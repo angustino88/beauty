@@ -19,7 +19,7 @@
 
 .table :global(.ant-table-column-sorter-up.active),
 .table :global(.ant-table-column-sorter-down.active) {
-  color: var(--lm-success-fg) !important;
+  color: var(--lm-primary-fg) !important;
 }
 
 .table :global(.ant-table-tbody > tr:hover > td) {

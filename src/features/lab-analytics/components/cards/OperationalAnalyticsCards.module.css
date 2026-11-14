@@ -1,0 +1,14 @@
+.period { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 16px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 16px; }
+.card { display: flex; min-width: 0; flex-direction: column; gap: 14px; padding: 18px 20px 20px; background: var(--lm-surface); border: 1px solid var(--lm-border); border-radius: 14px; box-shadow: var(--lm-shadow-sm); }
+.card > header { display: flex; flex-direction: column; gap: 2px; }
+.card > header h3 { margin: 0; color: var(--lm-text); font-size: 15px; font-weight: 650; }
+.card > header span { color: var(--lm-text-tertiary); font-size: 12px; }
+.subhead { margin: 4px 0 0; color: var(--lm-text-secondary); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+.center { display: grid; min-height: 180px; place-items: center; }
+.uptime { display: inline-flex; align-items: center; gap: 8px; font-variant-numeric: tabular-nums; }
+.uptimeTrack { display: inline-block; width: 56px; height: 6px; overflow: hidden; background: var(--lm-surface-muted); border-radius: 999px; }
+.uptimeTrack span { display: block; height: 100%; border-radius: inherit; }
+.table :global(.ant-table) { background: transparent; }
+.downtime { display: inline-flex; flex-direction: column; align-items: flex-end; line-height: 1.3; font-variant-numeric: tabular-nums; }
+.downtime small { color: var(--lm-text-tertiary); font-size: 11px; }

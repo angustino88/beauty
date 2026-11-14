@@ -13,19 +13,20 @@ import React from 'react';
 import { TooltipButton } from '@/components/layout/TooltipButton';
 import type { BenchBookingItem, IProjectOption } from '../types';
 import styles from './MyBookingTable.module.css';
-import indicatorStyles from '@/shared/components/StatusIndicator.module.css';
+import { StatusBadge } from '@/shared/components/StatusBadge';
+import type { StatusTone } from '@/shared/status/statusTone';
 
-const statusToneMap: Record<string, string> = {
-  reserved: indicatorStyles.success,
-  in_progress: indicatorStyles.info,
-  completed: indicatorStyles.neutral,
-  cancelled: indicatorStyles.warning,
-  expired: indicatorStyles.danger,
+const statusToneMap: Record<string, StatusTone> = {
+  reserved: 'violet',
+  in_progress: 'info',
+  completed: 'success',
+  cancelled: 'neutral',
+  expired: 'danger',
   // Fallbacks for any legacy records
-  available: indicatorStyles.success,
-  'in-progress': indicatorStyles.info,
-  done: indicatorStyles.neutral,
-  cancel: indicatorStyles.warning,
+  available: 'violet',
+  'in-progress': 'info',
+  done: 'success',
+  cancel: 'neutral',
 };
 
 const titleMap: Record<string, string> = {
@@ -41,10 +42,10 @@ const titleMap: Record<string, string> = {
   cancel: 'Cancelled',
 };
 
-const approvalToneMap: Record<string, string> = {
-  pending: indicatorStyles.warning,
-  approved: indicatorStyles.success,
-  rejected: indicatorStyles.danger,
+const approvalToneMap: Record<string, StatusTone> = {
+  pending: 'warning',
+  approved: 'success',
+  rejected: 'danger',
 };
 
 const approvalTitleMap: Record<string, string> = {
@@ -60,19 +61,15 @@ const approvalIconMap: Record<string, React.ReactNode> = {
 };
 
 const StatusIndicator = ({ status }: { status: string }) => (
-  <span className={`${indicatorStyles.indicator} ${statusToneMap[status] ?? indicatorStyles.neutral}`}>
-    <span className={indicatorStyles.statusDot} aria-hidden="true" />
-    <span>{titleMap[status] || status || 'Unknown'}</span>
-  </span>
+  <StatusBadge tone={statusToneMap[status] ?? 'neutral'} label={titleMap[status] || status || 'Unknown'} />
 );
 
 const ApprovalIndicator = ({ status }: { status: string }) => (
-  <span className={`${indicatorStyles.indicator} ${styles.approvalIndicator} ${approvalToneMap[status] ?? indicatorStyles.neutral}`}>
-    <span className={styles.approvalIcon} aria-hidden="true">
-      {approvalIconMap[status] ?? <QuestionCircleOutlined />}
-    </span>
-    <span>{approvalTitleMap[status] || status || 'Unknown'}</span>
-  </span>
+  <StatusBadge
+    tone={approvalToneMap[status] ?? 'neutral'}
+    icon={approvalIconMap[status] ?? <QuestionCircleOutlined />}
+    label={approvalTitleMap[status] || status || 'Unknown'}
+  />
 );
 
 const DateRenderer = React.memo(({ value }: { value: string | undefined }) => {
@@ -130,7 +127,7 @@ export function buildMyBookingColumns({
       key: 'status',
       title: 'Status',
       align: 'center',
-      width: 108,
+      width: 160,
       filters: [
         { text: 'Reserved', value: 'reserved' },
         { text: 'In progress', value: 'in_progress' },
@@ -149,7 +146,7 @@ export function buildMyBookingColumns({
       key: 'approval_status',
       title: 'Approval',
       align: 'center',
-      width: 112,
+      width: 160,
       filters: [
         { text: 'Pending', value: 'pending' },
         { text: 'Approved', value: 'approved' },

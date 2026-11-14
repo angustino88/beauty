@@ -1,15 +1,22 @@
 import { useState } from 'react';
-import { Alert, Card, DatePicker, Empty, Progress, Space, Table, Typography } from 'antd';
+import { Alert, DatePicker, Spin, Table, Typography } from 'antd';
 import dayjs, { type Dayjs } from 'dayjs';
 import {
   useLabsAnalyticsBookedVsUsedRetrieveQuery,
   useLabsAnalyticsEquipmentAvailabilityRetrieveQuery,
 } from '@/shared/api/generated/api';
+import { MeterStat, StatGrid, StatTile } from '@/shared/components/detail/DetailPrimitives';
+import { StatusBadge } from '@/shared/components/StatusBadge';
+import { ChartEmpty, RankedList, formatNumber, useChartTheme } from '@/shared/charts';
+import { equipmentStatusLabel, equipmentStatusTone } from '@/features/lab-equipment/shared/utils/equipmentStatus';
 import { DEFAULT_DURATION, DEFAULT_TIMEZONE } from '../../utils/charts';
+import styles from './OperationalAnalyticsCards.module.css';
 
 const { RangePicker } = DatePicker;
+const hours = (value: unknown) => `${formatNumber(Number(value ?? 0))} h`;
 
 export function OperationalAnalyticsCards() {
+  const theme = useChartTheme();
   const [range, setRange] = useState<[Dayjs, Dayjs]>([
     dayjs(DEFAULT_DURATION.from_date_time),
     dayjs(DEFAULT_DURATION.to_date_time),
@@ -25,7 +32,7 @@ export function OperationalAnalyticsCards() {
 
   return (
     <>
-      <Space style={{ marginBottom: 16 }} wrap>
+      <div className={styles.period}>
         <Typography.Text strong>Reporting period</Typography.Text>
         <RangePicker
           value={range}
@@ -34,41 +41,75 @@ export function OperationalAnalyticsCards() {
             if (dates?.[0] && dates[1] && !dates[0].isAfter(dates[1])) setRange([dates[0], dates[1]]);
           }}
         />
-      </Space>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 360px), 1fr))', gap: 16 }}>
-        <Card title="Booked vs used hours" loading={bookings.isFetching}>
-          {bookings.isError ? <Alert type="error" showIcon message="Unable to load booking utilization" action={<a onClick={() => void bookings.refetch()}>Retry</a>} /> : bookingData ? (
-            <>
-              <Space size="large" wrap style={{ marginBottom: 16 }}>
-                <Typography.Text>Booked: <strong>{bookingData.total_booked_hours.toFixed(1)} h</strong></Typography.Text>
-                <Typography.Text>Used: <strong>{bookingData.total_used_hours.toFixed(1)} h</strong></Typography.Text>
-                <Typography.Text>Working: <strong>{bookingData.official_working_hours.toFixed(1)} h</strong></Typography.Text>
-              </Space>
-              <Typography.Text>Used to booked: {bookingData.used_to_booked_ratio == null ? 'N/A' : `${(bookingData.used_to_booked_ratio * 100).toFixed(1)}%`}</Typography.Text>
-              <Table rowKey="bench_id" size="small" pagination={{ pageSize: 5 }} dataSource={bookingData.benches} columns={[
-                { title: 'Bench', dataIndex: 'bench_name' },
-                { title: 'Booked hours', dataIndex: 'booked_hours', align: 'right', render: (value: number) => value.toFixed(1) },
-              ]} style={{ marginTop: 16 }} />
-            </>
-          ) : <Empty description="No utilization data" />}
-        </Card>
-        <Card title="Equipment availability" loading={availability.isFetching}>
-          {availability.isError ? <Alert type="error" showIcon message="Unable to load equipment availability" action={<a onClick={() => void availability.refetch()}>Retry</a>} /> : equipmentData ? (
-            <>
-              <Space size="large" wrap style={{ marginBottom: 16 }}>
-                <Typography.Text>Equipment: <strong>{equipmentData.equipment_count}</strong></Typography.Text>
-                <Typography.Text>Average uptime: <strong>{equipmentData.average_uptime_percent == null ? 'N/A' : `${equipmentData.average_uptime_percent.toFixed(1)}%`}</strong></Typography.Text>
-              </Space>
-              <Table rowKey="equipment_id" size="small" pagination={{ pageSize: 5 }} dataSource={equipmentData.items} columns={[
-                { title: 'Equipment', dataIndex: 'equipment_name' },
-                { title: 'Uptime', dataIndex: 'uptime_percent', render: (value: number) => <Progress percent={Math.max(0, Math.min(100, value))} size="small" format={() => `${value.toFixed(1)}%`} /> },
-                { title: 'Unavailable', dataIndex: 'unavailable_hours', align: 'right', render: (value: number) => `${value.toFixed(1)} h` },
-                { title: 'Outages', dataIndex: 'outage_count', align: 'right' },
-                { title: 'Status', dataIndex: 'current_status' },
-              ]} style={{ marginTop: 16 }} />
-            </>
-          ) : <Empty description="No availability data" />}
-        </Card>
+      </div>
+      <div className={styles.grid}>
+        <section className={styles.card}>
+          <header><h3>Booked vs used hours</h3><span>How much booked bench time was actually used</span></header>
+          {bookings.isFetching ? <div className={styles.center}><Spin /></div>
+            : bookings.isError ? <Alert type="error" showIcon message="Unable to load booking utilization" action={<a onClick={() => void bookings.refetch()}>Retry</a>} />
+              : bookingData ? (
+                <>
+                  <StatGrid>
+                    <MeterStat higherIsBetter label="Used of booked" used={Math.round(bookingData.total_used_hours ?? 0)} total={Math.round(bookingData.total_booked_hours ?? 0)} unit="h"
+                      detail={bookingData.used_to_booked_ratio == null ? 'Ratio not available' : `${formatNumber((bookingData.used_to_booked_ratio ?? 0) * 100)}% utilisation`} />
+                    <StatTile label="Booked of working time" value={hours(bookingData.total_booked_hours)} detail={`${hours(bookingData.official_working_hours)} official working time`} />
+                  </StatGrid>
+                  <h4 className={styles.subhead}>Most booked benches</h4>
+                  {bookingData.benches?.length ? (
+                    <RankedList
+                      color={theme.series[0]}
+                      unit="h"
+                      items={[...bookingData.benches].sort((a, b) => b.booked_hours - a.booked_hours).slice(0, 5)
+                        .map((bench) => ({ key: String(bench.bench_id), label: bench.bench_name, value: bench.booked_hours }))}
+                    />
+                  ) : <ChartEmpty>No bench bookings in this period</ChartEmpty>}
+                </>
+              ) : <ChartEmpty>No utilization data</ChartEmpty>}
+        </section>
+
+        <section className={styles.card}>
+          <header><h3>Equipment availability</h3><span>Uptime and outages per tracked device</span></header>
+          {availability.isFetching ? <div className={styles.center}><Spin /></div>
+            : availability.isError ? <Alert type="error" showIcon message="Unable to load equipment availability" action={<a onClick={() => void availability.refetch()}>Retry</a>} />
+              : equipmentData ? (
+                <>
+                  <StatGrid>
+                    <StatTile label="Tracked equipment" value={formatNumber(equipmentData.equipment_count)} />
+                    <StatTile label="Average uptime" value={equipmentData.average_uptime_percent == null ? 'N/A' : `${formatNumber(equipmentData.average_uptime_percent)}%`} />
+                  </StatGrid>
+                  <Table
+                    className={styles.table}
+                    rowKey="equipment_id"
+                    size="small"
+                    pagination={{ pageSize: 5, hideOnSinglePage: true }}
+                    dataSource={equipmentData.items}
+                    columns={[
+                      { title: 'Equipment', dataIndex: 'equipment_name', ellipsis: true },
+                      {
+                        title: 'Uptime', dataIndex: 'uptime_percent', width: 132,
+                        render: (value: number) => {
+                          const pct = Math.max(0, Math.min(100, Number(value ?? 0)));
+                          const color = pct >= 98 ? theme.tone.success : pct >= 95 ? theme.tone.warning : theme.tone.danger;
+                          return (
+                            <span className={styles.uptime}>
+                              <span className={styles.uptimeTrack}><span style={{ width: `${pct}%`, background: color }} /></span>
+                              {formatNumber(pct)}%
+                            </span>
+                          );
+                        },
+                      },
+                      {
+                        title: 'Downtime', dataIndex: 'unavailable_hours', align: 'right', width: 110,
+                        render: (value: number, row: { outage_count?: number }) => (
+                          <span className={styles.downtime}>{hours(value)}<small>{row.outage_count ?? 0} {row.outage_count === 1 ? 'outage' : 'outages'}</small></span>
+                        ),
+                      },
+                      { title: 'Status', dataIndex: 'current_status', width: 160, render: (status: string) => <StatusBadge tone={equipmentStatusTone(status)} label={equipmentStatusLabel(status)} /> },
+                    ]}
+                  />
+                </>
+              ) : <ChartEmpty>No availability data</ChartEmpty>}
+        </section>
       </div>
     </>
   );

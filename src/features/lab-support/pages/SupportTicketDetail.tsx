@@ -1,6 +1,7 @@
+import { StatusBadge } from '@/shared/components/StatusBadge';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { Alert, Button, Card, Descriptions, Empty, Form, Input, Select, Space, Spin, Tag, Timeline, Typography, message } from 'antd';
+import { Alert, Button, Card, Descriptions, Empty, Form, Input, Select, Space, Spin, Timeline, Typography, message } from 'antd';
 import { useAuthState } from '@/features/auth/hooks/useAuthState';
 import {
   useSupportStatusesOptionsRetrieveQuery,
@@ -112,7 +113,7 @@ export default function SupportTicketDetail() {
         <Link to="/support-tickets">← Back to support tickets</Link>
         <Card title={`${ticket.key} · ${ticket.subject}`} extra={<Button onClick={() => void refresh()}>Refresh</Button>}>
           <Descriptions column={{ xs: 1, sm: 2 }}>
-            <Descriptions.Item label="Status"><Tag>{ticket.status?.name ?? '–'}</Tag></Descriptions.Item>
+            <Descriptions.Item label="Status"><StatusBadge status={ticket.status?.name} label={ticket.status?.name ?? '–'} /></Descriptions.Item>
             <Descriptions.Item label="Priority">{ticket.priority?.name ?? '–'}</Descriptions.Item>
             <Descriptions.Item label="Category">{ticket.category?.name ?? '–'}</Descriptions.Item>
             <Descriptions.Item label="Requester">{ticket.requester?.full_name || ticket.requester?.username || '–'}</Descriptions.Item>

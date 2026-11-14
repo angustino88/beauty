@@ -37,6 +37,8 @@ import { PurchaseDetailDrawer } from '../components/PurchaseDetailDrawer';
 import { AddPurchaseTransactionModal } from '../components/AddPurchaseTransactionModal';
 import { AddPurchaseItemModal } from '../components/AddPurchaseItemModal';
 import tableStyles from '@/components/tables/AppTable.module.css';
+import { StatusBadge } from '@/shared/components/StatusBadge';
+import { purchaseStatusLabel, purchaseStatusTone } from '@/shared/status/statusTone';
 
 const EMPTY_PURCHASES: IPurchase[] = [];
 
@@ -159,15 +161,9 @@ export const PurchasesPage: React.FC = () => {
       title: 'Status',
       dataIndex: 'status',
       key: 'status',
-      width: 130,
+      width: 160,
       render: (status: string, record: IPurchase) => {
-        const s = (status || '').toLowerCase();
-        let tone = '';
-        if (s === 'received' || s === 'completed' || s === 'approved') tone = styles.statusSuccess;
-        else if (s === 'ordered') tone = styles.statusInfo;
-        else if (s === 'draft') tone = styles.statusWarning;
-        else if (s === 'cancelled') tone = styles.statusDanger;
-        return <span className={`${styles.status} ${tone}`}>{record.status_label || (status || 'Unknown').toUpperCase()}</span>;
+        return <StatusBadge tone={purchaseStatusTone(status)} label={record.status_label || purchaseStatusLabel(status)} />;
       },
     },
     {

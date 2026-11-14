@@ -28,7 +28,7 @@
 .bookingModal :global(.ant-btn-primary) {
   min-width: 140px;
   font-weight: 700;
-  background: var(--lm-success-solid);
+  background: var(--lm-primary);
 }
 
 .bookingModal :global(.ant-btn-default) {

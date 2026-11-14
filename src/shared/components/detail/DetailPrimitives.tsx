@@ -64,14 +64,17 @@ export function FacetGrid({ items }: { items: Facet[] }) {
 const meterTone = (ratio: number): StatusTone => (ratio >= 0.9 ? 'danger' : ratio >= 0.75 ? 'warning' : 'success');
 
 /** Usage against a limit. Colour reflects headroom: green, amber from 75 %, red from 90 %. */
-export function MeterStat({ label, used, total, unit = '', detail }: {
+export function MeterStat({ label, used, total, unit = '', detail, higherIsBetter = false }: {
   label: string; used: number; total: number; unit?: string; detail?: ReactNode;
+  /** For utilisation-style meters: green when high, amber below 75 %, red below 50 %. */
+  higherIsBetter?: boolean;
 }) {
   const ratio = total > 0 ? Math.min(1, Math.max(0, used / total)) : 0;
+  const tone: StatusTone = higherIsBetter ? (ratio >= 0.75 ? 'success' : ratio >= 0.5 ? 'warning' : 'danger') : meterTone(ratio);
   const pct = Math.round(ratio * 100);
   const suffix = unit ? ` ${unit}` : '';
   return (
-    <div className={`${styles.stat} ${styles[meterTone(ratio)]}`}>
+    <div className={`${styles.stat} ${styles[tone]}`}>
       <span className={styles.statLabel}>{label}</span>
       <span className={styles.statValue}>
         <strong>{used.toLocaleString()}</strong>

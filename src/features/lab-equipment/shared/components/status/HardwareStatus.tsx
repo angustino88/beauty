@@ -6,6 +6,7 @@ import {
   useGetLabNamesListQuery,
 } from "../../api/dropdownApi";
 import styles from "./HardwareStatus.module.css";
+import { StatusBadge } from "@/shared/components/StatusBadge";
 
 const STATUS_META: Record<
   string,
@@ -633,20 +634,5 @@ export default function HardwareStatus({
     );
   }
 
-  return (
-    <Tag
-      style={{
-        backgroundColor: meta.bgColor,
-        borderColor: meta.bgColor,
-        color: meta.textColor,
-        width: "auto",
-        whiteSpace: "nowrap",
-        textAlign: "center",
-        fontWeight: 700,
-        opacity: 1,
-      }}
-    >
-      {meta.label}
-    </Tag>
-  );
+  return <StatusBadge status={normalized} label={meta.label} />;
 }

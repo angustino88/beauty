@@ -2,12 +2,18 @@
    Tone classes come from shared/status/statusTone.ts; the overviewGreen etc. and successSubtle
    names are aliases kept for older call sites. All colours are theme tokens. */
 .indicator {
+  /* Every status pill has the same width so table columns line up; long
+     labels truncate and show in full on hover (StatusBadge sets title). */
   display: inline-flex;
+  box-sizing: border-box;
+  width: var(--status-badge-width, 128px);
+  max-width: 100%;
   align-items: center;
   justify-content: flex-start;
   gap: 6px;
   min-height: 24px;
   padding: 2px 9px 2px 8px;
+  overflow: hidden;
   color: var(--indicator-text);
   font-size: 12px;
   font-weight: 600;
@@ -16,6 +22,21 @@
   background: var(--indicator-background);
   border: 1px solid var(--indicator-border);
   border-radius: 999px;
+}
+
+.fit { width: auto; }
+
+.label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.icon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  color: var(--indicator-accent);
+  font-size: 12px;
 }
 
 .statusDot {

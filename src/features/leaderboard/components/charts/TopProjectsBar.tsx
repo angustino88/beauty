@@ -6,13 +6,12 @@ interface TopProjectsBarProps {
   data?: TopProjectItem[];
 }
 
-const HEAT_COLORS = [
-  '#fafafa', '#ede7f6', '#d1c4e9', '#b39ddb', '#7e57c2', '#512da8', '#311b92',
-];
-const HEAT_TEXT = ['#9e9e9e', '#6a4fa3', '#4a3480', '#fff', '#fff', '#fff', '#fff'];
-const HEAT_BORDER = [
-  '#e0e0e0', '#c5b3e6', '#a890d4', '#8c6dbf', '#6840b5', '#3f1f96', '#27116e',
-];
+// Theme-aware ramp: empty cells use the muted surface, then mix toward the chart violet.
+const HEAT_COLORS = [0, 16, 30, 46, 64, 82, 100].map((pct) => (pct === 0
+  ? 'var(--lm-surface-muted)'
+  : `color-mix(in srgb, var(--lm-chart-6) ${pct}%, var(--lm-surface-muted))`));
+const HEAT_TEXT = ['var(--lm-text-tertiary)', 'var(--lm-text-secondary)', 'var(--lm-text)', '#fff', '#fff', '#fff', '#fff'];
+const HEAT_BORDER = HEAT_COLORS.map((color, index) => (index === 0 ? 'var(--lm-border)' : color));
 
 function heatIndex(minutes: number, totalMinutes: number): number {
   if (minutes === 0 || totalMinutes === 0) return 0;

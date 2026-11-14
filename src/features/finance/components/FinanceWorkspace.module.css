@@ -6,9 +6,9 @@
 .register .hero p, .register .eyebrow { color: var(--lm-text-tertiary); }
 .register .heroActions :global(.ant-btn) { height: 30px; font-size: 12px; border-radius: 5px; }
 .register .heroActions :global(.ant-btn-default) { color: var(--lm-text); border-color: var(--lm-border); background: var(--lm-surface); }
-.register .heroActions :global(.ant-btn-default:hover) { color: var(--lm-success-fg) !important; border-color: var(--lm-success-solid) !important; background: var(--lm-surface-muted) !important; }
-.register .heroActions :global(.ant-btn-primary) { color: #fff; border-color: var(--lm-success-solid); background: var(--lm-success-solid); }
-.register .heroActions :global(.ant-btn-primary:hover) { color: #fff !important; border-color: var(--lm-success-solid) !important; background: var(--lm-success-solid) !important; }
+.register .heroActions :global(.ant-btn-default:hover) { color: var(--lm-primary-fg) !important; border-color: var(--lm-primary) !important; background: var(--lm-surface-muted) !important; }
+.register .heroActions :global(.ant-btn-primary) { color: #fff; border-color: var(--lm-primary); background: var(--lm-primary); }
+.register .heroActions :global(.ant-btn-primary:hover) { color: #fff !important; border-color: var(--lm-primary) !important; background: var(--lm-primary) !important; }
 .register .metricGrid { gap: 8px; }
 .register .metric { min-height: 96px; padding: 12px 14px; border-radius: 6px; box-shadow: none; }
 .register .metricValue { margin-top: 8px; font-size: 22px; }
@@ -117,13 +117,13 @@
 }
 
 .heroActions :global(.ant-btn-primary) {
-  color: var(--lm-success-fg);
+  color: var(--lm-primary-fg);
   border-color: var(--lm-border);
   background: var(--lm-surface-muted);
 }
 
 .heroActions :global(.ant-btn-primary:hover) {
-  color: var(--lm-success-fg) !important;
+  color: var(--lm-primary-fg) !important;
   border-color: var(--lm-border-subtle) !important;
   background: var(--lm-surface) !important;
 }
@@ -463,3 +463,11 @@
 .statusWarning { --status-bg: var(--lm-warning-bg); --status-border: var(--lm-warning-border); --status-color: var(--lm-warning-solid); }
 .statusInfo { --status-bg: var(--lm-surface-muted); --status-border: var(--lm-border); --status-color: var(--lm-info-solid); }
 .statusDanger { --status-bg: var(--lm-danger-bg); --status-border: var(--lm-danger-border); --status-color: var(--lm-danger-solid); }
+/* Chart headline totals (cash-flow card) */
+.chartTotals { display: flex; flex-wrap: wrap; gap: 8px 32px; margin-bottom: 14px; }
+.chartTotals > div { display: flex; flex-direction: column; gap: 2px; }
+.chartTotals span { color: var(--lm-text-tertiary); font-size: 12px; }
+.chartTotals strong { color: var(--lm-text); font-size: 20px; font-weight: 700; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
+.changeUp, .changeDown { font-size: 12px; font-weight: 600; }
+.chartTotals .changeUp { color: var(--lm-danger-fg); }
+.chartTotals .changeDown { color: var(--lm-success-fg); }

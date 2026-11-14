@@ -53,7 +53,7 @@ export const buildStationColumns = ({
     {
       title: "Status",
       key: "status",
-      width: 140,
+      width: 184,
       align: "center",
       filters: statusFilters,
       filteredValue: activeFilters.status ?? null,

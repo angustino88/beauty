@@ -39,12 +39,12 @@
 
 .modal :global(.ant-btn-primary) {
   min-width: 72px;
-  background: var(--lm-success-solid);
+  background: var(--lm-primary);
   box-shadow: none;
 }
 
 .modal :global(.ant-btn-primary:hover) {
-  background: var(--lm-success-solid) !important;
+  background: var(--lm-primary) !important;
 }
 
 .modal :global(.ant-modal-close) {
@@ -160,7 +160,7 @@
 .form :global(.ant-input:focus),
 .form :global(.ant-input-focused),
 .form :global(.ant-select-focused .ant-select-selector) {
-  border-color: var(--lm-success-solid);
+  border-color: var(--lm-primary);
   box-shadow: 0 0 0 2px rgba(0, 136, 74, 0.1);
 }
 

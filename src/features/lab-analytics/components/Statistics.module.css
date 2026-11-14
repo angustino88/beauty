@@ -1,0 +1,9 @@
+.kpi { display: flex; width: 100%; height: 100%; flex-direction: column; align-items: stretch; gap: 4px; padding: 18px 18px 16px; color: inherit; font: inherit; text-align: left; cursor: pointer; background: var(--lm-surface); border: 1px solid var(--lm-border); border-radius: 14px; box-shadow: var(--lm-shadow-sm); transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease; }
+.kpi:hover { border-color: var(--lm-border-strong); box-shadow: var(--lm-shadow-md); transform: translateY(-1px); }
+.kpi:focus-visible { outline: none; box-shadow: var(--lm-focus-ring); }
+.kpiTitle { color: var(--lm-text-secondary); font-size: 13px; font-weight: 600; }
+.kpiValue { color: var(--lm-text); font-size: 28px; font-weight: 700; line-height: 1.2; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.kpiCompare { color: var(--lm-text-tertiary); font-size: 12px; }
+.kpiChartRow { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin: 12px 0 10px; }
+.kpiChartRow > :first-child { flex: 1; max-width: 62%; }
+.kpiError { margin-top: 10px; color: var(--lm-danger-fg); font-size: 12px; }

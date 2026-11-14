@@ -1,80 +1,24 @@
-import { Empty } from 'antd';
-import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
+import { ChartEmpty, DonutChart, useChartTheme } from '@/shared/charts';
+import { toneForStatus } from '@/shared/status/statusTone';
 import { hardwareStatuses } from '../../utils';
 import type { LabEquipmentStatusSummary } from '../../types';
-import CustomTooltip from './CustomTooltip';
-import { ChartPalette } from './ChartTheme';
-import { PieChartLabel } from './PieChartLabel';
 
-type StatusRow = { status_type: string; entries: number; label: string };
-
-function processEquipmentStatusChartResponse(statusRows: LabEquipmentStatusSummary[]): StatusRow[] {
-  let otherCount = 0;
-  const rows = statusRows.map((row) => ({
-    status_type: row.status_type,
-    entries: Number(row.entries),
-    label: hardwareStatuses.find((s) => s.value === row.status_type)?.text ?? row.status_type,
-  }))
-    .filter((row) => {
-      if (['transferred', 'maintenance', 'broken', 'lost', 'on_order'].includes(row.status_type)) {
-        otherCount += row.entries;
-        return false;
-      }
-      return true;
-    })
-    .filter((r) => r.entries > 0);
-
-  if (otherCount > 0) {
-    rows.push({
-      status_type: 'others',
-      entries: otherCount,
-      label: 'Others',
-    });
-  }
-  return rows;
-}
-
+/** Every status gets its own slice in its status colour, so faults are never hidden in "Others". */
 export function LabEquipmentStatusChart({ statusSummary }: { statusSummary: LabEquipmentStatusSummary[] | undefined }) {
-  const processedData = processEquipmentStatusChartResponse(statusSummary ?? []);
-  const total = processedData.reduce((acc, item) => acc + item.entries, 0);
-  if (!processedData.length) return <Empty />;
-
+  const theme = useChartTheme();
+  const rows = (statusSummary ?? []).filter((row) => Number(row.entries) > 0);
+  if (!rows.length) return <ChartEmpty />;
   return (
-    <ResponsiveContainer width="100%" height={350}>
-      <PieChart>
-        <Pie
-          data={processedData}
-          dataKey="entries"
-          nameKey="label"
-          cx="50%"
-          cy="50%"
-          outerRadius={126}
-          innerRadius={88}
-          label={(props) => <PieChartLabel {...props} />}
-          labelLine={false}
-          isAnimationActive
-          animationDuration={600}
-        >
-          {processedData.map((entry, index) => (
-            <Cell
-              name={entry.label}
-              key={index}
-              fill={entry.status_type === 'others' ? '#9aa5a0' : ChartPalette[index % ChartPalette.length]}
-              stroke="#ffffff"
-              strokeWidth={3}
-            />
-          ))}
-        </Pie>
-        <text x="50%" y="47%" textAnchor="middle" fill="#65736b" fontSize={11} fontWeight={700}>
-          TOTAL
-        </text>
-        <text x="50%" y="55%" textAnchor="middle" fill="#173d29" fontSize={24} fontWeight={700}>
-          {total}
-        </text>
-        <Legend iconType="circle" iconSize={8} wrapperStyle={{ paddingTop: 12, fontSize: 12 }} />
-        <Tooltip content={<CustomTooltip />} />
-      </PieChart>
-    </ResponsiveContainer>
+    <DonutChart
+      totalLabel="Equipment"
+      data={[...rows]
+        .sort((a, b) => Number(b.entries) - Number(a.entries))
+        .map((row) => ({
+          key: row.status_type,
+          label: hardwareStatuses.find((status) => status.value === row.status_type)?.text ?? row.status_type.replaceAll('_', ' '),
+          value: Number(row.entries),
+          color: theme.tone[toneForStatus(row.status_type)],
+        }))}
+    />
   );
 }
-

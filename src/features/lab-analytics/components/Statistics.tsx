@@ -1,7 +1,8 @@
-import { ArrowDownOutlined, ArrowUpOutlined } from '@ant-design/icons';
-import { Alert, Button, Card, Col, Modal, Row, Statistic, Typography } from 'antd';
+import { Alert, Button, Col, Modal, Row } from 'antd';
 import { useMemo, useState } from 'react';
-import { Area, AreaChart, ResponsiveContainer } from 'recharts';
+import { MiniBars, StatTriplet, TrendChip, useChartTheme } from '@/shared/charts';
+import { Skeleton } from '@/components/ui/skeleton';
+import styles from './Statistics.module.css';
 import {
   useGetBookingCountStatisticsQuery,
   useGetBookingTrendSeriesQuery,
@@ -21,6 +22,7 @@ import { DateUnitFilter } from './filters';
 type StatKey = 'labVisitChart' | 'bookingCountChart' | 'userCountChart' | 'labCountChart';
 
 export function Statistics() {
+  const chartTheme = useChartTheme();
   const [modalOpen, setModalOpen] = useState<StatKey | ''>('');
   const [unitByKey, setUnitByKey] = useState<Record<StatKey, StatisticUnit>>({
     labVisitChart: 'day',
@@ -46,7 +48,7 @@ export function Statistics() {
         title: 'Weekly Visitors',
         key: 'labVisitChart' as const,
         unit: 'visits',
-        color: 'var(--lm-success-fg)',
+        colorIndex: 0,
         loading: labVisitLoading,
         error: labVisitError || labVisitSeriesError,
         retry: () => { void retryLabVisits(); void retryLabVisitSeries(); },
@@ -57,7 +59,7 @@ export function Statistics() {
         title: 'Weekly Bookings',
         key: 'bookingCountChart' as const,
         unit: 'bookings',
-        color: 'var(--lm-warning-fg)',
+        colorIndex: 1,
         loading: bookingCountLoading,
         error: bookingCountError || bookingSeriesError,
         retry: () => { void retryBookings(); void retryBookingSeries(); },
@@ -68,7 +70,7 @@ export function Statistics() {
         title: 'Total Users',
         key: 'userCountChart' as const,
         unit: 'users',
-        color: 'var(--lm-info-fg)',
+        colorIndex: 2,
         loading: userCountLoading,
         error: userCountError || userSeriesError,
         retry: () => { void retryUsers(); void retryUserSeries(); },
@@ -79,7 +81,7 @@ export function Statistics() {
         title: 'Total Labs',
         key: 'labCountChart' as const,
         unit: 'labs',
-        color: 'var(--lm-text-tertiary)',
+        colorIndex: 4,
         loading: labCountLoading,
         error: labCountError || labSeriesError,
         retry: () => { void retryLabs(); void retryLabSeries(); },
@@ -100,58 +102,26 @@ export function Statistics() {
   return (
     <Row gutter={[16, 16]}>
       {statisticsMap.map((entry) => {
-        const trend = entry.statistics?.trend;
-        const trendEl = trend && trend !== 0 ? (
-          <Typography.Text style={{ color: trend > 0 ? 'var(--lm-success-fg)' : 'var(--lm-danger-fg)' }}>
-            {trend > 0 ? <ArrowUpOutlined /> : <ArrowDownOutlined />} {Math.abs(trend)}%
-          </Typography.Text>
-        ) : null;
-
+        const color = chartTheme.series[entry.colorIndex];
+        const values = entry.data.map((point) => Number(point.count));
         return (
-          <Col xs={24} sm={12} lg={6} key={entry.key}>
-            <Card
-              hoverable
-              style={{ height: '100%', width: '100%' }}
-              styles={{ body: { padding: '18px 20px' } }}
-              onClick={() => setModalOpen(entry.key)}
-              loading={entry.loading}
-            >
-              <Statistic
-                style={{ width: '100%' }}
-                title={
-                  <Row justify="space-between" style={{ gap: 8 }}>
-                    <Typography.Title level={5}>{entry.title}</Typography.Title>
-                    {trendEl}
-                  </Row>
-                }
-                value={entry.statistics?.count}
-              />
-              {entry.error && <Typography.Text type="danger">Unable to load metrics</Typography.Text>}
-              {entry.data.length > 1 && (
-                <div style={{ marginTop: 12 }}>
-                  <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-                    {`${unitByKey[entry.key]} trend`}
-                  </Typography.Text>
-                  <div style={{ height: 38, marginTop: 2 }} aria-hidden="true">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={entry.data} margin={{ top: 2, right: 0, bottom: 0, left: 0 }}>
-                        <Area
-                          type="monotone"
-                          dataKey="count"
-                          stroke={entry.color}
-                          strokeWidth={2}
-                          fill={entry.color}
-                          fillOpacity={0.12}
-                          isAnimationActive
-                          animationDuration={600}
-                        />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
+          <Col xs={24} sm={12} xl={6} key={entry.key}>
+            <button type="button" className={styles.kpi} onClick={() => setModalOpen(entry.key)} aria-label={`Open ${entry.title} trend`}>
+              <span className={styles.kpiTitle}>{entry.title}</span>
+              {entry.loading ? <Skeleton className="tw:my-1 tw:h-8 tw:w-24" /> : (
+                <strong className={styles.kpiValue}>{entry.statistics?.count?.toLocaleString() ?? '—'}</strong>
               )}
-            </Card>
-
+              <span className={styles.kpiCompare}>Compared to last week</span>
+              {entry.error ? <span className={styles.kpiError}>Unable to load metrics</span> : (
+                <>
+                  <div className={styles.kpiChartRow}>
+                    {values.length > 1 ? <MiniBars values={values} color={color} /> : <span />}
+                    <TrendChip value={entry.statistics?.trend} />
+                  </div>
+                  {values.length > 1 && <StatTriplet values={values} />}
+                </>
+              )}
+            </button>
             <Modal
               width="min(1080px, calc(100vw - 32px))"
               key={entry.key}
@@ -170,7 +140,7 @@ export function Statistics() {
                 }}
                 onExport={entry.data.length ? () => void exportRowsToExcel(entry.data, analyticsColumnIndex.statistics, entry.title.replace(/\s+/g, '_'), entry.title) : undefined}
               />
-              <StatisticsChart dataSource={entry.data} unit={entry.unit} bucketUnit={unitByKey[entry.key]} color={entry.color} />
+              <StatisticsChart dataSource={entry.data} unit={entry.unit} bucketUnit={unitByKey[entry.key]} color={chartTheme.series[entry.colorIndex]} />
             </Modal>
           </Col>
         );

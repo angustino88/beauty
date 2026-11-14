@@ -25,6 +25,7 @@ import {
 } from '../downtimeApi';
 import ScheduleDowntimeModal from './ScheduleDowntimeModal';
 import styles from './Downtime.module.css';
+import { StatusBadge } from '@/shared/components/StatusBadge';
 
 dayjs.extend(relativeTime);
 
@@ -146,35 +147,12 @@ export const DowntimeTab: React.FC<DowntimeTabProps> = ({
       title: 'State',
       dataIndex: 'state',
       key: 'state',
-      width: 120,
+      width: 160,
       render: (state: string) => {
-        if (state === 'current') {
-          return (
-            <span className={`${styles.stateBadge} ${styles.stateCurrent}`}>
-              <span className={styles.pulsingDot} style={{ width: 6, height: 6, margin: 0 }} />
-              Active
-            </span>
-          );
-        }
-        if (state === 'scheduled') {
-          return (
-            <span className={`${styles.stateBadge} ${styles.stateScheduled}`}>
-              <CalendarOutlined /> Scheduled
-            </span>
-          );
-        }
-        if (state === 'ended') {
-          return (
-            <span className={`${styles.stateBadge} ${styles.stateEnded}`}>
-              <CheckCircleOutlined /> Resolved
-            </span>
-          );
-        }
-        return (
-          <span className={`${styles.stateBadge} ${styles.stateCancelled}`}>
-            Cancelled
-          </span>
-        );
+        if (state === 'current') return <StatusBadge tone="warning" label="Active" icon={<span className={styles.pulsingDot} style={{ width: 6, height: 6, margin: 0 }} />} />;
+        if (state === 'scheduled') return <StatusBadge tone="info" label="Scheduled" icon={<CalendarOutlined />} />;
+        if (state === 'ended') return <StatusBadge tone="success" label="Resolved" icon={<CheckCircleOutlined />} />;
+        return <StatusBadge tone="neutral" label="Cancelled" />;
       },
     },
     {

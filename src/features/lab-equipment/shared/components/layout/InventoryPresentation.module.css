@@ -14,9 +14,9 @@
 .breadcrumb span { color: var(--lm-text-disabled); }
 .pageHeading h1 { margin: 0; color: var(--lm-text); font-size: clamp(22px, 2vw, 28px); font-weight: 700; line-height: 1.18; letter-spacing: -.03em; }
 .pageHeading p { margin: 6px 0 0; color: var(--register-muted); font-size: 13px; line-height: 1.45; }
-.inventory .createButton:global(.ant-btn) { height: 36px; padding: 0 14px; border: 1px solid var(--lm-success-solid); border-radius: 7px; background: var(--lm-success-solid); color: #fff !important; box-shadow: none; font-size: 13px; font-weight: 600; }
-.inventory .createButton:global(.ant-btn:hover) { border-color: var(--lm-success-solid); background: var(--lm-success-solid); color: #fff; }
-.inventory .createButton:global(.ant-btn:focus-visible) { outline: 2px solid var(--lm-success-solid); outline-offset: 2px; }
+.inventory .createButton:global(.ant-btn) { height: 36px; padding: 0 14px; border: 1px solid var(--lm-primary); border-radius: 7px; background: var(--lm-primary); color: #fff !important; box-shadow: none; font-size: 13px; font-weight: 600; }
+.inventory .createButton:global(.ant-btn:hover) { border-color: var(--lm-primary); background: var(--lm-primary); color: #fff; }
+.inventory .createButton:global(.ant-btn:focus-visible) { outline: 2px solid var(--lm-primary); outline-offset: 2px; }
 
 .inventory {
   --equipment-control-height: 34px;

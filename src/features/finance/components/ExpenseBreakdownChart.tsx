@@ -1,15 +1,7 @@
-import React from 'react';
+import React, { useId } from 'react';
 import { Card, Empty } from 'antd';
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Legend,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts';
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { ChartLegend, ChartTooltip, VerticalGradient, formatCompact, useChartTheme } from '@/shared/charts';
 import type { IFinancialReportTypeBreakdown } from '../types';
 import styles from './FinanceWorkspace.module.css';
 
@@ -18,49 +10,43 @@ interface ExpenseBreakdownChartProps {
   data: IFinancialReportTypeBreakdown[];
 }
 
-export const ExpenseBreakdownChart: React.FC<ExpenseBreakdownChartProps> = ({
-  currency,
-  data,
-}) => {
+/** Stacked paid + pending columns; the stack height is the budgeted amount. */
+export const ExpenseBreakdownChart: React.FC<ExpenseBreakdownChartProps> = ({ currency, data }) => {
+  const theme = useChartTheme();
+  const id = useId().replace(/:/g, '');
   if (!data || data.length === 0) {
     return (
       <Card className={styles.chartCard} title="Spend by category">
-        <Empty description="No category breakdown data available" />
+        <Empty description="No breakdown data available" />
       </Card>
     );
   }
 
-  const chartData = data.map((item) => ({
-    category: item.expense_type_label,
-    budgeted: item.amount,
-    paid: item.paid_amount,
-    pending: item.pending_amount,
-  }));
+  const chartData = [...data]
+    .sort((a, b) => b.amount - a.amount)
+    .map((item) => ({ category: item.expense_type_label, paid: item.paid_amount, pending: item.pending_amount, budgeted: item.amount }));
+  const [paidColor, pendingColor] = [theme.series[0], theme.series[3]];
+  const money = (value: unknown) => `${currency} ${Number(value ?? 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 
   return (
-    <Card className={styles.chartCard} title={<div>Spend by category<div className={styles.chartSubtitle}>Budgeted, paid and pending by expense type</div></div>}>
+    <Card className={styles.chartCard} title={<div>Spend by category<div className={styles.chartSubtitle}>Paid and pending amounts by expense type</div></div>}>
+      <ChartLegend items={[{ label: 'Paid', color: paidColor }, { label: 'Pending', color: pendingColor }]} />
       <div style={{ width: '100%', height: 320 }}>
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart
-            data={chartData}
-            margin={{ top: 20, right: 30, left: 10, bottom: 20 }}
-          >
-            <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="#e9efea" />
-            <XAxis dataKey="category" tick={{ fill: '#75857a', fontSize: 11 }} tickLine={false} axisLine={false} interval={0} angle={-25} textAnchor="end" height={70} />
-            <YAxis
-              tick={{ fill: '#75857a', fontSize: 11 }} tickLine={false} axisLine={false}
-              tickFormatter={(val) => `${val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val}`}
-            />
+          <BarChart data={chartData} margin={{ top: 10, right: 8, left: 0, bottom: 0 }} barCategoryGap="28%">
+            <defs>
+              <VerticalGradient id={`${id}-paid`} color={paidColor} from={1} to={0.55} />
+              <VerticalGradient id={`${id}-pending`} color={pendingColor} from={0.95} to={0.6} />
+            </defs>
+            <CartesianGrid {...theme.gridProps} />
+            <XAxis dataKey="category" {...theme.axisProps} interval={0} tickFormatter={(value: string) => (value.length > 14 ? `${value.slice(0, 13)}…` : value)} />
+            <YAxis {...theme.axisProps} width={52} tickFormatter={(value) => formatCompact(value, 0)} />
             <Tooltip
-              contentStyle={{ borderRadius: 10, border: '1px solid #e2eae3', boxShadow: '0 10px 30px rgba(25, 53, 40, .12)' }}
-              formatter={(value) => [
-                `${currency} ${Number(value ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`,
-              ]}
+              cursor={{ fill: theme.grid, opacity: 0.5 }}
+              content={<ChartTooltip formatValue={(value) => money(value)} title={(label, payload) => `${String(label)} · budget ${money(payload[0]?.payload?.budgeted)}`} />}
             />
-            <Legend verticalAlign="top" height={36} />
-            <Bar dataKey="budgeted" name="Budgeted" fill="#4a8295" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="paid" name="Paid" fill="#459178" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="pending" name="Pending" fill="#b98548" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="paid" name="Paid" stackId="spend" fill={`url(#${id}-paid)`} maxBarSize={44} />
+            <Bar dataKey="pending" name="Pending" stackId="spend" fill={`url(#${id}-pending)`} radius={[6, 6, 0, 0]} maxBarSize={44} />
           </BarChart>
         </ResponsiveContainer>
       </div>

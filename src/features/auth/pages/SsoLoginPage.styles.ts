@@ -138,7 +138,7 @@ export const useLoginStyles = createStyles(({ css, token }) => ({
 
     &:hover,
     &:focus {
-      background: var(--lm-success-solid) !important;
+      background: var(--lm-primary) !important;
       color: #fff !important;
     }
   `,

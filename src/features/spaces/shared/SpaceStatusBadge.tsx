@@ -8,8 +8,7 @@ import {
   type ResourceState,
 } from './resourceStatus';
 import styles from './SpaceStatusBadge.module.css';
-import equipmentBadgeStyles from '@/features/lab-equipment/shared/components/status/EquipmentStatus.module.css';
-import indicatorStyles from '@/shared/components/StatusIndicator.module.css';
+import { StatusBadge } from '@/shared/components/StatusBadge';
 
 interface SpaceStatusBadgeProps {
   status?: unknown;
@@ -44,21 +43,20 @@ export default function SpaceStatusBadge({
         ? resolvedAccess.toLowerCase() === 'restricted'
         : resolvedAccess?.value === 'restricted';
 
-    const toneClass = indicatorStyles[badge.tone] ?? indicatorStyles.neutral;
+    // "Unavailable (Room X)" is too long for the shared badge width: show the
+    // short state and keep the blocker in the tooltip.
+    const shortText = badge.text.replace(/\s*\(.*\)$/, '');
 
     return (
-      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-        <span
-          className={`${indicatorStyles.indicator} ${toneClass} ${equipmentBadgeStyles.badge} ${styles.badge}`}
-        >
-          <span className={indicatorStyles.statusDot} aria-hidden="true" />
-          {badge.text}
+      <span className={styles.wrap}>
+        <StatusBadge tone={badge.tone} label={shortText} title={badge.text} className={styles.badge} />
+        <span className={styles.lockSlot}>
+          {isRestricted && (
+            <Tooltip title="Restricted access">
+              <LockOutlined aria-label="Restricted access" />
+            </Tooltip>
+          )}
         </span>
-        {isRestricted && (
-          <Tooltip title="Restricted access">
-            <LockOutlined style={{ color: 'var(--lm-violet-solid)', fontSize: 13 }} aria-label="Restricted access" />
-          </Tooltip>
-        )}
       </span>
     );
   }
@@ -76,11 +74,9 @@ export default function SpaceStatusBadge({
   }
 
   return (
-    <span
-      className={`${indicatorStyles.indicator} ${indicatorStyles[resolvedTone]} ${equipmentBadgeStyles.badge} ${styles.badge}`}
-    >
-      <span className={indicatorStyles.statusDot} aria-hidden="true" />
-      {resolvedLabel}
+    <span className={styles.wrap}>
+      <StatusBadge tone={resolvedTone} label={resolvedLabel} className={styles.badge} />
+      <span className={styles.lockSlot} />
     </span>
   );
 }

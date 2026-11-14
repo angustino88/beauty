@@ -1,6 +1,6 @@
 /* Opt-in register presentation. No global or dashboard selectors. */
 .registerPage { display: flex; flex-direction: column; gap: 16px; min-width: 0; color: var(--lm-text); }
-.registerPage .registerCard { --table-control-height: 30px; --table-accent: var(--lm-success-solid); border-color: var(--lm-border); border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px #182b3b08; }
+.registerPage .registerCard { --table-control-height: 30px; --table-accent: var(--lm-primary); --table-accent-hover: var(--lm-primary-hover); border-color: var(--lm-border); border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px #182b3b08; }
 .registerCard :global(.ant-card-body) { padding: 0; }
 .registerPage .toolbar { position: static; margin: 0; padding: 10px 12px; gap: 10px 12px; border-bottom: 1px solid var(--lm-border); }
 .registerPage .actions { flex-wrap: wrap; }
@@ -22,13 +22,13 @@
 .registerPage .table :global(.ant-table-filter-trigger.active) { color: var(--lm-info-fg); background: var(--lm-surface-muted); box-shadow: inset 0 0 0 1px #c5d0dd; }
 .registerPage .table :global(.ant-pagination) { margin: 0; padding: 10px 12px; background: var(--lm-surface); }
 .registerPage .table :global(.ant-pagination-total-text) { margin-inline-end: auto; color: var(--lm-text-tertiary); font-size: 12px; }
-.registerPage .table :global(.ant-pagination-item-active) { border-color: var(--lm-success-solid); background: var(--lm-surface-muted); }
-.registerPage .table :global(.ant-pagination-item-active a) { color: var(--lm-success-fg); }
-.registerPage button:focus-visible { outline: 2px solid var(--lm-success-solid); outline-offset: 2px; }
+.registerPage .table :global(.ant-pagination-item-active) { border-color: var(--lm-primary); background: var(--lm-surface-muted); }
+.registerPage .table :global(.ant-pagination-item-active a) { color: var(--lm-primary-fg); }
+.registerPage button:focus-visible { outline: 2px solid var(--lm-primary); outline-offset: 2px; }
 
 .tableCard {
-  --table-accent: var(--lm-success-solid);
-  --table-accent-hover: var(--lm-success-solid);
+  --table-accent: var(--lm-primary);
+  --table-accent-hover: var(--lm-primary-hover);
   --table-accent-soft: var(--lm-surface-muted);
   --table-control-height: 32px;
   border: 1px solid var(--lm-border-strong);

@@ -84,3 +84,23 @@ export function toTone(value: string | undefined | null): StatusTone {
   if ((STATUS_TONES as readonly string[]).includes(value)) return value as StatusTone;
   return LEGACY_TONES[value] ?? 'neutral';
 }
+
+/** Purchase orders: draft → ordered → received; cancelled ends the flow. */
+const PURCHASE_TONES: Record<string, StatusTone> = {
+  draft: 'neutral', ordered: 'info', received: 'success', completed: 'success', approved: 'success', cancelled: 'danger',
+};
+
+export const purchaseStatusTone = (status: unknown): StatusTone => PURCHASE_TONES[normalizeStatusKey(status)] ?? 'neutral';
+
+/** Expense / invoice payment state. */
+const PAYMENT_TONES: Record<string, StatusTone> = {
+  paid: 'success', partial: 'warning', partially_paid: 'warning', pending: 'info', overdue: 'danger', refunded: 'violet', cancelled: 'neutral',
+};
+
+export const paymentStatusTone = (status: unknown): StatusTone => PAYMENT_TONES[normalizeStatusKey(status)] ?? 'neutral';
+
+/** Sentence-case label for raw status codes ("PARTIALLY_PAID" → "Partially paid"). */
+export function purchaseStatusLabel(status: unknown): string {
+  const key = normalizeStatusKey(status);
+  return key ? key.charAt(0).toUpperCase() + key.slice(1).replaceAll('_', ' ') : 'Unknown';
+}

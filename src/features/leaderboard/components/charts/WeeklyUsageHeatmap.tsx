@@ -11,15 +11,12 @@ const WEEKDAY_LABELS: Record<number, string> = {
   1: 'Mon', 2: 'Tue', 3: 'Wed', 4: 'Thu', 5: 'Fri', 6: 'Sat', 7: 'Sun',
 };
 
-const HEAT_COLORS = [
-  '#fafafa', '#f3e8ff', '#ddb6f8', '#bb86ef', '#9c27b0', '#6a1b9a', '#3d0066',
-];
-const HEAT_TEXT  = ['#9e9e9e', '#7b3fa0', '#5c1a80', '#fff', '#fff', '#fff', '#fff'];
-const HEAT_LABEL = [
-  '#bdbdbd', '#c48ee0', '#9c4fcb',
-  'rgba(255,255,255,0.82)', 'rgba(255,255,255,0.78)',
-  'rgba(255,255,255,0.75)', 'rgba(255,255,255,0.70)',
-];
+// Theme-aware ramp: empty cells use the muted surface, then mix toward the chart violet.
+const HEAT_COLORS = [0, 16, 30, 46, 64, 82, 100].map((pct) => (pct === 0
+  ? 'var(--lm-surface-muted)'
+  : `color-mix(in srgb, var(--lm-chart-6) ${pct}%, var(--lm-surface-muted))`));
+const HEAT_TEXT = ['var(--lm-text-tertiary)', 'var(--lm-text-secondary)', 'var(--lm-text)', '#fff', '#fff', '#fff', '#fff'];
+const HEAT_LABEL = ['var(--lm-text-disabled)', 'var(--lm-text-tertiary)', 'var(--lm-text-secondary)', 'rgba(255,255,255,0.82)', 'rgba(255,255,255,0.78)', 'rgba(255,255,255,0.75)', 'rgba(255,255,255,0.7)'];
 
 function heatIndex(hours: number, maxHours: number): number {
   if (hours === 0 || maxHours === 0) return 0;

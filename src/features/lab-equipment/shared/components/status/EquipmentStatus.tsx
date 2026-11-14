@@ -10,7 +10,7 @@ import {
   type EquipmentStatusActionValue,
 } from '../../utils/equipmentStatusActions';
 import styles from './EquipmentStatus.module.css';
-import indicatorStyles from '@/shared/components/StatusIndicator.module.css';
+import { StatusBadge } from '@/shared/components/StatusBadge';
 import dayjs, { type Dayjs } from 'dayjs';
 import type {
   EquipmentChangeCondition,
@@ -22,9 +22,7 @@ import type {
 import type { EquipmentItem } from '../../../types/equipment';
 
 export default function EquipmentStatus({ status }: { status: unknown }) {
-  return <span className={`${indicatorStyles.indicator} ${indicatorStyles[equipmentStatusTone(status)]} ${styles.badge}`}>
-    <span className={indicatorStyles.statusDot} aria-hidden="true" />{equipmentStatusLabel(status)}
-  </span>;
+  return <StatusBadge tone={equipmentStatusTone(status)} label={equipmentStatusLabel(status)} className={styles.badge} />;
 }
 
 export type EquipmentStatusAction =

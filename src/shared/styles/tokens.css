@@ -87,6 +87,18 @@
   --lm-paper-edge: #382a22;
   --lm-paper-highlight: #ffffff;
   --lm-paper-accent: #7b2d26;
+
+  /* Chart series (categorical, ordered for contrast between neighbours) */
+  --lm-chart-1: #0f9f8f;
+  --lm-chart-2: #e0446d;
+  --lm-chart-3: #6155d9;
+  --lm-chart-4: #e3a008;
+  --lm-chart-5: #2f7fd8;
+  --lm-chart-6: #9b59d0;
+  --lm-chart-7: #ec7a2c;
+  --lm-chart-8: #7a8597;
+  --lm-chart-grid: #e9ecf2;
+  --lm-chart-axis: #8a90a2;
 }
 
 html[data-theme='dark'] {
@@ -156,4 +168,15 @@ html[data-theme='dark'] {
   --lm-paper-edge: #d8c7b2;
   --lm-paper-highlight: #6f6456;
   --lm-paper-accent: #e8968c;
+
+  --lm-chart-1: #2dc7b3;
+  --lm-chart-2: #f2648b;
+  --lm-chart-3: #9b90f5;
+  --lm-chart-4: #f2bf3b;
+  --lm-chart-5: #5fa4f2;
+  --lm-chart-6: #c08af0;
+  --lm-chart-7: #f59a5a;
+  --lm-chart-8: #98a1b2;
+  --lm-chart-grid: #2b313a;
+  --lm-chart-axis: #7f8797;
 }

@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import { useState } from 'react';
 import { Button, Form, Input, Modal, Select } from 'antd';
-import indicatorStyles from '@/shared/components/StatusIndicator.module.css';
+import { StatusBadge } from '@/shared/components/StatusBadge';
 import { licenseStatusLabel, licenseStatusTone, licenseStatusValue } from '../../../license/licenseStatus';
 
 const LICENSE_STATUS_META: Record<string, { label: string; bgColor: string; textColor: string }> = {
@@ -114,9 +114,6 @@ export default function LicenseStatus({ status, isEditing, record, onStatusChang
   }
 
   return (
-    <span className={`${indicatorStyles.indicator} ${indicatorStyles[tone]}`}>
-      <span className={indicatorStyles.statusDot} aria-hidden="true" />
-      {meta?.label ?? licenseStatusLabel(status)}
-    </span>
+    <StatusBadge tone={tone} label={meta?.label ?? licenseStatusLabel(status)} />
   );
 }

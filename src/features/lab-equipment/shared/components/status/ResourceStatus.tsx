@@ -6,6 +6,7 @@ import {
   useGetLabNamesListQuery,
 } from "../../api/dropdownApi";
 import styles from "./ResourceStatus.module.css";
+import { StatusBadge } from "@/shared/components/StatusBadge";
 
 export const STATUS_META: Record<
   string,
@@ -632,20 +633,5 @@ export default function ResourceStatus({
     );
   }
 
-  return (
-    <Tag
-      style={{
-        backgroundColor: meta.bgColor,
-        borderColor: meta.bgColor,
-        color: meta.textColor,
-        width: "auto",
-        whiteSpace: "nowrap",
-        textAlign: "center",
-        fontWeight: 700,
-        opacity: 1,
-      }}
-    >
-      {meta.label}
-    </Tag>
-  );
+  return <StatusBadge status={normalized} label={meta.label} />;
 }

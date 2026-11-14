@@ -410,7 +410,7 @@
 }
 
 .mappingTable :global(.ant-select-focused .ant-select-selector) {
-  border-color: var(--lm-success-solid) !important;
+  border-color: var(--lm-primary) !important;
   box-shadow: 0 0 0 3px rgba(31, 122, 77, 0.12) !important;
 }
 

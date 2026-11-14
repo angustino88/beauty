@@ -28,7 +28,7 @@
 
 .sectionTitle {
   margin: 0;
-  color: var(--lm-success-fg);
+  color: var(--lm-text);
   font-size: 16px;
   font-weight: 700;
   line-height: 1.25;

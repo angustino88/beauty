@@ -149,7 +149,7 @@ export const useInfoModalStyles = createStyles(({ css }) => ({
     span, strong { display: block; min-width: 0; }
     span { color: var(--lm-text-secondary); font-size: 10px; font-weight: 700; text-transform: uppercase; }
     strong { overflow: hidden; margin-top: 3px; color: var(--lm-text); font-size: 14px; line-height: 1.35; text-overflow: ellipsis; text-transform: none; }
-    a { color: var(--lm-success-fg); text-decoration: underline; text-underline-offset: 2px; }
+    a { color: var(--lm-primary-fg); text-decoration: underline; text-underline-offset: 2px; }
     @media (max-width: 480px) {
       grid-template-columns: 1fr;
       > div:nth-child(odd) { border-right: 0; }
@@ -326,8 +326,8 @@ export const useInfoModalStyles = createStyles(({ css }) => ({
 
     &:hover,
     &:focus {
-      background: var(--lm-success-solid) !important;
-      border-color: var(--lm-success-solid) !important;
+      background: var(--lm-primary) !important;
+      border-color: var(--lm-primary) !important;
     }
   `,
 }));

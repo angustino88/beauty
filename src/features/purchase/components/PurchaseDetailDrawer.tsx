@@ -41,6 +41,8 @@ import { EditPurchaseDraftModal } from './EditPurchaseDraftModal';
 import { AddPurchaseTransactionModal } from './AddPurchaseTransactionModal';
 import { AllocateResourceModal } from './AllocateResourceModal';
 import { PurchaseLifecycle } from './PurchaseLifecycle';
+import { StatusBadge } from '@/shared/components/StatusBadge';
+import { purchaseStatusLabel, purchaseStatusTone } from '@/shared/status/statusTone';
 
 const AllocatedResourceCell: React.FC<{
   purchaseItemId: number;
@@ -193,9 +195,6 @@ export const PurchaseDetailDrawer: React.FC<PurchaseDetailDrawerProps> = ({
   };
 
   const statusLower = (order.status || '').toLowerCase();
-  const statusTone = statusLower === 'ordered' ? detailStyles.ordered
-    : ['received', 'completed', 'approved'].includes(statusLower) ? detailStyles.received
-    : statusLower === 'cancelled' ? detailStyles.cancelled : '';
   const statusHint = statusLower === 'draft' ? 'In preparation'
     : statusLower === 'ordered' ? 'Awaiting delivery'
     : statusLower === 'received' ? 'Delivery confirmed'
@@ -405,7 +404,7 @@ export const PurchaseDetailDrawer: React.FC<PurchaseDetailDrawerProps> = ({
         </div>
         <div className={detailStyles.statusBar}>
           <div className={detailStyles.statusCopy}>
-            <span className={`${detailStyles.status} ${statusTone}`}>{order.status_label || (order.status ? order.status.charAt(0).toUpperCase() + order.status.slice(1).toLowerCase() : 'Unknown')}</span>
+            <StatusBadge tone={purchaseStatusTone(order.status)} label={order.status_label || purchaseStatusLabel(order.status)} />
             <span className={detailStyles.statusHint}>{statusHint}</span>
           </div>
           <Dropdown

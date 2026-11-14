@@ -52,7 +52,7 @@
 }
 
 .zoomToolbar button:hover:not(:disabled) {
-  color: var(--lm-success-fg);
+  color: var(--lm-primary-fg);
   background: var(--lm-surface-muted);
 }
 
@@ -62,7 +62,7 @@
 }
 
 .zoomToolbar button:focus-visible {
-  outline: 2px solid var(--lm-success-solid);
+  outline: 2px solid var(--lm-primary);
   outline-offset: 1px;
 }
 

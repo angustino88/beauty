@@ -1,0 +1,8 @@
+.card { display: flex; height: 440px; min-width: 0; flex-direction: column; background: var(--lm-surface); border: 1px solid var(--lm-border); border-radius: 14px; box-shadow: var(--lm-shadow-sm); }
+.header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 18px 20px 10px; }
+.titles { display: flex; min-width: 0; flex-direction: column; gap: 2px; }
+.titles h3 { margin: 0; color: var(--lm-text); font-size: 15px; font-weight: 650; }
+.titles span { color: var(--lm-text-tertiary); font-size: 12px; }
+.body { display: flex; min-height: 0; flex: 1; flex-direction: column; padding: 6px 20px 18px; overflow-y: auto; scrollbar-width: thin; }
+/* Centre short content vertically without clipping long lists (auto margins collapse when it overflows). */
+.body > * { margin-block: auto; }

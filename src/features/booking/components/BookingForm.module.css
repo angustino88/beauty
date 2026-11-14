@@ -63,32 +63,32 @@
   min-width: 92px;
   height: 26px;
   padding: 0 8px;
-  color: var(--lm-success-fg);
+  color: var(--lm-primary-fg);
   font: inherit;
   font-size: 12px;
   font-weight: 600;
   line-height: 24px;
   text-align: center;
   cursor: pointer;
-  border: 1px solid var(--lm-success-border);
+  border: 1px solid var(--lm-primary-border);
   border-radius: 4px;
-  background: var(--lm-success-bg);
+  background: var(--lm-primary-bg);
 }
 
 .suggestionButton:hover {
-  border-color: var(--lm-success-solid);
-  background: var(--lm-success-bg);
+  border-color: var(--lm-primary);
+  background: var(--lm-primary-bg);
 }
 
 .suggestionButton:focus-visible {
-  outline: 2px solid var(--lm-success-solid);
+  outline: 2px solid var(--lm-primary);
   outline-offset: 2px;
 }
 
 .suggestionButtonSelected {
-  color: var(--lm-success-fg);
-  border-color: var(--lm-success-solid);
-  background: var(--lm-success-solid);
+  color: var(--lm-primary-fg);
+  border-color: var(--lm-primary);
+  background: var(--lm-primary);
 }
 
 .bookingForm :global(.ant-select),

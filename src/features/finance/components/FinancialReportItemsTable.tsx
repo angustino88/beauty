@@ -8,6 +8,8 @@ import type { IFinancialReportItem } from '../types';
 import tableStyles from '@/components/tables/AppTable.module.css';
 import { formatMoney } from './formatMoney';
 import styles from './FinanceWorkspace.module.css';
+import { StatusBadge } from '@/shared/components/StatusBadge';
+import { paymentStatusTone, purchaseStatusLabel } from '@/shared/status/statusTone';
 
 interface FinancialReportItemsTableProps {
   items: IFinancialReportItem[];
@@ -176,15 +178,9 @@ export const FinancialReportItemsTable: React.FC<FinancialReportItemsTableProps>
       dataIndex: 'payment_status',
       key: 'payment_status',
       align: 'center',
-      width: 110,
+      width: 150,
       render: (status: string) => {
-        const s = status.toLowerCase();
-        let tone = '';
-        if (s === 'paid') tone = styles.statusSuccess;
-        else if (s === 'partial') tone = styles.statusWarning;
-        else if (s === 'pending') tone = styles.statusInfo;
-        else if (s === 'overdue') tone = styles.statusDanger;
-        return <span className={`${styles.status} ${tone}`}>{status.toUpperCase()}</span>;
+        return <StatusBadge tone={paymentStatusTone(status)} label={purchaseStatusLabel(status)} />;
       },
     },
     {
