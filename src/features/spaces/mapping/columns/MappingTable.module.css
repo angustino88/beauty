@@ -1,0 +1,433 @@
+.asset {
+  --asset-accent: #57606a;
+  --asset-soft: #f6f8fa;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  padding: 6px 8px;
+  border: 1px solid #d8dee4;
+  border-left: 3px solid var(--asset-accent);
+  border-radius: 5px;
+  color: inherit;
+  background: #ffffff;
+  text-decoration: none;
+  transition: border-color 140ms ease, background-color 140ms ease;
+}
+
+.asset:hover {
+  border-color: var(--asset-accent);
+  background: var(--asset-soft);
+}
+
+.asset:focus-visible {
+  outline: 2px solid var(--asset-accent);
+  outline-offset: 2px;
+}
+
+.asset[data-tone="lab"] {
+  --asset-accent: #1f7a4d;
+  --asset-soft: #e9f6ee;
+}
+
+.asset[data-tone="rack"] {
+  --asset-accent: #0969da;
+  --asset-soft: #ddf4ff;
+}
+
+.asset[data-tone="computer"] {
+  --asset-accent: #1f6feb;
+  --asset-soft: #eaf2ff;
+}
+
+.asset[data-tone="sample"] {
+  --asset-accent: #8250df;
+  --asset-soft: #f3efff;
+}
+
+.asset[data-tone="network"] {
+  --asset-accent: #007d8a;
+  --asset-soft: #e7f5f6;
+}
+
+.asset[data-tone="debug"] {
+  --asset-accent: #bf4b00;
+  --asset-soft: #fff1e5;
+}
+
+.asset[data-tone="power"] {
+  --asset-accent: #9a6700;
+  --asset-soft: #fff8c5;
+}
+
+.asset[data-tone="monitor"] {
+  --asset-accent: #cf222e;
+  --asset-soft: #ffebe9;
+}
+
+.asset[data-tone="accessory"] {
+  --asset-accent: #6e7781;
+  --asset-soft: #f3f4f6;
+}
+
+.assetIcon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  margin-right: 8px;
+  border-radius: 4px;
+  color: #ffffff;
+  background: var(--asset-accent);
+  font-size: 14px;
+}
+
+.assetText {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.assetText strong,
+.assetText span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.assetText strong {
+  color: #24292f;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.assetText span {
+  margin-top: 2px;
+  color: #57606a;
+  font-size: 11px;
+}
+
+.assetList {
+  width: 100%;
+}
+
+.assetList :global(.ant-space-item) {
+  width: 100%;
+}
+
+.emptyMapping {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #8c959f;
+  font-size: 12px;
+}
+
+.emptyMapping::before {
+  width: 6px;
+  height: 6px;
+  border: 1px solid #afb8c1;
+  border-radius: 50%;
+  content: "";
+}
+
+.mappingSummary {
+  margin: 8px 0 14px;
+  border: 1px solid #dbe3e8;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #ffffff 0%, #f7faf9 100%);
+  box-shadow: 0 4px 16px rgba(25, 51, 42, 0.06);
+}
+
+.mappingSummary :global(.ant-card-body) {
+  padding: 18px 20px 16px;
+}
+
+.summaryHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.summaryEyebrow {
+  color: #168458;
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.summaryTitle {
+  margin: 2px 0 0 !important;
+  color: #172b24 !important;
+  font-size: 19px !important;
+}
+
+.summaryTotal {
+  display: flex;
+  min-width: 112px;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.summaryTotal strong {
+  color: #172b24;
+  font-size: 26px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.summaryTotal span {
+  margin-top: 4px;
+  color: #65736d;
+  font-size: 11px;
+}
+
+.summaryProgress {
+  margin: 14px 0 13px;
+}
+
+.summaryProgress :global(.ant-progress-inner),
+.summaryProgress :global(.ant-progress-bg) {
+  height: 7px !important;
+  border-radius: 999px;
+}
+
+.summaryMetrics {
+  margin-top: 0 !important;
+}
+
+.summaryMetric {
+  position: relative;
+  display: grid;
+  min-height: 82px;
+  grid-template-columns: 30px minmax(0, 1fr);
+  align-content: center;
+  align-items: center;
+  column-gap: 9px;
+  padding: 12px;
+  border: 1px solid #e2e8eb;
+  border-left: 3px solid var(--metric-color);
+  border-radius: 9px;
+  background: #fff;
+}
+
+.metricComplete { --metric-color: #168458; }
+.metricPartial { --metric-color: #c28512; }
+.metricUnplaced { --metric-color: #cf5961; }
+.metricAssets { --metric-color: #3478c5; }
+
+.metricIcon {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--metric-color) 11%, white);
+  color: var(--metric-color);
+  font-size: 14px;
+}
+
+.metricText {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.metricText strong {
+  color: #1d3029;
+  font-size: 21px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.05;
+}
+
+.metricText small {
+  margin-top: 3px;
+  color: #374a42;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.metricHint {
+  grid-column: 1 / -1;
+  margin-top: 8px;
+  overflow: hidden;
+  color: #78857f;
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 575px) {
+  .mappingSummary :global(.ant-card-body) {
+    padding: 14px;
+  }
+
+  .summaryTitle {
+    font-size: 17px !important;
+  }
+
+  .summaryMetric {
+    min-height: 76px;
+    padding: 9px;
+  }
+}
+
+.mappingStatus {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #1f7a4d;
+}
+
+.mappingStatus > span {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.1;
+}
+
+.mappingStatus strong {
+  color: #24292f;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.mappingStatus small {
+  color: #57606a;
+  font-size: 10px;
+}
+
+.mappingStatusDetails {
+  display: flex;
+  min-width: 125px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.mappingSupplemental {
+  display: block;
+  max-width: 190px;
+  overflow: hidden;
+  color: #57606a;
+  font-size: 10px;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mappingTable :global(.ant-table-container) {
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  background: #ffffff;
+}
+
+.mappingTable :global(.ant-table-sticky-holder) {
+  z-index: 5;
+  overflow: visible;
+  border-radius: 6px 6px 0 0;
+  background: #f6f8fa;
+}
+
+.mappingTable :global(.ant-table-thead > tr > th) {
+  position: relative;
+  z-index: 4;
+  height: 46px;
+  padding: 8px 12px;
+  color: #24292f;
+  font-size: 12px;
+  font-weight: 700;
+  background: #f6f8fa;
+  border-bottom: 2px solid #d0d7de;
+}
+
+.mappingTable :global(.ant-table-tbody > tr > td) {
+  position: relative;
+  z-index: 0;
+}
+
+.mappingTable :global(.ant-table-thead .ant-table-cell-fix-right) {
+  z-index: 6;
+  background: #f6f8fa;
+}
+
+.mappingTable :global(.ant-table-tbody .ant-table-cell-fix-right) {
+  z-index: 1;
+}
+
+.mappingTable :global(.ant-table-thead > tr > th:nth-child(2)) {
+  box-shadow: inset 0 3px 0 #1f7a4d;
+}
+
+.mappingTable :global(.ant-table-thead > tr > th:nth-child(4)),
+.mappingTable :global(.ant-table-thead > tr > th:nth-child(5)) {
+  box-shadow: inset 0 3px 0 #0969da;
+}
+
+.mappingTable :global(.ant-table-thead > tr > th:nth-child(n + 6):nth-child(-n + 11)) {
+  box-shadow: inset 0 3px 0 #9a6700;
+}
+
+.mappingTable :global(.ant-table-tbody > tr > td) {
+  padding: 9px 10px;
+  vertical-align: top;
+  background: #ffffff;
+  border-bottom-color: #d8dee4;
+}
+
+.mappingTable :global(.ant-table-tbody > tr:nth-child(even) > td) {
+  background: #fbfcfd;
+}
+
+.mappingTable :global(.ant-table-tbody > tr:hover > td) {
+  background: #f6f8fa;
+}
+
+.mappingTable :global(.ant-table-tbody > tr > td:first-child) {
+  color: #57606a;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.mappingTable :global(.ant-table-tbody > tr > td:last-child) {
+  padding-top: 13px;
+}
+
+.mappingTable :global(.ant-table-filter-trigger) {
+  border-radius: 4px;
+}
+
+.mappingTable :global(.ant-select-selector) {
+  border-color: #afb8c1 !important;
+  border-radius: 5px !important;
+  box-shadow: none !important;
+}
+
+.mappingTable :global(.ant-select-focused .ant-select-selector) {
+  border-color: #1f7a4d !important;
+  box-shadow: 0 0 0 3px rgba(31, 122, 77, 0.12) !important;
+}
+
+.mappingTable :global(.ant-table-tbody > tr:has(.ant-select) > td) {
+  background: #fffbea;
+  border-top: 1px solid #d4a72c;
+  border-bottom: 1px solid #d4a72c;
+}
+
+.mappingTable :global(.ant-btn) {
+  border-radius: 4px;
+  box-shadow: none;
+}
+
+@media (hover: hover) {
+  .asset:hover {
+    border-color: var(--asset-accent);
+    background: var(--asset-soft);
+  }
+}

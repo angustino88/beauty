@@ -1,0 +1,22 @@
+.highlightRow {
+  background-color: #e9f6ee !important;
+}
+
+.row {
+  transition: background-color 600ms ease;
+}
+
+.monitoringTable :global(.ant-table-tbody > tr:nth-child(even):not(:hover) > td) {
+  background: #fbfcfd;
+}
+
+.monitoringTable :global(.ant-table-tbody > tr.highlightRow > td) {
+  background: #e9f6ee !important;
+}
+
+.monitoringTable :global(.ant-typography code) {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

@@ -1,0 +1,105 @@
+# LabMango Frontend v2
+
+## Project Purpose
+
+LabMango Frontend v2 is the current frontend for lab operations, built to replace the legacy UI stack with a faster build system, cleaner data flow, and stronger maintainability while preserving business behavior.
+
+
+## Technology Stack
+
+- React 19 + TypeScript
+- Vite 8
+- Redux Toolkit + RTK Query
+- Ant Design 6
+- MSAL v5 (`@azure/msal-browser`, `@azure/msal-react`)
+- Three.js (`@react-three/fiber`, `@react-three/drei`) for 3D dashboard surfaces
+
+## Prerequisites
+
+- Node.js 20.x
+- npm 10.x or newer
+- Git
+
+## Quick Start
+
+```bash
+git clone <repository-url>
+cd prj.labmango_frontend.v2
+npm install
+npm run dev
+```
+
+Default development URL:
+
+- `http://localhost:3000`
+
+## Environment Configuration
+
+This project uses Vite runtime variables (`VITE_*`), not `REACT_APP_*`.
+
+Minimum variables:
+
+- `VITE_API_URL`
+- `VITE_CLIENT_ID`
+- `VITE_TENANT_ID`
+- `VITE_REDIRECT_URI`
+- `VITE_APP_URL`
+- `VITE_WS_URL_CHATBOT`
+
+For exact values per environment, use secure internal channels and contact the team lead.
+
+## Available Scripts
+
+- `npm run dev` — start local development server
+- `npm run build` — production build to `build/`
+- `npm run preview` — preview built assets
+- `npm run lint` — run ESLint
+- `npm test` — run Node.js TypeScript unit tests
+- `npm run typecheck` — check TypeScript without building assets
+
+## Generate API Client
+
+The current code-generation contract is `openapi/openapi-full.json`. The split `openapi/openapi.yml` is incomplete (some referenced domain files are absent), so do not use it for generation until its references have been restored and validated. To use another complete contract, set `OPENAPI_SPEC` before the command. Then run:
+
+```bash
+npm ci
+npm run api:generate
+```
+
+To use another contract path, set `OPENAPI_SPEC` before the command. PowerShell example:
+
+```powershell
+$env:OPENAPI_SPEC = "docs/api/openapi.yaml"
+npm run api:generate
+```
+
+The generated RTK Query endpoints and hooks are written to `src/shared/api/generated/api.ts`. They inject into the existing `baseApi`, so requests use the frontend's authentication, token refresh, and cache infrastructure. Keep generated code separate from handwritten API code and do not edit it manually. Cache tags remain managed by handwritten feature endpoints; add endpoint-specific tag behavior when migrating a feature.
+
+The equipment collection response includes pagination metadata, but the current contract does not declare request parameters for `page` or `page_size`. The inventory currently paginates only the returned rows; confirm backend request support and update the contract before switching to server-side pagination.
+
+The code generator reads the local contract by default. To generate from another contract, set `OPENAPI_SPEC` before running the command.
+
+## Repository Structure
+
+Top-level structure:
+
+```text
+prj.labmango_frontend.v2/
+├── public/
+├── src/
+│   ├── app/
+│   ├── components/
+│   ├── features/
+│   └── shared/
+├── docs/
+├── package.json
+├── vite.config.ts
+└── tsconfig*.json
+```
+
+Primary source folders:
+
+- `src/app`: app bootstrap, routing, store wiring
+- `src/features`: feature modules (domain-focused)
+- `src/components`: shared UI building blocks
+- `src/shared`: cross-feature libraries, hooks, API base, utilities

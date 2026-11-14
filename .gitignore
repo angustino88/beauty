@@ -1,0 +1,16 @@
+node_modules
+build
+dist
+*.local
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+coverage
+test-results
+playwright-report
+# Internal / proprietary assets kept out of the public repo
+nginx/
+src/fonts/
+openapi/

@@ -1,0 +1,398 @@
+.gameOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(14, 22, 33, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  backdrop-filter: blur(2px);
+}
+
+.gameWindow {
+  background: #ffffff;
+  width: 720px;
+  max-width: 95vw;
+  border-radius: 16px;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
+  padding: 14px 18px 18px;
+  position: relative;
+  font-family: ui-sans-serif, system-ui, Segoe UI, Roboto, Arial;
+}
+
+.gameHeader {
+  background: linear-gradient(90deg, #b32020 0%, #d7263d 100%);
+  color: #fff;
+  padding: 10px 14px;
+  border-radius: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.headerTitle {
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+.headerActions {
+  display: flex;
+  gap: 6px;
+}
+.iconBtn {
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.iconBtn:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.scoreRow {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin: 10px 2px;
+  line-height: 3.1;
+}
+
+.badge,
+.badgeSecondary,
+.badgeJump {
+  display: inline-block;
+  box-sizing: border-box;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  white-space: nowrap;
+  padding: 1px 14px;
+  line-height: 3.1;
+}
+
+.badge,
+.badgeSecondary {
+  width: 80px;
+  min-width: 80px;
+}
+.badgeJump {
+  width: auto;
+  min-width: unset;
+  max-width: 180px;
+}
+
+.badge {
+  background: #d7263d;
+  color: #ffffff;
+  border: 2px solid #9b1c1c;
+  box-shadow: 0 2px 6px rgba(155, 28, 28, 0.2);
+}
+
+.badgeSecondary {
+  background: #0f4028;
+  color: #ffffff;
+  border: 2px solid #0b2d1d;
+  box-shadow: 0 2px 6px rgba(15, 64, 40, 0.2);
+}
+
+.badgeJump {
+  color: #3b2f0b;
+  background: linear-gradient(180deg, #fff7d9 0%, #f9e8a9 35%, #e6c972 55%, #f2de9b 72%, #ffe9b8 100%);
+  border: 2px solid #c4a05f;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.65),
+    inset 0 -1px 0 rgba(180, 140, 70, 0.25),
+    0 2px 6px rgba(196, 160, 95, 0.35);
+}
+.badgeIcon {
+  margin-right: 6px;
+  font-size: 14px;
+  vertical-align: middle;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.15));
+}
+
+.proAnnounce {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  background: linear-gradient(180deg, #fffaf0 0%, #fbeed4 60%, #fffaf0 100%);
+  border: 1px solid rgba(196, 160, 95, 0.45);
+  color: #2f240a;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    0 8px 24px rgba(196, 160, 95, 0.12);
+}
+
+.gameArea {
+  position: relative;
+  height: 220px;
+  background: linear-gradient(#f9fcff, #eef6ff);
+  border: 1px solid #cdd9e6;
+  border-radius: 12px;
+  overflow: hidden;
+  user-select: none;
+  margin: 0 auto 12px;
+  box-shadow: inset 0 -12px 20px rgba(0, 0, 0, 0.04);
+}
+
+.groundLine {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 46px;
+  height: 3px;
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.06), rgba(0, 0, 0, 0.04));
+  box-shadow: 0 -1px 0 rgba(0, 0, 0, 0.06) inset;
+}
+
+.runner {
+  position: absolute;
+  left: 60px;
+  bottom: 10px;
+  width: 100px;
+  height: 100px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  will-change: transform;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.18));
+  transition: transform 0.06s linear;
+}
+.runnerAir {
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.16));
+}
+
+.obstacle {
+  position: absolute;
+  bottom: 46px;
+  width: 34px;
+  text-align: center;
+  will-change: transform;
+  font-size: 28px;
+}
+
+.pausedOverlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(15, 64, 40, 0.08);
+  color: #0f4028;
+  font-weight: 700;
+  font-size: 20px;
+}
+
+.controlsRow {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin: 6px 0 10px;
+}
+.primaryBtn {
+  background: #1b998b;
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  cursor: pointer;
+  transition:
+    transform 0.05s ease,
+    filter 0.15s ease;
+}
+.primaryBtn:hover {
+  filter: brightness(1.05);
+}
+.primaryBtn:active {
+  transform: scale(0.98);
+}
+.secondaryBtn {
+  background: #ff4040;
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  cursor: pointer;
+  transition:
+    transform 0.05s ease,
+    filter 0.15s ease;
+}
+.secondaryBtn:hover {
+  filter: brightness(1.05);
+}
+.secondaryBtn:active {
+  transform: scale(0.98);
+}
+
+.tip {
+  font-size: 12px;
+  text-align: center;
+  color: #667089;
+  margin-top: 2px;
+}
+
+.snowTheme {
+  background: radial-gradient(720px 300px at 50% -160px, #fff4e6 0%, #ffe0b3 40%, #ffd180 100%);
+  position: relative;
+  overflow: hidden;
+}
+.snowflake {
+  position: absolute;
+  top: -12px;
+  left: calc(10% + 80px * var(--i, 0));
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffb3c1 0%, #ff6fa5 55%, transparent 100%);
+  box-shadow: 0 1px 3px rgba(255, 105, 135, 0.35);
+  opacity: 0.95;
+  animation: snow 6s ease-in-out infinite;
+  transform-origin: center;
+}
+.snowflake:nth-child(2) {
+  --i: 2;
+  animation-duration: 7.2s;
+  left: 38%;
+  width: 8px;
+  height: 8px;
+}
+.snowflake:nth-child(3) {
+  --i: 4;
+  animation-duration: 5.8s;
+  left: 68%;
+  width: 12px;
+  height: 12px;
+}
+@keyframes snow {
+  0% {
+    transform: translateY(0) translateX(0) rotate(0deg);
+    opacity: 0.95;
+  }
+  25% {
+    transform: translateY(80px) translateX(10px) rotate(35deg);
+    opacity: 0.92;
+  }
+  50% {
+    transform: translateY(160px) translateX(-12px) rotate(90deg);
+    opacity: 0.88;
+  }
+  75% {
+    transform: translateY(220px) translateX(6px) rotate(140deg);
+    opacity: 0.84;
+  }
+  100% {
+    transform: translateY(280px) translateX(-16px) rotate(200deg);
+    opacity: 0.8;
+  }
+}
+
+.challengeTheme {
+  background: radial-gradient(900px 360px at 50% -160px, #ffe9d6 0%, #ffd9bd 40%, #ffc9a6 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.fireEmbers {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+.ember {
+  position: absolute;
+  bottom: 48px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff1cc 0%, #ffd27a 40%, #ff7a00 70%, transparent 100%);
+  box-shadow:
+    0 0 10px rgba(255, 122, 0, 0.45),
+    0 0 4px rgba(255, 210, 122, 0.65);
+  opacity: 0;
+  animation: ember-rise 2.6s ease-in infinite;
+}
+.fireEmbers .ember:nth-child(1) {
+  left: 22%;
+  animation-duration: 2.2s;
+}
+.fireEmbers .ember:nth-child(2) {
+  left: 38%;
+  animation-duration: 2.8s;
+}
+.fireEmbers .ember:nth-child(3) {
+  left: 54%;
+  animation-duration: 2.4s;
+}
+.fireEmbers .ember:nth-child(4) {
+  left: 70%;
+  animation-duration: 2.9s;
+}
+.fireEmbers .ember:nth-child(5) {
+  left: 86%;
+  animation-duration: 2.5s;
+}
+@keyframes ember-rise {
+  0% {
+    opacity: 0;
+    transform: translateY(0) translateX(0);
+  }
+  10% {
+    opacity: 0.6;
+    transform: translateY(-20px) translateX(4px);
+  }
+  50% {
+    opacity: 0.4;
+    transform: translateY(-90px) translateX(-6px);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-160px) translateX(2px);
+  }
+}
+
+.challengeTheme .groundLine {
+  background: linear-gradient(90deg, rgba(120, 60, 0, 0.12), rgba(120, 60, 0, 0.08));
+  box-shadow: 0 -1px 0 rgba(120, 60, 0, 0.08) inset;
+}
+
+.gameOver {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  z-index: 5;
+  pointer-events: none;
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 24px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  background: rgba(20, 23, 29, 0.35);
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+.challengeTheme .gameOver {
+  background: rgba(60, 30, 0, 0.35);
+}
+
+.collectible {
+  position: absolute;
+  bottom: 100px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  text-align: center;
+  will-change: transform, opacity;
+  transition: opacity 160ms ease-out;
+  filter: drop-shadow(0 2px 4px rgba(255, 122, 0, 0.25));
+}

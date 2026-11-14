@@ -1,0 +1,71 @@
+.page {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.title {
+  margin: 0 !important;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #311b92 !important;
+}
+
+.card {
+  border-radius: 14px;
+  box-shadow: 0 4px 20px rgba(126, 87, 194, 0.12);
+  border: 1px solid #ede7f6;
+  overflow: hidden;
+}
+
+/* Violet active tab */
+:global(.ant-tabs-card > .ant-tabs-nav .ant-tabs-tab-active) {
+  background: linear-gradient(135deg, #7e57c2, #512da8) !important;
+  border-color: #512da8 !important;
+}
+
+:global(.ant-tabs-card > .ant-tabs-nav .ant-tabs-tab-active .ant-tabs-tab-btn) {
+  color: #ffffff !important;
+  font-weight: 700;
+}
+
+:global(.ant-tabs-card > .ant-tabs-nav .ant-tabs-tab:not(.ant-tabs-tab-active):hover .ant-tabs-tab-btn) {
+  color: #7e57c2 !important;
+}
+
+/* Soft slate segmented control (Weekly / Monthly / All time) */
+.page :global(.ant-segmented .ant-segmented-item-selected) {
+  background: #e8e4f0 !important;
+  color: #512da8 !important;
+  font-weight: 600;
+  box-shadow: none !important;
+}
+
+.page :global(.ant-segmented .ant-segmented-item:not(.ant-segmented-item-selected):hover) {
+  color: #7e57c2 !important;
+}
+
+.tableWrap {
+  padding: 0 16px;
+}
+
+.exportButton {
+  margin-right: 12px;
+  background: linear-gradient(135deg, #7e57c2, #512da8) !important;
+  border: none !important;
+  box-shadow: 0 2px 8px rgba(126, 87, 194, 0.35) !important;
+}
+
+.exportButton:hover {
+  background: linear-gradient(135deg, #9c6fd6, #6a3bbf) !important;
+}

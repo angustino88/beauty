@@ -1,0 +1,295 @@
+/* Opt-in register presentation. No global or dashboard selectors. */
+.registerPage { display: flex; flex-direction: column; gap: 16px; min-width: 0; color: #25333e; }
+.registerPage .registerCard { --table-control-height: 30px; --table-accent: #007a48; border-color: #dce3e8; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px #182b3b08; }
+.registerCard :global(.ant-card-body) { padding: 0; }
+.registerPage .toolbar { position: static; margin: 0; padding: 10px 12px; gap: 10px 12px; border-bottom: 1px solid #dce3e8; }
+.registerPage .actions { flex-wrap: wrap; }
+.registerPage .search :global(.ant-btn), .registerPage .actions :global(.ant-btn), .registerPage .search :global(.ant-input) { font-family: inherit; font-size: 12px; font-weight: 500; }
+.registerHeading { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; padding: 14px 12px; background: #fafbfc; border-bottom: 1px solid #e8edf0; }
+.registerHeading :global(h4.ant-typography) { font-size: 14px; font-weight: 600; color: #25333e; }
+.registerHeading :global(.ant-typography) { font-size: 12px; }
+.registerPage :global(.ant-segmented) { padding: 3px; font-size: 12px; color: #52616e; background: #f0f3f5; }
+.registerPage .table :global(.ant-table-container) { border: 0; border-radius: 0; }
+.registerPage .table :global(.ant-table), .registerPage .table :global(.ant-table-cell) { font-family: inherit; font-size: 12px; color: #25333e; line-height: 1.4; }
+.registerPage .table :global(.ant-table-thead > tr > th) { padding: 10px 12px; color: #52616e; background: #f3f5f7; font-size: 11px; font-weight: 700; letter-spacing: .045em; border-bottom: 1px solid #cfd8df; }
+.registerPage .table :global(.ant-table-tbody > tr > td) { padding: 6px 12px; font-size: 12px; border-bottom: 1px solid #e8edf0; font-variant-numeric: tabular-nums; }
+.registerPage .table :global(.ant-table-tbody .ant-typography) { font-size: 12px; line-height: 1.4; }
+.registerPage .table :global(.ant-table-thead .ant-typography) { font-size: inherit; color: inherit; font-weight: inherit; }
+.registerPage .table :global(.ant-typography code) { font-size: 11px; padding: 1px 4px; }
+.registerPage .table :global(.ant-table-tbody > tr:nth-child(even) > td) { background: #fafbfc; }
+.registerPage .table :global(.ant-table-tbody > tr:hover > td), .registerPage .table :global(.ant-table-tbody > tr > td.ant-table-cell-row-hover) { background: #eef7f2; }
+.registerPage .table :global(.ant-table-tbody > tr.ant-table-row-selected > td) { background: #e5f3ec; }
+.registerPage .table :global(.ant-table-filter-trigger.active) { color: #334e6b; background: #e4eaf1; box-shadow: inset 0 0 0 1px #c5d0dd; }
+.registerPage .table :global(.ant-pagination) { margin: 0; padding: 10px 12px; background: #fff; }
+.registerPage .table :global(.ant-pagination-total-text) { margin-inline-end: auto; color: #647481; font-size: 12px; }
+.registerPage .table :global(.ant-pagination-item-active) { border-color: #007a48; background: #eef7f2; }
+.registerPage .table :global(.ant-pagination-item-active a) { color: #007a48; }
+.registerPage button:focus-visible { outline: 2px solid #007a48; outline-offset: 2px; }
+
+.tableCard {
+  --table-accent: #1f7a4d;
+  --table-accent-hover: #17633e;
+  --table-accent-soft: #e9f6ee;
+  --table-control-height: 32px;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  box-shadow: 0 1px 2px rgba(27, 31, 36, 0.04);
+}
+
+.toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 12px 0;
+  background: #ffffff;
+  border-bottom: 1px solid #d8dee4;
+}
+
+.search {
+  max-width: 520px;
+}
+
+.search :global(.full-text-search-input) {
+  min-width: 240px;
+}
+
+.search :global(.ant-input-affix-wrapper),
+.search :global(.ant-input-affix-wrapper-lg) {
+  height: var(--table-control-height);
+  padding-block: 0;
+  border-color: #d0d7de;
+  border-radius: 6px;
+  box-shadow: none;
+}
+
+.search :global(.ant-input-affix-wrapper:hover),
+.search :global(.ant-input-affix-wrapper-focused) {
+  border-color: var(--table-accent);
+}
+
+.search :global(.ant-input-affix-wrapper-focused) {
+  box-shadow: 0 0 0 3px rgba(31, 122, 77, 0.14);
+}
+
+.search :global(.ant-input-affix-wrapper .ant-input) {
+  height: 100%;
+  font-size: 13px;
+}
+
+.search :global(.ant-btn) {
+  min-width: 80px;
+  height: var(--table-control-height);
+  padding-inline: 10px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  border-color: var(--table-accent);
+  border-radius: 6px;
+  background: var(--table-accent);
+}
+
+.search :global(.ant-btn:hover) {
+  border-color: var(--table-accent-hover) !important;
+  background: var(--table-accent-hover) !important;
+}
+
+.actions {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.actions > * {
+  flex: 0 0 auto;
+}
+
+.actions :global(.ant-btn) {
+  height: var(--table-control-height);
+  padding-inline: 10px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  border-color: #d0d7de;
+  border-radius: 6px;
+  box-shadow: none;
+}
+
+.actions :global(.ant-btn:hover) {
+  color: var(--table-accent);
+  border-color: var(--table-accent);
+  background: var(--table-accent-soft);
+}
+
+.actions :global(.ant-btn-primary) {
+  color: #ffffff;
+  border-color: var(--table-accent);
+  background: var(--table-accent);
+}
+
+.actions :global(.ant-btn-primary:hover) {
+  color: #ffffff !important;
+  border-color: var(--table-accent-hover) !important;
+  background: var(--table-accent-hover) !important;
+}
+
+.table {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+}
+
+.table :global(.ant-table) {
+  color: #24292f;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+.table :global(.ant-table-container) {
+  border: 1px solid #d0d7de;
+  border-radius: 5px;
+}
+
+.table :global(.ant-table-thead > tr > th) {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 10px 14px;
+  color: #24292f;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: 0;
+  text-transform: none;
+  background: #f6f8fa;
+  border-bottom: 1px solid #d0d7de;
+}
+
+.nowrapHeader :global(.ant-table-thead > tr > th),
+.nowrapHeader :global(.ant-table-column-title) {
+  white-space: nowrap;
+}
+
+.table :global(.ant-table-tbody > tr > td) {
+  padding: 10px 14px;
+  color: #24292f;
+  font-size: 13px;
+  line-height: 1.45;
+  vertical-align: middle;
+  border-bottom-color: #d8dee4;
+}
+
+.table :global(.ant-table-cell) {
+  font-family: inherit;
+  font-size: 13px;
+}
+
+.table :global(.ant-input),
+.table :global(.ant-select-selection-item),
+.table :global(.ant-picker-input > input) {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+  font-size: 13px;
+}
+
+.table :global(.ant-tag) {
+  margin-inline-end: 4px;
+  padding: 0 7px;
+  font-family: inherit;
+  font-size: 12px;
+  line-height: 20px;
+  border-radius: 4px;
+}
+
+.table :global(.ant-btn) {
+  min-height: 28px;
+  font-family: inherit;
+  font-size: 13px;
+  border-radius: 4px;
+}
+
+.table :global(.ant-space) {
+  align-items: center;
+}
+
+.table :global(.ant-table-tbody > tr:hover > td) {
+  background: #f6f8fa;
+}
+
+.table :global(.ant-table-tbody > tr.ant-table-row-selected > td) {
+  background: #ddf4ff;
+}
+
+.table :global(.ant-table-cell-fix-left),
+.table :global(.ant-table-cell-fix-right) {
+  background: #ffffff;
+}
+
+.table :global(.ant-table-thead .ant-table-cell-fix-left),
+.table :global(.ant-table-thead .ant-table-cell-fix-right) {
+  background: #f6f8fa;
+}
+
+.table :global(.ant-table-filter-trigger:hover),
+.table :global(.ant-table-filter-trigger.active) {
+  color: #0969da;
+  background: #ddf4ff;
+}
+
+.table :global(.ant-table-column-sorter-up.active),
+.table :global(.ant-table-column-sorter-down.active) {
+  color: #0969da;
+}
+
+.table :global(.ant-pagination) {
+  margin: 16px 0 2px;
+}
+
+.table :global(.ant-pagination-item-active) {
+  border-color: #0969da;
+}
+
+.table :global(.ant-pagination-item-active a) {
+  color: #0969da;
+}
+
+.table :global(.ant-pagination-total-text),
+.table :global(.ant-empty-description) {
+  color: #57606a;
+  font-size: 13px;
+}
+
+@media (max-width: 576px) {
+  .tableCard {
+    border-right: 0;
+    border-left: 0;
+    border-radius: 0;
+  }
+
+  .toolbar {
+    align-items: stretch;
+    padding: 10px 0;
+  }
+
+  .search {
+    max-width: none;
+  }
+
+  .search :global(.full-text-search-input) {
+    min-width: 0;
+  }
+
+  .actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .table :global(.ant-table-thead > tr > th),
+  .table :global(.ant-table-tbody > tr > td) {
+    padding: 10px 12px;
+  }
+}

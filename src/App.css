@@ -1,0 +1,63 @@
+/* === FullCalendar Custom Styles === */
+
+.fc-day-today,
+.fc .fc-day-today {
+  background-color: #fff8dc !important;
+}
+
+.fc-col-header-cell-cushion,
+.fc-list-day-side-text,
+.fc-list-day-text {
+  color: #00884A !important;
+  font-weight: 600;
+}
+
+.fc-timegrid-event {
+  overflow: hidden;
+  border-radius: 6px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+
+.fc-direction-ltr .fc-timegrid-now-indicator-arrow {
+  border-width: 5px 11px 5px 6px !important;
+  border-radius: 0px 10px 10px 0px !important;
+  opacity: .7 !important;
+}
+
+.fc .fc-timegrid-now-indicator-arrow {
+  margin-top: -6px !important;
+  border-style: solid !important;
+}
+
+.fc .fc-timegrid-now-indicator-line {
+  margin-top: -1px !important;
+  border-style: solid !important;
+  border-width: 3px 0 0 !important;
+  border-color: #f20540 !important;
+  opacity: .7 !important;
+  position: relative;
+}
+
+.fc .fc-timegrid-now-indicator-line::before {
+  content: "";
+  position: absolute;
+  left: -0.7px;
+  margin-top: -4px !important;
+  width: 6px;
+  height: 6px;
+  background-color: #f20540;
+  border-radius: 50%;
+  box-shadow: 0 0 2px #fff;
+}
+
+/* === End FullCalendar Custom Styles === */
+
+/* Month-view event dot (fc-daygrid-dot-event circle) — suppress the default blue dot */
+.fc-daygrid-event-dot {
+  display: none;
+}
+
+/* Selection highlight — override FC's default blue with the project green */
+.fc .fc-highlight {
+  background: rgba(0, 136, 74, 0.12) !important;
+}

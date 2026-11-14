@@ -1,0 +1,45 @@
+.panel {
+  width: min(360px, calc(100vw - 48px));
+}
+
+.heading {
+  margin-bottom: 10px;
+  color: #1f2328;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.list {
+  margin: 0;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) minmax(100px, 1fr);
+  gap: 16px;
+  padding: 8px 0;
+  border-top: 1px solid #e7ebef;
+}
+
+.row dt,
+.row dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.row dt {
+  color: #656d76;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.row dd {
+  color: #1f2328;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: right;
+}
+
+.empty {
+  margin-block: 8px 2px;
+}

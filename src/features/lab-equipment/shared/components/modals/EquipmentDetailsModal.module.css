@@ -1,0 +1,130 @@
+.sheet :global(.ant-tabs-nav) { margin-bottom: 20px; }
+.sheet :global(.ant-tabs-tab-active .ant-tabs-tab-btn) { color: #6155d9 !important; }
+.sheet :global(.ant-tabs-ink-bar) { background: #6155d9; }
+.sheet :global(.ant-tabs-nav::before) { border-color: #e8eaf0; }
+.detailSection { display: flex; flex-direction: column; gap: 10px; }
+.detailsDescriptions { min-width: 0; }
+.detailsDescriptions :global(.ant-descriptions-view) { border-color: #e8eaf0 !important; border-radius: 9px; overflow: hidden; }
+.detailsDescriptions :global(.ant-descriptions-item-label) { width: 34%; background: #f8f8fb !important; color: #717789 !important; font-size: 11px; font-weight: 500; }
+.detailsDescriptions :global(.ant-descriptions-item-content) { color: #343849; font-size: 12px; overflow-wrap: anywhere; }
+.detailsDescriptions :global(.ant-descriptions-row > th),
+.detailsDescriptions :global(.ant-descriptions-row > td) { padding: 10px 12px !important; border-color: #e8eaf0 !important; }
+.detailsDescriptions a { color: #5c50c4; }
+
+.heroStatus {
+	position: absolute;
+	top: 20px;
+	right: 24px;
+	display: inline-flex;
+	align-items: center;
+	z-index: 2;
+}
+
+.feedback {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 12px 0;
+	color: #647481;
+	font-size: 12px;
+}
+
+.emptyMapping {
+	padding: 16px;
+	color: #647481;
+	background: #f8fafb;
+	border: 1px dashed #dce3e8;
+	border-radius: 8px;
+	font-size: 12px;
+}
+
+.connectedGraph {
+	min-width: 0;
+	padding: 14px;
+	background: #f8fafb;
+	border: 1px solid #e5eaee;
+	border-radius: 8px;
+}
+
+.graphHint {
+	margin: 0 0 12px;
+	color: #576b7b;
+	font-size: 12px;
+	line-height: 1.5;
+}
+
+.sectionTitle {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	color: #597070;
+}
+
+.sectionTitle > :global(.anticon) {
+	color: #668984;
+	font-size: 13px;
+}
+
+.sectionTitle h3 {
+	margin: 0;
+}
+
+.informationList {
+	display: grid;
+	gap: 6px;
+	margin: 0;
+	padding-left: 18px;
+	white-space: normal;
+}
+
+.informationList li {
+	padding-left: 2px;
+}
+
+.valueList {
+	display: grid;
+	gap: 8px;
+}
+
+.valueList > div + div {
+	padding-top: 8px;
+	border-top: 1px solid #e8edf0;
+}
+
+.nestedValues {
+	display: grid;
+	gap: 6px;
+	margin: 0;
+	font-size: 12px;
+}
+
+.nestedValues > div {
+	display: grid;
+	grid-template-columns: minmax(90px, 30%) minmax(0, 1fr);
+	gap: 10px;
+}
+
+.nestedValues dt {
+	color: #647481;
+	font-weight: 400;
+}
+
+.nestedValues dd {
+	margin: 0;
+	overflow-wrap: anywhere;
+}
+
+@media (max-width: 600px) {
+	.heroStatus {
+		position: static;
+		margin-bottom: 8px;
+	}
+
+	.sectionTitle {
+		gap: 6px;
+	}
+
+	.connectedGraph {
+		padding: 10px;
+	}
+}

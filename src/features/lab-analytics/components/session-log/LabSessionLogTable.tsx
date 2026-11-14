@@ -1,0 +1,1 @@
+export { LabSessionLogTable } from '../LabSessionLogTable';

@@ -1,0 +1,152 @@
+.analyticsPage {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  min-height: 100%;
+  padding: 4px 0 40px;
+  background: transparent;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.sectionHeader::after {
+  flex: 1;
+  height: 1px;
+  content: '';
+  background: #dfe7e2;
+}
+
+.sectionTitle {
+  margin: 0;
+  color: #173d29;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.kpiSection {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.kpiGrid :global(.ant-card) {
+  flex: 1;
+  border-color: #e1e6e3;
+  border-radius: 6px;
+  box-shadow: none;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.kpiGrid :global(.ant-col) {
+  display: flex;
+}
+
+.kpiGrid :global(.ant-card:hover) {
+  border-color: #b5c9bc;
+  box-shadow: 0 4px 12px rgba(24, 39, 30, 0.06);
+}
+
+.kpiGrid :global(.ant-statistic-title) {
+  margin-bottom: 14px;
+}
+
+.kpiGrid :global(.ant-statistic-content) {
+  color: #173d29;
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.chartGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  width: 100%;
+}
+
+.chartGrid :global(.ant-card) {
+  border-color: #e1e6e3;
+  border-radius: 6px;
+  box-shadow: none;
+  overflow: hidden;
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.chartGrid :global(.ant-card:hover) {
+  border-color: #b5c9bc;
+  box-shadow: 0 4px 12px rgba(24, 39, 30, 0.06);
+}
+
+.chartGrid :global(.ant-card-head) {
+  min-height: 68px;
+  border-bottom-color: #ebf0ed;
+  background: #fbfcfb;
+}
+
+.chartGrid :global(.ant-card-head-title) {
+  white-space: normal;
+}
+
+.chartGrid :global(.ant-typography.ant-typography-h5) {
+  color: #213c2b;
+  font-size: 15px;
+}
+
+.chartGrid :global(.ant-card-body) {
+  padding: 12px 18px 18px;
+}
+
+.sessionLog :global(.ant-card) {
+  border-color: #e1e6e3;
+  border-radius: 6px;
+  box-shadow: none;
+}
+
+.sessionLog :global(.ant-card-head) {
+  min-height: 60px;
+  border-bottom-color: #e5ece8;
+  background: #fbfcfb;
+}
+
+.sessionLog :global(.ant-table-thead > tr > th) {
+  color: #405148;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+@media (max-width: 900px) {
+  .chartGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 576px) {
+  .analyticsPage {
+    gap: 20px;
+    padding-bottom: 24px;
+  }
+
+  .section {
+    gap: 12px;
+  }
+
+  .chartGrid {
+    gap: 16px;
+  }
+
+  .chartGrid :global(.ant-card-body) {
+    padding: 12px;
+  }
+}

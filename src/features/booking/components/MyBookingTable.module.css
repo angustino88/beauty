@@ -1,0 +1,35 @@
+/* Like EquipmentTable, preserve Ant Design's fixed-column positioning.
+   Only non-fixed cells need a containing block for header-control overlays.
+   Override AppTable's blanket sticky header rule, not the library's offsets. */
+.bookingTable :global(.ant-table .ant-table-thead > tr > th:not(.ant-table-cell-fix)) { position: relative; top: auto; }
+.bookingTable :global(.ant-table .ant-table-thead > tr > th.ant-table-cell-fix) {
+  position: sticky;
+  top: auto;
+  z-index: calc(var(--z-offset-reverse, 1) + 2);
+}
+.bookingTable :global(.ant-table-header), .bookingTable :global(.ant-table-body) { max-width: 100%; }
+.bookingTable :global(.ant-table-header table), .bookingTable :global(.ant-table-body table) { table-layout: fixed; }
+.bookingTable :global(.ant-table-body) { overflow-x: scroll !important; scrollbar-width: auto; scrollbar-color: #8795a4 #edf1f5; }
+.bookingTable :global(.ant-table-body::-webkit-scrollbar) { width: 12px; height: 12px; }
+.bookingTable :global(.ant-table-body::-webkit-scrollbar-thumb) { background: #8795a4; border: 2px solid #edf1f5; border-radius: 6px; }
+.bookingTable :global(.ant-table-sticky-scroll) { z-index: 10; }
+.bookingCode { display: block; white-space: normal; overflow-wrap: anywhere; }
+.bookingCode code { white-space: normal; overflow-wrap: anywhere; }
+.creatorSwitch { display: inline-flex; align-items: center; }
+
+.approvalIndicator {
+  border-left: 3px solid var(--indicator-accent);
+}
+
+.approvalIcon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  color: var(--indicator-accent);
+  font-size: 13px;
+}
+
+.tooltipTarget {
+  display: inline-flex;
+  cursor: help;
+}

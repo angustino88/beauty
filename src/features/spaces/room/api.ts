@@ -1,0 +1,254 @@
+import { baseApi } from "@/shared/lib/api";
+import { generatedApi } from '@/shared/api/generated/api';
+import { skipToken } from "@reduxjs/toolkit/query";
+import {
+  generateListTags,
+  generateItemTag,
+  invalidateList,
+} from "@/shared/lib/api/tagHelpers";
+import {
+  createResourceEndpoints,
+} from "@/shared/lib/api/endpointHelpers";
+import type {
+  IRoom,
+  IRoomDashboardLayout,
+  IRoomDashboardRack,
+  IRoomDashboardSlot,
+  IRoomDropdownOptions,
+  IRoomListResponse,
+  IRoomParams,
+  IRoomPayload,
+} from "./types";
+import type { SpaceStatusHistoryRecord } from "../shared/SpaceStatusHistoryModal";
+import {
+  mapRoomDetailApiResponse,
+  mapRoomListApiResponse,
+  mapRoomWritePayload,
+} from "./mapper";
+import { normalizeFilterFacets, type FilterFacets } from "@/features/lab-equipment/shared/facets/filterFacets";
+
+const ENDPOINTS = createResourceEndpoints("labs/rooms");
+const TAG = "Room";
+
+generatedApi.enhanceEndpoints({
+  endpoints: {
+    labsRoomsRetrieve: { providesTags: invalidateList(TAG) },
+    labsRoomsOptionsRetrieve: { providesTags: invalidateList(TAG) },
+    labsRoomsStatusSummaryRetrieve: { providesTags: invalidateList(TAG) },
+    labsRoomsCreate: { invalidatesTags: invalidateList(TAG) },
+  },
+});
+
+export const roomRtkApi = baseApi.injectEndpoints({
+  endpoints: (build) => ({
+    getRooms: build.query<IRoomListResponse, IRoomParams>({
+      query: (params) => ({ url: ENDPOINTS.LIST, params }),
+      transformResponse: (res: unknown) => mapRoomListApiResponse(res),
+      providesTags: (result) => generateListTags(TAG, result),
+    }),
+    createRoom: build.mutation<IRoom, IRoomPayload>({
+      query: (body) => ({
+        url: ENDPOINTS.CREATE,
+        method: "POST",
+        body: mapRoomWritePayload(body),
+      }),
+      transformResponse: (res: unknown) => mapRoomDetailApiResponse(res),
+      invalidatesTags: invalidateList(TAG),
+    }),
+    updateRoom: build.mutation<IRoom, { id: number; body: IRoomPayload }>({
+      query: ({ id, body }) => ({
+        url: ENDPOINTS.UPDATE(id),
+        method: "PATCH",
+        body: mapRoomWritePayload(body),
+      }),
+      transformResponse: (res: unknown) => mapRoomDetailApiResponse(res),
+      invalidatesTags: (_r, _e, { id }) => [
+        ...generateItemTag(TAG, id),
+        ...invalidateList(TAG),
+        { type: "ChangeLog", id },
+      ],
+    }),
+    deleteRoom: build.mutation<void, number>({
+      query: (id) => ({ url: ENDPOINTS.DELETE(id), method: "DELETE" }),
+      invalidatesTags: invalidateList(TAG),
+    }),
+    changeRoomLifecycle: build.mutation<
+      IRoom,
+      {
+        roomId: number;
+        body: {
+          lifecycle_status?: 'planned' | 'in_service' | 'retired';
+          access_policy?: 'open' | 'restricted';
+          metadata?: Record<string, unknown>;
+        };
+      }
+    >({
+      query: ({ roomId, body }) => ({
+        url: `/api/labs/rooms/${roomId}/actions/change-lifecycle`,
+        method: "POST",
+        body,
+      }),
+      transformResponse: (res: unknown) => mapRoomDetailApiResponse(res),
+      invalidatesTags: (_r, _e, { roomId }) => [
+        ...generateItemTag(TAG, roomId),
+        ...invalidateList(TAG),
+        { type: "Station", id: "LIST" },
+        { type: "Bench", id: "LIST" },
+      ],
+    }),
+    updateRoomImage: build.mutation<IRoom, { id: number; image: File }>({
+      query: ({ id, image }) => {
+        const formData = new FormData();
+        formData.append("image", image);
+        return { url: ENDPOINTS.UPDATE(id), method: "PATCH", body: formData };
+      },
+      transformResponse: (res: unknown) => mapRoomDetailApiResponse(res),
+      invalidatesTags: (_r, _e, { id }) => [
+        ...generateItemTag(TAG, id),
+        ...invalidateList(TAG),
+      ],
+    }),
+    getRoomById: build.query<IRoom, number>({
+      query: (id) => ({ url: ENDPOINTS.DETAIL(id) }),
+      transformResponse: (res: unknown) => mapRoomDetailApiResponse(res),
+      providesTags: (_result, _error, id) => generateItemTag(TAG, id),
+    }),
+    getRoomHistory: build.query<
+      { data: SpaceStatusHistoryRecord[]; total: number },
+      { id: number; page: number; pageSize: number }
+    >({
+      query: ({ id, page, pageSize }) => ({
+        url: `${ENDPOINTS.DETAIL(id)}/history`,
+        params: { page, page_size: pageSize },
+      }),
+      transformResponse: (res: { data: SpaceStatusHistoryRecord[]; meta: { pagination: { count: number } } }) => ({
+        data: res.data,
+        total: res.meta.pagination.count,
+      }),
+      providesTags: (_result, _error, { id }) => [{ type: "ChangeLog", id }],
+    }),
+    getRoomDropdown: build.query<IRoomDropdownOptions, void>({
+      query: () => ({ url: "/api/labs/rooms/filters" }),
+      providesTags: invalidateList(TAG),
+      transformResponse: (res: unknown): IRoomDropdownOptions => {
+        const envelope = (res as Record<string, unknown>) ?? {};
+        const data = (envelope.data as Record<string, unknown>) ?? envelope;
+        const extract = (arr: unknown) =>
+          Array.isArray(arr)
+            ? arr.map((item: Record<string, unknown>) => ({
+                id: (item.id as number) ?? 0,
+                name: (item.name as string) ?? (item.room_name as string) ?? "",
+              }))
+            : [];
+        return {
+          countries: extract(data.countries),
+          cities: extract(data.cities),
+          buildings: extract(data.buildings),
+          floors: extract(data.floors),
+        };
+      },
+    }),
+    getRoomFilters: build.query<FilterFacets, void>({
+      query: () => ({ url: "/api/labs/rooms/filters" }),
+      transformResponse: normalizeFilterFacets,
+      providesTags: invalidateList(TAG),
+    }),
+    getRoomDashboardLayout: build.query<IRoomDashboardLayout, number>({
+      query: (id) => ({ url: `/api/labs/rooms/${id}/mapping` }),
+      transformResponse: (res: unknown): IRoomDashboardLayout => {
+        const envelope = (res as Record<string, unknown>) ?? {};
+        const data = (envelope.data ?? envelope) as Record<string, unknown>;
+
+        if (Array.isArray(data.rooms) || Array.isArray(data.room_slots)) {
+          const rooms = (Array.isArray(data.rooms) ? data.rooms : []) as Array<Record<string, unknown>>;
+          const roomSlots = (Array.isArray(data.room_slots) ? data.room_slots : []) as Array<Record<string, unknown>>;
+          const stations = (Array.isArray(data.stations) ? data.stations : []) as Array<Record<string, unknown>>;
+
+          const room = rooms[0] ?? {};
+          const stationsBySlotId = new Map<number, Record<string, unknown>>();
+          const unplacedStations: IRoomDashboardRack[] = [];
+
+          for (const st of stations) {
+            const slotId = st.slot_id as number | null;
+            if (slotId) {
+              stationsBySlotId.set(slotId, st);
+            } else {
+              unplacedStations.push({
+                id: st.id as number,
+                sku: (st.sku as string) ?? null,
+                name: (st.name as string) ?? null,
+                slot_id: null,
+                slot_code: null,
+                slot_row: null,
+                slot_col: null,
+              });
+            }
+          }
+
+          const slots: IRoomDashboardSlot[] = roomSlots.map((s) => {
+            const slotId = s.id as number;
+            const station = stationsBySlotId.get(slotId);
+            return {
+              id: slotId,
+              row_index: (s.row_index as number) ?? 0,
+              col_index: (s.col_index as number) ?? 0,
+              slot_code: (s.slot_code as string) ?? "",
+              rack: station
+                ? {
+                    id: station.id as number,
+                    sku: (station.sku as string) ?? null,
+                    name: (station.name as string) ?? null,
+                    slot_id: slotId,
+                    slot_code: (s.slot_code as string) ?? null,
+                    slot_row: (s.row_index as number) ?? null,
+                    slot_col: (s.col_index as number) ?? null,
+                  }
+                : null,
+            };
+          });
+
+          return {
+            room: {
+              id: (room.id as number) ?? 0,
+              sku: (room.sku as string) ?? null,
+              name: (room.name as string) ?? null,
+              rows: (room.layout_rows as number) ?? null,
+              cols: (room.layout_columns as number) ?? null,
+              setup_capacity: roomSlots.length,
+            },
+            slots,
+            unplaced_racks: unplacedStations,
+          };
+        }
+
+        return (envelope.data as IRoomDashboardLayout) ?? envelope;
+      },
+      providesTags: (_result, _error, id) => [{ type: "Room", id: `layout-${id}` }],
+    }),
+  }),
+  overrideExisting: false,
+});
+
+export const {
+  useGetRoomsQuery,
+  useCreateRoomMutation,
+  useUpdateRoomMutation,
+  useDeleteRoomMutation,
+  useChangeRoomLifecycleMutation,
+  useUpdateRoomImageMutation,
+  useGetRoomByIdQuery,
+  useGetRoomHistoryQuery,
+  useGetRoomDropdownQuery,
+  useGetRoomFiltersQuery,
+  useGetRoomDashboardLayoutQuery,
+} = roomRtkApi;
+
+export function useGetRoomByIdWrapper(
+  id: number | typeof skipToken,
+  options?: Parameters<typeof roomRtkApi.endpoints.getRoomById.useQuery>[1],
+) {
+  return roomRtkApi.endpoints.getRoomById.useQuery(
+    id === skipToken ? skipToken : id,
+    options,
+  );
+}

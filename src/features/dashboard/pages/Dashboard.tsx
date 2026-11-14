@@ -1,0 +1,119 @@
+import { useMemo } from "react";
+import { Alert } from "antd";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { DashboardSummary } from "../components/DashboardSummary";
+import { BenchTable } from "../components/BenchTable";
+import { BenchDetailModal } from "../components/modals/BenchDetailModal";
+import NotFound from "@/pages/errors/NotFound";
+import ServerError from "@/pages/errors/ServerError";
+import { useGetDashboardPageQuery, useGetDashboardSummaryQuery } from "../api";
+import { useDashboardState } from "../hooks/useDashboardState";
+import { useDashboardFavorites } from "../hooks/useDashboardFavorites";
+import { useBenchDetailModal } from "../hooks/useBenchDetailModal";
+import type { DerivedDashboardStats, DashboardBench } from "../types";
+
+const EMPTY_STATS: DerivedDashboardStats = {
+  totalCount: 0,
+  freeCount: 0,
+  activeCount: 0,
+  inactiveCount: 0,
+  maintainingCount: 0,
+  offlineCount: 0,
+};
+
+const EMPTY_DATA: DashboardBench[] = [];
+
+const getStatusCode = (error: unknown): number | null => {
+  if (!error || typeof error !== "object" || !("status" in error)) return null;
+  const status = (error as { status: unknown }).status;
+  return typeof status === "number" ? status : null;
+};
+
+export default function Dashboard() {
+  const { data: summaryData, error: summaryError } =
+    useGetDashboardSummaryQuery();
+
+  const derivedStats = useMemo<DerivedDashboardStats>(() => {
+    if (!summaryData) return EMPTY_STATS;
+    const total = summaryData.total_benches ?? summaryData.total ?? 0;
+    const dist = summaryData.activity_distribution ?? summaryData.status ?? {};
+    return {
+      totalCount: total,
+      freeCount: dist["free"] ?? 0,
+      activeCount: dist["active"] ?? 0,
+      inactiveCount: dist["inactive"] ?? 0,
+      maintainingCount: (dist["maintaining"] ?? 0) + (dist["maintenance"] ?? 0),
+      offlineCount: dist["offline"] ?? 0,
+    };
+  }, [summaryData]);
+
+  const state = useDashboardState();
+
+  // isLoading = first-time fetch (no cached data) → show skeleton
+  // isFetching = any fetch including background refetches → DON'T show spinner (silent)
+  const {
+    data: pageData,
+    isLoading,
+    isError,
+    error: pageError,
+    refetch,
+  } = useGetDashboardPageQuery(state.queryParams);
+
+  const tableData = pageData?.results ?? EMPTY_DATA;
+  const totalCount = pageData?.total_count ?? 0;
+
+  const { handleFavoriteClick } = useDashboardFavorites();
+  const { modalBenchId, openModal, closeModal, benchDetail, isDetailFetching } =
+    useBenchDetailModal();
+  const statusCode = getStatusCode(pageError) ?? getStatusCode(summaryError);
+
+  // Render error in-place without changing URL
+  if (statusCode === 404) {
+    return <NotFound />;
+  }
+  if (statusCode !== null && statusCode >= 500) {
+    return <ServerError />;
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <PageHeader title="Dashboard" />
+
+      {isError &&
+        statusCode !== 404 &&
+        statusCode !== null &&
+        statusCode < 500 && (
+          <Alert
+            type="error"
+            message="Failed to load dashboard data"
+            description="Please check your connection and try refreshing."
+            showIcon
+            action={<a onClick={() => void refetch()}>Retry</a>}
+          />
+        )}
+
+      <DashboardSummary
+        stats={derivedStats}
+        activeSummary={state.summaryStatus}
+        onSummaryClick={state.handleSummaryClick}
+      />
+
+      <BenchTable
+        data={tableData}
+        totalCount={totalCount}
+        isLoading={isLoading}
+        refetch={refetch}
+        state={state}
+        handleFavoriteClick={handleFavoriteClick}
+        openModal={openModal}
+      />
+
+      <BenchDetailModal
+        modalBenchId={modalBenchId}
+        closeModal={closeModal}
+        benchDetail={benchDetail}
+        isDetailFetching={isDetailFetching}
+      />
+    </div>
+  );
+}

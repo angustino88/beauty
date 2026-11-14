@@ -1,0 +1,65 @@
+.calendarCard {
+    border: 0;
+    box-shadow: 0 1px 3px rgba(20, 32, 28, 0.06), 0 12px 32px rgba(20, 32, 28, 0.05);
+}
+
+.calendarCard :global(.ant-card-body) {
+    padding: 12px 16px;
+}
+
+.headerControls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: flex-end;
+    width: 100%;
+}
+
+.filterLabel {
+    flex: 0 0 auto;
+    color: #40554d;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.filterControl {
+    flex: 1;
+    max-width: 440px;
+    min-width: 220px;
+}
+
+.calendarContainer {
+    min-width: 0;
+}
+
+@media screen and (max-width: 992px) {
+    .calendarCard :global(.ant-card-body) {
+        padding: 10px 14px;
+    }
+
+    .filterControl {
+        max-width: 320px;
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .headerControls {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .filterControl {
+        max-width: 100%;
+        min-width: 160px;
+    }
+}
+
+@media screen and (max-width: 576px) {
+    .calendarCard {
+        border-radius: 0;
+    }
+
+    .calendarCard :global(.ant-card-body) {
+        padding: 8px 10px;
+    }
+}

@@ -1,0 +1,27 @@
+.table :global(.ant-table-thead > tr > th) {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 9px 12px;
+  color: #57606a;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  background: #fbfcfd;
+  border-bottom: 1px solid #d8dee4;
+  white-space: nowrap;
+}
+
+.table :global(.ant-table-column-title) {
+  white-space: nowrap;
+}
+
+.table :global(.ant-table-column-sorter-up.active),
+.table :global(.ant-table-column-sorter-down.active) {
+  color: #1f7a4d !important;
+}
+
+.table :global(.ant-table-tbody > tr:hover > td) {
+  background: #f6f8fa !important;
+}

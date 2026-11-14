@@ -1,0 +1,443 @@
+import type { Key, ReactNode } from 'react';
+import { DatePicker, Input, Select } from 'antd';
+import dayjs, { type Dayjs } from 'dayjs';
+import {
+  InlineImageUpload,
+  readStatusFromRecord,
+  renderAuditCell,
+  renderImageCell,
+  renderOwnerCell,
+} from '../../shared';
+import LicenseStatus from '../../shared/components/status/LicenseStatus';
+import LicenseInformationCell from './LicenseInformationCell';
+import type { ILicense } from '../types';
+
+import type { CarrierDeviceOption } from '../hooks/useLicenseTable';
+
+type FilterItem = { text: string; value: string };
+type SelectOption = { label: string; value: number };
+
+const readProduct = (record: ILicense) => record.license_product?.product_name ?? record.product?.product_name ?? '';
+const readVendor = (record: ILicense) => record.license_vendor?.vendor_name ?? record.vendor?.vendor_name ?? '';
+const readType = (record: ILicense) => record.license_type?.type_name ?? record.license_type?.license_type_name ?? '';
+const readCategory = (record: ILicense) => record.license_category?.category_name ?? record.category?.category_name ?? '';
+const readRestriction = (record: ILicense) =>
+  record.license_restriction?.restriction_name
+  ?? record.license_restriction?.license_restriction_name
+  ?? record.restriction?.restriction_name
+  ?? '';
+const readCarrier = (record: ILicense) => record.carrier_device?.sku ?? record.carrier_device?.carrier_device_name ?? '';
+
+export interface LicenseInlineDraft {
+  name: string;
+  license_product: number | null;
+  license_vendor: number | null;
+  maximum_version: string;
+  license_ID: string;
+  carrier_device: string | number | null;
+  license_category: number | null;
+  license_type: number | null;
+  license_restriction: number | null;
+  log_label: string;
+  expiry_date: Dayjs | null;
+  primary_owner: number | null;
+  remark: string;
+  pending_status_type?: string;
+  pending_status_data?: Record<string, unknown>;
+}
+
+interface BuildColumnsArgs {
+  filters: Record<string, Key[] | null>;
+  productFilters: FilterItem[];
+  vendorFilters: FilterItem[];
+  categoryFilters: FilterItem[];
+  typeFilters: FilterItem[];
+  restrictionFilters: FilterItem[];
+  ownerFilters: FilterItem[];
+  statusFilters: FilterItem[];
+  productOptions: SelectOption[];
+  vendorOptions: SelectOption[];
+  categoryOptions: SelectOption[];
+  typeOptions: SelectOption[];
+  restrictionOptions: SelectOption[];
+  ownerOptions: SelectOption[];
+  carrierDeviceOptions: CarrierDeviceOption[];
+  isEditing: (record: ILicense) => boolean;
+  editingDraft: LicenseInlineDraft | null;
+  updateDraftField: <K extends keyof LicenseInlineDraft>(
+    key: K,
+    value: LicenseInlineDraft[K],
+  ) => void;
+  actionsRenderer: (_: unknown, record: ILicense) => ReactNode;
+  onImageChange?: (file: File) => void;
+  onStatusChange?: (record: ILicense, values: { status_type: string; status_data: Record<string, unknown> }) => void;
+}
+
+const carrierDeviceDraftValue = (item: ILicense): string | number | null => {
+  const device = item.carrier_device;
+  if (!device || device.id == null) return null;
+  // Mirror old saga: combine carrier_device_name + id so the draft value
+  // matches the grouped option `${group}-${id}` and preselects on edit.
+  return device.carrier_device_name ? `${device.carrier_device_name}-${device.id}` : device.id;
+};
+
+export const toLicenseInlineDraft = (item: ILicense): LicenseInlineDraft => ({
+  name: item.name ?? '',
+  license_product: item.license_product?.id ?? item.product?.id ?? null,
+  license_vendor: item.license_vendor?.id ?? item.vendor?.id ?? null,
+  maximum_version: item.maximum_version == null ? '' : String(item.maximum_version),
+  license_ID: item.license_ID ?? '',
+  carrier_device: carrierDeviceDraftValue(item),
+  license_category: item.license_category?.id ?? item.category?.id ?? null,
+  license_type: item.license_type?.id ?? null,
+  license_restriction: item.license_restriction?.id ?? item.restriction?.id ?? null,
+  log_label: item.log_label ?? '',
+  expiry_date: item.expiry_date ? dayjs(item.expiry_date) : null,
+  primary_owner: item.primary_owner?.id ?? null,
+  remark: item.remark ?? '',
+});
+
+export const buildLicenseColumns = ({
+  filters,
+  productFilters,
+  vendorFilters,
+  categoryFilters,
+  typeFilters,
+  restrictionFilters,
+  ownerFilters,
+  statusFilters,
+  productOptions,
+  vendorOptions,
+  categoryOptions,
+  typeOptions,
+  restrictionOptions,
+  ownerOptions,
+  carrierDeviceOptions,
+  isEditing,
+  editingDraft,
+  updateDraftField,
+  actionsRenderer,
+  onImageChange,
+  onStatusChange,
+}: BuildColumnsArgs) => [
+  { title: 'ID', dataIndex: 'id', key: 'id', width: 100, fixed: 'left' as const },
+  { title: 'SKU', dataIndex: 'sku', key: 'sku', width: 200, fixed: 'left' as const },
+  {
+    title: 'Name',
+    dataIndex: 'name',
+    key: 'name',
+    width: 200,
+    fixed: 'left' as const,
+    render: (value: string, record: ILicense) => (
+      isEditing(record)
+        ? (
+          <Input
+            value={editingDraft?.name ?? ''}
+            onChange={(event) => updateDraftField('name', event.target.value)}
+          />
+        )
+        : (value ?? '')
+    ),
+  },
+  {
+    title: 'Product',
+    key: 'license_product',
+    width: 150,
+    filters: productFilters,
+    filterSearch: true,
+    filteredValue: filters.license_product ?? null,
+    onFilter: (value: boolean | Key, record: ILicense) => String(record.license_product?.id ?? record.product?.id ?? '') === String(value),
+    render: (_: unknown, record: ILicense) => (
+      isEditing(record)
+        ? (
+          <Select
+            allowClear
+            showSearch
+            style={{ width: '100%' }}
+            value={editingDraft?.license_product ?? undefined}
+            options={productOptions}
+            onChange={(value) => updateDraftField('license_product', typeof value === 'number' ? value : null)}
+          />
+        )
+        : readProduct(record)
+    ),
+  },
+  {
+    title: 'Vendor',
+    key: 'license_vendor',
+    width: 150,
+    filters: vendorFilters,
+    filterSearch: true,
+    filteredValue: filters.license_vendor ?? null,
+    onFilter: (value: boolean | Key, record: ILicense) => String(record.license_vendor?.id ?? record.vendor?.id ?? '') === String(value),
+    render: (_: unknown, record: ILicense) => (
+      isEditing(record)
+        ? (
+          <Select
+            allowClear
+            showSearch
+            style={{ width: '100%' }}
+            value={editingDraft?.license_vendor ?? undefined}
+            options={vendorOptions}
+            onChange={(value) => updateDraftField('license_vendor', typeof value === 'number' ? value : null)}
+          />
+        )
+        : readVendor(record)
+    ),
+  },
+  {
+    title: 'Maximum Version',
+    dataIndex: 'maximum_version',
+    key: 'maximum_version',
+    width: 150,
+    render: (value: string | null | undefined, record: ILicense) => (
+      isEditing(record)
+        ? (
+          <Input
+            value={editingDraft?.maximum_version ?? ''}
+            onChange={(event) => updateDraftField('maximum_version', event.target.value)}
+          />
+        )
+        : (value ?? '')
+    ),
+  },
+  {
+    title: 'License ID',
+    dataIndex: 'license_ID',
+    key: 'license_ID',
+    width: 150,
+    render: (value: string | null | undefined, record: ILicense) => (
+      isEditing(record)
+        ? (
+          <Input
+            value={editingDraft?.license_ID ?? ''}
+            onChange={(event) => updateDraftField('license_ID', event.target.value)}
+          />
+        )
+        : (value ?? '')
+    ),
+  },
+  {
+    title: 'License Carrier',
+    key: 'carrier_device',
+    width: 200,
+    render: (_: unknown, record: ILicense) => (
+      isEditing(record)
+        ? (
+          <Select
+            allowClear
+            showSearch
+            style={{ width: '100%' }}
+            value={editingDraft?.carrier_device ?? undefined}
+            options={carrierDeviceOptions}
+            onChange={(value) => updateDraftField(
+              'carrier_device',
+              typeof value === 'string' || typeof value === 'number' ? value : null,
+            )}
+          />
+        )
+        : readCarrier(record)
+    ),
+  },
+  {
+    title: 'License Category',
+    key: 'license_category',
+    width: 150,
+    filters: categoryFilters,
+    filterSearch: true,
+    filteredValue: filters.license_category ?? null,
+    onFilter: (value: boolean | Key, record: ILicense) => String(record.license_category?.id ?? record.category?.id ?? '') === String(value),
+    render: (_: unknown, record: ILicense) => (
+      isEditing(record)
+        ? (
+          <Select
+            allowClear
+            showSearch
+            style={{ width: '100%' }}
+            value={editingDraft?.license_category ?? undefined}
+            options={categoryOptions}
+            onChange={(value) => updateDraftField('license_category', typeof value === 'number' ? value : null)}
+          />
+        )
+        : readCategory(record)
+    ),
+  },
+  {
+    title: 'License Type',
+    key: 'license_type',
+    width: 180,
+    filters: typeFilters,
+    filterSearch: true,
+    filteredValue: filters.license_type ?? null,
+    onFilter: (value: boolean | Key, record: ILicense) => String(record.license_type?.id ?? '') === String(value),
+    render: (_: unknown, record: ILicense) => (
+      isEditing(record)
+        ? (
+          <Select
+            allowClear
+            showSearch
+            style={{ width: '100%' }}
+            value={editingDraft?.license_type ?? undefined}
+            options={typeOptions}
+            onChange={(value) => updateDraftField('license_type', typeof value === 'number' ? value : null)}
+          />
+        )
+        : readType(record)
+    ),
+  },
+  {
+    title: 'License Restriction',
+    key: 'license_restriction',
+    width: 180,
+    filters: restrictionFilters,
+    filterSearch: true,
+    filteredValue: filters.license_restriction ?? null,
+    onFilter: (value: boolean | Key, record: ILicense) => String(record.license_restriction?.id ?? record.restriction?.id ?? '') === String(value),
+    render: (_: unknown, record: ILicense) => (
+      isEditing(record)
+        ? (
+          <Select
+            allowClear
+            showSearch
+            style={{ width: '100%' }}
+            value={editingDraft?.license_restriction ?? undefined}
+            options={restrictionOptions}
+            onChange={(value) => updateDraftField('license_restriction', typeof value === 'number' ? value : null)}
+          />
+        )
+        : readRestriction(record)
+    ),
+  },
+  {
+    title: 'LOG Label',
+    dataIndex: 'log_label',
+    key: 'log_label',
+    width: 150,
+    render: (value: string, record: ILicense) => (
+      isEditing(record)
+        ? (
+          <Input
+            value={editingDraft?.log_label ?? ''}
+            onChange={(event) => updateDraftField('log_label', event.target.value)}
+          />
+        )
+        : (value ?? '')
+    ),
+  },
+  {
+    title: 'Expiry Date',
+    key: 'expiry_date',
+    width: 150,
+    render: (_: unknown, record: ILicense) => (
+      isEditing(record)
+        ? (
+          <DatePicker
+            value={editingDraft?.expiry_date ?? null}
+            format="YYYY-MM-DD"
+            style={{ width: '100%' }}
+            onChange={(value) => updateDraftField('expiry_date', value)}
+          />
+        )
+        : (record.expiry_date ? dayjs(record.expiry_date).format('YYYY-MM-DD') : '')
+    ),
+  },
+  {
+    title: 'Primary Owner',
+    key: 'primary_owner',
+    width: 150,
+    filters: ownerFilters,
+    filterSearch: true,
+    filteredValue: filters.primary_owner ?? null,
+    onFilter: (value: boolean | Key, record: ILicense) => (record.primary_owner?.username ?? '') === String(value),
+    render: (_: unknown, record: ILicense) => (
+      isEditing(record)
+        ? (
+          <Select
+            allowClear
+            showSearch
+            style={{ width: '100%' }}
+            value={editingDraft?.primary_owner ?? undefined}
+            options={ownerOptions}
+            onChange={(value) => updateDraftField('primary_owner', typeof value === 'number' ? value : null)}
+          />
+        )
+        : renderOwnerCell(record.primary_owner)
+    ),
+  },
+  {
+    title: 'Last Audited',
+    dataIndex: 'lab_audit',
+    key: 'lab_audit',
+    width: 180,
+    align: 'center' as const,
+    render: (_: unknown, record: ILicense) => renderAuditCell(record.lab_audit),
+  },
+  {
+    title: 'Image',
+    dataIndex: 'image',
+    key: 'image',
+    width: 150,
+    align: 'center' as const,
+    render: (_: unknown, record: ILicense) => (
+      isEditing(record) && onImageChange
+        ? <InlineImageUpload currentImage={record.image} onImageChange={onImageChange} />
+        : renderImageCell(record.image)
+    ),
+  },
+  {
+    title: 'Status',
+    key: 'status',
+    width: 150,
+    align: 'center' as const,
+    onHeaderCell: () => ({ className: 'centeredFilterHeader' }),
+    filters: statusFilters,
+    filterSearch: true,
+    filteredValue: filters.status ?? null,
+    onFilter: (value: boolean | Key, record: ILicense) => readStatusFromRecord(record) === String(value),
+    render: (_: unknown, record: ILicense) => (
+      <LicenseStatus
+        status={isEditing(record) ? editingDraft?.pending_status_type ?? readStatusFromRecord(record) : readStatusFromRecord(record)}
+        isEditing={isEditing(record)}
+        record={isEditing(record) && editingDraft?.pending_status_type ? {
+          ...record,
+          status: editingDraft.pending_status_type,
+        } : record}
+        onStatusChange={onStatusChange ? (values) => onStatusChange(record, values) : undefined}
+      />
+    ),
+  },
+  {
+    title: 'Information',
+    key: 'information',
+    width: 180,
+    render: (_: unknown, record: ILicense) => (
+      <span style={{ whiteSpace: 'pre-line' }}>
+        <LicenseInformationCell record={record} />
+      </span>
+    ),
+  },
+  {
+    title: 'Remark',
+    dataIndex: 'remark',
+    key: 'remark',
+    width: 150,
+    render: (value: string | null | undefined, record: ILicense) => (
+      isEditing(record)
+        ? (
+          <Input
+            value={editingDraft?.remark ?? ''}
+            onChange={(event) => updateDraftField('remark', event.target.value)}
+          />
+        )
+        : (value ?? '')
+    ),
+  },
+  {
+    title: 'Actions',
+    key: 'actions',
+    fixed: 'right' as const,
+    width: 165,
+    align: 'center' as const,
+    render: actionsRenderer,
+  },
+];

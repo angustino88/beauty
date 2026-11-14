@@ -1,0 +1,139 @@
+.bookingForm :global(.ant-form-item) {
+  margin-bottom: 10px;
+}
+
+.bookingForm :global(.ant-form-item-label > label) {
+  color: #173c62;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.bookingForm :global(.ant-form-item-required::before) {
+  color: #e33b45 !important;
+}
+
+.section {
+  margin-bottom: 8px;
+  overflow: hidden;
+  border: 1px solid #e5edf4;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.sectionBody {
+  padding: 10px 14px 0;
+}
+
+.durationNotice {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 10px;
+  padding: 7px 10px;
+  font-size: 12px;
+  border: 1px solid #d7eee9;
+  border-radius: 5px;
+  background: #f0faf8;
+}
+
+.durationNotice strong {
+  color: #137052;
+}
+
+.durationNotice :global(.anticon) {
+  color: #137052;
+}
+
+.suggestions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 30px;
+  margin: 0 0 10px;
+}
+
+.suggestionLabel {
+  flex: 0 0 auto;
+  color: #48627d;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.suggestionButton {
+  min-width: 92px;
+  height: 26px;
+  padding: 0 8px;
+  color: #137052;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 24px;
+  text-align: center;
+  cursor: pointer;
+  border: 1px solid #b8dfd4;
+  border-radius: 4px;
+  background: #f0faf8;
+}
+
+.suggestionButton:hover {
+  border-color: #087d52;
+  background: #e1f4ee;
+}
+
+.suggestionButton:focus-visible {
+  outline: 2px solid #167a59;
+  outline-offset: 2px;
+}
+
+.suggestionButtonSelected {
+  color: #075c42;
+  border-color: #087d52;
+  background: #a8dfcd;
+}
+
+.bookingForm :global(.ant-select),
+.bookingForm :global(.ant-picker),
+.reasonInput {
+  width: 100%;
+}
+
+.reasonOption {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  color: #31463d;
+}
+
+.reasonOption :global(.anticon) {
+  flex: 0 0 auto;
+  color: #6e8278;
+  font-size: 13px;
+}
+
+.reasonOption span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media screen and (max-width: 576px) {
+  .bookingForm :global(.ant-form-item) {
+    margin-bottom: 16px;
+  }
+
+  .sectionBody {
+    padding-right: 14px;
+    padding-left: 14px;
+  }
+
+  .durationNotice {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .suggestions {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+}

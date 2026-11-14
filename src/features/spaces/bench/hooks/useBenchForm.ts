@@ -1,0 +1,53 @@
+import {
+  useCreateBenchMutation,
+  useDeleteBenchMutation,
+  useUpdateBenchMutation,
+} from "../api";
+import {
+  notifyEquipmentCreated,
+  notifyEquipmentError,
+  useEquipmentCrudActions,
+} from "@/features/lab-equipment/shared";
+import type { IBench, IBenchPayload } from "../types";
+
+export function useBenchForm() {
+  const [createBench, { isLoading: creating }] = useCreateBenchMutation();
+  const [updateBench, { isLoading: updating }] = useUpdateBenchMutation();
+  const [deleteBench, { isLoading: deleting }] = useDeleteBenchMutation();
+
+  const actions = useEquipmentCrudActions<IBenchPayload>({
+    updateMutation: updateBench,
+    deleteMutation: deleteBench,
+    updateImageMutation: (async () => ({ data: undefined as unknown as IBench })) as unknown as Parameters<typeof useEquipmentCrudActions<IBenchPayload>>[0]["updateImageMutation"],
+    mapStatusBody: (values) => values as unknown as IBenchPayload,
+    labels: { entityName: "Bench", entityNameLower: "bench", errorPrefix: "bench" },
+  });
+
+  const createFromValues = async (values: Record<string, unknown>) => {
+    const payload: IBenchPayload = {
+      sku: typeof values.sku === "string" ? values.sku : undefined,
+      name: typeof values.name === "string" ? values.name : undefined,
+      group_id: values.group_id ? Number(values.group_id) : null,
+      type_id: values.type_id ? Number(values.type_id) : null,
+      setup_location_id: values.setup_location_id ? Number(values.setup_location_id) : null,
+      station_slot_id: values.station_slot_id ? Number(values.station_slot_id) : null,
+      remark: typeof values.remark === "string" ? values.remark : "",
+    };
+
+    try {
+      const created = await createBench(payload).unwrap();
+      notifyEquipmentCreated("Bench", created, { sku: payload.sku, name: payload.name });
+    } catch (err) {
+      notifyEquipmentError("create", "Bench", err);
+      throw err;
+    }
+  };
+
+  return {
+    createFromValues,
+    ...actions,
+    creating,
+    updating,
+    deleting,
+  };
+}
