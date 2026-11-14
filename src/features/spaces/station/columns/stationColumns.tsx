@@ -84,7 +84,7 @@ export const buildStationColumns = ({
       filterSearch: true,
       filteredValue: activeFilters.room ?? null,
       render: (_, record) => {
-        if (!record.room) return <span style={{ color: "#8c8c8c" }}>Not placed</span>;
+        if (!record.room) return <span style={{ color: "var(--lm-text-tertiary)" }}>Not placed</span>;
         return (
           <Space>
             <Tooltip title={`Room SKU: ${record.room.sku}`}>

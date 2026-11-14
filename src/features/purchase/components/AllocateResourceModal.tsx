@@ -219,7 +219,7 @@ export const AllocateResourceModal: React.FC<AllocateResourceModalProps> = ({
             rules={[{ required: true, message: `Please select a ${selectedKind}` }]}
             extra={
               options.length === 0 && !isOptionsLoading ? (
-                <span style={{ color: '#fa8c16' }}>
+                <span style={{ color: 'var(--lm-warning-solid)' }}>
                   No items loaded automatically. You can switch to "Enter ID Directly" above.
                 </span>
               ) : undefined

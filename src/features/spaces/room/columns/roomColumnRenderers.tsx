@@ -39,7 +39,7 @@ export const renderRoomLocationCell = (room: IRoom) => {
             target="_blank"
             rel="noreferrer"
             onClick={(e) => e.stopPropagation()}
-            style={{ color: '#00884A', textDecoration: 'underline' }}
+            style={{ color: 'var(--lm-primary-fg)', textDecoration: 'underline' }}
         >
             {locationText || url}
         </a>

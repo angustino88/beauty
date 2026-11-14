@@ -1,3 +1,4 @@
+import { toneForStatus, type StatusTone } from '../../../shared/status/statusTone.ts';
 export type SpaceStatusKind = 'room' | 'station' | 'bench';
 
 export function normalizeSpaceStatus(status: unknown): string {
@@ -24,29 +25,6 @@ export function spaceStatusLabel(status: unknown): string {
   return value.replaceAll('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
-const statusTones: Record<string, string> = {
-  available: 'overviewGreen',
-  free: 'overviewGreen',
-  online: 'overviewGreen',
-  active: 'overviewGreen',
-  in_service: 'overviewGreen',
-  in_use: 'overviewBlue',
-  occupied: 'overviewBlue',
-  issue: 'overviewBlue',
-  needs_review: 'overviewBlue',
-  reserved: 'overviewAmber',
-  planned: 'overviewAmber',
-  maintenance: 'overviewRed',
-  broken: 'overviewRed',
-  lost: 'overviewRed',
-  closed: 'overviewViolet',
-  restricted: 'overviewViolet',
-  retired: 'neutral',
-  out_of_service: 'overviewRed',
-  in_storage: 'neutral',
-  transferred: 'neutral',
-};
-
-export function spaceStatusTone(status: unknown): string {
-  return statusTones[normalizeSpaceStatus(status)] ?? 'neutral';
+export function spaceStatusTone(status: unknown): StatusTone {
+  return toneForStatus(normalizeSpaceStatus(status));
 }

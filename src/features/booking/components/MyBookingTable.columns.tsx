@@ -82,7 +82,7 @@ const DateRenderer = React.memo(({ value }: { value: string | undefined }) => {
   return (
     <Tooltip title={date.format('YYYY-MM-DD hh:mm A')} placement="topLeft">
       <div style={{ minWidth: 0, lineHeight: 1.35, textAlign: 'left' }}>
-        <Typography.Text style={{ display: 'block', color: '#344054', fontWeight: 500, fontSize: 12 }}>
+        <Typography.Text style={{ display: 'block', color: 'var(--lm-text)', fontWeight: 500, fontSize: 12 }}>
           {date.format('MMM D, YYYY')}
         </Typography.Text>
         <Typography.Text type="secondary" style={{ display: 'block', fontSize: 11 }}>
@@ -229,8 +229,8 @@ export function buildMyBookingColumns({
           <Tooltip title={displayName !== username ? displayName : null} placement="right">
             <Tag
               style={{
-                color: '#4338CA',
-                background: '#EEF2FF',
+                color: 'var(--lm-primary)',
+                background: 'var(--lm-info-bg)',
                 border: 'none',
                 borderRadius: 14,
                 fontWeight: 500,
@@ -280,7 +280,7 @@ export function buildMyBookingColumns({
           code
           copyable={value ? { text: value, tooltips: ['Copy booking code', 'Copied'] } : false}
           className={styles.bookingCode}
-          style={{ maxWidth: '100%', fontSize: 12, color: '#344054' }}
+          style={{ maxWidth: '100%', fontSize: 12, color: 'var(--lm-text)' }}
         >
           {value || '—'}
         </Typography.Text>
@@ -343,10 +343,10 @@ export function buildMyBookingColumns({
                 maxWidth: '100%',
                 marginInlineEnd: 0,
                 overflow: 'hidden',
-                color: '#344054',
+                color: 'var(--lm-text)',
                 fontWeight: 500,
                 textOverflow: 'ellipsis',
-                background: '#F2F4F7',
+                background: 'var(--lm-surface-subtle)',
                 whiteSpace: 'nowrap',
               }}
             >
@@ -366,7 +366,7 @@ export function buildMyBookingColumns({
         return (
           <Typography.Paragraph
             ellipsis={reason ? { rows: 2, tooltip: { title: reason, placement: 'topLeft' } } : false}
-            style={{ marginBottom: 0, color: reason ? '#344054' : '#98A2B3', lineHeight: 1.45 }}
+            style={{ marginBottom: 0, color: reason ? 'var(--lm-text)' : 'var(--lm-text-disabled)', lineHeight: 1.45 }}
           >
             {reason || '—'}
           </Typography.Paragraph>

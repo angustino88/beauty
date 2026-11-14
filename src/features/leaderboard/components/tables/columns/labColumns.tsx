@@ -14,7 +14,7 @@ export const labColumns: ColumnsType<RankedLabItem> = [
     width: 70,
     align: 'center',
     sorter: (a, b) => (a.rank ?? 0) - (b.rank ?? 0),
-    render: (rank: number) => <Text strong style={{ color: '#888888' }}>#{rank}</Text>,
+    render: (rank: number) => <Text strong style={{ color: 'var(--lm-text-tertiary)' }}>#{rank}</Text>,
   },
   {
     title: 'Image',
@@ -31,7 +31,7 @@ export const labColumns: ColumnsType<RankedLabItem> = [
               height: 36,
               borderRadius: 6,
               overflow: 'hidden',
-              border: '1px solid #e8e8e8',
+              border: '1px solid var(--lm-border)',
             }}
           >
             <img
@@ -47,7 +47,7 @@ export const labColumns: ColumnsType<RankedLabItem> = [
               width: 48,
               height: 36,
               borderRadius: 6,
-              background: 'linear-gradient(135deg, #7e57c2 0%, #311b92 100%)',
+              background: 'linear-gradient(135deg, var(--lm-primary) 0%, var(--lm-primary) 100%)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -113,6 +113,6 @@ export const labColumns: ColumnsType<RankedLabItem> = [
     width: 90,
     align: 'center',
     sorter: (a, b) => (a.points ?? 0) - (b.points ?? 0),
-    render: (pts: number) => <Text strong style={{ color: '#7e57c2' }}>{pts}</Text>,
+    render: (pts: number) => <Text strong style={{ color: 'var(--lm-primary)' }}>{pts}</Text>,
   },
 ];

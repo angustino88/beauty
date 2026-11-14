@@ -1,3 +1,4 @@
+import { toneForStatus, type StatusTone } from '../../../../shared/status/statusTone.ts';
 /** Lifecycle status only; computing activity is a separate backend domain. */
 export function equipmentStatusValue(status: unknown): string {
   if (typeof status === 'string') {
@@ -19,9 +20,4 @@ export function equipmentStatusLabel(status: unknown): string {
   return value ? value.replaceAll('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase()) : 'Unknown';
 }
 
-export const equipmentStatusTone = (status: unknown): string => ({
-  available: 'overviewGreen', in_use: 'overviewBlue', borrowed: 'overviewAmber',
-  maintenance: 'overviewViolet', broken: 'overviewRed', lost: 'overviewRed',
-  on_order: 'overviewBlue', transferred: 'neutral', retired: 'neutral',
-  calibration_overdue: 'overviewAmber',
-} as Record<string, string>)[equipmentStatusValue(status)] ?? 'neutral';
+export const equipmentStatusTone = (status: unknown): StatusTone => toneForStatus(equipmentStatusValue(status));

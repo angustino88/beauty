@@ -236,10 +236,10 @@ export default function LicensePage() {
             statusLabel={licenseStatusLabel}
             showAllOtherStatuses
             featuredStatuses={[
-              { key: 'active', label: 'Active', description: 'Valid licenses', tone: 'green' },
-              { key: 'inactive', label: 'Inactive', description: 'Not currently active', tone: 'slate' },
-              { key: 'expired', label: 'Expired', description: 'Past expiry date', tone: 'red' },
-              { key: 'trial', label: 'Trial', description: 'Evaluation licenses', tone: 'blue' },
+              { key: 'active', label: 'Active', description: 'Valid licenses', tone: 'success' },
+              { key: 'inactive', label: 'Inactive', description: 'Not currently active', tone: 'neutral' },
+              { key: 'expired', label: 'Expired', description: 'Past expiry date', tone: 'danger' },
+              { key: 'trial', label: 'Trial', description: 'Evaluation licenses', tone: 'info' },
             ]}
           />
         </>}

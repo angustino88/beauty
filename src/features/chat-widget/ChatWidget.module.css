@@ -54,7 +54,7 @@
   width: 11px;
   height: 11px;
   border-radius: 50%;
-  background: #2e6b3a; /* patina green */
+  background: var(--lm-success-solid); /* patina green */
   border: 2px solid rgba(250, 244, 233, 0.95); /* parchment */
   animation: pulseActiveDot 2s infinite ease-in-out;
 }
@@ -191,7 +191,7 @@
 .completeDivider {
   margin: 8px 0;
   font-size: 12px;
-  color: #52c41a;
+  color: var(--lm-success-fg);
 }
 
 /* Choices: parchment strip */
@@ -302,7 +302,7 @@
 .commandIcon {
   flex-shrink: 0;
   font-size: 16px;
-  color: #2e6b3a;
+  color: var(--lm-success-fg);
   width: 24px;
   display: flex;
   align-items: center;
@@ -377,7 +377,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #2e6b3a;
+  background: var(--lm-success-solid);
   animation: bounceDot 1.2s infinite ease-in-out;
 }
 
@@ -413,7 +413,7 @@
   padding: 2px 7px;
   border-radius: 999px;
   background: rgba(46, 107, 58, 0.10);
-  color: #2e6b3a;
+  color: var(--lm-success-fg);
   border: 1px solid rgba(46, 107, 58, 0.28);
   font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, monospace;
   white-space: nowrap;
@@ -451,14 +451,14 @@
    ========================================================= */
 
 :root {
-  --v-paper: #f7efe2;        /* parchment */
-  --v-cream: #fff8f1;        /* soft cream surface */
+  --v-paper: var(--lm-warning-bg);        /* parchment */
+  --v-cream: var(--lm-warning-bg);        /* soft cream surface */
   --v-ink: rgba(34, 30, 20, 0.92);
   --v-muted: rgba(34, 30, 20, 0.56);
 
-  --v-brass: #c9b076;        /* brass accent */
-  --v-olive: #4b5a2a;        /* worn olive (flat) */
-  --v-rust: #9b4a36;         /* warm rust for user bubbles */
+  --v-brass: var(--lm-warning-solid);        /* brass accent */
+  --v-olive: var(--lm-success-solid);        /* worn olive (flat) */
+  --v-rust: var(--lm-danger-solid);         /* warm rust for user bubbles */
 
   --v-border: rgba(160, 115, 60, 0.18);
   --v-shadow: rgba(30, 24, 18, 0.08);

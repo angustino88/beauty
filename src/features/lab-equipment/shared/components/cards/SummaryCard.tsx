@@ -15,7 +15,7 @@ export default function SummaryCard({
   label,
   title,
   value,
-  backgroundColor = '#24292f',
+  backgroundColor = 'var(--lm-surface-inverse)',
   color = '#fff',
   loading = false,
   onClick,

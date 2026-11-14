@@ -34,9 +34,9 @@ export function renderAuditCell(audit: ILabAudit | null | undefined) {
       title={(
         <Space size={8}>
           {isApproved ? (
-            <CheckCircleOutlined style={{ color: '#15803D' }} />
+            <CheckCircleOutlined style={{ color: 'var(--lm-success-fg)' }} />
           ) : (
-            <CloseCircleOutlined style={{ color: '#B42318' }} />
+            <CloseCircleOutlined style={{ color: 'var(--lm-danger-fg)' }} />
           )}
           <strong>Audit details</strong>
           <Tag color={isApproved ? 'success' : 'error'} style={{ marginInlineEnd: 0 }}>
@@ -56,8 +56,8 @@ export function renderAuditCell(audit: ILabAudit | null | undefined) {
                 padding: '5px 0',
               }}
             >
-              <span style={{ color: '#667085', fontSize: 12 }}>{item.label}</span>
-              <span style={{ color: '#101828', fontWeight: 500, overflowWrap: 'anywhere' }}>
+              <span style={{ color: 'var(--lm-text-tertiary)', fontSize: 12 }}>{item.label}</span>
+              <span style={{ color: 'var(--lm-text)', fontWeight: 500, overflowWrap: 'anywhere' }}>
                 {item.value}
               </span>
             </div>
@@ -68,8 +68,8 @@ export function renderAuditCell(audit: ILabAudit | null | undefined) {
       <Tag
         icon={isApproved ? <CheckCircleOutlined /> : <CloseCircleOutlined />}
         style={{
-          color: isApproved ? '#15803D' : '#B42318',
-          background: isApproved ? '#F0FDF4' : '#FEF3F2',
+          color: isApproved ? 'var(--lm-success-fg)' : 'var(--lm-danger-fg)',
+          background: isApproved ? 'var(--lm-success-bg)' : 'var(--lm-danger-bg)',
           border: 'none',
           borderRadius: 14,
           fontWeight: 500,
@@ -140,8 +140,8 @@ export function renderOwnerCell(owner: IPrimaryOwner | null | undefined) {
     <Tooltip title={owner.display_name}>
     <Tag
       style={{
-        color: '#4338CA',
-        background: '#EEF2FF',
+        color: 'var(--lm-primary)',
+        background: 'var(--lm-info-bg)',
         border: 'none',
         borderRadius: 14,
         fontWeight: 500,

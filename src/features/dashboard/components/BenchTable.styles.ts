@@ -4,9 +4,9 @@ export const useBenchTableStyles = createStyles(({ css }) => ({
   customTableStyles: css`
     &.ant-card {
       border-radius: 16px;
-      border: 1px solid rgba(56, 42, 34, 0.20);
-      background: linear-gradient(180deg, #fffef9 0%, #f7f0e6 100%);
-      box-shadow: 0 16px 34px rgba(31, 24, 18, 0.10);
+      border: 1px solid color-mix(in srgb, var(--lm-paper-edge) 20%, transparent);
+      background: linear-gradient(180deg, var(--lm-paper-top) 0%, var(--lm-paper-bottom) 100%);
+      box-shadow: 0 16px 34px rgba(31, 24, 18, 0.1);
       overflow: hidden;
       position: relative;
     }
@@ -27,10 +27,10 @@ export const useBenchTableStyles = createStyles(({ css }) => ({
       content: "";
       position: absolute;
       inset: 10px;
-      border: 1px solid rgba(56, 42, 34, 0.12);
+      border: 1px solid color-mix(in srgb, var(--lm-paper-edge) 12%, transparent);
       border-radius: 12px;
       pointer-events: none;
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.40);
+      box-shadow: inset 0 1px 0 color-mix(in srgb, var(--lm-paper-highlight) 40%, transparent);
     }
     .ant-card-body {
       position: relative;
@@ -39,8 +39,8 @@ export const useBenchTableStyles = createStyles(({ css }) => ({
     .toolbar {
       position: relative;
       border-radius: 14px;
-      border: 1px solid rgba(56, 42, 34, 0.16);
-      background: linear-gradient(180deg, rgba(255, 254, 249, 0.98) 0%, rgba(249, 243, 233, 0.98) 100%);
+      border: 1px solid color-mix(in srgb, var(--lm-paper-edge) 16%, transparent);
+      background: linear-gradient(180deg, color-mix(in srgb, var(--lm-paper-top) 98%, transparent) 0%, color-mix(in srgb, var(--lm-paper-bottom) 98%, transparent) 100%);
       box-shadow: 0 10px 20px rgba(31, 24, 18, 0.08);
       padding: 12px;
       margin-bottom: 12px;
@@ -56,20 +56,20 @@ export const useBenchTableStyles = createStyles(({ css }) => ({
       background: linear-gradient(
         90deg,
         rgba(0, 0, 0, 0) 0%,
-        rgba(123, 45, 38, 0.78) 16%,
-        rgba(123, 45, 38, 0.78) 84%,
+        color-mix(in srgb, var(--lm-paper-accent) 78%, transparent) 16%,
+        color-mix(in srgb, var(--lm-paper-accent) 78%, transparent) 84%,
         rgba(0, 0, 0, 0) 100%
       );
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 1px 0 rgba(0, 0, 0, 0.10);
+      box-shadow: inset 0 1px 0 color-mix(in srgb, var(--lm-paper-highlight) 28%, transparent), 0 1px 0 rgba(0, 0, 0, 0.10);
       opacity: 0.85;
       pointer-events: none;
     }
     .toolbar > * { margin-top: 14px; }
     .toolbar .ant-input-affix-wrapper {
       border-radius: 14px !important;
-      border: 1px solid rgba(56, 42, 34, 0.22) !important;
-      background: linear-gradient(180deg, rgba(255, 254, 246, 0.92) 0%, rgba(250, 245, 236, 0.92) 100%) !important;
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65) !important;
+      border: 1px solid color-mix(in srgb, var(--lm-paper-edge) 22%, transparent) !important;
+      background: linear-gradient(180deg, color-mix(in srgb, var(--lm-paper-top) 92%, transparent) 0%, color-mix(in srgb, var(--lm-paper-bottom) 92%, transparent) 100%) !important;
+      box-shadow: inset 0 1px 0 color-mix(in srgb, var(--lm-paper-highlight) 65%, transparent) !important;
     }
     .toolbar .ant-input-affix-wrapper > input.ant-input {
       border: 0 !important;
@@ -78,28 +78,28 @@ export const useBenchTableStyles = createStyles(({ css }) => ({
       background: transparent !important;
     }
     .toolbar .ant-input-affix-wrapper:hover {
-      border-color: rgba(123, 45, 38, 0.35) !important;
+      border-color: color-mix(in srgb, var(--lm-paper-accent) 35%, transparent) !important;
     }
     .toolbar .ant-input-affix-wrapper-focused,
     .toolbar .ant-input-affix-wrapper:focus-within {
-      border-color: rgba(123, 45, 38, 0.55) !important;
-      box-shadow: 0 0 0 3px rgba(123, 45, 38, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.65) !important;
+      border-color: color-mix(in srgb, var(--lm-paper-accent) 55%, transparent) !important;
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--lm-paper-accent) 18%, transparent), inset 0 1px 0 color-mix(in srgb, var(--lm-paper-highlight) 65%, transparent) !important;
     }
     .toolbar .ant-btn {
       border-radius: 14px;
-      border: 1px solid rgba(56, 42, 34, 0.22);
-      background: linear-gradient(180deg, rgba(255, 254, 246, 0.92) 0%, rgba(250, 245, 236, 0.92) 100%);
-      color: rgba(34, 28, 23, 0.88);
+      border: 1px solid color-mix(in srgb, var(--lm-paper-edge) 22%, transparent);
+      background: linear-gradient(180deg, color-mix(in srgb, var(--lm-paper-top) 92%, transparent) 0%, color-mix(in srgb, var(--lm-paper-bottom) 92%, transparent) 100%);
+      color: color-mix(in srgb, var(--lm-paper-ink) 88%, transparent);
       font-weight: 800;
       letter-spacing: 0.02em;
-      box-shadow: 0 10px 18px rgba(31, 24, 18, 0.10), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+      box-shadow: 0 10px 18px rgba(31, 24, 18, 0.1), inset 0 1px 0 color-mix(in srgb, var(--lm-paper-highlight) 55%, transparent);
       transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
     }
     .toolbar .ant-btn:hover {
       transform: translateY(-1px);
-      border-color: rgba(123, 45, 38, 0.35);
-      box-shadow: 0 14px 22px rgba(31, 24, 18, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.55);
-      color: rgba(34, 28, 23, 0.92);
+      border-color: color-mix(in srgb, var(--lm-paper-accent) 35%, transparent);
+      box-shadow: 0 14px 22px rgba(31, 24, 18, 0.14), inset 0 1px 0 color-mix(in srgb, var(--lm-paper-highlight) 55%, transparent);
+      color: color-mix(in srgb, var(--lm-paper-ink) 92%, transparent);
     }
     .toolbar .ant-btn:active {
       transform: translateY(0px);
@@ -110,14 +110,14 @@ export const useBenchTableStyles = createStyles(({ css }) => ({
       overflow: hidden;
     }
     .ant-table-container {
-      border: 1px solid rgba(56, 42, 34, 0.18);
+      border: 1px solid color-mix(in srgb, var(--lm-paper-edge) 18%, transparent);
       border-radius: 12px;
-      background: rgba(255, 254, 246, 0.78);
+      background: color-mix(in srgb, var(--lm-paper-top) 78%, transparent);
     }
     .ant-table-thead > tr > th {
-      background: linear-gradient(180deg, rgba(255, 254, 249, 1) 0%, rgba(246, 240, 230, 1) 100%) !important;
-      border-bottom: 2px solid rgba(56, 42, 34, 0.26) !important;
-      color: rgba(34, 28, 23, 0.90) !important;
+      background: linear-gradient(180deg, var(--lm-paper-top) 0%, var(--lm-paper-bottom) 100%) !important;
+      border-bottom: 2px solid color-mix(in srgb, var(--lm-paper-edge) 26%, transparent) !important;
+      color: color-mix(in srgb, var(--lm-paper-ink) 90%, transparent) !important;
       font-weight: 900 !important;
       letter-spacing: 0.08em;
       text-transform: uppercase;
@@ -143,16 +143,16 @@ export const useBenchTableStyles = createStyles(({ css }) => ({
       margin: 0 !important;
     }
     .ant-table-tbody > tr > td {
-      background: rgba(255, 254, 248, 0.72);
-      border-bottom: 1px solid rgba(56, 42, 34, 0.12);
-      color: rgba(34, 28, 23, 0.88);
+      background: color-mix(in srgb, var(--lm-paper-top) 72%, transparent);
+      border-bottom: 1px solid color-mix(in srgb, var(--lm-paper-edge) 12%, transparent);
+      color: color-mix(in srgb, var(--lm-paper-ink) 88%, transparent);
       padding: 12px 16px;
     }
     .ant-table-tbody > tr:nth-child(2n) > td {
-      background: rgba(250, 246, 238, 0.62);
+      background: color-mix(in srgb, var(--lm-paper-bottom) 62%, transparent);
     }
     .ant-table-tbody > tr:hover > td {
-      background: rgba(123, 45, 38, 0.085) !important;
+      background: color-mix(in srgb, var(--lm-paper-accent) 8.5%, transparent) !important;
       transition: background 120ms ease;
     }
     .ant-table-tbody > tr > td.ant-table-column-sort,
@@ -161,15 +161,15 @@ export const useBenchTableStyles = createStyles(({ css }) => ({
     }
     .ant-pagination,
     .ant-pagination * {
-      color: rgba(34, 28, 23, 0.80);
+      color: color-mix(in srgb, var(--lm-paper-ink) 80%, transparent);
     }
     /* Sample tags: green tint */
     .sampleTags .ant-tag {
       background: rgba(47, 111, 79, 0.16);
       border-color: rgba(47, 111, 79, 0.36);
-      color: rgba(10, 38, 25, 0.92);
+      color: color-mix(in srgb, var(--lm-paper-ink) 92%, transparent);
       font-weight: 700;
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.40);
+      box-shadow: inset 0 1px 0 color-mix(in srgb, var(--lm-paper-highlight) 40%, transparent);
     }
     /* License tags: purple tint */
     .licenseTags {
@@ -182,14 +182,14 @@ export const useBenchTableStyles = createStyles(({ css }) => ({
       margin: 0;
       background: rgba(92, 45, 145, 0.16);
       border-color: rgba(92, 45, 145, 0.40);
-      color: rgba(34, 10, 68, 0.92);
+      color: color-mix(in srgb, var(--lm-violet-fg) 92%, transparent);
       font-weight: 700;
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.40);
+      box-shadow: inset 0 1px 0 color-mix(in srgb, var(--lm-paper-highlight) 40%, transparent);
     }
   `,
 
   favoriteActiveBtn: css`
-    &:hover .anticon { color: #faad14 !important; }
+    &:hover .anticon { color: var(--lm-warning-solid) !important; }
   `,
 }));
 

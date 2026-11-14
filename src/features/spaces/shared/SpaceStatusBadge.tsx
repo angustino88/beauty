@@ -11,15 +11,6 @@ import styles from './SpaceStatusBadge.module.css';
 import equipmentBadgeStyles from '@/features/lab-equipment/shared/components/status/EquipmentStatus.module.css';
 import indicatorStyles from '@/shared/components/StatusIndicator.module.css';
 
-const toneClassMap: Record<string, string> = {
-  neutral: indicatorStyles.neutral,
-  info: indicatorStyles.info,
-  warning: indicatorStyles.warning,
-  danger: indicatorStyles.danger,
-  success: indicatorStyles.success,
-  'success-subtle': indicatorStyles.successSubtle,
-};
-
 interface SpaceStatusBadgeProps {
   status?: unknown;
   label?: string;
@@ -53,7 +44,7 @@ export default function SpaceStatusBadge({
         ? resolvedAccess.toLowerCase() === 'restricted'
         : resolvedAccess?.value === 'restricted';
 
-    const toneClass = toneClassMap[badge.tone] ?? indicatorStyles.neutral;
+    const toneClass = indicatorStyles[badge.tone] ?? indicatorStyles.neutral;
 
     return (
       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
@@ -65,7 +56,7 @@ export default function SpaceStatusBadge({
         </span>
         {isRestricted && (
           <Tooltip title="Restricted access">
-            <LockOutlined style={{ color: '#d97706', fontSize: 13 }} aria-label="Restricted access" />
+            <LockOutlined style={{ color: 'var(--lm-violet-solid)', fontSize: 13 }} aria-label="Restricted access" />
           </Tooltip>
         )}
       </span>
@@ -80,7 +71,7 @@ export default function SpaceStatusBadge({
   if (spaceKind === 'room' || spaceKind === 'station') {
     if (value === 'available' || resolvedLabel.toLowerCase() === 'available') {
       resolvedLabel = 'Operational';
-      resolvedTone = 'overviewGreen';
+      resolvedTone = 'success';
     }
   }
 

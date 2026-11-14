@@ -1,3 +1,4 @@
+import type { StatusTone } from '../../../shared/status/statusTone.ts';
 export type Choice<T extends string = string> = { value: T; label: string };
 
 export type LifecycleStatus = 'planned' | 'in_service' | 'retired';
@@ -83,13 +84,7 @@ export interface DowntimeConflictDetail {
   message: string;
 }
 
-export type BadgeTone =
-  | 'neutral'
-  | 'info'
-  | 'warning'
-  | 'danger'
-  | 'success'
-  | 'success-subtle';
+export type BadgeTone = StatusTone;
 
 export interface ResourceBadgeResult {
   text: string;
@@ -104,9 +99,9 @@ export interface ResourceBadgeResult {
  * 3. condition !== "operational" -> { text: condition.label, tone: "danger" (out_of_service) | "warning" (in_maintenance) }
  * 4. availability.value === "unavailable" && blocked_by -> { text: "Unavailable (type name)", tone: "warning" }
  * 5. If room or station and operational -> { text: "Operational", tone: "success" }
- * 6. activity_status === "active" -> { text: "In use", tone: "success" }
- * 7. activity_status === "scheduled" -> { text: "Booked today", tone: "info" }
- * 8. Default (bench/asset) -> { text: "Available", tone: "success-subtle" }
+ * 6. activity_status === "active" -> { text: "In use", tone: "info" }
+ * 7. activity_status === "scheduled" -> { text: "Booked today", tone: "violet" }
+ * 8. Default (bench/asset) -> { text: "Available", tone: "success" }
  */
 export function resourceBadge(
   r?: Partial<ResourceState> | null,
@@ -133,9 +128,9 @@ export function resourceBadge(
   if (resourceType === 'room' || resourceType === 'station') {
     return { text: 'Operational', tone: 'success' };
   }
-  if (r.activity_status?.value === 'active') return { text: 'In use', tone: 'success' };
-  if (r.activity_status?.value === 'scheduled') return { text: 'Booked today', tone: 'info' };
-  return { text: 'Available', tone: 'success-subtle' };
+  if (r.activity_status?.value === 'active') return { text: 'In use', tone: 'info' };
+  if (r.activity_status?.value === 'scheduled') return { text: 'Booked today', tone: 'violet' };
+  return { text: 'Available', tone: 'success' };
 }
 
 /**

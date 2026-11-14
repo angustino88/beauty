@@ -38,7 +38,7 @@ function EquipmentFacetDropdown({ selectedKeys, setSelectedKeys, confirm, clearF
           </div>
         )) : <Typography.Text type="secondary">{search ? 'No matching options' : 'No options for the selected filters'}</Typography.Text>}
       </div>
-      <Space style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid #eee', paddingTop: 10 }}>
+      <Space style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid var(--lm-border)', paddingTop: 10 }}>
         <Button size="small" disabled={!selectedKeys.length} onClick={() => {
           setSearch('');
           clearFilters?.({ confirm: true, closeDropdown: false });

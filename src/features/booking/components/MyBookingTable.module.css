@@ -9,9 +9,9 @@
 }
 .bookingTable :global(.ant-table-header), .bookingTable :global(.ant-table-body) { max-width: 100%; }
 .bookingTable :global(.ant-table-header table), .bookingTable :global(.ant-table-body table) { table-layout: fixed; }
-.bookingTable :global(.ant-table-body) { overflow-x: scroll !important; scrollbar-width: auto; scrollbar-color: #8795a4 #edf1f5; }
+.bookingTable :global(.ant-table-body) { overflow-x: scroll !important; scrollbar-width: auto; scrollbar-color: var(--lm-neutral-solid) var(--lm-border-subtle); }
 .bookingTable :global(.ant-table-body::-webkit-scrollbar) { width: 12px; height: 12px; }
-.bookingTable :global(.ant-table-body::-webkit-scrollbar-thumb) { background: #8795a4; border: 2px solid #edf1f5; border-radius: 6px; }
+.bookingTable :global(.ant-table-body::-webkit-scrollbar-thumb) { background: var(--lm-neutral-solid); border: 2px solid var(--lm-border-subtle); border-radius: 6px; }
 .bookingTable :global(.ant-table-sticky-scroll) { z-index: 10; }
 .bookingCode { display: block; white-space: normal; overflow-wrap: anywhere; }
 .bookingCode code { white-space: normal; overflow-wrap: anywhere; }

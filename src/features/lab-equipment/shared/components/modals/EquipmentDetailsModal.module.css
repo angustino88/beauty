@@ -1,15 +1,15 @@
 .sheet :global(.ant-tabs-nav) { margin-bottom: 20px; }
-.sheet :global(.ant-tabs-tab-active .ant-tabs-tab-btn) { color: #6155d9 !important; }
-.sheet :global(.ant-tabs-ink-bar) { background: #6155d9; }
-.sheet :global(.ant-tabs-nav::before) { border-color: #e8eaf0; }
+.sheet :global(.ant-tabs-tab-active .ant-tabs-tab-btn) { color: var(--lm-primary) !important; }
+.sheet :global(.ant-tabs-ink-bar) { background: var(--lm-primary); }
+.sheet :global(.ant-tabs-nav::before) { border-color: var(--lm-border); }
 .detailSection { display: flex; flex-direction: column; gap: 10px; }
 .detailsDescriptions { min-width: 0; }
-.detailsDescriptions :global(.ant-descriptions-view) { border-color: #e8eaf0 !important; border-radius: 9px; overflow: hidden; }
-.detailsDescriptions :global(.ant-descriptions-item-label) { width: 34%; background: #f8f8fb !important; color: #717789 !important; font-size: 11px; font-weight: 500; }
-.detailsDescriptions :global(.ant-descriptions-item-content) { color: #343849; font-size: 12px; overflow-wrap: anywhere; }
+.detailsDescriptions :global(.ant-descriptions-view) { border-color: var(--lm-border) !important; border-radius: 9px; overflow: hidden; }
+.detailsDescriptions :global(.ant-descriptions-item-label) { width: 34%; background: var(--lm-surface-subtle) !important; color: var(--lm-text-tertiary) !important; font-size: 11px; font-weight: 500; }
+.detailsDescriptions :global(.ant-descriptions-item-content) { color: var(--lm-text); font-size: 12px; overflow-wrap: anywhere; }
 .detailsDescriptions :global(.ant-descriptions-row > th),
-.detailsDescriptions :global(.ant-descriptions-row > td) { padding: 10px 12px !important; border-color: #e8eaf0 !important; }
-.detailsDescriptions a { color: #5c50c4; }
+.detailsDescriptions :global(.ant-descriptions-row > td) { padding: 10px 12px !important; border-color: var(--lm-border) !important; }
+.detailsDescriptions a { color: var(--lm-primary); }
 
 .heroStatus {
 	position: absolute;
@@ -25,15 +25,15 @@
 	align-items: center;
 	gap: 10px;
 	padding: 12px 0;
-	color: #647481;
+	color: var(--lm-text-tertiary);
 	font-size: 12px;
 }
 
 .emptyMapping {
 	padding: 16px;
-	color: #647481;
-	background: #f8fafb;
-	border: 1px dashed #dce3e8;
+	color: var(--lm-text-tertiary);
+	background: var(--lm-surface-subtle);
+	border: 1px dashed var(--lm-border);
 	border-radius: 8px;
 	font-size: 12px;
 }
@@ -41,14 +41,14 @@
 .connectedGraph {
 	min-width: 0;
 	padding: 14px;
-	background: #f8fafb;
-	border: 1px solid #e5eaee;
+	background: var(--lm-surface-subtle);
+	border: 1px solid var(--lm-border);
 	border-radius: 8px;
 }
 
 .graphHint {
 	margin: 0 0 12px;
-	color: #576b7b;
+	color: var(--lm-text-secondary);
 	font-size: 12px;
 	line-height: 1.5;
 }
@@ -57,11 +57,11 @@
 	display: inline-flex;
 	align-items: center;
 	gap: 8px;
-	color: #597070;
+	color: var(--lm-text-secondary);
 }
 
 .sectionTitle > :global(.anticon) {
-	color: #668984;
+	color: var(--lm-text-tertiary);
 	font-size: 13px;
 }
 
@@ -88,7 +88,7 @@
 
 .valueList > div + div {
 	padding-top: 8px;
-	border-top: 1px solid #e8edf0;
+	border-top: 1px solid var(--lm-border);
 }
 
 .nestedValues {
@@ -105,7 +105,7 @@
 }
 
 .nestedValues dt {
-	color: #647481;
+	color: var(--lm-text-tertiary);
 	font-weight: 400;
 }
 
@@ -127,4 +127,13 @@
 	.connectedGraph {
 		padding: 10px;
 	}
+}
+/* The sheet body already pads its content; avoid a second inset around tabs and summaries. */
+.flushBody {
+	padding: 0 !important;
+	overflow: visible !important;
+}
+
+.flushBody :global(.ant-tabs-nav) {
+	margin-bottom: 16px;
 }

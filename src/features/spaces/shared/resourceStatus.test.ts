@@ -74,7 +74,7 @@ test('resourceBadge shows in use and booked today when operational and available
     activity_status: { value: 'active', label: 'Active' },
     status: null,
   };
-  assert.deepEqual(resourceBadge(active), { text: 'In use', tone: 'success' });
+  assert.deepEqual(resourceBadge(active), { text: 'In use', tone: 'info' });
 
   const scheduled: ResourceState = {
     lifecycle_status: { value: 'in_service', label: 'In Service' },
@@ -83,7 +83,7 @@ test('resourceBadge shows in use and booked today when operational and available
     activity_status: { value: 'scheduled', label: 'Scheduled' },
     status: null,
   };
-  assert.deepEqual(resourceBadge(scheduled), { text: 'Booked today', tone: 'info' });
+  assert.deepEqual(resourceBadge(scheduled), { text: 'Booked today', tone: 'violet' });
 
   const idle: ResourceState = {
     lifecycle_status: { value: 'in_service', label: 'In Service' },
@@ -92,7 +92,7 @@ test('resourceBadge shows in use and booked today when operational and available
     activity_status: { value: 'idle', label: 'Idle' },
     status: null,
   };
-  assert.deepEqual(resourceBadge(idle), { text: 'Available', tone: 'success-subtle' });
+  assert.deepEqual(resourceBadge(idle), { text: 'Available', tone: 'success' });
   assert.deepEqual(resourceBadge(idle, 'station'), { text: 'Operational', tone: 'success' });
   assert.deepEqual(resourceBadge(idle, 'room'), { text: 'Operational', tone: 'success' });
 });

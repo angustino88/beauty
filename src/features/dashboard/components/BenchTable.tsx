@@ -196,7 +196,7 @@ export const BenchTable = memo(function BenchTable({
             }
             icon={
               state.showFavoritesOnly ? (
-                <StarFilled style={{ color: "#faad14" }} />
+                <StarFilled style={{ color: "var(--lm-warning-solid)" }} />
               ) : (
                 <StarOutlined />
               )

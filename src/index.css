@@ -1,10 +1,13 @@
 @import './shared/styles/tailwind.css';
 
+/* Corporate font is not distributed in the public repo. Internal builds drop the
+   file into public/fonts/ (gitignored); otherwise the --lm-font-sans fallbacks apply. */
 @font-face {
   font-family: "Bosch Sans";
-  src: url("./fonts/fonts-woff/BoschSans-Regular-v5_003.woff") format("woff");
+  src: url("/fonts/BoschSans-Regular-v5_003.woff") format("woff");
   font-weight: normal;
   font-style: normal;
+  font-display: swap;
 }
 
 *, *::before, *::after {
@@ -20,19 +23,13 @@ html, body {
 }
 
 body {
-  font-family: "Bosch Sans", -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
-    'Noto Sans', sans-serif;
+  font-family: var(--lm-font-sans);
   font-size: 14px;
   line-height: 1.5715;
-  color: #292d33;
-  background-color: #f5f3ef;
+  color: var(--lm-text);
+  background-color: var(--lm-bg);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-html[data-theme='dark'] body {
-  color: #e8eaed;
-  background-color: #171a1f;
 }
 
 #root {

@@ -17,7 +17,7 @@
 
 .filterLabel {
     flex: 0 0 auto;
-    color: #40554d;
+    color: var(--lm-text-secondary);
     font-size: 13px;
     font-weight: 600;
 }

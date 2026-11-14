@@ -7,16 +7,16 @@ export const useInfoModalStyles = createStyles(({ css }) => ({
     width: 100%;
     min-width: 0;
     padding: 2px 2px 2px 0;
-    color: #263a32;
+    color: var(--lm-text);
   `,
   deviceHero: css`
     display: grid;
     grid-template-columns: 164px minmax(0, 1fr);
     min-height: 176px;
     overflow: hidden;
-    border: 1px solid #d8e3dd;
+    border: 1px solid var(--lm-border-strong);
     border-radius: 8px;
-    background: linear-gradient(135deg, rgba(226, 240, 232, 0.72), transparent 52%), #fbfcfa;
+    background: linear-gradient(135deg, rgba(226, 240, 232, 0.72), transparent 52%), var(--lm-surface-subtle);
 
     @media (max-width: 640px) { grid-template-columns: 1fr; }
   `,
@@ -61,7 +61,7 @@ export const useInfoModalStyles = createStyles(({ css }) => ({
   deviceIdentity: css`
     min-width: 0;
     padding: 18px 20px;
-    h3.ant-typography { margin: 2px 0 0; color: #1d342b; font-size: 24px; line-height: 1.2; letter-spacing: 0; }
+    h3.ant-typography { margin: 2px 0 0; color: var(--lm-text); font-size: 24px; line-height: 1.2; letter-spacing: 0; }
 
     @media (max-width: 480px) {
       padding: 18px;
@@ -89,23 +89,23 @@ export const useInfoModalStyles = createStyles(({ css }) => ({
     align-items: center;
     gap: 10px;
     padding: 8px 11px;
-    border: 1px solid #d6e1db;
+    border: 1px solid var(--lm-border-strong);
     border-radius: 6px;
     background: rgba(255, 255, 255, 0.76);
-    > span { padding-right: 10px; border-right: 1px solid #dce5e0; color: #718078; font-size: 10px; font-weight: 700; line-height: 1.3; text-transform: uppercase; }
-    > strong { display: flex; align-items: center; gap: 9px; color: #315e4c; font-size: 14px; font-weight: 800; line-height: 1.3; }
-    > strong small { color: #718078; font-size: 10px; font-weight: 600; white-space: nowrap; }
+    > span { padding-right: 10px; border-right: 1px solid var(--lm-border); color: var(--lm-text-tertiary); font-size: 10px; font-weight: 700; line-height: 1.3; text-transform: uppercase; }
+    > strong { display: flex; align-items: center; gap: 9px; color: var(--lm-success-fg); font-size: 14px; font-weight: 800; line-height: 1.3; }
+    > strong small { color: var(--lm-text-tertiary); font-size: 10px; font-weight: 600; white-space: nowrap; }
     &[data-status='active'] {
-      > strong { color: #8d3b34; }
+      > strong { color: var(--lm-danger-fg); }
     }
     &[data-status='inactive'] {
-      > strong { color: #8a651f; }
+      > strong { color: var(--lm-warning-fg); }
     }
     &[data-status='offline'], &[data-status='unknown'] {
-      > strong { color: #625b58; }
+      > strong { color: var(--lm-text-secondary); }
     }
     &[data-status='maintaining'], &[data-status='maintenance'] {
-      > strong { color: #176d78; }
+      > strong { color: var(--lm-info-fg); }
     }
 
     @media (max-width: 480px) {
@@ -121,15 +121,15 @@ export const useInfoModalStyles = createStyles(({ css }) => ({
     border-radius: 50%;
   `,
   bookingStatusBooked: css`
-    background: #a13a30;
+    background: var(--lm-danger-solid);
     box-shadow: 0 0 0 3px rgba(161, 58, 48, 0.12);
   `,
   bookingStatusAvailable: css`
-    background: #3e8761;
+    background: var(--lm-success-solid);
     box-shadow: 0 0 0 3px rgba(62, 135, 97, 0.12);
   `,
   eyebrow: css`
-    color: #3f765f;
+    color: var(--lm-success-fg);
     font-size: 11px;
     font-weight: 800;
     text-transform: uppercase;
@@ -140,44 +140,44 @@ export const useInfoModalStyles = createStyles(({ css }) => ({
     gap: 0;
     margin-top: 14px;
     overflow: hidden;
-    border: 1px solid #dce5e0;
+    border: 1px solid var(--lm-border);
     border-radius: 6px;
     background: rgba(255, 255, 255, 0.68);
-    > div { display: flex; min-width: 0; align-items: center; gap: 10px; padding: 10px 12px; color: #39715a; font-size: 15px; }
-    > div:nth-child(odd) { border-right: 1px solid #e3eae6; }
-    > div:nth-child(-n + 2) { border-bottom: 1px solid #e3eae6; }
+    > div { display: flex; min-width: 0; align-items: center; gap: 10px; padding: 10px 12px; color: var(--lm-success-fg); font-size: 15px; }
+    > div:nth-child(odd) { border-right: 1px solid var(--lm-border); }
+    > div:nth-child(-n + 2) { border-bottom: 1px solid var(--lm-border); }
     span, strong { display: block; min-width: 0; }
-    span { color: #66756d; font-size: 10px; font-weight: 700; text-transform: uppercase; }
-    strong { overflow: hidden; margin-top: 3px; color: #263a32; font-size: 14px; line-height: 1.35; text-overflow: ellipsis; text-transform: none; }
-    a { color: #247056; text-decoration: underline; text-underline-offset: 2px; }
+    span { color: var(--lm-text-secondary); font-size: 10px; font-weight: 700; text-transform: uppercase; }
+    strong { overflow: hidden; margin-top: 3px; color: var(--lm-text); font-size: 14px; line-height: 1.35; text-overflow: ellipsis; text-transform: none; }
+    a { color: var(--lm-success-fg); text-decoration: underline; text-underline-offset: 2px; }
     @media (max-width: 480px) {
       grid-template-columns: 1fr;
       > div:nth-child(odd) { border-right: 0; }
-      > div:not(:last-child) { border-bottom: 1px solid #e3eae6; }
+      > div:not(:last-child) { border-bottom: 1px solid var(--lm-border); }
     }
   `,
   remark: css`
     margin-top: 12px;
     padding: 7px 10px;
-    border-left: 3px solid #83a996;
+    border-left: 3px solid var(--lm-neutral-solid);
     background: rgba(225,237,230,.55);
-    color: #58675f;
+    color: var(--lm-text-secondary);
     font-size: 12px;
     line-height: 1.45;
   `,
   activityStrip: css`
     padding: 14px 16px 16px;
-    border: 1px solid #d8e3dd;
+    border: 1px solid var(--lm-border-strong);
     border-radius: 8px;
-    background: #f8faf8;
+    background: var(--lm-surface-subtle);
   `,
   sectionHeading: css`
     display: flex;
     align-items: center;
     gap: 10px;
     div { display: grid; gap: 1px; }
-    strong { color: #263a32; font-size: 15px; line-height: 1.3; }
-    div > span { color: #707d76; font-size: 11px; line-height: 1.35; }
+    strong { color: var(--lm-text); font-size: 15px; line-height: 1.3; }
+    div > span { color: var(--lm-text-tertiary); font-size: 11px; line-height: 1.35; }
   `,
   headingIcon: css`
     display: grid;
@@ -185,8 +185,8 @@ export const useInfoModalStyles = createStyles(({ css }) => ({
     height: 32px;
     place-items: center;
     border-radius: 6px;
-    background: #dfece5;
-    color: #2f7458;
+    background: var(--lm-surface-muted);
+    color: var(--lm-success-fg);
     font-size: 15px;
   `,
   activityFlow: css`
@@ -195,18 +195,18 @@ export const useInfoModalStyles = createStyles(({ css }) => ({
     gap: 0;
     margin-top: 12px;
     overflow: hidden;
-    border: 1px solid #dfe7e2;
+    border: 1px solid var(--lm-border);
     border-radius: 6px;
-    background: #fff;
-    > div { display: grid; grid-template-columns: 30px minmax(0, 1fr); min-width: 0; min-height: 64px; align-items: center; gap: 10px; padding: 12px 14px; color: #4e806b; }
-    > div > .anticon { display: grid; width: 30px; height: 30px; place-items: center; border-radius: 5px; background: #edf4f0; font-size: 15px; }
-    > div:nth-of-type(2), > div:nth-of-type(3) { border-left: 1px solid #e4eae7; }
+    background: var(--lm-surface);
+    > div { display: grid; grid-template-columns: 30px minmax(0, 1fr); min-width: 0; min-height: 64px; align-items: center; gap: 10px; padding: 12px 14px; color: var(--lm-text-secondary); }
+    > div > .anticon { display: grid; width: 30px; height: 30px; place-items: center; border-radius: 5px; background: var(--lm-surface-muted); font-size: 15px; }
+    > div:nth-of-type(2), > div:nth-of-type(3) { border-left: 1px solid var(--lm-border); }
     span, strong { display: block; min-width: 0; }
-    div > span { width: 100%; color: #6d7b74; font-size: 10px; font-weight: 700; text-transform: uppercase; }
-    strong { overflow: hidden; margin-top: 4px; color: #283b33; font-size: 14px; line-height: 1.35; text-overflow: ellipsis; text-transform: none; white-space: nowrap; }
+    div > span { width: 100%; color: var(--lm-text-tertiary); font-size: 10px; font-weight: 700; text-transform: uppercase; }
+    strong { overflow: hidden; margin-top: 4px; color: var(--lm-text); font-size: 14px; line-height: 1.35; text-overflow: ellipsis; text-transform: none; white-space: nowrap; }
     @media (max-width: 640px) {
       grid-template-columns: 1fr;
-      > div:nth-of-type(2), > div:nth-of-type(3) { border-top: 1px solid #e4eae7; border-left: 0; }
+      > div:nth-of-type(2), > div:nth-of-type(3) { border-top: 1px solid var(--lm-border); border-left: 0; }
     }
   `,
   remoteUserValue: css`
@@ -221,9 +221,9 @@ export const useInfoModalStyles = createStyles(({ css }) => ({
   inventorySection: css`
     min-width: 0;
     padding: 16px 18px 18px;
-    border: 1px solid #d8e3dd;
+    border: 1px solid var(--lm-border-strong);
     border-radius: 8px;
-    background: #fff;
+    background: var(--lm-surface);
   `,
   inventoryHeading: css`
     display: flex;
@@ -236,10 +236,10 @@ export const useInfoModalStyles = createStyles(({ css }) => ({
     display: flex;
     align-items: baseline;
     gap: 5px;
-    color: #748079;
+    color: var(--lm-text-tertiary);
     font-size: 9px;
     text-transform: uppercase;
-    strong { color: #2c624d; font-size: 22px; font-variant-numeric: tabular-nums; }
+    strong { color: var(--lm-success-fg); font-size: 22px; font-variant-numeric: tabular-nums; }
   `,
   equipmentGrid: css`
     display: grid;
@@ -251,16 +251,16 @@ export const useInfoModalStyles = createStyles(({ css }) => ({
   equipmentGroup: css`
     min-width: 0;
     overflow: hidden;
-    border: 1px solid #e1e8e4;
+    border: 1px solid var(--lm-border);
     border-radius: 6px;
-    background: #f9fbf9;
+    background: var(--lm-surface-subtle);
   `,
   equipmentGroupHeader: css`
     display: flex;
     align-items: center;
     gap: 7px;
     padding: 9px 10px;
-    border-bottom: 1px solid #e5ebe8;
+    border-bottom: 1px solid var(--lm-border);
   `,
   equipmentIcon: css`
     display: grid;
@@ -269,13 +269,13 @@ export const useInfoModalStyles = createStyles(({ css }) => ({
     flex: 0 0 25px;
     place-items: center;
     border-radius: 5px;
-    background: #e0ece6;
-    color: #347258;
+    background: var(--lm-surface-muted);
+    color: var(--lm-success-fg);
     font-size: 13px;
   `,
   equipmentLabel: css`
     overflow: hidden;
-    color: #34473f;
+    color: var(--lm-text);
     font-size: 11px;
     font-weight: 800;
     text-overflow: ellipsis;
@@ -283,7 +283,7 @@ export const useInfoModalStyles = createStyles(({ css }) => ({
   `,
   equipmentCount: css`
     margin-left: auto;
-    color: #718078;
+    color: var(--lm-text-tertiary);
     font-size: 11px;
     font-variant-numeric: tabular-nums;
   `,
@@ -296,8 +296,8 @@ export const useInfoModalStyles = createStyles(({ css }) => ({
     min-width: 0;
     padding: 9px 8px;
     border-radius: 4px;
-    background: #fff;
-    color: #2c3e36;
+    background: var(--lm-surface);
+    color: var(--lm-text);
     font-size: 12px;
     font-weight: 700;
   `,
@@ -305,7 +305,7 @@ export const useInfoModalStyles = createStyles(({ css }) => ({
     display: block;
     overflow: hidden;
     margin-top: 3px;
-    color: #77827d;
+    color: var(--lm-text-tertiary);
     font-family: Consolas, monospace;
     font-size: 9px;
     font-weight: 500;
@@ -314,20 +314,20 @@ export const useInfoModalStyles = createStyles(({ css }) => ({
   `,
   emptyInventory: css`
     padding: 24px;
-    border: 1px dashed #d7dfdb;
+    border: 1px dashed var(--lm-border-strong);
     border-radius: 6px;
-    color: #8a948f;
+    color: var(--lm-text-tertiary);
     font-size: 12px;
     text-align: center;
   `,
   bookButton: css`
-    background: #1F7A4D;
-    border-color: #1F7A4D;
+    background: var(--lm-success-solid);
+    border-color: var(--lm-success-solid);
 
     &:hover,
     &:focus {
-      background: #1F7A4D !important;
-      border-color: #1F7A4D !important;
+      background: var(--lm-success-solid) !important;
+      border-color: var(--lm-success-solid) !important;
     }
   `,
 }));

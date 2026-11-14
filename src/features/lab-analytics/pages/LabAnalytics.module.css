@@ -23,12 +23,12 @@
   flex: 1;
   height: 1px;
   content: '';
-  background: #dfe7e2;
+  background: var(--lm-border);
 }
 
 .sectionTitle {
   margin: 0;
-  color: #173d29;
+  color: var(--lm-success-fg);
   font-size: 16px;
   font-weight: 700;
   line-height: 1.25;
@@ -42,7 +42,7 @@
 
 .kpiGrid :global(.ant-card) {
   flex: 1;
-  border-color: #e1e6e3;
+  border-color: var(--lm-border);
   border-radius: 6px;
   box-shadow: none;
   transition: border-color 160ms ease, box-shadow 160ms ease;
@@ -53,7 +53,7 @@
 }
 
 .kpiGrid :global(.ant-card:hover) {
-  border-color: #b5c9bc;
+  border-color: var(--lm-border-strong);
   box-shadow: 0 4px 12px rgba(24, 39, 30, 0.06);
 }
 
@@ -62,7 +62,7 @@
 }
 
 .kpiGrid :global(.ant-statistic-content) {
-  color: #173d29;
+  color: var(--lm-success-fg);
   font-size: 30px;
   font-weight: 700;
   line-height: 1.15;
@@ -76,7 +76,7 @@
 }
 
 .chartGrid :global(.ant-card) {
-  border-color: #e1e6e3;
+  border-color: var(--lm-border);
   border-radius: 6px;
   box-shadow: none;
   overflow: hidden;
@@ -84,14 +84,14 @@
 }
 
 .chartGrid :global(.ant-card:hover) {
-  border-color: #b5c9bc;
+  border-color: var(--lm-border-strong);
   box-shadow: 0 4px 12px rgba(24, 39, 30, 0.06);
 }
 
 .chartGrid :global(.ant-card-head) {
   min-height: 68px;
-  border-bottom-color: #ebf0ed;
-  background: #fbfcfb;
+  border-bottom-color: var(--lm-border);
+  background: var(--lm-surface);
 }
 
 .chartGrid :global(.ant-card-head-title) {
@@ -99,7 +99,7 @@
 }
 
 .chartGrid :global(.ant-typography.ant-typography-h5) {
-  color: #213c2b;
+  color: var(--lm-text);
   font-size: 15px;
 }
 
@@ -108,19 +108,19 @@
 }
 
 .sessionLog :global(.ant-card) {
-  border-color: #e1e6e3;
+  border-color: var(--lm-border);
   border-radius: 6px;
   box-shadow: none;
 }
 
 .sessionLog :global(.ant-card-head) {
   min-height: 60px;
-  border-bottom-color: #e5ece8;
-  background: #fbfcfb;
+  border-bottom-color: var(--lm-border);
+  background: var(--lm-surface);
 }
 
 .sessionLog :global(.ant-table-thead > tr > th) {
-  color: #405148;
+  color: var(--lm-text-secondary);
   font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;

@@ -1,20 +1,17 @@
 import React from 'react';
-import { Collapse, Descriptions } from 'antd';
-import {
-  DesktopOutlined,
-  ToolOutlined,
-  ApiOutlined,
-  ThunderboltOutlined,
-  InfoCircleOutlined,
-  EnvironmentOutlined,
-  ApartmentOutlined,
-} from '@ant-design/icons';
+import { Collapse } from 'antd';
 import { Link } from 'react-router-dom';
-import dayjs from 'dayjs';
-import EquipmentStatus from '../status/EquipmentStatus';
+import {
+  Activity, Cable, Cpu, IdCard, KeyRound, Monitor, Network, Package, ReceiptText, Users, Wrench, Zap,
+} from 'lucide-react';
 import { MappingVisualization } from '@/features/spaces/mapping/components/MappingVisualization';
 import type { ResourceMappingRow } from '@/features/spaces/mapping/types';
-import styles from './EquipmentCompactSummary.module.css';
+import {
+  Code, DetailSection, FacetGrid, LinkedList, NoteBox, PropertyList, StatGrid, StatTile, StatusHero, type Facet,
+} from '@/shared/components/detail/DetailPrimitives';
+import { refLabel } from '@/shared/utils/refLabel';
+import { toneForStatus, type StatusTone } from '@/shared/status/statusTone';
+import { explainEquipmentStatus } from '../../utils/equipmentStatusExplanation';
 
 interface EquipmentCompactSummaryProps {
   equipmentType: string;
@@ -23,192 +20,171 @@ interface EquipmentCompactSummaryProps {
   displayStatus: unknown;
 }
 
-const getCategoryIcon = (type: string) => {
-  switch (type.toLowerCase()) {
-    case 'computing':
-      return <DesktopOutlined />;
-    case 'networking':
-      return <ApiOutlined />;
-    case 'power':
-    case 'power_supply':
-      return <ThunderboltOutlined />;
-    case 'instrument':
-    case 'debugging':
-      return <ToolOutlined />;
-    default:
-      return <DesktopOutlined />;
+const CATEGORY_ICONS: Record<string, React.ReactNode> = {
+  computing: <Cpu />, display: <Monitor />, networking: <Network />, power: <Zap />, power_supply: <Zap />,
+  instrument: <Wrench />, debugging: <Wrench />, accessory: <Cable />,
+};
+
+const dateOnly = (value: unknown) => {
+  if (!value) return null;
+  const date = new Date(String(value));
+  return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+};
+
+const money = (value: unknown): string | null => {
+  const amount = value && typeof value === 'object' ? (value as Record<string, unknown>).amount ?? (value as Record<string, unknown>).value : value;
+  if (amount === null || amount === undefined || amount === '' || !Number.isFinite(Number(amount))) return null;
+  const currency = value && typeof value === 'object' && typeof (value as Record<string, unknown>).currency === 'string'
+    ? String((value as Record<string, unknown>).currency) : 'USD';
+  try {
+    return new Intl.NumberFormat(undefined, { style: 'currency', currency, maximumFractionDigits: 0 }).format(Number(amount));
+  } catch {
+    return `${currency} ${Number(amount).toLocaleString()}`;
   }
 };
 
-export const EquipmentCompactSummary: React.FC<EquipmentCompactSummaryProps> = ({
-  equipmentType,
-  record,
-  connectedRows,
-  displayStatus,
-}) => {
-  const name = String(record.name || record.lab_name || record.sku || `${equipmentType} equipment`);
-  const sku = record.sku ? String(record.sku) : null;
-  const serial = record.serial_number ? String(record.serial_number) : null;
+function warrantyStat(value: unknown, now = new Date()) {
+  if (!value) return null;
+  const date = new Date(String(value));
+  if (Number.isNaN(date.getTime())) return <StatTile label="Warranty" value={String(value)} />;
+  const days = Math.round((date.getTime() - now.getTime()) / 86_400_000);
+  const detail = days < 0 ? 'Expired' : days <= 90 ? `Expires in ${days} days` : 'Active';
+  return <StatTile label="Warranty until" value={dateOnly(value)} detail={detail} />;
+}
+
+function facetsOf(record: Record<string, unknown>): Facet[] {
+  const facets: Facet[] = [];
+  const lifecycle = record.lifecycle_state as { value?: string; label?: string } | null | undefined;
+  if (lifecycle?.value) {
+    const tone: StatusTone = lifecycle.value === 'in_service' ? 'success' : toneForStatus(lifecycle.value);
+    facets.push({ label: 'Lifecycle', value: lifecycle.label && lifecycle.label !== lifecycle.value ? lifecycle.label : lifecycle.value.replaceAll('_', ' '), tone });
+  }
+  const condition = record.condition as { value?: string; label?: string } | null | undefined;
+  if (condition?.value) {
+    const tone: StatusTone = condition.value === 'operational' ? 'success' : condition.value === 'in_maintenance' ? 'warning' : 'danger';
+    const label = condition.value === 'operational' ? 'Operational' : condition.value === 'in_maintenance' ? 'In maintenance' : 'Out of service';
+    facets.push({ label: 'Condition', value: label, tone, icon: condition.value === 'operational' ? undefined : <Wrench /> });
+  }
+  const placement = record.placement as Record<string, unknown> | null | undefined;
+  const target = placement?.target_type as string | undefined;
+  facets.push({
+    label: 'Placement',
+    value: target === 'bench' ? 'On a bench' : target === 'station' ? 'At a station' : target === 'room' ? 'In a room' : target === 'note' ? 'Noted location' : 'Not placed',
+    tone: target === 'bench' ? 'info' : 'neutral',
+  });
+  if (record.loan) {
+    const loan = record.loan as Record<string, unknown>;
+    facets.push({ label: 'Loan', value: loan.overdue ? 'Overdue' : 'Active loan', tone: loan.overdue ? 'danger' : 'violet', icon: <Activity /> });
+  }
+  if (record.calibration_required) {
+    facets.push({
+      label: 'Calibration',
+      value: record.calibration_overdue ? 'Overdue' : 'Up to date',
+      tone: record.calibration_overdue ? 'warning' : 'success',
+    });
+  }
+  return facets;
+}
+
+export const EquipmentCompactSummary: React.FC<EquipmentCompactSummaryProps> = ({ equipmentType, record, connectedRows, displayStatus }) => {
+  const status = explainEquipmentStatus({ ...record, display_status: displayStatus ?? record.display_status });
   const image = typeof record.image === 'string' && record.image ? record.image : null;
+  const name = refLabel(record.name) || refLabel(record.sku) || 'Equipment';
+  const sku = refLabel(record.sku);
 
-  // Placement info
-  const primaryPlacement = connectedRows[0];
-  const benchName = primaryPlacement?.bench?.name || primaryPlacement?.bench?.sku;
-  const roomName = primaryPlacement?.room?.name || primaryPlacement?.room?.sku;
-  const storageRoom = record.storage_room ? String(record.storage_room) : null;
+  const price = money(record.acquisition_price);
+  const warranty = warrantyStat(record.warranty_until);
+  const replacement = dateOnly(record.replacement_date);
+  const lastCalibrated = dateOnly(record.last_calibrated_at);
 
-  // Owner info
-  const owner = record.owner || record.primary_owner ? String(record.owner || record.primary_owner) : null;
-  const department = record.department ? String(record.department) : null;
-
-  // Pricing & Warranty. Reference objects can carry a nested amount value.
-  const priceValue = typeof record.acquisition_price === 'object' && record.acquisition_price !== null
-    ? (record.acquisition_price as Record<string, unknown>).amount ?? (record.acquisition_price as Record<string, unknown>).value
-    : record.acquisition_price;
-  const price = priceValue != null && priceValue !== '' && Number.isFinite(Number(priceValue))
-    ? new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(Number(priceValue))
-    : null;
-  const warranty = record.warranty_until ? dayjs(String(record.warranty_until)).format('YYYY-MM-DD') : null;
-
-  // Network info
-  const ip = record.ip_address ? String(record.ip_address) : null;
-  const host = record.hostname ? String(record.hostname) : null;
-
-  const remark = record.remark || record.details || record.information ? String(record.remark || record.details || record.information) : null;
+  const network = [
+    ['Hostname', refLabel(record.hostname)],
+    ['IP address', refLabel(record.ip_address) && <Code>{refLabel(record.ip_address)}</Code>],
+    ['MAC address', refLabel(record.mac_address) && <Code>{refLabel(record.mac_address)}</Code>],
+    ['Operating system', refLabel(record.os_name)],
+  ] as const;
+  const licenses = Array.isArray(record.licenses) ? record.licenses as Array<Record<string, unknown>> : [];
+  const notes = [record.remark, record.details, record.information].map(refLabel).filter(Boolean);
 
   return (
-    <div className={styles.container}>
-      <div className={styles.identityCard}>
-        <div className={styles.thumbnail}>
-          {image ? <img src={image} alt={name} /> : getCategoryIcon(equipmentType)}
-        </div>
-        <div className={styles.identityCopy}>
-          <span className={styles.categoryTag}>{equipmentType}</span>
-          <div className={styles.metaLine}>
-            {Boolean(record.product_model) && <span>{String(record.product_model)}</span>}
-            {serial && <span>Serial {serial}</span>}
-          </div>
-        </div>
-        <div className={styles.identityStatus}>
-          <EquipmentStatus status={displayStatus} />
-        </div>
-      </div>
+    <div className="tw:flex tw:min-w-0 tw:flex-col tw:gap-5">
+      <StatusHero
+        tone={status.tone}
+        title={status.title}
+        description={status.description}
+        icon={image ? <img src={image} alt={name} /> : CATEGORY_ICONS[equipmentType.toLowerCase()] ?? <Package />}
+        facts={status.facts}
+      />
 
-      <section className={styles.detailSection}>
-        <h4 className={styles.sectionTitle}><ApartmentOutlined className={styles.sectionTitleIcon} />At a glance</h4>
-        <div className={styles.metricGrid}>
-          <div className={styles.metricCard}>
-            <span className={styles.ribbonLabel}>Placement</span>
-            <strong>{benchName ? benchName : storageRoom ? `Storage: ${storageRoom}` : 'Unplaced'}</strong>
-            <span>{roomName ? `Room: ${roomName}` : <Link to="/spaces/mapping">Explore mapping</Link>}</span>
-          </div>
-          <div className={styles.metricCard}>
-            <span className={styles.ribbonLabel}>Owner</span>
-            <strong>{owner || 'Not assigned'}</strong>
-            {department && <span>{department}</span>}
-          </div>
-          {(price || warranty) && <div className={styles.metricCard}>
-            <span className={styles.ribbonLabel}>Acquisition & warranty</span>
-            <strong>{price || '—'}</strong>
-            {warranty && <span>Warranty until {warranty}</span>}
-          </div>}
-          {(ip || host) && <div className={styles.metricCard}>
-            <span className={styles.ribbonLabel}>Network</span>
-            <strong>{ip || host}</strong>
-            {host && ip && <span>{host}</span>}
-          </div>}
-        </div>
-      </section>
+      <FacetGrid items={facetsOf(record)} />
 
-      {/* 3. Hardware & Identification */}
-      <section className={styles.detailSection}>
-        <h4 className={styles.sectionTitle}>
-          <InfoCircleOutlined className={styles.sectionTitleIcon} />
-          Hardware & Identification
-        </h4>
-        <Descriptions column={{ xs: 1, sm: 2 }} size="small" bordered>
-          {sku && <Descriptions.Item label="SKU">{sku}</Descriptions.Item>}
-          {Boolean(record.manufacturer) && (
-            <Descriptions.Item label="Manufacturer">{String(record.manufacturer)}</Descriptions.Item>
-          )}
-          {Boolean(record.product_model) && (
-            <Descriptions.Item label="Product Model">{String(record.product_model)}</Descriptions.Item>
-          )}
-          {Boolean(serial) && <Descriptions.Item label="Serial Number">{serial}</Descriptions.Item>}
-          {Boolean(record.kind) && <Descriptions.Item label="Kind">{String(record.kind)}</Descriptions.Item>}
-          {Boolean(record.type) && <Descriptions.Item label="Type">{String(record.type)}</Descriptions.Item>}
-          {Boolean(record.log_label) && (
-            <Descriptions.Item label="Log Label">{String(record.log_label)}</Descriptions.Item>
-          )}
-        </Descriptions>
-      </section>
-
-      {/* 4. Ownership & Placement */}
-      <section className={styles.detailSection}>
-        <h4 className={styles.sectionTitle}>
-          <EnvironmentOutlined className={styles.sectionTitleIcon} />
-          Ownership & Placement
-        </h4>
-        <Descriptions column={{ xs: 1, sm: 2 }} size="small" bordered>
-          {Boolean(department) && <Descriptions.Item label="Department">{department}</Descriptions.Item>}
-          {Boolean(record.group) && <Descriptions.Item label="Group">{String(record.group)}</Descriptions.Item>}
-          {Boolean(record.technical_user) && (
-            <Descriptions.Item label="Technical User">{String(record.technical_user)}</Descriptions.Item>
-          )}
-        </Descriptions>
-      </section>
-
-      {/* 5. Network & Telemetry (if present) */}
-      {(Boolean(ip) || Boolean(host) || Boolean(record.mac_address) || Boolean(record.os_name)) && (
-        <section className={styles.detailSection}>
-          <h4 className={styles.sectionTitle}>
-            <ApiOutlined className={styles.sectionTitleIcon} />
-            Network & Telemetry
-          </h4>
-          <Descriptions column={{ xs: 1, sm: 2 }} size="small" bordered>
-            {Boolean(host) && <Descriptions.Item label="Hostname">{host}</Descriptions.Item>}
-            {Boolean(ip) && <Descriptions.Item label="IP Address">{ip}</Descriptions.Item>}
-            {Boolean(record.mac_address) && (
-              <Descriptions.Item label="MAC Address">{String(record.mac_address)}</Descriptions.Item>
-            )}
-            {Boolean(record.os_name) && (
-              <Descriptions.Item label="Operating System">{String(record.os_name)}</Descriptions.Item>
-            )}
-          </Descriptions>
-        </section>
+      {(price || warranty || replacement || lastCalibrated) && (
+        <DetailSection title="Lifecycle & cost" icon={<ReceiptText />}>
+          <StatGrid>
+            {price && <StatTile label="Acquisition price" value={price} />}
+            {warranty}
+            {replacement && <StatTile label="Planned replacement" value={replacement} />}
+            {lastCalibrated && <StatTile label="Last calibrated" value={lastCalibrated} detail={record.next_calibration_due_at ? `Next due ${dateOnly(record.next_calibration_due_at)}` : undefined} />}
+          </StatGrid>
+        </DetailSection>
       )}
 
-      {/* 6. Remarks / Notes */}
-      {Boolean(remark) && (
-        <div className={styles.remarkBox}>
-          <strong>Notes:</strong> {remark}
-        </div>
+      <DetailSection title="Identification" icon={<IdCard />}>
+        <PropertyList items={[
+          ['SKU', sku && <Code>{sku}</Code>],
+          ['Serial number', refLabel(record.serial_number) && <Code>{refLabel(record.serial_number)}</Code>],
+          ['Category', refLabel(record.category) || equipmentType.replaceAll('_', ' ')],
+          ['Kind', refLabel(record.kind)],
+          ['Type', refLabel(record.type)],
+          ['Manufacturer', refLabel(record.manufacturer)],
+          ['Model', refLabel(record.product_model)],
+          ['Log label', refLabel(record.log_label)],
+        ]} />
+      </DetailSection>
+
+      <DetailSection title="Ownership" icon={<Users />}>
+        <PropertyList items={[
+          ['Owner', refLabel(record.owner) || refLabel(record.primary_owner)],
+          ['Department', refLabel(record.department)],
+          ['Group', refLabel(record.group)],
+          ['Technical user', refLabel(record.technical_user)],
+          ['Home storage room', refLabel(record.storage_room)],
+        ]} />
+      </DetailSection>
+
+      {network.some(([, value]) => value) && (
+        <DetailSection title="Network" icon={<Network />}>
+          <PropertyList items={[...network]} />
+        </DetailSection>
       )}
 
-      {/* 7. Connected Relationship Graph Collapse */}
+      {licenses.length > 0 && (
+        <DetailSection title={`Licenses (${licenses.length})`} icon={<KeyRound />} action={<Link to="/lab-equipment/license">All licenses →</Link>}>
+          <LinkedList items={licenses.map((license, index) => ({
+            key: String(license.id ?? index), code: refLabel(license.sku) || undefined,
+            title: refLabel(license.name) || refLabel(license.license_name) || 'License',
+          }))} />
+        </DetailSection>
+      )}
+
+      {notes.length > 0 && <NoteBox title="Notes">{[...new Set(notes)].join('\n')}</NoteBox>}
+
       {connectedRows.length > 0 && (
         <Collapse
-          items={[
-            {
-              key: 'topology',
-              label: (
-                <span style={{ fontWeight: 600, fontSize: 13 }}>
-                  <ApartmentOutlined style={{ marginRight: 6, color: '#6155d9' }} />
-                  Placement topology & connected hierarchy
-                </span>
-              ),
-              children: (
-                <MappingVisualization
-                  rows={connectedRows}
-                  loading={false}
-                  showPagination={false}
-                  compact
-                  selectedDeviceType={equipmentType}
-                  selectedDeviceId={Number(record.id)}
-                />
-              ),
-            },
-          ]}
+          items={[{
+            key: 'topology',
+            label: 'Placement topology',
+            children: (
+              <MappingVisualization
+                rows={connectedRows}
+                loading={false}
+                showPagination={false}
+                compact
+                selectedDeviceType={equipmentType}
+                selectedDeviceId={Number(record.id)}
+              />
+            ),
+          }]}
         />
       )}
     </div>

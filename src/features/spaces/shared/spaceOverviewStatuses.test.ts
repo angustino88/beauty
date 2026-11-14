@@ -9,9 +9,9 @@ test('space cards use only backend lifecycle statuses including zero counts', ()
     { status: { value: 'reserved', label: 'Reserved' }, resource_count: 0 },
     { status: { value: 'new_status', label: 'Custom state' }, resource_count: 1 },
   ]), [
-    { key: 'in_storage', label: 'In storage', description: '', tone: 'slate' },
-    { key: 'reserved', label: 'Reserved', description: 'Booked today', tone: 'amber' },
-    { key: 'new_status', label: 'Custom state', description: '', tone: 'slate' },
+    { key: 'in_storage', label: 'In storage', description: '', tone: 'neutral' },
+    { key: 'reserved', label: 'Reserved', description: 'Booked today', tone: 'violet' },
+    { key: 'new_status', label: 'Custom state', description: '', tone: 'neutral' },
   ]);
   assert.deepEqual(spaceOverviewStatuses([]), []);
 });
@@ -49,8 +49,8 @@ test('bench service lifecycle has distinct summary and badge colors', () => {
     { status: { value: 'in_service', label: 'In service' }, resource_count: 2 },
     { status: { value: 'out_of_service', label: 'Out of service' }, resource_count: 3 },
   ];
-  assert.deepEqual(spaceOverviewStatuses(statuses, 'bench').map(({ tone }) => tone), ['amber', 'green', 'red']);
+  assert.deepEqual(spaceOverviewStatuses(statuses, 'bench').map(({ tone }) => tone), ['info', 'success', 'danger']);
   assert.deepEqual(statuses.map(({ status }) => spaceStatusTone(status)), [
-    'overviewAmber', 'overviewGreen', 'overviewRed',
+    'info', 'success', 'danger',
   ]);
 });

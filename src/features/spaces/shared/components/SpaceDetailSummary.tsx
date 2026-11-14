@@ -1,518 +1,256 @@
 import React from 'react';
-import { Alert, Descriptions, Tag } from 'antd';
-import {
-  AppstoreOutlined,
-  HomeOutlined,
-  DesktopOutlined,
-  InfoCircleOutlined,
-  LockOutlined,
-  UnlockOutlined,
-  CheckCircleFilled,
-  ExclamationCircleFilled,
-  CloseCircleFilled,
-  ArrowRightOutlined,
-} from '@ant-design/icons';
 import { Link } from 'react-router-dom';
-import SpaceStatusBadge from '../SpaceStatusBadge';
+import { Activity, Boxes, Building2, Cpu, Gauge, Info, Lock, LockOpen, Server, Wrench } from 'lucide-react';
+import {
+  Code, DetailSection, FacetGrid, LinkedList, MeterStat, NoteBox, PropertyList, StatGrid, StatTile, StatusHero,
+  type Facet, type HeroFact,
+} from '@/shared/components/detail/DetailPrimitives';
+import { refLabel } from '@/shared/utils/refLabel';
+import type { StatusTone } from '@/shared/status/statusTone';
 import type { LocationState, ResourceState } from '../resourceStatus';
+import { explainSpaceStatus } from '../spaceStatusExplanation';
 import type { ResourceMappingRow } from '@/features/spaces/mapping/types';
-import styles from './SpaceDetailSummary.module.css';
+
+type SpaceKind = 'room' | 'station' | 'bench';
 
 interface SpaceDetailSummaryProps {
-  spaceKind: 'room' | 'station' | 'bench';
+  spaceKind: SpaceKind;
   record: Record<string, unknown>;
   connectedRows?: ResourceMappingRow[];
   onOpenMapping?: () => void;
 }
 
-export const SpaceDetailSummary: React.FC<SpaceDetailSummaryProps> = ({
-  spaceKind,
-  record,
-  connectedRows = [],
-}) => {
-  const resourceState = record as unknown as Partial<LocationState & ResourceState>;
-  const lifecycle = resourceState.lifecycle_status;
-  const condition = resourceState.condition;
-  const availability = resourceState.availability;
-  const access = resourceState.access_policy;
+/** Reads a dotted path from the record ("location_info.building"). */
+const read = (record: Record<string, unknown>, path: string): unknown =>
+  path.split('.').reduce<unknown>((value, key) => (
+    value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>)[key] : undefined
+  ), record);
 
-  const isRestricted =
-    access?.value === 'restricted' ||
-    (typeof access === 'string' && (access as string).toLowerCase() === 'restricted');
+/** First non-empty label among candidate fields (API field names vary between list and detail reads). */
+const text = (record: Record<string, unknown>, ...paths: string[]): string | null => {
+  for (const path of paths) {
+    const label = refLabel(read(record, path));
+    if (label) return label;
+  }
+  return null;
+};
 
-  const isBlocked = availability?.value === 'unavailable';
+const num = (record: Record<string, unknown>, ...paths: string[]): number | null => {
+  for (const path of paths) {
+    const value = read(record, path);
+    if (value === null || value === undefined || value === '') continue;
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return null;
+};
 
-  // Common Header Info
-  const remark = record.remark ? String(record.remark) : null;
+const ICONS: Record<SpaceKind, React.ReactNode> = { room: <Building2 />, station: <Server />, bench: <Cpu /> };
 
-  // The Sheet already presents the canonical resource name and SKU. Use the
-  // summary surface for location and state instead of repeating the title.
-  const HeaderIcon =
-    spaceKind === 'station'
-      ? AppstoreOutlined
-      : spaceKind === 'room'
-      ? HomeOutlined
-      : DesktopOutlined;
+function locationOf(kind: SpaceKind, record: Record<string, unknown>): string {
+  if (kind === 'room') {
+    const building = text(record, 'location_info.building', 'building', 'building_name');
+    const floor = text(record, 'floor', 'location_info.floor');
+    const city = text(record, 'location_info.city', 'city');
+    const country = text(record, 'country', 'location_info.country');
+    const parts = [building && `Building ${building}`, floor && `Floor ${floor}`, city, country].filter(Boolean);
+    return parts.length ? parts.join(' · ') : text(record, 'location', 'location_info.location_string') ?? 'Location not set';
+  }
+  const room = text(record, 'room_name', 'room', 'room_id');
+  if (kind === 'station') {
+    const slot = text(record, 'slot_code', 'slot_id');
+    return room ? `${room}${slot ? ` › Slot ${slot}` : ''}` : 'Not placed in a room';
+  }
+  const station = text(record, 'station_name', 'station', 'setup_location_id');
+  const slot = text(record, 'station_slot.slot_code', 'station_slot_id');
+  if (!station) return 'Not placed on a station';
+  return [room, `${station}${slot ? ` › Slot ${slot}` : ''}`].filter(Boolean).join(' › ');
+}
 
-  // Location Crumb
-  const getLocationCrumb = () => {
-    if (spaceKind === 'station') {
-      const room =
-        record.room_name ||
-        (typeof record.room === 'object' && record.room
-          ? (record.room as { name?: string; sku?: string }).name ||
-            (record.room as { sku?: string }).sku
-          : null) ||
-        (record.room_id ? `Room #${record.room_id}` : null);
-      const slot = record.slot_code || record.slot_id;
-      if (!room) return 'Not placed in a room';
-      return `Room: ${room}${slot ? ` › Slot: ${slot}` : ''}`;
-    }
-    if (spaceKind === 'room') {
-      const parts = [
-        record.building ? `Bldg ${String(record.building)}` : null,
-        record.floor ? `Floor ${String(record.floor)}` : null,
-        record.city ? String(record.city) : null,
-        record.country ? String(record.country) : null,
-      ].filter(Boolean);
-      return parts.length > 0 ? parts.join(', ') : record.location ? String(record.location) : 'Facility Room';
-    }
-    // bench
-    const room =
-      record.room_name ||
-      (typeof record.room === 'object' && record.room
-        ? (record.room as { name?: string }).name
-        : null);
-    const station =
-      record.station_name ||
-      (typeof record.station === 'object' && record.station
-        ? (record.station as { name?: string }).name
-        : null) ||
-      (record.setup_location_id ? `Station #${record.setup_location_id}` : null);
-    const slot =
-      typeof record.station_slot === 'object' && record.station_slot
-        ? (record.station_slot as { slot_code?: string }).slot_code
-        : record.station_slot_id;
+function facetsOf(kind: SpaceKind, state: Partial<ResourceState & LocationState>): Facet[] {
+  const facets: Facet[] = [];
+  const lifecycle = state.lifecycle_status;
+  if (lifecycle) {
+    const tone: StatusTone = lifecycle.value === 'in_service' ? 'success' : lifecycle.value === 'planned' ? 'info' : 'neutral';
+    facets.push({ label: 'Lifecycle', value: lifecycle.label || lifecycle.value, tone });
+  }
+  const condition = state.condition;
+  if (condition) {
+    const tone: StatusTone = condition.value === 'operational' ? 'success' : condition.value === 'in_maintenance' ? 'warning' : 'danger';
+    facets.push({ label: 'Condition', value: condition.label || condition.value, tone, icon: condition.value === 'operational' ? undefined : <Wrench /> });
+  }
+  const access = state.access_policy;
+  if (access) {
+    const restricted = (typeof access === 'string' ? access : access.value) === 'restricted';
+    facets.push({
+      label: 'Access', value: restricted ? 'Restricted' : 'Open', tone: restricted ? 'violet' : 'success',
+      icon: restricted ? <Lock /> : <LockOpen />,
+    });
+  }
+  if (kind === 'bench' && state.activity_status) {
+    const activity = state.activity_status.value;
+    facets.push({
+      label: 'Booking activity',
+      value: activity === 'active' ? 'In use now' : activity === 'scheduled' ? 'Booked today' : 'Idle',
+      tone: activity === 'active' ? 'info' : activity === 'scheduled' ? 'violet' : 'neutral',
+      icon: <Activity />,
+    });
+  }
+  return facets;
+}
 
-    if (!station) return 'Unplaced Bench';
-    return `${room ? `Room: ${room} › ` : ''}Station: ${station}${slot ? ` (Slot ${slot})` : ''}`;
-  };
+function CapacityStats({ kind, record, equipmentCount }: { kind: SpaceKind; record: Record<string, unknown>; equipmentCount: number | null }) {
+  const tiles: React.ReactNode[] = [];
+  if (kind === 'room') {
+    const occupied = num(record, 'slot_summary.occupied_slots');
+    const rows = num(record, 'rows', 'layout_rows');
+    const cols = num(record, 'cols', 'layout_columns');
+    const slots = num(record, 'slot_summary.total_slots') ?? (rows && cols ? rows * cols : null);
+    if (slots && occupied !== null) tiles.push(<MeterStat key="slots" label="Station slots used" used={occupied} total={slots} detail={rows && cols ? `${rows} × ${cols} grid` : undefined} />);
+    else if (slots) tiles.push(<StatTile key="slots" label="Station slots" value={`${slots}`} detail={rows && cols ? `${rows} × ${cols} grid` : undefined} />);
+    const used = num(record, 'power_usage');
+    const max = num(record, 'max_power', 'max_power_w');
+    if (max && used !== null) tiles.push(<MeterStat key="power" label="Power draw" used={used} total={max} unit="W" detail={`${(max - used).toLocaleString()} W headroom`} />);
+    else if (max) tiles.push(<StatTile key="power" label="Power limit" value={`${max.toLocaleString()} W`} />);
+    const temp = num(record, 'temperature');
+    const humidity = num(record, 'humidity');
+    if (temp || humidity) tiles.push(<StatTile key="env" label="Environment" value={temp ? `${temp} °C` : `${humidity}% RH`} detail={temp && humidity ? `${humidity}% relative humidity` : undefined} />);
+  }
+  if (kind === 'station') {
+    const active = num(record, 'active_bench_count', 'bench_count');
+    const capacity = num(record, 'bench_capacity');
+    if (capacity && active !== null) tiles.push(<MeterStat key="benches" label="Bench slots used" used={active} total={capacity} />);
+    const allocated = num(record, 'allocated_power_w');
+    const power = num(record, 'power_capacity_w');
+    const available = num(record, 'available_power_w') ?? (power !== null && allocated !== null ? power - allocated : null);
+    if (power && allocated !== null) tiles.push(<MeterStat key="power" label="Power allocated" used={allocated} total={power} unit="W" detail={available !== null ? `${available.toLocaleString()} W available` : undefined} />);
+    else if (power) tiles.push(<StatTile key="power" label="Power capacity" value={`${power.toLocaleString()} W`} />);
+    const ports = num(record, 'network_port_capacity', 'network_port_count');
+    if (ports !== null) tiles.push(<StatTile key="ports" label="Network ports" value={ports} />);
+    const load = num(record, 'max_load_kg');
+    if (load !== null) tiles.push(<StatTile key="load" label="Max load" value={`${load} kg`} />);
+  }
+  if (kind === 'bench') {
+    if (equipmentCount !== null) tiles.push(<StatTile key="eq" label="Assigned equipment" value={`${equipmentCount} ${equipmentCount === 1 ? 'device' : 'devices'}`} />);
+    const power = num(record, 'requested_power_w');
+    if (power !== null) tiles.push(<StatTile key="power" label="Requested power" value={`${power.toLocaleString()} W`} />);
+    const cooling = num(record, 'requested_cooling_w');
+    if (cooling !== null) tiles.push(<StatTile key="cooling" label="Cooling need" value={`${cooling.toLocaleString()} W`} />);
+    const load = num(record, 'requested_load_kg');
+    if (load !== null) tiles.push(<StatTile key="load" label="Requested load" value={`${load} kg`} />);
+  }
+  if (!tiles.length) return null;
+  return (
+    <DetailSection title={kind === 'bench' ? 'Requirements' : 'Capacity & utilisation'} icon={<Gauge />}>
+      <StatGrid>{tiles}</StatGrid>
+    </DetailSection>
+  );
+}
+
+function properties(kind: SpaceKind, record: Record<string, unknown>) {
+  const sku = text(record, 'sku');
+  const label = text(record, 'label');
+  if (kind === 'room') {
+    const length = num(record, 'length');
+    const width = num(record, 'width');
+    return [
+      ['SKU', sku && <Code>{sku}</Code>],
+      ['Room label', label],
+      ['Building', text(record, 'location_info.building', 'building')],
+      ['Floor', text(record, 'floor', 'location_info.floor')],
+      ['City', text(record, 'location_info.city', 'city')],
+      ['Country', text(record, 'country', 'location_info.country')],
+      ['Floor area', length && width ? `${length} × ${width} m` : text(record, 'size')],
+      ['Primary owner', text(record, 'primary_owner')],
+    ] as const;
+  }
+  if (kind === 'station') {
+    const h = num(record, 'height_mm');
+    const w = num(record, 'width_mm');
+    const d = num(record, 'depth_mm');
+    return [
+      ['SKU', sku && <Code>{sku}</Code>],
+      ['Hardware label', label],
+      ['Room', text(record, 'room_name', 'room')],
+      ['Slot', text(record, 'slot_code', 'slot_id')],
+      ['Dimensions (H × W × D)', h && w && d ? `${h} × ${w} × ${d} mm` : null],
+      ['Primary owner', text(record, 'primary_owner')],
+    ] as const;
+  }
+  return [
+    ['SKU', sku && <Code>{sku}</Code>],
+    ['Group', text(record, 'group_name', 'bench_group')],
+    ['Type', text(record, 'type_name', 'bench_type')],
+    ['Primary owner', text(record, 'primary_owner', 'owner')],
+    ['Department', text(record, 'department')],
+    ['Location note', text(record, 'location_name')],
+  ] as const;
+}
+
+function Connected({ kind, record, rows }: { kind: SpaceKind; record: Record<string, unknown>; rows: ResourceMappingRow[] }) {
+  const mappingLink = <Link to="/spaces/mapping">Open mapping →</Link>;
+  if (kind === 'bench') {
+    const row = rows.find((r) => r.bench.id === Number(record.id)) ?? rows[0];
+    const equipment = row?.equipment ?? [];
+    if (!equipment.length) return null;
+    return (
+      <DetailSection title={`Assigned equipment (${equipment.length})`} icon={<Boxes />} action={mappingLink}>
+        <LinkedList items={equipment.map((eq) => ({
+          key: eq.id, code: eq.sku, title: eq.name,
+          meta: [refLabel(eq.category), eq.role].filter(Boolean).join(' · '),
+        }))} />
+      </DetailSection>
+    );
+  }
+  if (kind === 'station') {
+    const stationId = Number(record.id);
+    const hosted = rows.filter((r) => r.station?.id === stationId || r.bench.setup_location_id === stationId);
+    if (!hosted.length) return null;
+    return (
+      <DetailSection title={`Hosted benches (${hosted.length})`} icon={<Boxes />} action={mappingLink}>
+        <LinkedList items={hosted.map((r) => ({
+          key: r.id, code: r.bench.sku, title: r.bench.name,
+          meta: [r.station_slot && `Slot ${r.station_slot.slot_code}`, `${r.equipment.length} equipment`].filter(Boolean).join(' · '),
+        }))} />
+      </DetailSection>
+    );
+  }
+  return null;
+}
+
+export const SpaceDetailSummary: React.FC<SpaceDetailSummaryProps> = ({ spaceKind, record, connectedRows = [] }) => {
+  const state = record as unknown as Partial<LocationState & ResourceState>;
+  const status = explainSpaceStatus(state, spaceKind);
+  const access = state.access_policy;
+  const restricted = (typeof access === 'string' ? access : access?.value) === 'restricted';
+  const benchRow = connectedRows.find((r) => r.bench.id === Number(record.id)) ?? connectedRows[0];
+  const equipmentCount = spaceKind !== 'bench' ? null
+    : benchRow?.equipment?.length ?? (Array.isArray(record.equipment) ? record.equipment.length : num(record, 'equipment_count'));
+
+  const facts: HeroFact[] = [{ label: 'Location', value: locationOf(spaceKind, record) }];
+  if (state.availability?.blocked_by) {
+    const blocker = state.availability.blocked_by;
+    facts.push({ label: 'Blocked by', value: `${blocker.type.charAt(0).toUpperCase()}${blocker.type.slice(1)} ${blocker.name}`, tone: 'warning' });
+  }
+  if (restricted) facts.push({ label: 'Access', value: 'Restricted — approval needed', tone: 'violet' });
+
+  const remark = text(record, 'remark');
 
   return (
-    <div className={styles.container}>
-      <div className={styles.locationCard}>
-        <span className={styles.iconBox}><HeaderIcon /></span>
-        <div className={styles.locationCopy}>
-          <span className={styles.locationLabel}>Location</span>
-          <strong>{getLocationCrumb()}</strong>
-        </div>
-        <SpaceStatusBadge
-          spaceKind={spaceKind}
-          resourceState={resourceState}
-          accessPolicy={access}
-        />
-      </div>
-
-      {/* Blocked / Downtime Alert */}
-      {isBlocked && (
-        <Alert
-          type="warning"
-          showIcon
-          message={
-            <span>
-              <strong>Resource Unavailable:</strong> Blocked by{' '}
-              {availability?.blocked_by ? (
-                <strong>
-                  {availability.blocked_by.type.toUpperCase()}{' '}
-                  {availability.blocked_by.name}
-                </strong>
-              ) : (
-                'upstream maintenance / downtime'
-              )}
-              {availability?.reason ? ` (${availability.reason})` : ''}
-            </span>
-          }
-        />
-      )}
-
-      {/* 2. Top Metric Ribbon */}
-      {spaceKind === 'station' && <StationMetricRibbon record={record} />}
-      {spaceKind === 'room' && <RoomMetricRibbon record={record} />}
-      {spaceKind === 'bench' && <BenchMetricRibbon record={record} connectedRows={connectedRows} />}
-
-      {/* 3. Operational State & Health */}
-      <section className={styles.detailSection}>
-        <h4 className={styles.sectionTitle}>
-          <CheckCircleFilled className={styles.sectionTitleIcon} />
-          Operational status
-        </h4>
-        <div className={styles.stateGrid}>
-          <div className={styles.stateCard}>
-            <span className={styles.stateLabel}>Lifecycle</span>
-            {lifecycle?.value === 'in_service' ? (
-              <span className={`${styles.statePill} ${styles.good}`}>
-                <CheckCircleFilled style={{ fontSize: 10 }} /> In Service
-              </span>
-            ) : lifecycle?.value === 'planned' ? (
-              <span className={`${styles.statePill} ${styles.info}`}>Planned</span>
-            ) : lifecycle?.value === 'retired' ? (
-              <span className={`${styles.statePill} ${styles.neutral}`}>Retired</span>
-            ) : (
-              <span className={`${styles.statePill} ${styles.neutral}`}>{lifecycle?.label || lifecycle?.value || 'Not set'}</span>
-            )}
-          </div>
-
-          {condition && <div className={styles.stateCard}>
-            <span className={styles.stateLabel}>Condition</span>
-            {condition?.value === 'operational' ? (
-              <span className={`${styles.statePill} ${styles.good}`}>
-                <CheckCircleFilled /> Operational
-              </span>
-            ) : condition?.value === 'in_maintenance' ? (
-              <span className={`${styles.statePill} ${styles.warning}`}>
-                <ExclamationCircleFilled /> In Maintenance
-              </span>
-            ) : condition?.value === 'out_of_service' ? (
-              <span className={`${styles.statePill} ${styles.danger}`}>
-                <CloseCircleFilled /> Out of Service
-              </span>
-            ) : (
-              <span className={`${styles.statePill} ${styles.neutral}`}>{condition?.label || condition?.value}</span>
-            )}
-          </div>}
-
-          {access && (
-            <div className={styles.stateCard}>
-              <span className={styles.stateLabel}>Access</span>
-              {isRestricted ? (
-                <span className={`${styles.statePill} ${styles.warning}`}>
-                  <LockOutlined /> Restricted Access
-                </span>
-              ) : (
-                <span className={`${styles.statePill} ${styles.good}`}>
-                  <UnlockOutlined /> Open Access
-                </span>
-              )}
-            </div>
-          )}
-
-          {spaceKind === 'bench' && resourceState.activity_status && (
-            <div className={styles.stateCard}>
-              <span className={styles.stateLabel}>Booking activity</span>
-              {resourceState.activity_status.value === 'active' ? (
-                <span className={`${styles.statePill} ${styles.good}`}>In use</span>
-              ) : resourceState.activity_status.value === 'scheduled' ? (
-                <span className={`${styles.statePill} ${styles.info}`}>Booked today</span>
-              ) : (
-                <span className={`${styles.statePill} ${styles.neutral}`}>Ready · Idle</span>
-              )}
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* 4. Structured Technical Specifications */}
-      <section className={styles.detailSection}>
-        <h4 className={styles.sectionTitle}>
-          <InfoCircleOutlined className={styles.sectionTitleIcon} />
-          Specifications & Details
-        </h4>
-        {spaceKind === 'station' && <StationDescriptions record={record} />}
-        {spaceKind === 'room' && <RoomDescriptions record={record} />}
-        {spaceKind === 'bench' && <BenchDescriptions record={record} />}
-      </section>
-
-      {/* 5. Connected Resources Quick Summary */}
-      <ConnectedSummary spaceKind={spaceKind} record={record} connectedRows={connectedRows} />
-
-      {/* 6. Remark / Note */}
-      {remark && (
-        <div className={styles.remarkBox}>
-          <strong>Note:</strong> {remark}
-        </div>
-      )}
+    <div className="tw:flex tw:min-w-0 tw:flex-col tw:gap-5">
+      <StatusHero tone={status.tone} title={status.title} description={status.description} icon={ICONS[spaceKind]} facts={facts} />
+      <FacetGrid items={facetsOf(spaceKind, state)} />
+      <CapacityStats kind={spaceKind} record={record} equipmentCount={equipmentCount} />
+      <Connected kind={spaceKind} record={record} rows={connectedRows} />
+      {(() => {
+        const items = properties(spaceKind, record);
+        return items.some(([, value]) => value) ? (
+          <DetailSection title="Details" icon={<Info />}><PropertyList items={[...items]} /></DetailSection>
+        ) : null;
+      })()}
+      {remark && <NoteBox>{remark}</NoteBox>}
     </div>
   );
 };
 
-// --- Station Metric Ribbon ---
-function StationMetricRibbon({ record }: { record: Record<string, unknown> }) {
-  const activeBenches = record.active_bench_count != null ? Number(record.active_bench_count) : null;
-  const totalCapacity = record.bench_capacity != null ? Number(record.bench_capacity) : null;
-  const benchOccupancy = totalCapacity != null && totalCapacity > 0 && activeBenches != null ? Math.round((activeBenches / totalCapacity) * 100) : null;
-
-  const allocatedPower = record.allocated_power_w != null ? Number(record.allocated_power_w) : null;
-  const totalPower = record.power_capacity_w != null ? Number(record.power_capacity_w) : null;
-  const powerUtilization = totalPower != null && totalPower > 0 && allocatedPower != null ? Math.round((allocatedPower / totalPower) * 100) : null;
-  const availablePower = record.available_power_w != null ? Number(record.available_power_w)
-    : totalPower != null && allocatedPower != null ? totalPower - allocatedPower : null;
-
-  const ports = record.network_port_capacity != null ? Number(record.network_port_capacity) : null;
-  const maxLoad = record.max_load_kg != null ? Number(record.max_load_kg) : null;
-
-  return (
-    <MetricGrid metrics={[
-      totalCapacity != null || activeBenches != null ? { label: 'Bench capacity', value: totalCapacity != null ? `${activeBenches ?? '—'} / ${totalCapacity}` : `${activeBenches} active`, detail: benchOccupancy != null ? `${benchOccupancy}% occupied` : undefined } : null,
-      allocatedPower != null || totalPower != null ? { label: 'Power allocation', value: totalPower != null && allocatedPower != null ? `${allocatedPower} / ${totalPower} W` : `${allocatedPower ?? totalPower} W`, detail: powerUtilization != null ? `${powerUtilization}% utilized` : undefined } : null,
-      availablePower != null ? { label: 'Power available', value: `${availablePower} W` } : null,
-      ports != null ? { label: 'Network ports', value: String(ports) } : null,
-      maxLoad != null ? { label: 'Max load', value: `${maxLoad} kg` } : null,
-    ]} />
-  );
-}
-
-// --- Room Metric Ribbon ---
-function RoomMetricRibbon({ record }: { record: Record<string, unknown> }) {
-  const rows = record.layout_rows != null ? Number(record.layout_rows) : null;
-  const cols = record.layout_columns != null ? Number(record.layout_columns) : null;
-  const totalSlots = rows && cols ? rows * cols : record.setup_capacity != null ? Number(record.setup_capacity) : null;
-
-  const temp = record.temperature != null ? Number(record.temperature) : null;
-  const humidity = record.humidity != null ? Number(record.humidity) : null;
-  const maxPower = record.max_power_w != null ? Number(record.max_power_w) : null;
-
-  const facility = [record.building ? `Building ${String(record.building)}` : null, record.floor ? `Floor ${String(record.floor)}` : null]
-    .filter(Boolean).join(' · ');
-  return <MetricGrid metrics={[
-    totalSlots != null ? { label: 'Grid capacity', value: `${totalSlots} slots`, detail: rows && cols ? `${rows} rows × ${cols} columns` : undefined } : null,
-    temp != null || humidity != null ? { label: 'Environment', value: temp != null ? `${temp} °C` : `${humidity}% humidity`, detail: temp != null && humidity != null ? `${humidity}% humidity` : undefined } : null,
-    maxPower != null ? { label: 'Power limit', value: `${maxPower} W` } : null,
-    facility ? { label: 'Facility', value: facility, detail: [record.city, record.country].filter(Boolean).join(', ') || undefined } : null,
-  ]} />;
-}
-
-// --- Bench Metric Ribbon ---
-function BenchMetricRibbon({
-  record,
-  connectedRows,
-}: {
-  record: Record<string, unknown>;
-  connectedRows: ResourceMappingRow[];
-}) {
-  const benchRow = connectedRows.find((r) => r.bench.id === Number(record.id)) ?? connectedRows[0];
-  const equipmentCount = benchRow?.equipment?.length ??
-    (Array.isArray(record.equipment) ? record.equipment.length : record.equipment_count != null ? Number(record.equipment_count) : null);
-
-  const groupName =
-    record.group_name ||
-    (typeof record.bench_group === 'object' && record.bench_group
-      ? (record.bench_group as { name?: string }).name
-      : null);
-
-  const typeName =
-    record.type_name ||
-    (typeof record.bench_type === 'object' && record.bench_type
-      ? (record.bench_type as { name?: string }).name
-      : null);
-
-  const power = record.requested_power_w != null ? Number(record.requested_power_w) : null;
-  const load = record.requested_load_kg != null ? Number(record.requested_load_kg) : null;
-
-  return <MetricGrid metrics={[
-    equipmentCount != null ? { label: 'Assigned equipment', value: `${equipmentCount} devices`, detail: 'Mounted on bench' } : null,
-    groupName || typeName ? { label: 'Classification', value: [groupName, typeName].filter(Boolean).join(' · ') } : null,
-    power != null ? { label: 'Requested power', value: `${power} W` } : null,
-    load != null ? { label: 'Requested load', value: `${load} kg` } : null,
-  ]} />;
-}
-
-interface DetailMetric { label: string; value: string; detail?: string }
-
-function MetricGrid({ metrics }: { metrics: Array<DetailMetric | null> }) {
-  const visibleMetrics = metrics.filter((metric): metric is DetailMetric => Boolean(metric?.value));
-  if (!visibleMetrics.length) return null;
-  return <div className={styles.metricGrid}>
-    {visibleMetrics.map((metric) => <div className={styles.metricCard} key={metric.label}>
-      <span className={styles.ribbonLabel}>{metric.label}</span>
-      <strong>{metric.value}</strong>
-      {metric.detail && <span>{metric.detail}</span>}
-    </div>)}
-  </div>;
-}
-
-// --- Station Descriptions ---
-function StationDescriptions({ record }: { record: Record<string, unknown> }) {
-  const h = record.height_mm != null ? `${record.height_mm} mm` : null;
-  const w = record.width_mm != null ? `${record.width_mm} mm` : null;
-  const d = record.depth_mm != null ? `${record.depth_mm} mm` : null;
-  const dimensions = h && w && d ? `${h} × ${w} × ${d}` : null;
-
-  return (
-    <Descriptions column={{ xs: 1, sm: 2 }} size="small" bordered>
-      {Boolean(record.sku) && <Descriptions.Item label="SKU">{String(record.sku)}</Descriptions.Item>}
-      <Descriptions.Item label="Room">
-        {String(record.room_name || (typeof record.room === 'object' && record.room ? (record.room as { name?: string }).name : null) || (record.room_id ? `Room #${record.room_id}` : 'Not assigned'))}
-      </Descriptions.Item>
-      <Descriptions.Item label="Slot Code">
-        {String(record.slot_code || record.slot_id || '—')}
-      </Descriptions.Item>
-      {dimensions && <Descriptions.Item label="Dimensions (H×W×D)">{dimensions}</Descriptions.Item>}
-      {record.max_load_kg != null && (
-        <Descriptions.Item label="Max Load">{String(record.max_load_kg)} kg</Descriptions.Item>
-      )}
-      {record.network_port_capacity != null && (
-        <Descriptions.Item label="Network Ports">
-          {String(record.network_port_capacity)} ports
-        </Descriptions.Item>
-      )}
-      {Boolean(record.label) && (
-        <Descriptions.Item label="Hardware Label">{String(record.label)}</Descriptions.Item>
-      )}
-    </Descriptions>
-  );
-}
-
-// --- Room Descriptions ---
-function RoomDescriptions({ record }: { record: Record<string, unknown> }) {
-  const h = record.layout_rows != null ? Number(record.layout_rows) : null;
-  const w = record.layout_columns != null ? Number(record.layout_columns) : null;
-  const grid = h && w ? `${h} Rows × ${w} Columns` : null;
-  const roomLocation = [record.building ? `Building ${String(record.building)}` : null, record.floor ? `Floor ${String(record.floor)}` : null]
-    .filter(Boolean).join(' · ') || (record.location ? String(record.location) : null);
-
-  return (
-    <Descriptions column={{ xs: 1, sm: 2 }} size="small" bordered>
-      {Boolean(record.sku) && <Descriptions.Item label="SKU">{String(record.sku)}</Descriptions.Item>}
-      {Boolean(roomLocation) && <Descriptions.Item label="Facility location">
-        {roomLocation}
-      </Descriptions.Item>}
-      {Boolean(record.city || record.country) && <Descriptions.Item label="City & Country">
-        {[record.city ? String(record.city) : null, record.country ? String(record.country) : null].filter(Boolean).join(', ') || '—'}
-      </Descriptions.Item>
-      }
-      {grid && <Descriptions.Item label="Layout Grid">{grid}</Descriptions.Item>}
-      {record.setup_capacity != null && (
-        <Descriptions.Item label="Capacity">{String(record.setup_capacity)} stations</Descriptions.Item>
-      )}
-      {Boolean(record.location) && (
-        <Descriptions.Item label="Location Info">{String(record.location)}</Descriptions.Item>
-      )}
-      {Boolean(record.label) && (
-        <Descriptions.Item label="Room Label">{String(record.label)}</Descriptions.Item>
-      )}
-    </Descriptions>
-  );
-}
-
-// --- Bench Descriptions ---
-function BenchDescriptions({ record }: { record: Record<string, unknown> }) {
-  const group =
-    record.group_name ||
-    (typeof record.bench_group === 'object' && record.bench_group
-      ? (record.bench_group as { name?: string }).name
-      : null);
-  const type =
-    record.type_name ||
-    (typeof record.bench_type === 'object' && record.bench_type
-      ? (record.bench_type as { name?: string }).name
-      : null);
-
-  return (
-    <Descriptions column={{ xs: 1, sm: 2 }} size="small" bordered>
-      {Boolean(record.sku) && <Descriptions.Item label="SKU">{String(record.sku)}</Descriptions.Item>}
-      {group && <Descriptions.Item label="Group">{String(group)}</Descriptions.Item>}
-      {type && <Descriptions.Item label="Type">{String(type)}</Descriptions.Item>}
-      {record.requested_power_w != null && (
-        <Descriptions.Item label="Requested Power">{String(record.requested_power_w)} W</Descriptions.Item>
-      )}
-      {record.requested_cooling_w != null && (
-        <Descriptions.Item label="Cooling Requirement">
-          {String(record.requested_cooling_w)} W
-        </Descriptions.Item>
-      )}
-      {record.requested_load_kg != null && (
-        <Descriptions.Item label="Requested Load">{String(record.requested_load_kg)} kg</Descriptions.Item>
-      )}
-      {Boolean(record.primary_owner) && (
-        <Descriptions.Item label="Primary Owner">{String(record.primary_owner)}</Descriptions.Item>
-      )}
-    </Descriptions>
-  );
-}
-
-// --- Connected Resources Quick Summary ---
-function ConnectedSummary({
-  spaceKind,
-  record,
-  connectedRows,
-}: {
-  spaceKind: 'room' | 'station' | 'bench';
-  record: Record<string, unknown>;
-  connectedRows: ResourceMappingRow[];
-}) {
-  if (spaceKind === 'bench') {
-    const benchRow = connectedRows.find((r) => r.bench.id === Number(record.id)) ?? connectedRows[0];
-    const equipment = benchRow?.equipment ?? [];
-    if (equipment.length === 0) return null;
-
-    return (
-      <div>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-          <h4 className={styles.sectionTitle} style={{ margin: 0, border: 0, padding: 0 }}>
-            <DesktopOutlined className={styles.sectionTitleIcon} />
-            Assigned Equipment ({equipment.length})
-          </h4>
-          <Link to="/spaces/mapping" style={{ fontSize: 12, fontWeight: 600 }}>
-            Open Mapping <ArrowRightOutlined />
-          </Link>
-        </div>
-
-        <div className={styles.connectedList}>
-          {equipment.map((eq) => (
-            <div key={eq.id} className={styles.connectedItem}>
-              <div className={styles.connectedItemName}>
-                <span className={styles.skuTag}>{eq.sku}</span>
-                <span>{eq.name}</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <Tag color="blue">{eq.category.name}</Tag>
-                {eq.role && <Tag>{eq.role}</Tag>}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  if (spaceKind === 'station' && connectedRows.length > 0) {
-    const stationId = Number(record.id);
-    const stationRows = connectedRows.filter(
-      (r) => r.station?.id === stationId || r.bench.setup_location_id === stationId,
-    );
-
-    if (stationRows.length === 0) return null;
-
-    return (
-      <div>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-          <h4 className={styles.sectionTitle} style={{ margin: 0, border: 0, padding: 0 }}>
-            <DesktopOutlined className={styles.sectionTitleIcon} />
-            Hosted Benches ({stationRows.length})
-          </h4>
-          <Link to="/spaces/mapping" style={{ fontSize: 12, fontWeight: 600 }}>
-            Open Mapping <ArrowRightOutlined />
-          </Link>
-        </div>
-
-        <div className={styles.connectedList}>
-          {stationRows.map((r) => (
-            <div key={r.id} className={styles.connectedItem}>
-              <div className={styles.connectedItemName}>
-                <span className={styles.skuTag}>{r.bench.sku}</span>
-                <span>{r.bench.name}</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                {r.station_slot && <Tag color="geekblue">Slot {r.station_slot.slot_code}</Tag>}
-                <Tag color="green">{r.equipment.length} equipment</Tag>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  return null;
-}
 export default SpaceDetailSummary;

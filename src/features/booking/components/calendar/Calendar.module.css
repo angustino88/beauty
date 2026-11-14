@@ -38,7 +38,7 @@
 
 .compactEventTime {
     flex: 0 0 auto;
-    color: #455b52;
+    color: var(--lm-text-secondary);
     font-size: 10px;
     font-weight: 700;
     white-space: nowrap;
@@ -47,13 +47,13 @@
 .compactEventTime::after {
     content: "·";
     margin-left: 5px;
-    color: #8b9993;
+    color: var(--lm-text-tertiary);
 }
 
 .compactEventTitle {
     overflow: hidden;
     min-width: 0;
-    color: #20332c;
+    color: var(--lm-text);
     font-size: 11px;
     font-weight: 700;
     text-overflow: ellipsis;
@@ -61,7 +61,7 @@
 }
 
 .timeGridEventTime {
-    color: #455b52;
+    color: var(--lm-text-secondary);
     font-size: 10px;
     font-weight: 700;
     white-space: nowrap;
@@ -69,7 +69,7 @@
 
 .timeGridEventTitle {
     overflow: hidden;
-    color: #20332c;
+    color: var(--lm-text);
     font-size: 12px;
     font-weight: 700;
     line-height: 1.25;
@@ -83,7 +83,7 @@
     gap: 4px;
     overflow: hidden;
     margin-top: auto;
-    color: #536860;
+    color: var(--lm-text-secondary);
     font-size: 10px;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -98,7 +98,7 @@
     border: 1px solid rgba(32, 51, 44, 0.12);
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.62);
-    color: #315c4b;
+    color: var(--lm-success-fg);
     font-size: 8px;
     font-weight: 700;
 }
@@ -115,14 +115,14 @@
 
 .monthEventTime {
     flex: 0 0 auto;
-    color: #536860;
+    color: var(--lm-text-secondary);
     font-size: 11px;
     font-weight: 600;
 }
 
 .monthEventTitle {
     overflow: hidden;
-    color: #20332c;
+    color: var(--lm-text);
     font-size: 11px;
     font-weight: 700;
     text-overflow: ellipsis;
@@ -141,7 +141,7 @@
 
 .listEventTitle {
     overflow: hidden;
-    color: #20332c;
+    color: var(--lm-text);
     font-weight: 700;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -154,10 +154,10 @@
     max-width: 180px;
     flex: 0 0 auto;
     padding: 3px 8px 3px 4px;
-    border: 1px solid #dce5e0;
+    border: 1px solid var(--lm-border);
     border-radius: 999px;
-    background: #f7faf8;
-    color: #536860;
+    background: var(--lm-surface-subtle);
+    color: var(--lm-text-secondary);
     font-size: 11px;
 }
 
@@ -168,7 +168,7 @@
     flex: 0 0 20px;
     place-items: center;
     border-radius: 50%;
-    background: #315c4b;
+    background: var(--lm-success-solid);
     color: #ffffff;
     font-size: 9px;
     font-weight: 700;
@@ -187,9 +187,9 @@
     gap: 10px;
     padding: 6px 12px;
     margin-bottom: 8px;
-    border: 1px solid #dfe5e2;
+    border: 1px solid var(--lm-border);
     border-radius: 6px;
-    background: #f7f9f8;
+    background: var(--lm-surface-subtle);
 }
 
 .todayButton {
@@ -211,7 +211,7 @@
 .calendarTitle h2 {
     min-width: 150px;
     margin: 0;
-    color: #20332c;
+    color: var(--lm-text);
     font-size: 15px;
     font-weight: 700;
     line-height: 28px;
@@ -239,24 +239,24 @@
 
 .calendarSurface {
     overflow: hidden;
-    border: 1px solid #dfe5e2;
+    border: 1px solid var(--lm-border);
     border-radius: 6px;
-    background: #ffffff;
+    background: var(--lm-surface);
 }
 
 .calendarSurface :global(.fc) {
-    --fc-border-color: #e4e9e6;
-    --fc-neutral-bg-color: #f7f9f8;
-    --fc-page-bg-color: #ffffff;
-    --fc-today-bg-color: #edf7f1;
-    --fc-now-indicator-color: #d34848;
-    color: #263b33;
+    --fc-border-color: var(--lm-border);
+    --fc-neutral-bg-color: var(--lm-surface-subtle);
+    --fc-page-bg-color: var(--lm-surface);
+    --fc-today-bg-color: var(--lm-surface-muted);
+    --fc-now-indicator-color: var(--lm-danger-solid);
+    color: var(--lm-text);
 }
 
 .calendarSurface :global(.fc-theme-standard td),
 .calendarSurface :global(.fc-theme-standard th),
 .calendarSurface :global(.fc-theme-standard .fc-scrollgrid) {
-    border-color: #e4e9e6;
+    border-color: var(--lm-border);
 }
 
 .calendarSurface :global(.fc-scrollgrid) {
@@ -264,12 +264,12 @@
 }
 
 .calendarSurface :global(.fc-col-header-cell) {
-    background: #f7f9f8;
+    background: var(--lm-surface-subtle);
 }
 
 .calendarSurface :global(.fc-col-header-cell-cushion) {
     padding: 10px 6px;
-    color: #315c4b !important;
+    color: var(--lm-success-fg) !important;
     font-size: 12px;
     font-weight: 700;
     letter-spacing: 0;
@@ -278,7 +278,7 @@
 
 .calendarSurface :global(.fc-timegrid-slot-label-cushion),
 .calendarSurface :global(.fc-daygrid-day-number) {
-    color: #62736c;
+    color: var(--lm-text-secondary);
     font-size: 12px;
 }
 
@@ -287,7 +287,7 @@
 }
 
 .calendarSurface :global(.fc-day-today .fc-daygrid-day-number) {
-    color: #176b4b;
+    color: var(--lm-success-fg);
     font-weight: 700;
 }
 
@@ -296,11 +296,11 @@
 }
 
 .calendarSurface :global(.fc-list-day-cushion) {
-    background: #f1f6f3;
+    background: var(--lm-surface-muted);
 }
 
 .calendarSurface :global(.fc-list-event:hover td) {
-    background: #f7faf8;
+    background: var(--lm-surface-subtle);
 }
 
 .calendarSurface :global(.fc-timegrid-event-harness) {

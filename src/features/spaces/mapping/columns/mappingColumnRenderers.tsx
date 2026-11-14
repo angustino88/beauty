@@ -141,7 +141,7 @@ export const renderMappingStatus = (row: ResourceMappingRow) => {
 
   return (
     <div className={styles.mappingStatusDetails}>
-      <span className={styles.mappingStatus} style={{ color: is_fully_mapped ? "#1f7a4d" : "#d97706" }}>
+      <span className={styles.mappingStatus} style={{ color: is_fully_mapped ? "var(--lm-success-fg)" : "var(--lm-warning-fg)" }}>
         {is_fully_mapped ? <CheckCircleFilled aria-hidden="true" /> : <ExclamationCircleFilled aria-hidden="true" />}
         <span>
           <strong>{is_fully_mapped ? "Fully mapped" : missingParts[0] ?? "Partial"}</strong>
@@ -247,7 +247,7 @@ export const renderEquipmentCategories = (equipment: MappingEquipmentItem[]) => 
           return (
             <Tag key={catKey} color="blue" style={{ cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 4 }}>
               <span style={{ fontSize: 11 }}>{displayName}</span>
-              <Badge count={data.count} size="small" style={{ backgroundColor: "#0969da" }} />
+              <Badge count={data.count} size="small" style={{ backgroundColor: "var(--lm-info-solid)" }} />
             </Tag>
           );
         })}

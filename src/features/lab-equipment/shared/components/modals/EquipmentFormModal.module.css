@@ -1,18 +1,18 @@
-.modal :global(.ant-modal-container) { padding: 0; overflow: hidden; border: 1px solid #dce3e8; border-radius: 8px; }
-.modal :global(.ant-modal-header) { margin: 0; padding: 16px 24px; border-bottom: 1px solid #e3e8ec; }
-.modal :global(.ant-modal-title) { font-size: 16px; color: #25333e; }
+.modal :global(.ant-modal-container) { padding: 0; overflow: hidden; border: 1px solid var(--lm-border); border-radius: 8px; }
+.modal :global(.ant-modal-header) { margin: 0; padding: 16px 24px; border-bottom: 1px solid var(--lm-border); }
+.modal :global(.ant-modal-title) { font-size: 16px; color: var(--lm-text); }
 .modal :global(.ant-modal-body) { padding: 0; }
-.modal :global(.ant-modal-footer) { margin: 0; padding: 12px 24px; border-top: 1px solid #e3e8ec; background: #f8fafb; }
+.modal :global(.ant-modal-footer) { margin: 0; padding: 12px 24px; border-top: 1px solid var(--lm-border); background: var(--lm-surface-subtle); }
 .form { padding: 0 !important; max-height: none !important; }
 .section + .section { margin-top: 12px; }
-.section h3 { margin: 0 0 14px; padding-bottom: 8px; border-bottom: 1px solid #e8edf0; font-size: 12px; font-weight: 700; color: #405366; }
+.section h3 { margin: 0 0 14px; padding-bottom: 8px; border-bottom: 1px solid var(--lm-border); font-size: 12px; font-weight: 700; color: var(--lm-text-secondary); }
 .form :global(.ant-form-item) { margin-bottom: 12px; }
-.form :global(.ant-form-item-label > label) { font-size: 12px; font-weight: 500; color: #405366; }
+.form :global(.ant-form-item-label > label) { font-size: 12px; font-weight: 500; color: var(--lm-text-secondary); }
 .form :global(.ant-input), .form :global(.ant-input-number), .form :global(.ant-select), .form :global(.ant-picker) { font-size: 12px; }
-.form :global(.ant-form-item-extra) { font-size: 11px; color: #647481; min-height: 0; margin-top: 4px; }
-.form :global(.equipment-form-details) { margin: 8px 0 20px; border: 1px solid #dce3e8; background: #f8fafb; }
-.form :global(.ant-collapse-header) { font-size: 12px; font-weight: 600; color: #405366; }
-.form :global(.ant-upload-drag) { background: #fafbfc; }
+.form :global(.ant-form-item-extra) { font-size: 11px; color: var(--lm-text-tertiary); min-height: 0; margin-top: 4px; }
+.form :global(.equipment-form-details) { margin: 8px 0 20px; border: 1px solid var(--lm-border); background: var(--lm-surface-subtle); }
+.form :global(.ant-collapse-header) { font-size: 12px; font-weight: 600; color: var(--lm-text-secondary); }
+.form :global(.ant-upload-drag) { background: var(--lm-surface-subtle); }
 .form :global(.ant-upload-drag-icon) { margin-bottom: 4px !important; }
 .form :global(.ant-upload-drag-icon .anticon) { font-size: 24px !important; }
 .form :global(.ant-upload-text) { font-size: 12px !important; }

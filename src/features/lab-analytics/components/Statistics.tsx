@@ -46,7 +46,7 @@ export function Statistics() {
         title: 'Weekly Visitors',
         key: 'labVisitChart' as const,
         unit: 'visits',
-        color: '#1f7a4d',
+        color: 'var(--lm-success-fg)',
         loading: labVisitLoading,
         error: labVisitError || labVisitSeriesError,
         retry: () => { void retryLabVisits(); void retryLabVisitSeries(); },
@@ -57,7 +57,7 @@ export function Statistics() {
         title: 'Weekly Bookings',
         key: 'bookingCountChart' as const,
         unit: 'bookings',
-        color: '#d17a00',
+        color: 'var(--lm-warning-fg)',
         loading: bookingCountLoading,
         error: bookingCountError || bookingSeriesError,
         retry: () => { void retryBookings(); void retryBookingSeries(); },
@@ -68,7 +68,7 @@ export function Statistics() {
         title: 'Total Users',
         key: 'userCountChart' as const,
         unit: 'users',
-        color: '#2f6f8f',
+        color: 'var(--lm-info-fg)',
         loading: userCountLoading,
         error: userCountError || userSeriesError,
         retry: () => { void retryUsers(); void retryUserSeries(); },
@@ -79,7 +79,7 @@ export function Statistics() {
         title: 'Total Labs',
         key: 'labCountChart' as const,
         unit: 'labs',
-        color: '#7c6f9c',
+        color: 'var(--lm-text-tertiary)',
         loading: labCountLoading,
         error: labCountError || labSeriesError,
         retry: () => { void retryLabs(); void retryLabSeries(); },
@@ -102,7 +102,7 @@ export function Statistics() {
       {statisticsMap.map((entry) => {
         const trend = entry.statistics?.trend;
         const trendEl = trend && trend !== 0 ? (
-          <Typography.Text style={{ color: trend > 0 ? '#3f8600' : '#cf1322' }}>
+          <Typography.Text style={{ color: trend > 0 ? 'var(--lm-success-fg)' : 'var(--lm-danger-fg)' }}>
             {trend > 0 ? <ArrowUpOutlined /> : <ArrowDownOutlined />} {Math.abs(trend)}%
           </Typography.Text>
         ) : null;

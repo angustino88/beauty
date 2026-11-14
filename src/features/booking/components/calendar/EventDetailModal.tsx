@@ -66,14 +66,14 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 padding: '8px 10px 6px 10px',
-                borderBottom: '1px solid #eaeaea',
+                borderBottom: '1px solid var(--lm-border)',
                 borderRadius: '8px 8px 0 0',
                 backgroundColor: headerColor || token.colorPrimaryBg,
                 borderColor: token.colorPrimaryBorder,
               }}
               onClick={(e) => e.stopPropagation()}
             >
-              <Typography.Text strong style={{ fontSize: '14px', color: '#333', margin: 0 }}>
+              <Typography.Text strong style={{ fontSize: '14px', color: 'var(--lm-text)', margin: 0 }}>
                 {projectName}{reason ? ` - ${reason}` : ''}
               </Typography.Text>
               {hasPermission &&
@@ -83,22 +83,22 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
                   type="text"
                   onClick={() => setIsEditModalVisible(true)}
                   icon={<EditOutlined />}
-                  style={{ color: '#888' }}
+                  style={{ color: 'var(--lm-text-tertiary)' }}
                 />
               )}
             </div>
             <Space direction="vertical" style={{ padding: '0px 10px 6px' }}>
-              <Typography.Text italic style={{ color: '#555', fontSize: '12px' }}>
+              <Typography.Text italic style={{ color: 'var(--lm-text-secondary)', fontSize: '12px' }}>
                 <LockOutlined /> {hasPermission ? booking.booking_code : '••••••••••'}
               </Typography.Text>
-              <Typography.Text style={{ color: '#555', fontSize: '12px' }}>
+              <Typography.Text style={{ color: 'var(--lm-text-secondary)', fontSize: '12px' }}>
                 <ClockCircleOutlined /> {formatBookingDuration()}
               </Typography.Text>
-              <Typography.Text style={{ color: '#555', fontSize: '12px' }}>
+              <Typography.Text style={{ color: 'var(--lm-text-secondary)', fontSize: '12px' }}>
                 <DesktopOutlined />{' '}
                 {`${benchName}${computerName ? ` (${computerName})` : ''}`}
               </Typography.Text>
-              <Typography.Text style={{ color: '#555', fontSize: '12px' }}>
+              <Typography.Text style={{ color: 'var(--lm-text-secondary)', fontSize: '12px' }}>
                 <UserOutlined /> {booking.creator?.display_name || booking.creator?.username}
               </Typography.Text>
             </Space>

@@ -33,10 +33,10 @@ export const notifyEquipmentCreated = (
         <code
           style={{
             padding: '2px 7px',
-            border: '1px solid #9ccdb4',
+            border: '1px solid var(--lm-success-solid)',
             borderRadius: 4,
-            background: '#e8f3ed',
-            color: '#006b3f',
+            background: 'var(--lm-surface-muted)',
+            color: 'var(--lm-success-fg)',
             fontFamily: 'ui-monospace, SFMono-Regular, Consolas, monospace',
             fontSize: 12,
             fontWeight: 700,
@@ -70,10 +70,10 @@ export const notifyEquipmentUpdated = (
         <code
           style={{
             padding: '2px 7px',
-            border: '1px solid #9ccdb4',
+            border: '1px solid var(--lm-success-solid)',
             borderRadius: 4,
-            background: '#e8f3ed',
-            color: '#006b3f',
+            background: 'var(--lm-surface-muted)',
+            color: 'var(--lm-success-fg)',
             fontFamily: 'ui-monospace, SFMono-Regular, Consolas, monospace',
             fontSize: 12,
             fontWeight: 700,
@@ -157,7 +157,7 @@ export const notifyMappingUpdated = (
             key={`${item.status}-${item.label}`}
             style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, textAlign: 'left' }}
           >
-            {item.status === 'Added' ? <PlusCircleOutlined style={{ color: '#16803c' }} /> : <MinusCircleOutlined style={{ color: '#c62828' }} />}
+            {item.status === 'Added' ? <PlusCircleOutlined style={{ color: 'var(--lm-success-fg)' }} /> : <MinusCircleOutlined style={{ color: 'var(--lm-danger-fg)' }} />}
             <span>
               <strong>{item.status} {item.status === 'Added' ? 'to' : 'from'} {labLabel}:</strong> {item.label}
             </span>

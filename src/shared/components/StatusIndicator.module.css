@@ -1,11 +1,13 @@
+/* Status pill shared by spaces, equipment, licenses and bookings.
+   Tone classes come from shared/status/statusTone.ts; the overviewGreen etc. and successSubtle
+   names are aliases kept for older call sites. All colours are theme tokens. */
 .indicator {
   display: inline-flex;
   align-items: center;
   justify-content: flex-start;
-  gap: 5px;
-  min-width: 88px;
-  min-height: 26px;
-  padding: 3px 7px;
+  gap: 6px;
+  min-height: 24px;
+  padding: 2px 9px 2px 8px;
   color: var(--indicator-text);
   font-size: 12px;
   font-weight: 600;
@@ -13,7 +15,7 @@
   white-space: nowrap;
   background: var(--indicator-background);
   border: 1px solid var(--indicator-border);
-  border-radius: 5px;
+  border-radius: 999px;
 }
 
 .statusDot {
@@ -22,93 +24,47 @@
   height: 7px;
   background: var(--indicator-accent);
   border-radius: 50%;
-  box-shadow: 0 0 0 3px var(--indicator-ring);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--indicator-accent) 18%, transparent);
 }
 
-.success {
-  --indicator-text: #17603a;
-  --indicator-accent: #238636;
-  --indicator-background: #eefbf3;
-  --indicator-border: #b7e4c7;
-  --indicator-ring: rgba(35, 134, 54, 0.14);
+.success, .successSubtle, .overviewGreen {
+  --indicator-text: var(--lm-success-fg);
+  --indicator-accent: var(--lm-success-solid);
+  --indicator-background: var(--lm-success-bg);
+  --indicator-border: var(--lm-success-border);
 }
 
-.successSubtle {
-  --indicator-text: #1d7446;
-  --indicator-accent: #2da44e;
-  --indicator-background: #f0fdf4;
-  --indicator-border: #bbf7d0;
-  --indicator-ring: rgba(45, 164, 78, 0.12);
+.info, .overviewBlue {
+  --indicator-text: var(--lm-info-fg);
+  --indicator-accent: var(--lm-info-solid);
+  --indicator-background: var(--lm-info-bg);
+  --indicator-border: var(--lm-info-border);
 }
 
-.info {
-  --indicator-text: #075985;
-  --indicator-accent: #0284c7;
-  --indicator-background: #eff9ff;
-  --indicator-border: #bae3f8;
-  --indicator-ring: rgba(2, 132, 199, 0.14);
+.violet, .overviewViolet {
+  --indicator-text: var(--lm-violet-fg);
+  --indicator-accent: var(--lm-violet-solid);
+  --indicator-background: var(--lm-violet-bg);
+  --indicator-border: var(--lm-violet-border);
 }
 
-.warning {
-  --indicator-text: #7a4b08;
-  --indicator-accent: #b26a00;
-  --indicator-background: #fff8e8;
-  --indicator-border: #ecd39d;
-  --indicator-ring: rgba(178, 106, 0, 0.14);
+.warning, .overviewAmber {
+  --indicator-text: var(--lm-warning-fg);
+  --indicator-accent: var(--lm-warning-solid);
+  --indicator-background: var(--lm-warning-bg);
+  --indicator-border: var(--lm-warning-border);
 }
 
-.danger {
-  --indicator-text: #a12836;
-  --indicator-accent: #cf3345;
-  --indicator-background: #fff1f2;
-  --indicator-border: #f0bcc2;
-  --indicator-ring: rgba(207, 51, 69, 0.14);
+.danger, .overviewRed {
+  --indicator-text: var(--lm-danger-fg);
+  --indicator-accent: var(--lm-danger-solid);
+  --indicator-background: var(--lm-danger-bg);
+  --indicator-border: var(--lm-danger-border);
 }
 
 .neutral {
-  --indicator-text: #4b5563;
-  --indicator-accent: #667085;
-  --indicator-background: #f6f8fa;
-  --indicator-border: #d0d7de;
-  --indicator-ring: rgba(102, 112, 133, 0.14);
-}
-
-.overviewBlue {
-  --indicator-text: #315eac;
-  --indicator-accent: #315eac;
-  --indicator-background: #eff4fc;
-  --indicator-border: #d7e4f7;
-  --indicator-ring: rgba(49, 94, 172, 0.14);
-}
-
-.overviewGreen {
-  --indicator-text: #197856;
-  --indicator-accent: #197856;
-  --indicator-background: #ecf7f1;
-  --indicator-border: #cdebdc;
-  --indicator-ring: rgba(25, 120, 86, 0.14);
-}
-
-.overviewAmber {
-  --indicator-text: #9d6718;
-  --indicator-accent: #9d6718;
-  --indicator-background: #fff5e6;
-  --indicator-border: #f4dfb8;
-  --indicator-ring: rgba(157, 103, 24, 0.14);
-}
-
-.overviewViolet {
-  --indicator-text: #6951a4;
-  --indicator-accent: #6951a4;
-  --indicator-background: #f4f0fb;
-  --indicator-border: #e3d8f3;
-  --indicator-ring: rgba(105, 81, 164, 0.14);
-}
-
-.overviewRed {
-  --indicator-text: #b04648;
-  --indicator-accent: #b04648;
-  --indicator-background: #fdf0f0;
-  --indicator-border: #f0d6d6;
-  --indicator-ring: rgba(176, 70, 72, 0.14);
+  --indicator-text: var(--lm-neutral-fg);
+  --indicator-accent: var(--lm-neutral-solid);
+  --indicator-background: var(--lm-neutral-bg);
+  --indicator-border: var(--lm-neutral-border);
 }

@@ -98,15 +98,15 @@ export const useLoginStyles = createStyles(({ css, token }) => ({
     position: absolute;
     right: -3px;
     bottom: 1px;
-    color: #cf1322;
-    background: #fff1f0;
+    color: var(--lm-danger-fg);
+    background: var(--lm-danger-bg);
     border-radius: 50%;
     font-size: 20px;
   `,
 
   restrictedTitle: css`
     margin: 0 0 12px;
-    color: #262626;
+    color: var(--lm-text);
     font-size: 26px;
     font-weight: 700;
     line-height: 1.25;
@@ -115,7 +115,7 @@ export const useLoginStyles = createStyles(({ css, token }) => ({
   restrictedDescription: css`
     max-width: 350px;
     margin: 0;
-    color: #595959;
+    color: var(--lm-text-secondary);
     font-size: 14px;
     line-height: 1.6;
   `,
@@ -124,7 +124,7 @@ export const useLoginStyles = createStyles(({ css, token }) => ({
     width: 100%;
     height: 1px;
     margin: 24px 0;
-    background: #f0f0f0;
+    background: var(--lm-surface-muted);
   `,
 
   tryAgainButton: css`
@@ -133,12 +133,12 @@ export const useLoginStyles = createStyles(({ css, token }) => ({
     border: 0;
     border-radius: 999px;
     color: #fff;
-    background: #026F3D;
+    background: var(--lm-success-solid);
     font-weight: 600;
 
     &:hover,
     &:focus {
-      background: #174735 !important;
+      background: var(--lm-success-solid) !important;
       color: #fff !important;
     }
   `,
@@ -149,16 +149,16 @@ export const useLoginStyles = createStyles(({ css, token }) => ({
     justify-content: center;
     gap: 7px;
     margin-top: 24px;
-    color: #595959;
+    color: var(--lm-text-secondary);
     font-size: 12px;
 
     .anticon {
-      color: #8c8c8c;
+      color: var(--lm-text-tertiary);
       font-size: 15px;
     }
 
     a {
-      color: #1677ff;
+      color: var(--lm-info-solid);
       text-decoration: underline;
     }
   `,

@@ -19,8 +19,8 @@ export function TagCell({ item, displayKey, tooltipKey }: TagCellProps) {
     >
       <Tag
         style={{
-          color: '#4338CA',
-          background: '#EEF2FF',
+          color: 'var(--lm-primary)',
+          background: 'var(--lm-info-bg)',
           border: 'none',
           borderRadius: 14,
           fontWeight: 500,

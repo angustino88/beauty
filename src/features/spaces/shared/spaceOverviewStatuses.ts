@@ -2,7 +2,6 @@ import { groupStatusCounts } from '../../../shared/utils/statusSummary.ts';
 import { normalizeSpaceStatus, spaceStatusLabel, spaceStatusTone } from './spaceStatus.ts';
 
 type StatusCount = { status: { value: string; label?: string }; resource_count: number };
-type OverviewTone = 'blue' | 'green' | 'amber' | 'violet' | 'slate' | 'red';
 type SpaceKind = 'room' | 'station' | 'bench';
 
 const featuredOrder: Record<'room' | 'station', readonly string[]> = {
@@ -10,24 +9,15 @@ const featuredOrder: Record<'room' | 'station', readonly string[]> = {
   station: ['available', 'maintenance', 'issue', 'retired'],
 };
 
-const tones: Record<string, OverviewTone> = {
-  overviewBlue: 'blue',
-  overviewGreen: 'green',
-  overviewAmber: 'amber',
-  overviewViolet: 'violet',
-  overviewRed: 'red',
-  neutral: 'slate',
-};
-
 const descriptionsByStatus: Record<string, string> = {
   operational: 'Ready for placement & use',
   in_use: 'Active user session',
   scheduled: 'Booked today',
   reserved: 'Booked today',
-  maintenance: 'Scheduled servicing',
-  in_maintenance: 'Scheduled servicing',
-  issue: 'Reported hardware fault',
-  out_of_service: 'Reported hardware fault',
+  maintenance: 'Being serviced',
+  in_maintenance: 'Being serviced',
+  issue: 'Reported fault, not usable',
+  out_of_service: 'Not usable until repaired',
   closed: 'Access restricted or closed',
   restricted: 'Restricted access only',
   retired: 'Decommissioned from service',
@@ -60,7 +50,7 @@ export function spaceOverviewStatuses(statuses: readonly StatusCount[], kind: Sp
       key: status.value,
       label,
       description,
-      tone: tones[spaceStatusTone(status.value)] ?? 'slate',
+      tone: spaceStatusTone(status.value),
     };
   });
 }

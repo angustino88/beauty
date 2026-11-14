@@ -2,13 +2,13 @@
 
 .fc-day-today,
 .fc .fc-day-today {
-  background-color: #fff8dc !important;
+  background-color: var(--lm-warning-bg) !important;
 }
 
 .fc-col-header-cell-cushion,
 .fc-list-day-side-text,
 .fc-list-day-text {
-  color: #00884A !important;
+  color: var(--lm-success-fg) !important;
   font-weight: 600;
 }
 
@@ -33,7 +33,7 @@
   margin-top: -1px !important;
   border-style: solid !important;
   border-width: 3px 0 0 !important;
-  border-color: #f20540 !important;
+  border-color: var(--lm-danger-solid) !important;
   opacity: .7 !important;
   position: relative;
 }
@@ -45,7 +45,7 @@
   margin-top: -4px !important;
   width: 6px;
   height: 6px;
-  background-color: #f20540;
+  background-color: var(--lm-danger-solid);
   border-radius: 50%;
   box-shadow: 0 0 2px #fff;
 }

@@ -17,19 +17,19 @@
   margin: 0;
   font-size: 15px;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--lm-text);
 }
 
 .tabSubtitle {
   font-size: 12px;
-  color: #64748b;
+  color: var(--lm-text-tertiary);
 }
 
 /* Active Downtime Banner */
 .activeDowntimeCard {
-  background: #fffbeb;
-  border: 1px solid #fde68a;
-  border-left: 4px solid #f59e0b;
+  background: var(--lm-warning-bg);
+  border: 1px solid var(--lm-warning-solid);
+  border-left: 4px solid var(--lm-warning-solid);
   border-radius: 8px;
   padding: 14px 18px;
   display: flex;
@@ -41,9 +41,9 @@
 }
 
 .activeOutOfService {
-  background: #fef2f2;
-  border-color: #fecaca;
-  border-left-color: #ef4444;
+  background: var(--lm-danger-bg);
+  border-color: var(--lm-danger-border);
+  border-left-color: var(--lm-danger-solid);
   box-shadow: 0 1px 3px rgba(239, 68, 68, 0.08);
 }
 
@@ -57,7 +57,7 @@
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: #ef4444;
+  background: var(--lm-danger-solid);
   margin-top: 5px;
   box-shadow: 0 0 0 rgba(239, 68, 68, 0.4);
   animation: pulse 1.8s infinite;
@@ -65,7 +65,7 @@
 }
 
 .pulsingDotAmber {
-  background: #f59e0b;
+  background: var(--lm-warning-solid);
   box-shadow: 0 0 0 rgba(245, 158, 11, 0.4);
   animation: pulseAmber 1.8s infinite;
 }
@@ -109,7 +109,7 @@
 .activeTitle {
   font-size: 14px;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--lm-info-fg);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -117,7 +117,7 @@
 
 .activeMeta {
   font-size: 12px;
-  color: #475569;
+  color: var(--lm-text-secondary);
   display: flex;
   align-items: center;
   flex-wrap: wrap;
@@ -126,7 +126,7 @@
 
 .activeNote {
   font-size: 12px;
-  color: #64748b;
+  color: var(--lm-text-tertiary);
   margin-top: 4px;
   font-style: italic;
 }
@@ -154,39 +154,39 @@
 }
 
 .stateCurrent {
-  background: #fef2f2;
-  color: #dc2626;
-  border: 1px solid #fecaca;
+  background: var(--lm-danger-bg);
+  color: var(--lm-danger-solid);
+  border: 1px solid var(--lm-danger-border);
 }
 
 .stateScheduled {
-  background: #eff6ff;
-  color: #2563eb;
-  border: 1px solid #bfdbfe;
+  background: var(--lm-info-bg);
+  color: var(--lm-info-solid);
+  border: 1px solid var(--lm-info-border);
 }
 
 .stateEnded {
-  background: #f0fdf4;
-  color: #16a34a;
-  border: 1px solid #bbf7d0;
+  background: var(--lm-success-bg);
+  color: var(--lm-success-fg);
+  border: 1px solid var(--lm-success-border);
 }
 
 .stateCancelled {
-  background: #f8fafc;
-  color: #64748b;
-  border: 1px solid #e2e8f0;
+  background: var(--lm-surface-subtle);
+  color: var(--lm-text-tertiary);
+  border: 1px solid var(--lm-border);
 }
 
 /* Duration format */
 .durationText {
   font-weight: 600;
-  color: #334155;
+  color: var(--lm-text);
   font-variant-numeric: tabular-nums;
   font-size: 12px;
 }
 
 .durationOngoing {
-  color: #d97706;
+  color: var(--lm-warning-fg);
   font-weight: 600;
 }
 
@@ -199,11 +199,11 @@
 }
 
 .conditionCard {
-  border: 2px solid #e2e8f0;
+  border: 2px solid var(--lm-border);
   border-radius: 8px;
   padding: 12px 14px;
   cursor: pointer;
-  background: #ffffff;
+  background: var(--lm-surface);
   transition: all 0.15s ease;
   display: flex;
   flex-direction: column;
@@ -211,18 +211,18 @@
 }
 
 .conditionCard:hover {
-  border-color: #cbd5e1;
-  background: #f8fafc;
+  border-color: var(--lm-border-strong);
+  background: var(--lm-surface-subtle);
 }
 
 .conditionSelectedMaintenance {
-  border-color: #d97706;
-  background: #fffbeb;
+  border-color: var(--lm-warning-solid);
+  background: var(--lm-warning-bg);
 }
 
 .conditionSelectedOutOfService {
-  border-color: #dc2626;
-  background: #fef2f2;
+  border-color: var(--lm-danger-solid);
+  background: var(--lm-danger-bg);
 }
 
 .conditionTitle {
@@ -235,7 +235,7 @@
 
 .conditionDesc {
   font-size: 11px;
-  color: #64748b;
+  color: var(--lm-text-tertiary);
   line-height: 1.35;
 }
 

@@ -217,7 +217,7 @@ export function buildColumns({
             size="small"
             icon={
               bench.is_favorite ? (
-                <StarFilled style={{ color: '#faad14', fontSize: 16 }} />
+                <StarFilled style={{ color: 'var(--lm-warning-solid)', fontSize: 16 }} />
               ) : (
                 <StarOutlined style={{ fontSize: 16 }} />
               )

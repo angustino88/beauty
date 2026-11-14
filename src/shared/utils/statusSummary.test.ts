@@ -24,8 +24,8 @@ test('equipment summary merges legacy values by the badge status and color', () 
     ['new_status', 'Custom label', 1],
   ]);
   assert.equal(equipmentStatusTone('in_storage'), equipmentStatusTone('available'));
-  assert.equal(equipmentStatusTone('broken'), 'overviewRed');
-  assert.equal(equipmentStatusTone('maintenance'), 'overviewViolet');
+  assert.equal(equipmentStatusTone('broken'), 'danger');
+  assert.equal(equipmentStatusTone('maintenance'), 'warning');
 });
 
 test('license summaries use recorded license states rather than equipment aliases', () => {

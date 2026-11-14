@@ -1,5 +1,5 @@
 .highlightRow {
-  background-color: #e9f6ee !important;
+  background-color: var(--lm-surface-muted) !important;
 }
 
 .row {
@@ -7,11 +7,11 @@
 }
 
 .monitoringTable :global(.ant-table-tbody > tr:nth-child(even):not(:hover) > td) {
-  background: #fbfcfd;
+  background: var(--lm-surface);
 }
 
 .monitoringTable :global(.ant-table-tbody > tr.highlightRow > td) {
-  background: #e9f6ee !important;
+  background: var(--lm-surface-muted) !important;
 }
 
 .monitoringTable :global(.ant-typography code) {

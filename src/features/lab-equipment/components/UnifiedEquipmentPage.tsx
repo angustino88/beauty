@@ -572,7 +572,7 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
                     ))}
                   </div>
                 ) : (
-                  <span style={{ color: '#8c8c8c' }}>No information</span>
+                  <span style={{ color: 'var(--lm-text-tertiary)' }}>No information</span>
                 )
               }
             >
@@ -616,7 +616,7 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
                     ))}
                   </div>
                 ) : (
-                  <span style={{ color: '#647481' }}>No monitored devices</span>
+                  <span style={{ color: 'var(--lm-text-tertiary)' }}>No monitored devices</span>
                 )
               }
             >

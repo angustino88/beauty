@@ -4,12 +4,12 @@
   gap: 16px;
   padding-bottom: 16px;
   margin-bottom: 16px;
-  border-bottom: 2px solid #f5f5f5;
+  border-bottom: 2px solid var(--lm-border-subtle);
 }
 
 .avatar {
   flex-shrink: 0;
-  border: 3px solid #f0f0f0;
+  border: 3px solid var(--lm-border-subtle);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
@@ -38,11 +38,11 @@
   margin: 0 0 3px;
   line-height: 1.25;
   word-break: break-word;
-  color: #141414;
+  color: var(--lm-text);
 }
 
 .headerSub {
-  color: #8c8c8c;
+  color: var(--lm-text-tertiary);
   font-size: 13px;
   margin-top: 2px;
 }
@@ -69,13 +69,13 @@
 .pointsBadge {
   display: inline-flex;
   align-items: center;
-  background: #f3f0fc;
-  color: #512da8;
+  background: var(--lm-primary-bg);
+  color: var(--lm-primary-fg);
   font-size: 12px;
   font-weight: 700;
   padding: 3px 10px;
   border-radius: 20px;
-  border: 1px solid #d1c4e9;
+  border: 1px solid var(--lm-primary-border);
 }
 
 .metricsGrid {
@@ -93,20 +93,20 @@
   align-items: center;
   gap: 12px;
   padding: 10px 14px;
-  background: #fafafa;
-  border: 1px solid #f0f0f0;
+  background: var(--lm-surface-subtle);
+  border: 1px solid var(--lm-border-subtle);
   border-radius: 10px;
   transition: box-shadow 0.15s, border-color 0.15s;
 }
 
 .metricCard:hover {
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.07);
-  border-color: #e0e0e0;
+  border-color: var(--lm-border);
 }
 
 .metricCardIcon {
   font-size: 18px;
-  color: #7e57c2;
+  color: var(--lm-primary);
   flex-shrink: 0;
   width: 22px;
   text-align: center;
@@ -118,7 +118,7 @@
 
 .metricCardLabel {
   font-size: 11px;
-  color: #757575;
+  color: var(--lm-text-tertiary);
   text-transform: uppercase;
   letter-spacing: 0.6px;
   line-height: 1;
@@ -127,7 +127,7 @@
 .metricCardValue {
   font-size: 15px;
   font-weight: 700;
-  color: #1f1f1f;
+  color: var(--lm-text);
   margin-top: 3px;
   line-height: 1.2;
   white-space: nowrap;
@@ -136,7 +136,7 @@
 }
 
 .points {
-  color: #512da8;
+  color: var(--lm-primary-fg);
   font-weight: 700;
 }
 

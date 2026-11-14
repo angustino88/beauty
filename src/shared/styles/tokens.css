@@ -1,0 +1,159 @@
+/*
+ * LabMango semantic design tokens.
+ *
+ * Every component colour should come from here so light and dark themes stay in
+ * sync. Components never test the theme themselves: the html[data-theme] switch
+ * below re-points every token at once (antd, Tailwind utilities, CSS modules).
+ *
+ * Naming: --lm-<role>[-<variant>]
+ *   surfaces  bg (page) · surface (cards) · surface-subtle (headers, label cells)
+ *             surface-muted (tracks, hover) · surface-raised (popovers)
+ *   text      text · text-secondary · text-tertiary · text-disabled
+ *   lines     border · border-subtle · border-strong
+ *   status    <tone>-fg (text on soft bg) · <tone>-solid (dots, bars, icons)
+ *             <tone>-bg (soft fill) · <tone>-border
+ *             tones: success, info, warning, danger, violet, neutral
+ */
+
+:root {
+  --lm-font-sans: "Bosch Sans", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  --lm-font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+  --lm-bg: #f5f6fa;
+  --lm-surface: #ffffff;
+  --lm-surface-subtle: #f8f9fb;
+  --lm-surface-muted: #f0f2f6;
+  --lm-surface-raised: #ffffff;
+  --lm-surface-inverse: #202536;
+
+  --lm-text: #202536;
+  --lm-text-secondary: #4f5668;
+  --lm-text-tertiary: #717789;
+  --lm-text-disabled: #a3a8b6;
+  --lm-text-inverse: #ffffff;
+
+  --lm-border: #e4e7ee;
+  --lm-border-subtle: #eef0f4;
+  --lm-border-strong: #cfd4de;
+
+  --lm-primary: #6155d9;
+  --lm-primary-hover: #5146b9;
+  --lm-primary-fg: #4b40b0;
+  --lm-primary-bg: #f2f1fc;
+  --lm-primary-border: #dcd8f8;
+  --lm-on-primary: #ffffff;
+
+  --lm-success-fg: #17673f;
+  --lm-success-solid: #2f9e62;
+  --lm-success-bg: #ecf8f1;
+  --lm-success-border: #c6e9d4;
+
+  --lm-info-fg: #23589f;
+  --lm-info-solid: #3b7ddd;
+  --lm-info-bg: #eef4fd;
+  --lm-info-border: #cfe0f7;
+
+  --lm-warning-fg: #8a5400;
+  --lm-warning-solid: #d48a10;
+  --lm-warning-bg: #fff6e5;
+  --lm-warning-border: #f2dcae;
+
+  --lm-danger-fg: #a52a38;
+  --lm-danger-solid: #d9475a;
+  --lm-danger-bg: #fdf0f1;
+  --lm-danger-border: #f3cdd2;
+
+  --lm-violet-fg: #5b45a8;
+  --lm-violet-solid: #8a6fdc;
+  --lm-violet-bg: #f4f0fc;
+  --lm-violet-border: #e0d6f6;
+
+  --lm-neutral-fg: #4f5668;
+  --lm-neutral-solid: #8d94a5;
+  --lm-neutral-bg: #f2f4f7;
+  --lm-neutral-border: #dde1e8;
+
+  --lm-shadow-sm: 0 1px 2px rgba(32, 37, 54, 0.05);
+  --lm-shadow-md: 0 4px 14px rgba(32, 37, 54, 0.08);
+  --lm-shadow-lg: 0 16px 40px rgba(32, 37, 54, 0.14);
+  --lm-focus-ring: 0 0 0 3px rgba(97, 85, 217, 0.28);
+  --lm-overlay: rgba(15, 18, 28, 0.45);
+
+  /* Dashboard "paper" skin */
+  --lm-paper-top: #fffbf2;
+  --lm-paper-bottom: #f6ecdb;
+  --lm-paper-ink: #221c17;
+  --lm-paper-edge: #382a22;
+  --lm-paper-highlight: #ffffff;
+  --lm-paper-accent: #7b2d26;
+}
+
+html[data-theme='dark'] {
+  --lm-bg: #14171c;
+  --lm-surface: #1d2127;
+  --lm-surface-subtle: #232830;
+  --lm-surface-muted: #2a3039;
+  --lm-surface-raised: #262b33;
+  --lm-surface-inverse: #e8eaed;
+
+  --lm-text: #e8eaed;
+  --lm-text-secondary: #c2c7d0;
+  --lm-text-tertiary: #959cab;
+  --lm-text-disabled: #656c7a;
+  --lm-text-inverse: #14171c;
+
+  --lm-border: #333a44;
+  --lm-border-subtle: #2a3039;
+  --lm-border-strong: #4a525f;
+
+  --lm-primary: #6f62e6;
+  --lm-primary-hover: #8378ee;
+  --lm-primary-fg: #b8b0ff;
+  --lm-primary-bg: #29264a;
+  --lm-primary-border: #433d78;
+  --lm-on-primary: #ffffff;
+
+  --lm-success-fg: #7ad7a2;
+  --lm-success-solid: #46b878;
+  --lm-success-bg: #16301f;
+  --lm-success-border: #24543a;
+
+  --lm-info-fg: #8dbbf5;
+  --lm-info-solid: #5b9af0;
+  --lm-info-bg: #172a45;
+  --lm-info-border: #264873;
+
+  --lm-warning-fg: #f3c272;
+  --lm-warning-solid: #e5a238;
+  --lm-warning-bg: #352710;
+  --lm-warning-border: #5e4519;
+
+  --lm-danger-fg: #f59aa5;
+  --lm-danger-solid: #ea6274;
+  --lm-danger-bg: #3a1a20;
+  --lm-danger-border: #6a2c36;
+
+  --lm-violet-fg: #c3b2ff;
+  --lm-violet-solid: #a08af0;
+  --lm-violet-bg: #2a2246;
+  --lm-violet-border: #463a75;
+
+  --lm-neutral-fg: #c2c7d0;
+  --lm-neutral-solid: #8d94a5;
+  --lm-neutral-bg: #262b33;
+  --lm-neutral-border: #3a414c;
+
+  --lm-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --lm-shadow-md: 0 4px 14px rgba(0, 0, 0, 0.4);
+  --lm-shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.55);
+  --lm-focus-ring: 0 0 0 3px rgba(139, 128, 240, 0.4);
+  --lm-overlay: rgba(0, 0, 0, 0.6);
+
+  --lm-paper-top: #2c2823;
+  --lm-paper-bottom: #221f1b;
+  --lm-paper-ink: #f1e8da;
+  --lm-paper-edge: #d8c7b2;
+  --lm-paper-highlight: #6f6456;
+  --lm-paper-accent: #e8968c;
+}

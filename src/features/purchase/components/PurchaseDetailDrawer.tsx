@@ -70,7 +70,7 @@ const AllocatedResourceCell: React.FC<{
   return (
     <Space direction="vertical" size={2}>
       {resources.map((r) => (
-        <Tag key={r.id} style={{ cursor: 'pointer', padding: '2px 6px', color: '#39674f', background: '#edf6f0', borderColor: '#d6e9db' }} onClick={onAllocate}>
+        <Tag key={r.id} style={{ cursor: 'pointer', padding: '2px 6px', color: 'var(--lm-text-secondary)', background: 'var(--lm-surface-muted)', borderColor: 'var(--lm-border)' }} onClick={onAllocate}>
           <strong>{(r.resource_kind || 'ASSET').toUpperCase()} #{r.resource_id}</strong>
           {r.resource_name ? ` — ${r.resource_name}` : ''}
           {r.acquisition_price ? ` [${currency} ${r.acquisition_price}]` : ''}
@@ -108,13 +108,13 @@ const AllocatedResourcesSubTable: React.FC<{ purchaseItemId: number; currency: s
   }
 
   return (
-    <div style={{ margin: '6px 0', background: '#fafafa', padding: 10, borderRadius: 6, border: '1px solid #f0f0f0' }}>
+    <div style={{ margin: '6px 0', background: 'var(--lm-surface-subtle)', padding: 10, borderRadius: 6, border: '1px solid var(--lm-border-subtle)' }}>
       <Typography.Text strong style={{ fontSize: 12, display: 'block', marginBottom: 6 }}>
         Allocated Assets ({resources.length}):
       </Typography.Text>
       <Space wrap size={8}>
         {resources.map((r) => (
-          <Tag key={r.id} style={{ padding: '4px 8px', color: '#39674f', background: '#edf6f0', borderColor: '#d6e9db' }}>
+          <Tag key={r.id} style={{ padding: '4px 8px', color: 'var(--lm-text-secondary)', background: 'var(--lm-surface-muted)', borderColor: 'var(--lm-border)' }}>
             <strong>{(r.resource_kind || 'ASSET').toUpperCase()} #{r.resource_id}</strong>
             {r.resource_name ? ` — ${r.resource_name}` : ''}
             {r.acquisition_price ? ` [Price: ${currency} ${r.acquisition_price}]` : ''}
@@ -352,7 +352,7 @@ export const PurchaseDetailDrawer: React.FC<PurchaseDetailDrawerProps> = ({
       dataIndex: 'amount',
       key: 'amount',
       render: (amount: string, record: IPurchaseTransaction) => (
-        <strong style={{ color: record.transaction_type === 'refund' ? '#d46b08' : '#389e0d' }}>
+        <strong style={{ color: record.transaction_type === 'refund' ? 'var(--lm-warning-fg)' : 'var(--lm-success-fg)' }}>
           {record.transaction_type === 'refund' ? '-' : '+'} {order.currency}{' '}
           {parseFloat(amount || '0').toFixed(2)}
         </strong>

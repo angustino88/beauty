@@ -82,10 +82,10 @@ export const BenchBookingCreate: React.FC<CustomModalProps> = ({
                   <code
                     style={{
                       padding: '2px 7px',
-                      border: '1px solid #9ccdb4',
+                      border: '1px solid var(--lm-success-solid)',
                       borderRadius: 4,
-                      background: '#e8f3ed',
-                      color: '#006b3f',
+                      background: 'var(--lm-surface-muted)',
+                      color: 'var(--lm-success-fg)',
                       fontFamily: 'ui-monospace, SFMono-Regular, Consolas, monospace',
                       fontSize: 12,
                       fontWeight: 700,

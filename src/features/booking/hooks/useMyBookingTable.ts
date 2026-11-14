@@ -109,7 +109,7 @@ export function useMyBookingTable(
     (bookingId: number) => {
       Modal.confirm({
         title: 'Approve Booking',
-        icon: React.createElement(QuestionCircleOutlined, { style: { color: '#faad14' } }),
+        icon: React.createElement(QuestionCircleOutlined, { style: { color: 'var(--lm-warning-solid)' } }),
         content: 'Are you sure you want to approve this booking?',
         okText: 'Approve',
         cancelText: 'Cancel',
@@ -135,7 +135,7 @@ export function useMyBookingTable(
     (bookingId: number) => {
       Modal.confirm({
         title: 'Reject Booking',
-        icon: React.createElement(ExclamationCircleOutlined, { style: { color: '#ff4d4f' } }),
+        icon: React.createElement(ExclamationCircleOutlined, { style: { color: 'var(--lm-danger-solid)' } }),
         content: 'Are you sure you want to reject this booking?',
         okText: 'Reject',
         okButtonProps: { danger: true },

@@ -229,7 +229,7 @@ export const ScheduleDowntimeModal: React.FC<ScheduleDowntimeModalProps> = ({
                 }`}
                 onClick={() => form.setFieldValue('condition', 'in_maintenance')}
               >
-                <div className={styles.conditionTitle} style={{ color: '#d97706' }}>
+                <div className={styles.conditionTitle} style={{ color: 'var(--lm-warning-fg)' }}>
                   <ToolOutlined />
                   <span>{CONDITION_LABELS.in_maintenance}</span>
                 </div>
@@ -244,7 +244,7 @@ export const ScheduleDowntimeModal: React.FC<ScheduleDowntimeModalProps> = ({
                 }`}
                 onClick={() => form.setFieldValue('condition', 'out_of_service')}
               >
-                <div className={styles.conditionTitle} style={{ color: '#dc2626' }}>
+                <div className={styles.conditionTitle} style={{ color: 'var(--lm-danger-solid)' }}>
                   <ExclamationCircleOutlined />
                   <span>{CONDITION_LABELS.out_of_service}</span>
                 </div>
@@ -291,7 +291,7 @@ export const ScheduleDowntimeModal: React.FC<ScheduleDowntimeModalProps> = ({
             tooltip="Leave blank for open-ended outage until manually resolved"
           >
             <div className={styles.presetRow}>
-              <span style={{ fontSize: 11, color: '#64748b', marginRight: 4 }}>Quick presets:</span>
+              <span style={{ fontSize: 11, color: 'var(--lm-text-tertiary)', marginRight: 4 }}>Quick presets:</span>
               <Button size="small" className={styles.presetBtn} onClick={() => applyDurationPreset(1)}>
                 +1 Hour
               </Button>

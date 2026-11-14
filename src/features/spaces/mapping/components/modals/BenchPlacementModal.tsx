@@ -135,7 +135,7 @@ export function BenchPlacementModal({
             <span>
               <strong>Mapping Hierarchy:</strong> Room → Station → Bench Slot
               {row?.room && (
-                <span style={{ display: "block", marginTop: 4, fontSize: 12, color: "#475569" }}>
+                <span style={{ display: "block", marginTop: 4, fontSize: 12, color: "var(--lm-text-secondary)" }}>
                   Current: {row.room.name || row.room.sku}
                   {row.station ? ` / ${row.station.name || row.station.sku}` : ""}
                   {row.station_slot ? ` (Slot ${row.station_slot.slot_code})` : ""}

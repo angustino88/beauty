@@ -199,7 +199,7 @@ export const DowntimeTab: React.FC<DowntimeTabProps> = ({
       key: 'reason',
       width: 140,
       render: (_, r) => (
-        <span style={{ fontWeight: 500, color: '#334155' }}>
+        <span style={{ fontWeight: 500, color: 'var(--lm-text)' }}>
           {r.reason.label || DOWNTIME_REASON_LABELS[r.reason.value] || r.reason.value}
         </span>
       ),
@@ -230,8 +230,8 @@ export const DowntimeTab: React.FC<DowntimeTabProps> = ({
       key: 'actor',
       width: 130,
       render: (_, r) => (
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: '#475569' }}>
-          <UserOutlined style={{ fontSize: 11, color: '#94a3b8' }} />
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: 'var(--lm-text-secondary)' }}>
+          <UserOutlined style={{ fontSize: 11, color: 'var(--lm-text-disabled)' }} />
           {r.actor?.display_name || r.actor?.username || 'System'}
         </span>
       ),
@@ -247,7 +247,7 @@ export const DowntimeTab: React.FC<DowntimeTabProps> = ({
             <span>{val}</span>
           </Tooltip>
         ) : (
-          <span style={{ color: '#94a3b8' }}>—</span>
+          <span style={{ color: 'var(--lm-text-disabled)' }}>—</span>
         ),
     },
   ];
@@ -272,7 +272,7 @@ export const DowntimeTab: React.FC<DowntimeTabProps> = ({
               <Button
                 size="small"
                 type="primary"
-                style={{ background: '#16a34a', borderColor: '#16a34a' }}
+                style={{ background: 'var(--lm-success-solid)', borderColor: 'var(--lm-success-solid)' }}
                 icon={<CheckCircleOutlined />}
                 loading={ending}
               >
@@ -301,7 +301,7 @@ export const DowntimeTab: React.FC<DowntimeTabProps> = ({
             </Popconfirm>
           );
         }
-        return <span style={{ color: '#9ca3af' }}>—</span>;
+        return <span style={{ color: 'var(--lm-text-disabled)' }}>—</span>;
       },
     });
   }
@@ -389,7 +389,7 @@ export const DowntimeTab: React.FC<DowntimeTabProps> = ({
             >
               <Button
                 type="primary"
-                style={{ background: '#16a34a', borderColor: '#16a34a' }}
+                style={{ background: 'var(--lm-success-solid)', borderColor: 'var(--lm-success-solid)' }}
                 icon={<CheckCircleOutlined />}
                 loading={ending}
               >

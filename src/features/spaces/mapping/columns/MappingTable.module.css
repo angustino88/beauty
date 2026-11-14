@@ -1,17 +1,17 @@
 .asset {
-  --asset-accent: #57606a;
-  --asset-soft: #f6f8fa;
+  --asset-accent: var(--lm-neutral-solid);
+  --asset-soft: var(--lm-surface-subtle);
   display: flex;
   align-items: center;
   width: 100%;
   min-width: 0;
   min-height: 42px;
   padding: 6px 8px;
-  border: 1px solid #d8dee4;
+  border: 1px solid var(--lm-border);
   border-left: 3px solid var(--asset-accent);
   border-radius: 5px;
   color: inherit;
-  background: #ffffff;
+  background: var(--lm-surface);
   text-decoration: none;
   transition: border-color 140ms ease, background-color 140ms ease;
 }
@@ -27,48 +27,48 @@
 }
 
 .asset[data-tone="lab"] {
-  --asset-accent: #1f7a4d;
-  --asset-soft: #e9f6ee;
+  --asset-accent: var(--lm-success-solid);
+  --asset-soft: var(--lm-surface-muted);
 }
 
 .asset[data-tone="rack"] {
-  --asset-accent: #0969da;
-  --asset-soft: #ddf4ff;
+  --asset-accent: var(--lm-info-solid);
+  --asset-soft: var(--lm-info-bg);
 }
 
 .asset[data-tone="computer"] {
-  --asset-accent: #1f6feb;
-  --asset-soft: #eaf2ff;
+  --asset-accent: var(--lm-info-solid);
+  --asset-soft: var(--lm-info-bg);
 }
 
 .asset[data-tone="sample"] {
-  --asset-accent: #8250df;
-  --asset-soft: #f3efff;
+  --asset-accent: var(--lm-primary);
+  --asset-soft: var(--lm-primary-bg);
 }
 
 .asset[data-tone="network"] {
-  --asset-accent: #007d8a;
-  --asset-soft: #e7f5f6;
+  --asset-accent: var(--lm-info-solid);
+  --asset-soft: var(--lm-info-bg);
 }
 
 .asset[data-tone="debug"] {
-  --asset-accent: #bf4b00;
-  --asset-soft: #fff1e5;
+  --asset-accent: var(--lm-warning-solid);
+  --asset-soft: var(--lm-warning-bg);
 }
 
 .asset[data-tone="power"] {
-  --asset-accent: #9a6700;
-  --asset-soft: #fff8c5;
+  --asset-accent: var(--lm-warning-solid);
+  --asset-soft: var(--lm-warning-bg);
 }
 
 .asset[data-tone="monitor"] {
-  --asset-accent: #cf222e;
-  --asset-soft: #ffebe9;
+  --asset-accent: var(--lm-danger-solid);
+  --asset-soft: var(--lm-danger-bg);
 }
 
 .asset[data-tone="accessory"] {
-  --asset-accent: #6e7781;
-  --asset-soft: #f3f4f6;
+  --asset-accent: var(--lm-neutral-solid);
+  --asset-soft: var(--lm-surface-subtle);
 }
 
 .assetIcon {
@@ -100,14 +100,14 @@
 }
 
 .assetText strong {
-  color: #24292f;
+  color: var(--lm-text);
   font-size: 12px;
   font-weight: 600;
 }
 
 .assetText span {
   margin-top: 2px;
-  color: #57606a;
+  color: var(--lm-text-secondary);
   font-size: 11px;
 }
 
@@ -123,23 +123,23 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: #8c959f;
+  color: var(--lm-text-tertiary);
   font-size: 12px;
 }
 
 .emptyMapping::before {
   width: 6px;
   height: 6px;
-  border: 1px solid #afb8c1;
+  border: 1px solid var(--lm-border-strong);
   border-radius: 50%;
   content: "";
 }
 
 .mappingSummary {
   margin: 8px 0 14px;
-  border: 1px solid #dbe3e8;
+  border: 1px solid var(--lm-border);
   border-radius: 12px;
-  background: linear-gradient(135deg, #ffffff 0%, #f7faf9 100%);
+  background: linear-gradient(135deg, var(--lm-surface) 0%, var(--lm-surface-subtle) 100%);
   box-shadow: 0 4px 16px rgba(25, 51, 42, 0.06);
 }
 
@@ -155,7 +155,7 @@
 }
 
 .summaryEyebrow {
-  color: #168458;
+  color: var(--lm-success-fg);
   font-size: 11px;
   font-weight: 750;
   letter-spacing: 0.09em;
@@ -164,7 +164,7 @@
 
 .summaryTitle {
   margin: 2px 0 0 !important;
-  color: #172b24 !important;
+  color: var(--lm-text) !important;
   font-size: 19px !important;
 }
 
@@ -176,7 +176,7 @@
 }
 
 .summaryTotal strong {
-  color: #172b24;
+  color: var(--lm-text);
   font-size: 26px;
   font-variant-numeric: tabular-nums;
   line-height: 1;
@@ -184,7 +184,7 @@
 
 .summaryTotal span {
   margin-top: 4px;
-  color: #65736d;
+  color: var(--lm-text-secondary);
   font-size: 11px;
 }
 
@@ -211,16 +211,16 @@
   align-items: center;
   column-gap: 9px;
   padding: 12px;
-  border: 1px solid #e2e8eb;
+  border: 1px solid var(--lm-border);
   border-left: 3px solid var(--metric-color);
   border-radius: 9px;
-  background: #fff;
+  background: var(--lm-surface);
 }
 
-.metricComplete { --metric-color: #168458; }
-.metricPartial { --metric-color: #c28512; }
-.metricUnplaced { --metric-color: #cf5961; }
-.metricAssets { --metric-color: #3478c5; }
+.metricComplete { --metric-color: var(--lm-success-solid); }
+.metricPartial { --metric-color: var(--lm-warning-solid); }
+.metricUnplaced { --metric-color: var(--lm-danger-solid); }
+.metricAssets { --metric-color: var(--lm-info-solid); }
 
 .metricIcon {
   display: grid;
@@ -240,7 +240,7 @@
 }
 
 .metricText strong {
-  color: #1d3029;
+  color: var(--lm-text);
   font-size: 21px;
   font-variant-numeric: tabular-nums;
   line-height: 1.05;
@@ -248,7 +248,7 @@
 
 .metricText small {
   margin-top: 3px;
-  color: #374a42;
+  color: var(--lm-text);
   font-size: 11px;
   font-weight: 700;
 }
@@ -257,7 +257,7 @@
   grid-column: 1 / -1;
   margin-top: 8px;
   overflow: hidden;
-  color: #78857f;
+  color: var(--lm-text-tertiary);
   font-size: 10px;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -282,7 +282,7 @@
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  color: #1f7a4d;
+  color: var(--lm-success-fg);
 }
 
 .mappingStatus > span {
@@ -293,13 +293,13 @@
 }
 
 .mappingStatus strong {
-  color: #24292f;
+  color: var(--lm-text);
   font-size: 13px;
   font-weight: 700;
 }
 
 .mappingStatus small {
-  color: #57606a;
+  color: var(--lm-text-secondary);
   font-size: 10px;
 }
 
@@ -315,7 +315,7 @@
   display: block;
   max-width: 190px;
   overflow: hidden;
-  color: #57606a;
+  color: var(--lm-text-secondary);
   font-size: 10px;
   line-height: 1.35;
   text-overflow: ellipsis;
@@ -323,16 +323,16 @@
 }
 
 .mappingTable :global(.ant-table-container) {
-  border: 1px solid #d0d7de;
+  border: 1px solid var(--lm-border-strong);
   border-radius: 6px;
-  background: #ffffff;
+  background: var(--lm-surface);
 }
 
 .mappingTable :global(.ant-table-sticky-holder) {
   z-index: 5;
   overflow: visible;
   border-radius: 6px 6px 0 0;
-  background: #f6f8fa;
+  background: var(--lm-surface-subtle);
 }
 
 .mappingTable :global(.ant-table-thead > tr > th) {
@@ -340,11 +340,11 @@
   z-index: 4;
   height: 46px;
   padding: 8px 12px;
-  color: #24292f;
+  color: var(--lm-text);
   font-size: 12px;
   font-weight: 700;
-  background: #f6f8fa;
-  border-bottom: 2px solid #d0d7de;
+  background: var(--lm-surface-subtle);
+  border-bottom: 2px solid var(--lm-border-strong);
 }
 
 .mappingTable :global(.ant-table-tbody > tr > td) {
@@ -354,7 +354,7 @@
 
 .mappingTable :global(.ant-table-thead .ant-table-cell-fix-right) {
   z-index: 6;
-  background: #f6f8fa;
+  background: var(--lm-surface-subtle);
 }
 
 .mappingTable :global(.ant-table-tbody .ant-table-cell-fix-right) {
@@ -377,20 +377,20 @@
 .mappingTable :global(.ant-table-tbody > tr > td) {
   padding: 9px 10px;
   vertical-align: top;
-  background: #ffffff;
-  border-bottom-color: #d8dee4;
+  background: var(--lm-surface);
+  border-bottom-color: var(--lm-border);
 }
 
 .mappingTable :global(.ant-table-tbody > tr:nth-child(even) > td) {
-  background: #fbfcfd;
+  background: var(--lm-surface);
 }
 
 .mappingTable :global(.ant-table-tbody > tr:hover > td) {
-  background: #f6f8fa;
+  background: var(--lm-surface-subtle);
 }
 
 .mappingTable :global(.ant-table-tbody > tr > td:first-child) {
-  color: #57606a;
+  color: var(--lm-text-secondary);
   font-variant-numeric: tabular-nums;
   font-weight: 600;
 }
@@ -404,20 +404,20 @@
 }
 
 .mappingTable :global(.ant-select-selector) {
-  border-color: #afb8c1 !important;
+  border-color: var(--lm-border-strong) !important;
   border-radius: 5px !important;
   box-shadow: none !important;
 }
 
 .mappingTable :global(.ant-select-focused .ant-select-selector) {
-  border-color: #1f7a4d !important;
+  border-color: var(--lm-success-solid) !important;
   box-shadow: 0 0 0 3px rgba(31, 122, 77, 0.12) !important;
 }
 
 .mappingTable :global(.ant-table-tbody > tr:has(.ant-select) > td) {
-  background: #fffbea;
-  border-top: 1px solid #d4a72c;
-  border-bottom: 1px solid #d4a72c;
+  background: var(--lm-warning-bg);
+  border-top: 1px solid var(--lm-warning-solid);
+  border-bottom: 1px solid var(--lm-warning-solid);
 }
 
 .mappingTable :global(.ant-btn) {

@@ -26,7 +26,7 @@ export function OfflineNotification() {
         left: 0,
         right: 0,
         zIndex: 9999,
-        backgroundColor: '#ff4d4f',
+        backgroundColor: 'var(--lm-danger-solid)',
         color: '#fff',
         textAlign: 'center',
         padding: '6px 16px',

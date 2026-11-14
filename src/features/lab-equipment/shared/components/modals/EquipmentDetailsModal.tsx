@@ -705,7 +705,7 @@ export default function EquipmentDetailsModal({
         </div>
       )}
 
-      <div className={styles.detailsBody}>
+      <div className={`${styles.detailsBody} ${presentation.flushBody}`}>
         {normalizedSpaceType ? (
           <Tabs
             defaultActiveKey="overview"

@@ -168,7 +168,7 @@ export const FinancialReportItemsTable: React.FC<FinancialReportItemsTableProps>
       key: 'pending_amount',
       align: 'right',
       render: (val: number) => (
-        <span style={{ color: val > 0 ? '#9b682a' : '#8c8c8c', fontVariantNumeric: 'tabular-nums' }}>{formatMoney(val, currency)}</span>
+        <span style={{ color: val > 0 ? 'var(--lm-warning-fg)' : 'var(--lm-text-tertiary)', fontVariantNumeric: 'tabular-nums' }}>{formatMoney(val, currency)}</span>
       ),
     },
     {

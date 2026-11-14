@@ -22,9 +22,9 @@ function renderDetails(details: Record<string, string>[] = []) {
     <Tooltip title={<span style={{ whiteSpace: 'pre-line' }}>{summary}</span>} placement="left">
       <span>
         <Text ellipsis style={{ maxWidth: 210 }}>
-          <span style={{ color: '#57606a' }}>{firstKey}:</span> {firstValue}
+          <span style={{ color: 'var(--lm-text-secondary)' }}>{firstKey}:</span> {firstValue}
         </Text>
-        {entries.length > 1 && <span style={{ color: '#57606a' }}> +{entries.length - 1}</span>}
+        {entries.length > 1 && <span style={{ color: 'var(--lm-text-secondary)' }}> +{entries.length - 1}</span>}
       </span>
     </Tooltip>
   );

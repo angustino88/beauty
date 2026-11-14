@@ -63,19 +63,19 @@ export const ResourceStatusRows: React.FC<ResourceStatusRowsProps> = ({
     switch (condition?.value) {
       case 'operational':
         return (
-          <span style={{ color: '#16a34a', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ color: 'var(--lm-success-fg)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
             <CheckCircleFilled /> Operational
           </span>
         );
       case 'in_maintenance':
         return (
-          <span style={{ color: '#d97706', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ color: 'var(--lm-warning-fg)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
             <ExclamationCircleFilled /> In Maintenance
           </span>
         );
       case 'out_of_service':
         return (
-          <span style={{ color: '#dc2626', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ color: 'var(--lm-danger-solid)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
             <CloseCircleFilled /> Out of Service
           </span>
         );
@@ -259,9 +259,9 @@ export const ResourceStatusRows: React.FC<ResourceStatusRowsProps> = ({
             <div>
               <div className={styles.tileLabel}>
                 {isRestricted ? (
-                  <LockOutlined className={styles.tileLabelIcon} style={{ color: '#d97706' }} />
+                  <LockOutlined className={styles.tileLabelIcon} style={{ color: 'var(--lm-warning-fg)' }} />
                 ) : (
-                  <UnlockOutlined className={styles.tileLabelIcon} style={{ color: '#16a34a' }} />
+                  <UnlockOutlined className={styles.tileLabelIcon} style={{ color: 'var(--lm-success-fg)' }} />
                 )}
                 <span>Access Policy</span>
               </div>

@@ -54,13 +54,13 @@ export const DashboardSummary = memo(function DashboardSummary({ stats, activeSu
 
         // Dynamic styles that depend on per-card accent/stamp colors or isActive state.
         const cardStyle: CSSProperties = {
-          background: 'linear-gradient(180deg, rgba(255,251,242,1) 0%, rgba(246,236,219,1) 100%)',
+          background: 'linear-gradient(180deg, var(--lm-paper-top) 0%, var(--lm-paper-bottom) 100%)',
           borderRadius: 16,
           padding: 16,
           position: 'relative',
           overflow: 'hidden',
           minHeight: 136,
-          border: `1px solid rgba(65, 51, 42, ${isActive ? 0.55 : 0.30})`,
+          border: `1px solid color-mix(in srgb, var(--lm-paper-edge) ${isActive ? 55 : 30}%, transparent)`,
           boxShadow: isActive
             ? '0 18px 40px rgba(31, 24, 18, 0.24)'
             : '0 12px 26px rgba(31, 24, 18, 0.14)',
@@ -85,9 +85,9 @@ export const DashboardSummary = memo(function DashboardSummary({ stats, activeSu
           padding: '4px 10px',
           borderRadius: 10,
           transform: 'rotate(-8deg)',
-          color: 'rgba(255,255,255,0.95)',
+          color: 'color-mix(in srgb, var(--lm-paper-highlight) 95%, transparent)',
           background: `linear-gradient(180deg, ${stat.stamp} 0%, rgba(0,0,0,0.20) 100%)`,
-          border: '1px solid rgba(255,255,255,0.22)',
+          border: '1px solid color-mix(in srgb, var(--lm-paper-highlight) 22%, transparent)',
           boxShadow: '0 10px 18px rgba(0,0,0,0.28)',
           textShadow: '0 1px 0 rgba(0,0,0,0.20)',
         };
@@ -96,8 +96,8 @@ export const DashboardSummary = memo(function DashboardSummary({ stats, activeSu
           width: 14,
           height: 14,
           borderRadius: 999,
-          background: `radial-gradient(circle at 35% 35%, rgba(255,255,255,0.35), rgba(0,0,0,0) 55%), ${stat.accent}`,
-          boxShadow: 'inset 0 2px 0 rgba(255,255,255,0.25), inset 0 -2px 0 rgba(0,0,0,0.20)',
+          background: `radial-gradient(circle at 35% 35%, color-mix(in srgb, var(--lm-paper-highlight) 35%, transparent), rgba(0,0,0,0) 55%), ${stat.accent}`,
+          boxShadow: 'inset 0 2px 0 color-mix(in srgb, var(--lm-paper-highlight) 25%, transparent), inset 0 -2px 0 rgba(0,0,0,0.20)',
           opacity: isActive ? 1 : 0.70,
           flex: '0 0 auto',
         };

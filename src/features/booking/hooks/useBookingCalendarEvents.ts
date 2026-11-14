@@ -117,7 +117,7 @@ export function useBookingCalendarEvents() {
                   start: startStr,
                   end: endStr,
                   color: 'rgba(209, 213, 219, 0.85)',
-                  borderColor: '#9ca3af',
+                  borderColor: 'var(--lm-neutral-solid)',
                   textColor: '#374151',
                   allDay: false,
                   editable: false,

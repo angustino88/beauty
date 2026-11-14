@@ -55,7 +55,7 @@ export function buildLabSupportColumns(): ColumnsType<SupportTicket> {
       minWidth: 260,
       render: (_, record) => (
         <div style={{ minWidth: 220 }}>
-          <div style={{ fontWeight: 600, color: '#202a35' }}>{record.subject ?? record.summary ?? record.fields?.summary ?? 'Untitled ticket'}</div>
+          <div style={{ fontWeight: 600, color: 'var(--lm-text)' }}>{record.subject ?? record.summary ?? record.fields?.summary ?? 'Untitled ticket'}</div>
           {record.key && <TypographyText type="secondary">{record.key}</TypographyText>}
         </div>
       ),

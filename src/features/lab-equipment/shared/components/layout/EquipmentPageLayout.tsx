@@ -332,7 +332,7 @@ export default function EquipmentPageLayout<T extends { id: number | string }>({
               <Dropdown trigger={['click']} popupRender={() => (
                 <div className={professionalTable ? professional.columnMenu : undefined} style={{ padding: 12, background: 'white', boxShadow: '0 6px 24px #0002', borderRadius: 8, maxHeight: 400, overflowY: 'auto', minWidth: 220 }}>
                   {professionalTable && <strong className={professional.menuTitle}>Visible columns</strong>}
-                  <div style={{ padding: '4px 4px 10px', borderBottom: '1px solid #e3e8ec', marginBottom: 6 }}>
+                  <div style={{ padding: '4px 4px 10px', borderBottom: '1px solid var(--lm-border)', marginBottom: 6 }}>
                     <Checkbox checked={selectedColumnCount === selectableColumns.length} indeterminate={selectedColumnCount > 0 && selectedColumnCount < selectableColumns.length} onChange={(event) => {
                       setVisibleKeys(event.target.checked ? columns.map((column) => String(column.key)) : columns.filter((column) => fixedColumnKeys.includes(String(column.key)) || filters[String(column.key)]?.length).map((column) => String(column.key)));
                     }}>Select all</Checkbox>

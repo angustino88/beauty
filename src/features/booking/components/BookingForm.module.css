@@ -3,21 +3,21 @@
 }
 
 .bookingForm :global(.ant-form-item-label > label) {
-  color: #173c62;
+  color: var(--lm-info-fg);
   font-size: 13px;
   font-weight: 700;
 }
 
 .bookingForm :global(.ant-form-item-required::before) {
-  color: #e33b45 !important;
+  color: var(--lm-danger-solid) !important;
 }
 
 .section {
   margin-bottom: 8px;
   overflow: hidden;
-  border: 1px solid #e5edf4;
+  border: 1px solid var(--lm-border);
   border-radius: 6px;
-  background: #fff;
+  background: var(--lm-surface);
 }
 
 .sectionBody {
@@ -31,17 +31,17 @@
   margin: 0 0 10px;
   padding: 7px 10px;
   font-size: 12px;
-  border: 1px solid #d7eee9;
+  border: 1px solid var(--lm-border);
   border-radius: 5px;
-  background: #f0faf8;
+  background: var(--lm-success-bg);
 }
 
 .durationNotice strong {
-  color: #137052;
+  color: var(--lm-success-fg);
 }
 
 .durationNotice :global(.anticon) {
-  color: #137052;
+  color: var(--lm-success-fg);
 }
 
 .suggestions {
@@ -54,7 +54,7 @@
 
 .suggestionLabel {
   flex: 0 0 auto;
-  color: #48627d;
+  color: var(--lm-text-secondary);
   font-size: 12px;
   font-weight: 600;
 }
@@ -63,32 +63,32 @@
   min-width: 92px;
   height: 26px;
   padding: 0 8px;
-  color: #137052;
+  color: var(--lm-success-fg);
   font: inherit;
   font-size: 12px;
   font-weight: 600;
   line-height: 24px;
   text-align: center;
   cursor: pointer;
-  border: 1px solid #b8dfd4;
+  border: 1px solid var(--lm-success-border);
   border-radius: 4px;
-  background: #f0faf8;
+  background: var(--lm-success-bg);
 }
 
 .suggestionButton:hover {
-  border-color: #087d52;
-  background: #e1f4ee;
+  border-color: var(--lm-success-solid);
+  background: var(--lm-success-bg);
 }
 
 .suggestionButton:focus-visible {
-  outline: 2px solid #167a59;
+  outline: 2px solid var(--lm-success-solid);
   outline-offset: 2px;
 }
 
 .suggestionButtonSelected {
-  color: #075c42;
-  border-color: #087d52;
-  background: #a8dfcd;
+  color: var(--lm-success-fg);
+  border-color: var(--lm-success-solid);
+  background: var(--lm-success-solid);
 }
 
 .bookingForm :global(.ant-select),
@@ -102,12 +102,12 @@
   align-items: center;
   gap: 8px;
   min-width: 0;
-  color: #31463d;
+  color: var(--lm-text);
 }
 
 .reasonOption :global(.anticon) {
   flex: 0 0 auto;
-  color: #6e8278;
+  color: var(--lm-text-tertiary);
   font-size: 13px;
 }
 

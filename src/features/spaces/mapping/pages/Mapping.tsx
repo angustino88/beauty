@@ -144,7 +144,7 @@ export default function MappingPage() {
           percent={visibleBenchCount ? Math.round((summaryCounts.fullyMapped / visibleBenchCount) * 100) : 0}
           showInfo={false}
           strokeColor="#168458"
-          trailColor="#e8edf0"
+          trailColor="var(--lm-border)"
         />
         <Row gutter={[12, 12]} className={mappingStyles.summaryMetrics}>
           <Col xs={12} md={6}>
@@ -190,7 +190,7 @@ export default function MappingPage() {
           className={styles.toolbar}
           style={{
             marginBottom: 8,
-            backgroundColor: "#fff",
+            backgroundColor: "var(--lm-surface)",
             position: "sticky",
             top: 0,
             paddingTop: 20,

@@ -77,7 +77,7 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
       dataIndex: 'amount',
       key: 'amount',
       render: (amount: string, record: IExpensePayment) => (
-        <strong style={{ color: record.transaction_type === 'refund' ? '#d46b08' : '#389e0d' }}>
+        <strong style={{ color: record.transaction_type === 'refund' ? 'var(--lm-warning-fg)' : 'var(--lm-success-fg)' }}>
           {record.transaction_type === 'refund' ? '-' : '+'} {expense.currency}{' '}
           {parseFloat(amount || '0').toFixed(2)}
         </strong>
@@ -108,7 +108,7 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
       <Drawer
         title={
           <Space>
-            <WalletOutlined style={{ color: '#1f7a4d' }} />
+            <WalletOutlined style={{ color: 'var(--lm-success-fg)' }} />
             <span>Expense #{expense.id}: {expense.name}</span>
           </Space>
         }
@@ -174,7 +174,7 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
                 value={netPaid}
                 precision={2}
                 prefix={expense.currency}
-                valueStyle={{ color: '#3f8600' }}
+                valueStyle={{ color: 'var(--lm-success-fg)' }}
               />
             </Card>
           </Col>

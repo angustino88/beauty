@@ -4,10 +4,10 @@ import { EQUIPMENT_OVERVIEW_FEATURED_STATUSES } from './equipmentOverviewStatuse
 
 test('equipment overview keeps the five key statuses as featured tiles', () => {
   assert.deepEqual(EQUIPMENT_OVERVIEW_FEATURED_STATUSES.map(({ key }) => key), [
-    'in_use',
     'available',
+    'in_use',
     'borrowed',
-    'broken',
     'maintenance',
+    'broken',
   ]);
 });

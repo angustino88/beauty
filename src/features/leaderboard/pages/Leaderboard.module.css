@@ -18,20 +18,20 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #311b92 !important;
+  color: var(--lm-primary-fg) !important;
 }
 
 .card {
   border-radius: 14px;
   box-shadow: 0 4px 20px rgba(126, 87, 194, 0.12);
-  border: 1px solid #ede7f6;
+  border: 1px solid var(--lm-primary-border);
   overflow: hidden;
 }
 
 /* Violet active tab */
 :global(.ant-tabs-card > .ant-tabs-nav .ant-tabs-tab-active) {
   background: linear-gradient(135deg, #7e57c2, #512da8) !important;
-  border-color: #512da8 !important;
+  border-color: var(--lm-primary) !important;
 }
 
 :global(.ant-tabs-card > .ant-tabs-nav .ant-tabs-tab-active .ant-tabs-tab-btn) {
@@ -40,19 +40,19 @@
 }
 
 :global(.ant-tabs-card > .ant-tabs-nav .ant-tabs-tab:not(.ant-tabs-tab-active):hover .ant-tabs-tab-btn) {
-  color: #7e57c2 !important;
+  color: var(--lm-primary) !important;
 }
 
 /* Soft slate segmented control (Weekly / Monthly / All time) */
 .page :global(.ant-segmented .ant-segmented-item-selected) {
-  background: #e8e4f0 !important;
-  color: #512da8 !important;
+  background: var(--lm-surface-muted) !important;
+  color: var(--lm-primary-fg) !important;
   font-weight: 600;
   box-shadow: none !important;
 }
 
 .page :global(.ant-segmented .ant-segmented-item:not(.ant-segmented-item-selected):hover) {
-  color: #7e57c2 !important;
+  color: var(--lm-primary) !important;
 }
 
 .tableWrap {

@@ -58,7 +58,7 @@ export const VIGNETTE_STYLE: CSSProperties = {
   position: 'absolute',
   inset: 0,
   background:
-    'radial-gradient(120% 90% at 30% 10%, rgba(255,255,255,0.70) 0%, rgba(255,255,255,0) 55%), ' +
+    'radial-gradient(120% 90% at 30% 10%, color-mix(in srgb, var(--lm-paper-highlight) 70%, transparent) 0%, color-mix(in srgb, var(--lm-paper-highlight) 0%, transparent) 55%), ' +
     'radial-gradient(120% 90% at 85% 115%, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0) 60%)',
   pointerEvents: 'none',
 };
@@ -80,8 +80,8 @@ export const FOLD_CREASE_STYLE: CSSProperties = {
   right: -40,
   top: 66,
   height: 1,
-  background: 'rgba(70, 55, 45, 0.10)',
-  boxShadow: '0 1px 0 rgba(255,255,255,0.55)',
+  background: 'color-mix(in srgb, var(--lm-paper-edge) 10%, transparent)',
+  boxShadow: '0 1px 0 color-mix(in srgb, var(--lm-paper-highlight) 55%, transparent)',
   transform: 'rotate(-1deg)',
   pointerEvents: 'none',
 };
@@ -97,7 +97,7 @@ export const COLOR_TAB_BASE: CSSProperties = {
   top: 10,
   height: 16,
   borderRadius: 10,
-  boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.30), 0 1px 0 rgba(0,0,0,0.10)',
+  boxShadow: 'inset 0 1px 0 color-mix(in srgb, var(--lm-paper-highlight) 30%, transparent), 0 1px 0 rgba(0,0,0,0.10)',
 };
 
 export const HAIRLINE_BASE: CSSProperties = {
@@ -106,7 +106,7 @@ export const HAIRLINE_BASE: CSSProperties = {
   right: 14,
   top: 28,
   height: 1,
-  background: 'rgba(40, 30, 24, 0.16)',
+  background: 'color-mix(in srgb, var(--lm-paper-ink) 16%, transparent)',
 };
 
 // ── Static content area styles ────────────────────────────────────────────
@@ -127,13 +127,13 @@ export const LABEL_STYLE: CSSProperties = {
   fontSize: 14,
   letterSpacing: '0.13em',
   textTransform: 'uppercase',
-  color: 'rgba(34, 28, 23, 0.76)',
+  color: 'color-mix(in srgb, var(--lm-paper-ink) 76%, transparent)',
   fontWeight: 800,
 };
 
 export const CLICK_HINT_STYLE: CSSProperties = {
   fontSize: 11,
-  color: 'rgba(34, 28, 23, 0.48)',
+  color: 'color-mix(in srgb, var(--lm-paper-ink) 48%, transparent)',
 };
 
 export const NUMBER_ROW_STYLE: CSSProperties = {
@@ -149,7 +149,7 @@ export const NUMBER_STYLE: CSSProperties = {
   lineHeight: '38px',
   fontWeight: 950,
   letterSpacing: '-0.05em',
-  color: 'rgba(26, 20, 16, 0.92)',
-  textShadow: '0 1px 0 rgba(255,255,255,0.70)',
+  color: 'color-mix(in srgb, var(--lm-paper-ink) 92%, transparent)',
+  textShadow: '0 1px 0 color-mix(in srgb, var(--lm-paper-highlight) 70%, transparent)',
   fontVariantNumeric: 'tabular-nums',
 };

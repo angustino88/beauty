@@ -102,7 +102,7 @@ export const buildBenchColumns = ({
               </Link>
             </Tooltip>
           ) : null}
-          {!record.station && !record.room && <span style={{ color: "#8c8c8c" }}>Unplaced</span>}
+          {!record.station && !record.room && <span style={{ color: "var(--lm-text-tertiary)" }}>Unplaced</span>}
         </Space>
       ),
     },

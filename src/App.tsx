@@ -9,6 +9,8 @@ import { ThemeContext } from "@/shared/theme/ThemeContext";
 import "./App.css";
 
 const THEME_STORAGE_KEY = "labmango:theme";
+const FONT_STACK =
+  "\"Bosch Sans\", Inter, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, \"Noto Sans\", sans-serif";
 
 export default function App() {
   const dispatch = useAppDispatch();
@@ -16,10 +18,12 @@ export default function App() {
   const location = useLocation();
   const [isDark, setIsDark] = useState(() => {
     try {
-      return window.localStorage.getItem(THEME_STORAGE_KEY) === "dark";
+      const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
+      if (stored === "dark" || stored === "light") return stored === "dark";
     } catch {
-      return false;
+      // Storage can be blocked; fall through to the OS preference.
     }
+    return window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false;
   });
   const isRedirectRoute =
     location.pathname === "/auth/redirect" || location.pathname === "/about";
@@ -52,16 +56,25 @@ export default function App() {
           components: {
             Badge: { statusSize: 10 },
           },
+          // antd derives its palettes from literal colours, so these mirror the
+          // --lm-* values in shared/styles/tokens.css. Keep both in sync.
           token: {
-            colorPrimary: "#1f7a4d",
-            fontFamily: "Bosch Sans",
-            colorLink: isDark ? "#72c99a" : "#17633e",
-            colorBgLayout: isDark ? "#171a1f" : "#f5f3ef",
-            colorBgContainer: isDark ? "#22262d" : "#ffffff",
-            colorText: isDark ? "#e8eaed" : "#292d33",
-            colorTextSecondary: isDark ? "#a4aab4" : "#6d737b",
-            colorBorder: isDark ? "#3c424b" : "#dedbd5",
-            colorBorderSecondary: isDark ? "#323841" : "#ece9e3",
+            colorPrimary: isDark ? "#6f62e6" : "#6155d9",
+            colorInfo: isDark ? "#5b9af0" : "#3b7ddd",
+            colorSuccess: isDark ? "#46b878" : "#2f9e62",
+            colorWarning: isDark ? "#e5a238" : "#d48a10",
+            colorError: isDark ? "#ea6274" : "#d9475a",
+            fontFamily: FONT_STACK,
+            colorLink: isDark ? "#b8b0ff" : "#5146b9",
+            colorBgLayout: isDark ? "#14171c" : "#f5f6fa",
+            colorBgContainer: isDark ? "#1d2127" : "#ffffff",
+            colorBgElevated: isDark ? "#262b33" : "#ffffff",
+            colorFillAlter: isDark ? "#232830" : "#f8f9fb",
+            colorText: isDark ? "#e8eaed" : "#202536",
+            colorTextSecondary: isDark ? "#959cab" : "#717789",
+            colorBorder: isDark ? "#4a525f" : "#cfd4de",
+            colorBorderSecondary: isDark ? "#333a44" : "#e4e7ee",
+            borderRadius: 8,
           },
         }}
       >

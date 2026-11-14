@@ -35,7 +35,7 @@ export const BookingFilter: React.FC<BookingFilterProps> = ({ form, name = 'benc
           allowClear
           maxTagCount="responsive"
           placeholder="Search and select one or more benches"
-          prefix={<SearchOutlined style={{ color: '#667085', marginRight: 4 }} />}
+          prefix={<SearchOutlined style={{ color: 'var(--lm-text-tertiary)', marginRight: 4 }} />}
           options={benchOptions}
           maxTagPlaceholder={(omitted) => `+${omitted.length} benches`}
           notFoundContent={isFetching ? <Spin size="small" /> : 'No benches found'}

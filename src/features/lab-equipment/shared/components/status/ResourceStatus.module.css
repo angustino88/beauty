@@ -1,6 +1,6 @@
 .modal :global(.ant-modal-content) {
   overflow: hidden;
-  border: 1px solid #cbd8d7;
+  border: 1px solid var(--lm-border-strong);
   border-radius: 10px;
   box-shadow: 0 20px 50px rgba(31, 53, 56, 0.2);
 }
@@ -8,12 +8,12 @@
 .modal :global(.ant-modal-header) {
   margin-bottom: 0;
   padding: 18px 24px;
-  background: #f2f8f7;
-  border-bottom: 1px solid #d5e3e1;
+  background: var(--lm-surface-subtle);
+  border-bottom: 1px solid var(--lm-border-strong);
 }
 
 .modal :global(.ant-modal-title) {
-  color: #134e4a;
+  color: var(--lm-info-fg);
 }
 
 .modalTitle {
@@ -33,32 +33,32 @@
 .modal :global(.ant-modal-footer) {
   margin-top: 0;
   padding: 14px 24px;
-  border-top: 1px solid #e2e9e8;
-  background: #fbfcfc;
+  border-top: 1px solid var(--lm-border);
+  background: var(--lm-surface);
 }
 
 .modal :global(.ant-btn-primary) {
   min-width: 72px;
-  background: #00884a;
+  background: var(--lm-success-solid);
   box-shadow: none;
 }
 
 .modal :global(.ant-btn-primary:hover) {
-  background: #006f3c !important;
+  background: var(--lm-success-solid) !important;
 }
 
 .modal :global(.ant-modal-close) {
-  color: #607572;
+  color: var(--lm-text-secondary);
 }
 
 .modal :global(.ant-modal-close:hover) {
-  color: #134e4a;
-  background: #e5f1ee;
+  color: var(--lm-info-fg);
+  background: var(--lm-surface-muted);
 }
 
 .modal :global(.ant-btn-default) {
-  border-color: #cbd8d7;
-  color: #315b58;
+  border-color: var(--lm-border-strong);
+  color: var(--lm-info-fg);
 }
 
 .scrollArea {
@@ -74,15 +74,15 @@
   gap: 16px;
   margin-bottom: 20px;
   padding: 14px 16px;
-  border: 1px solid #d5e3e1;
+  border: 1px solid var(--lm-border-strong);
   border-radius: 8px;
-  background: #f7fbfa;
+  background: var(--lm-surface-subtle);
 }
 
 .contextLabel {
   display: block;
   margin-bottom: 2px;
-  color: #607572;
+  color: var(--lm-text-secondary);
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -91,7 +91,7 @@
 
 .contextValue {
   overflow: hidden;
-  color: #173b38;
+  color: var(--lm-text);
   font-size: 15px;
   font-weight: 700;
   text-overflow: ellipsis;
@@ -114,9 +114,9 @@
 .detailPanel {
   margin-bottom: 20px;
   padding: 16px 16px 2px;
-  border: 1px solid #dce8e6;
+  border: 1px solid var(--lm-border);
   border-radius: 8px;
-  background: #fbfdfc;
+  background: var(--lm-surface);
 }
 
 .sectionTitle {
@@ -124,7 +124,7 @@
   align-items: center;
   gap: 8px;
   margin: 0 0 12px;
-  color: #315b58;
+  color: var(--lm-info-fg);
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -134,7 +134,7 @@
 .sectionTitle::after {
   height: 1px;
   flex: 1;
-  background: #dce8e6;
+  background: var(--lm-border);
   content: "";
 }
 
@@ -147,20 +147,20 @@
 }
 
 .form :global(.ant-form-item-label > label) {
-  color: #334b48;
+  color: var(--lm-text);
   font-size: 13px;
   font-weight: 600;
 }
 
 .form :global(.ant-input),
 .form :global(.ant-select-selector) {
-  border-color: #cbd8d7;
+  border-color: var(--lm-border-strong);
 }
 
 .form :global(.ant-input:focus),
 .form :global(.ant-input-focused),
 .form :global(.ant-select-focused .ant-select-selector) {
-  border-color: #00884a;
+  border-color: var(--lm-success-solid);
   box-shadow: 0 0 0 2px rgba(0, 136, 74, 0.1);
 }
 
