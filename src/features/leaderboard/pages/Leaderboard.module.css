@@ -23,14 +23,14 @@
 
 .card {
   border-radius: 14px;
-  box-shadow: 0 4px 20px rgba(126, 87, 194, 0.12);
+  box-shadow: 0 4px 20px color-mix(in srgb, var(--lm-primary) 12%, transparent);
   border: 1px solid var(--lm-primary-border);
   overflow: hidden;
 }
 
 /* Violet active tab */
 :global(.ant-tabs-card > .ant-tabs-nav .ant-tabs-tab-active) {
-  background: linear-gradient(135deg, #7e57c2, #512da8) !important;
+  background: var(--lm-primary) !important;
   border-color: var(--lm-primary) !important;
 }
 
@@ -61,11 +61,11 @@
 
 .exportButton {
   margin-right: 12px;
-  background: linear-gradient(135deg, #7e57c2, #512da8) !important;
+  background: var(--lm-primary) !important;
   border: none !important;
-  box-shadow: 0 2px 8px rgba(126, 87, 194, 0.35) !important;
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--lm-primary) 35%, transparent) !important;
 }
 
 .exportButton:hover {
-  background: linear-gradient(135deg, #9c6fd6, #6a3bbf) !important;
+  background: var(--lm-primary-hover) !important;
 }

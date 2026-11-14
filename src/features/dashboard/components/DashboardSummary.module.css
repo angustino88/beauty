@@ -1,0 +1,134 @@
+/* Status overview: one rail. The free count answers "can I get a bench?",
+   the bar shows the mix, and the chips are both legend and filter. */
+.rail {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px 28px;
+  padding: 16px 20px;
+  background: var(--lm-surface);
+  border: 1px solid var(--lm-border);
+  border-radius: 12px;
+}
+
+.lead {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  white-space: nowrap;
+}
+
+.leadNumber {
+  color: var(--lm-success-fg);
+  font-size: 34px;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.leadText {
+  color: var(--lm-text-secondary);
+  font-size: 14px;
+}
+
+.leadText strong {
+  color: var(--lm-text);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.detail {
+  display: flex;
+  flex: 1 1 320px;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.bar {
+  display: flex;
+  gap: 2px;
+  height: 10px;
+  overflow: hidden;
+  background: var(--lm-surface-muted);
+  border-radius: 999px;
+}
+
+.segment {
+  min-width: 4px;
+  height: 100%;
+  background: var(--tone-solid);
+  transition: flex-grow 240ms ease;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 11px 4px 9px;
+  color: var(--lm-text-secondary);
+  background: var(--lm-surface);
+  border: 1px solid var(--lm-border);
+  border-radius: 999px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 20px;
+  white-space: nowrap;
+  transition: border-color 140ms ease, background-color 140ms ease, color 140ms ease;
+}
+
+.chip:hover {
+  background: var(--lm-surface-subtle);
+  border-color: var(--lm-border-strong);
+}
+
+.chip:focus-visible {
+  outline: none;
+  box-shadow: var(--lm-focus-ring);
+}
+
+.chipActive,
+.chipActive:hover {
+  color: var(--lm-primary-fg);
+  background: var(--lm-primary-bg);
+  border-color: var(--lm-primary);
+  box-shadow: 0 0 0 1px var(--lm-primary);
+}
+
+.chipCount {
+  color: var(--lm-text);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.chipActive .chipCount {
+  color: inherit;
+}
+
+.dot {
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  background: var(--tone-solid);
+  border-radius: 50%;
+}
+
+.success { --tone-solid: var(--lm-success-solid); }
+.info { --tone-solid: var(--lm-info-solid); }
+.warning { --tone-solid: var(--lm-warning-solid); }
+.danger { --tone-solid: var(--lm-danger-solid); }
+.reserved { --tone-solid: var(--lm-reserved-solid); }
+.neutral { --tone-solid: var(--lm-neutral-solid); }
+
+@media (prefers-reduced-motion: reduce) {
+  .segment, .chip { transition: none; }
+}

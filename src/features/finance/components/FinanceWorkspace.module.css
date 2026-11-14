@@ -39,9 +39,9 @@
   padding: 28px 32px;
   border: 1px solid var(--lm-primary);
   border-radius: 18px;
-  background: radial-gradient(circle at 87% 12%, rgba(116, 196, 151, .19), transparent 34%), linear-gradient(116deg, #122c2a, #1b4a3d 70%, #215747);
+  background: radial-gradient(circle at 87% 12%, rgba(185, 166, 255, .22), transparent 34%), linear-gradient(116deg, #1d1638, #34217a 70%, #4a2ea8);
   color: #fff;
-  box-shadow: 0 14px 34px rgba(19, 49, 41, .14);
+  box-shadow: 0 14px 34px rgba(26, 23, 35, .14);
 }
 
 .hero::after {
@@ -86,7 +86,7 @@
 .hero p {
   max-width: 550px;
   margin: 10px 0 0;
-  color: #c8ddd2;
+  color: #d9d2f5;
   font-size: 13px;
   line-height: 1.6;
 }

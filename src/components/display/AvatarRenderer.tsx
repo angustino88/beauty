@@ -18,9 +18,10 @@ function getInitials(displayname?: string, username?: string): string {
   return name.slice(0, 2).toUpperCase() || '?';
 }
 
+// Mid-tone hues that carry white initials in both themes.
 const AVATAR_COLORS = [
-  '#a13a30', '#3e8761', '#1d8a98', '#b8822e', '#6b625f',
-  '#6b2620', '#2a5f45', '#0e5b65', '#85621d', '#433d3b',
+  '#6d3fd6', '#0e7f99', '#1f8a52', '#b3611a', '#b0396b',
+  '#3f6bc4', '#7a5a9e', '#5e6b7d', '#8a6d1f', '#a8463c',
 ];
 
 function colorForUsername(username: string): string {
@@ -56,12 +57,13 @@ export function AvatarRenderer({ username, displayname }: AvatarRendererProps) {
   return (
     <Tooltip title={displayname || username}>
       <Avatar
-        size={42}
+        size={32}
         src={avatarSrc ?? undefined}
         style={{
-          backgroundColor: avatarSrc ? '#eef2f0' : color,
+          backgroundColor: avatarSrc ? 'var(--lm-surface-muted)' : color,
+          color: '#ffffff',
           fontSize: 11,
-          fontWeight: 800,
+          fontWeight: 600,
           letterSpacing: '0.04em',
           cursor: 'default',
           verticalAlign: 'middle',

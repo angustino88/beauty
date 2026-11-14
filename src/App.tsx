@@ -10,7 +10,7 @@ import "./App.css";
 
 const THEME_STORAGE_KEY = "labmango:theme";
 const FONT_STACK =
-  "\"Bosch Sans\", Inter, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, \"Noto Sans\", sans-serif";
+  "\"Inter Variable\", Inter, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, \"Noto Sans\", sans-serif";
 
 export default function App() {
   const dispatch = useAppDispatch();
@@ -59,23 +59,23 @@ export default function App() {
           // antd derives its palettes from literal colours, so these mirror the
           // --lm-* values in shared/styles/tokens.css. Keep both in sync.
           token: {
-            colorPrimary: isDark ? "#2bb3a3" : "#0d8a7e",
-            colorInfo: isDark ? "#4f8ff0" : "#3b82f6",
-            colorSuccess: isDark ? "#34b56a" : "#22a05a",
-            colorWarning: isDark ? "#e3a33a" : "#d98a0b",
-            colorError: isDark ? "#ec5e66" : "#e5484d",
+            colorPrimary: isDark ? "#7c5ce6" : "#6d3fd6",
+            colorInfo: isDark ? "#4a8cf0" : "#3b82f6",
+            colorSuccess: isDark ? "#2fae69" : "#1f9d57",
+            colorWarning: isDark ? "#e0a23a" : "#c27803",
+            colorError: isDark ? "#e85c64" : "#e0454b",
             fontFamily: FONT_STACK,
-            colorLink: isDark ? "#5fd4c4" : "#0b6f65",
-            colorBgLayout: isDark ? "#0b1117" : "#f4f6f8",
-            colorBgContainer: isDark ? "#121a22" : "#ffffff",
-            colorBgElevated: isDark ? "#18222d" : "#ffffff",
-            colorFillAlter: isDark ? "#16202a" : "#f8fafb",
-            colorText: isDark ? "#e6edf3" : "#14202b",
-            colorTextSecondary: isDark ? "#8796a7" : "#64748b",
-            colorBorder: isDark ? "#34455a" : "#cbd5df",
-            colorBorderSecondary: isDark ? "#233040" : "#e2e8ee",
+            colorLink: isDark ? "#b9a6ff" : "#5a2fc0",
+            colorBgLayout: isDark ? "#0e0d13" : "#f6f5f9",
+            colorBgContainer: isDark ? "#16151d" : "#ffffff",
+            colorBgElevated: isDark ? "#1e1d28" : "#ffffff",
+            colorFillAlter: isDark ? "#1b1a24" : "#faf9fc",
+            colorText: isDark ? "#ecebf2" : "#1a1723",
+            colorTextSecondary: isDark ? "#8c889e" : "#6b6679",
+            colorBorder: isDark ? "#3f3c52" : "#cdc8d9",
+            colorBorderSecondary: isDark ? "#2c2a3a" : "#e4e1ec",
             borderRadius: 8,
-            colorTextLightSolid: isDark ? "#04201d" : "#ffffff",
+            colorTextLightSolid: "#ffffff",
           },
         }}
       >

@@ -4,14 +4,14 @@
  * Tones describe what a person should do about a resource, not which entity it is:
  *   success  ready to use                       (available, operational)
  *   info     busy but healthy                    (in use, planned, on order)
- *   violet   committed or access-limited         (reserved, borrowed, closed)
+ *   reserved committed or access-limited         (reserved, borrowed, closed)
  *   warning  needs attention soon                (maintenance, calibration due)
  *   danger   not usable, needs action            (broken, out of service, lost)
  *   neutral  out of circulation or unknown       (retired, transferred, storage)
  */
-export type StatusTone = 'success' | 'info' | 'violet' | 'warning' | 'danger' | 'neutral';
+export type StatusTone = 'success' | 'info' | 'reserved' | 'warning' | 'danger' | 'neutral';
 
-export const STATUS_TONES: readonly StatusTone[] = ['success', 'info', 'violet', 'warning', 'danger', 'neutral'];
+export const STATUS_TONES: readonly StatusTone[] = ['success', 'info', 'reserved', 'warning', 'danger', 'neutral'];
 
 /** Tones that count towards "needs attention" in overviews. */
 export const ATTENTION_TONES: ReadonlySet<StatusTone> = new Set(['warning', 'danger']);
@@ -32,12 +32,12 @@ const TONE_BY_STATUS: Record<string, StatusTone> = {
   on_order: 'info',
   trial: 'info',
 
-  reserved: 'violet',
-  booked: 'violet',
-  borrowed: 'violet',
-  on_loan: 'violet',
-  closed: 'violet',
-  restricted: 'violet',
+  reserved: 'reserved',
+  booked: 'reserved',
+  borrowed: 'reserved',
+  on_loan: 'reserved',
+  closed: 'reserved',
+  restricted: 'reserved',
 
   maintenance: 'warning',
   in_maintenance: 'warning',
@@ -69,11 +69,29 @@ export function toneForStatus(status: unknown): StatusTone {
   return TONE_BY_STATUS[normalizeStatusKey(status)] ?? 'neutral';
 }
 
+/**
+ * Bench activity on the dashboard has its own, fixed colour language that lab
+ * users already read at a glance: free = green, active (occupied) = red,
+ * inactive = yellow, maintaining = blue, offline = grey. Whether a bench is
+ * booked is a separate fact and is shown next to the status, not by its colour.
+ */
+const BENCH_ACTIVITY_TONES: Record<string, StatusTone> = {
+  free: 'success',
+  online: 'success',
+  active: 'danger',
+  inactive: 'warning',
+  maintaining: 'info',
+  maintenance: 'info',
+  offline: 'neutral',
+};
+
+export const benchActivityTone = (status: unknown): StatusTone => BENCH_ACTIVITY_TONES[normalizeStatusKey(status)] ?? 'neutral';
+
 /** Older call sites pass colour names or legacy class names; map them onto tones. */
 const LEGACY_TONES: Record<string, StatusTone> = {
   green: 'success', overviewGreen: 'success', successSubtle: 'success', 'success-subtle': 'success',
   blue: 'info', overviewBlue: 'info',
-  violet: 'violet', overviewViolet: 'violet',
+  violet: 'reserved', overviewViolet: 'reserved',
   amber: 'warning', overviewAmber: 'warning',
   red: 'danger', overviewRed: 'danger',
   slate: 'neutral',
@@ -94,7 +112,7 @@ export const purchaseStatusTone = (status: unknown): StatusTone => PURCHASE_TONE
 
 /** Expense / invoice payment state. */
 const PAYMENT_TONES: Record<string, StatusTone> = {
-  paid: 'success', partial: 'warning', partially_paid: 'warning', pending: 'info', overdue: 'danger', refunded: 'violet', cancelled: 'neutral',
+  paid: 'success', partial: 'warning', partially_paid: 'warning', pending: 'info', overdue: 'danger', refunded: 'reserved', cancelled: 'neutral',
 };
 
 export const paymentStatusTone = (status: unknown): StatusTone => PAYMENT_TONES[normalizeStatusKey(status)] ?? 'neutral';

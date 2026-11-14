@@ -71,8 +71,8 @@ export function buildColumns({
     {
       title: 'Status',
       key: 'status',
-      align: 'center' as const,
-      minWidth: 160,
+      align: 'left' as const,
+      minWidth: 200,
       filters: STATUS_FILTER_OPTIONS,
       filterSearch: true,
       filterMultiple: true,

@@ -63,11 +63,11 @@
   --indicator-border: var(--lm-info-border);
 }
 
-.violet, .overviewViolet {
-  --indicator-text: var(--lm-violet-fg);
-  --indicator-accent: var(--lm-violet-solid);
-  --indicator-background: var(--lm-violet-bg);
-  --indicator-border: var(--lm-violet-border);
+.reserved, .violet, .overviewViolet {
+  --indicator-text: var(--lm-reserved-fg);
+  --indicator-accent: var(--lm-reserved-solid);
+  --indicator-background: var(--lm-reserved-bg);
+  --indicator-border: var(--lm-reserved-border);
 }
 
 .warning, .overviewAmber {

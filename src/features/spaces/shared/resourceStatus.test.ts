@@ -83,7 +83,7 @@ test('resourceBadge shows in use and booked today when operational and available
     activity_status: { value: 'scheduled', label: 'Scheduled' },
     status: null,
   };
-  assert.deepEqual(resourceBadge(scheduled), { text: 'Booked today', tone: 'violet' });
+  assert.deepEqual(resourceBadge(scheduled), { text: 'Booked today', tone: 'reserved' });
 
   const idle: ResourceState = {
     lifecycle_status: { value: 'in_service', label: 'In Service' },

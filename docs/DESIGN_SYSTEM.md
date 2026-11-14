@@ -8,16 +8,16 @@ theme; antd's theme in `src/App.tsx` mirrors the same values.
 
 1. **Neutral first.** Pages, cards, tables, borders and text use the neutral
    tokens (`--lm-bg`, `--lm-surface*`, `--lm-text*`, `--lm-border*`).
-2. **One brand accent: teal** (`--lm-primary*`). Use it for primary buttons,
+2. **One brand accent: violet** (`--lm-primary*`). Use it for primary buttons,
    links, focus rings, selection, the active navigation item and "today".
    Only one filled primary button per toolbar.
-3. **Status colours mean status — nothing else.** `success`, `info`, `violet`,
+3. **Status colours mean status — nothing else.** `success`, `info`, `reserved`,
    `warning`, `danger`, `neutral` are only for things that have a state
    (badges, overview tiles, alerts, meters). Do not use them for headings,
    labels, icons, entity types, table-column accents or decorative borders.
 4. **Entity types (room, station, bench, equipment, license) are told apart by
    icon, not colour.**
-5. **Charts** use `--lm-chart-1..8` (teal first) via `useChartTheme()`; status
+5. **Charts** use `--lm-chart-1..8` (violet first) via `useChartTheme()`; status
    charts use the status tones so a colour means the same thing everywhere.
 
 ## Status tones
@@ -26,7 +26,7 @@ theme; antd's theme in `src/App.tsx` mirrors the same values.
 |-----------|----------------------------------|--------------------------------------------|
 | success   | ready to use                     | Available, Operational, Paid, Approved     |
 | info      | busy but healthy                 | In use, Planned, Ordered, In progress      |
-| violet    | committed or access-limited      | Reserved, Borrowed, Closed, Restricted     |
+| reserved  | committed or access-limited      | Reserved, Borrowed, Closed, Restricted     |
 | warning   | needs attention soon             | Maintenance, Calibration overdue, Pending  |
 | danger    | not usable, needs action         | Broken, Out of service, Lost, Overdue      |
 | neutral   | out of circulation / unknown     | Retired, Transferred, Draft, Cancelled     |
@@ -38,14 +38,40 @@ The mapping lives in `src/shared/status/statusTone.ts`; render statuses with
 
 | Token            | Light     | Dark      |
 |------------------|-----------|-----------|
-| `--lm-bg`        | `#f4f6f8` | `#0b1117` |
-| `--lm-surface`   | `#ffffff` | `#121a22` |
-| `--lm-border`    | `#e2e8ee` | `#233040` |
-| `--lm-text`      | `#14202b` | `#e6edf3` |
-| `--lm-primary`   | `#0d8a7e` | `#2bb3a3` |
+| `--lm-bg`        | `#f6f5f9` | `#0e0d13` |
+| `--lm-surface`   | `#ffffff` | `#16151d` |
+| `--lm-border`    | `#e4e1ec` | `#2c2a3a` |
+| `--lm-text`      | `#1a1723` | `#ecebf2` |
+| `--lm-primary`   | `#6d3fd6` | `#7c5ce6` |
 
-Dark mode uses navy-slate surfaces rather than pure grey, and text on the dark
-teal primary is dark (`--lm-on-primary`) for contrast.
+Surfaces are neutrals tinted slightly towards violet in both themes, so the
+accent sits on its own ground. Text on the primary is white in both themes. In
+dark mode, buttons use `--lm-primary` and text/links use the lighter
+`--lm-primary-fg`. Type is Inter (self-hosted variable font) in weights 400, 500
+and 600; numbers that line up use `tabular-nums`.
 
-Seasonal decorations (the Tết header artwork) and the dashboard's "paper" cards
-are intentional exceptions; in dark mode the paper cards use slate surfaces.
+## Bench activity on the dashboard
+
+Bench activity has a fixed colour language of its own (`benchActivityTone` in
+`shared/status/statusTone.ts`):
+
+| Status      | Colour | Tone      |
+| ----------- | ------ | --------- |
+| Free        | green  | `success` |
+| Active      | red    | `danger`  |
+| Inactive    | yellow | `warning` |
+| Maintaining | blue   | `info`    |
+| Offline     | grey   | `neutral` |
+
+Whether a bench is booked right now is a separate fact: it is shown as a cyan
+"Booked" marker next to the status badge, never by the status colour.
+
+## Seasons
+
+The header carries a seasonal pack (Tết, Mid-Autumn, Christmas) defined in
+`shared/season/seasons.ts`. A pack supplies a chip label, a motif and an
+optional mascot, coloured only by the five `--lm-season-*` tokens that
+`html[data-season]` switches. It decorates the header and nothing else: buttons,
+links and status colours never change with the season. The season follows the
+calendar; set `VITE_SEASON` to `tet`, `mid-autumn`, `christmas` or `none` to pin
+it.

@@ -143,7 +143,7 @@ export default function MappingPage() {
           className={mappingStyles.summaryProgress}
           percent={visibleBenchCount ? Math.round((summaryCounts.fullyMapped / visibleBenchCount) * 100) : 0}
           showInfo={false}
-          strokeColor="#168458"
+          strokeColor="var(--lm-success-solid)"
           trailColor="var(--lm-border)"
         />
         <Row gutter={[12, 12]} className={mappingStyles.summaryMetrics}>

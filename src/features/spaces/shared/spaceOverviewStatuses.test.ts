@@ -10,7 +10,7 @@ test('space cards use only backend lifecycle statuses including zero counts', ()
     { status: { value: 'new_status', label: 'Custom state' }, resource_count: 1 },
   ]), [
     { key: 'in_storage', label: 'In storage', description: '', tone: 'neutral' },
-    { key: 'reserved', label: 'Reserved', description: 'Booked today', tone: 'violet' },
+    { key: 'reserved', label: 'Reserved', description: 'Booked today', tone: 'reserved' },
     { key: 'new_status', label: 'Custom state', description: '', tone: 'neutral' },
   ]);
   assert.deepEqual(spaceOverviewStatuses([]), []);

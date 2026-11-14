@@ -1,9 +1,10 @@
 /*
  * LabMango semantic design tokens.
  *
- * Palette rules: neutral surfaces and text; ONE brand accent (teal) for actions,
- * links, focus and selection; status colours are used only to express a status;
- * charts lead with the brand teal. Dark mode uses navy-slate surfaces.
+ * Palette rules: violet-tinted neutral surfaces and text; ONE brand accent
+ * (violet) for actions, links, focus and selection; status colours are used only
+ * to express a status; charts lead with the brand violet. The seasonal header
+ * decoration has its own --lm-season-* tokens and never changes functional colour.
  *
  * Every component colour should come from here so light and dark themes stay in
  * sync. Components never test the theme themselves: the html[data-theme] switch
@@ -16,171 +17,175 @@
  *   lines     border · border-subtle · border-strong
  *   status    <tone>-fg (text on soft bg) · <tone>-solid (dots, bars, icons)
  *             <tone>-bg (soft fill) · <tone>-border
- *             tones: success, info, warning, danger, violet, neutral
+ *             tones: success, info, warning, danger, reserved, neutral
+ *   season    season-fg/bg/border (header chip) · season-1/2 (motif, underline)
  */
 
 :root {
-  --lm-font-sans: "Bosch Sans", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+  --lm-font-sans: "Inter Variable", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
     "Helvetica Neue", Arial, "Noto Sans", sans-serif;
   --lm-font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
 
-  --lm-bg: #f4f6f8;
+  --lm-bg: #f6f5f9;
   --lm-surface: #ffffff;
-  --lm-surface-subtle: #f8fafb;
-  --lm-surface-muted: #eef2f5;
+  --lm-surface-subtle: #faf9fc;
+  --lm-surface-muted: #efedf4;
   --lm-surface-raised: #ffffff;
-  --lm-surface-inverse: #14202b;
+  --lm-surface-inverse: #1a1723;
 
-  --lm-text: #14202b;
-  --lm-text-secondary: #475569;
-  --lm-text-tertiary: #64748b;
-  --lm-text-disabled: #a3aebb;
+  --lm-text: #1a1723;
+  --lm-text-secondary: #4d485c;
+  --lm-text-tertiary: #6b6679;
+  --lm-text-disabled: #a9a4b5;
   --lm-text-inverse: #ffffff;
 
-  --lm-border: #e2e8ee;
-  --lm-border-subtle: #edf1f5;
-  --lm-border-strong: #cbd5df;
+  --lm-border: #e4e1ec;
+  --lm-border-subtle: #eeecf3;
+  --lm-border-strong: #cdc8d9;
 
-  --lm-primary: #0d8a7e;
-  --lm-primary-hover: #0a7569;
-  --lm-primary-fg: #0b6f65;
-  --lm-primary-bg: #e6f6f3;
-  --lm-primary-border: #b5e3dc;
+  --lm-primary: #6d3fd6;
+  --lm-primary-hover: #5c31bf;
+  --lm-primary-fg: #5a2fc0;
+  --lm-primary-bg: #f1ecfd;
+  --lm-primary-border: #d6c8f7;
   --lm-on-primary: #ffffff;
 
-  --lm-success-fg: #157a3c;
-  --lm-success-solid: #22a05a;
-  --lm-success-bg: #eaf7ef;
-  --lm-success-border: #c3e8d0;
+  --lm-success-fg: #17753f;
+  --lm-success-solid: #1f9d57;
+  --lm-success-bg: #e8f6ee;
+  --lm-success-border: #bfe5cf;
 
-  --lm-info-fg: #1d5fae;
+  --lm-info-fg: #1c5bb0;
   --lm-info-solid: #3b82f6;
-  --lm-info-bg: #edf4fe;
-  --lm-info-border: #cfe0fb;
+  --lm-info-bg: #ebf3fe;
+  --lm-info-border: #cadffb;
 
-  --lm-warning-fg: #8a5300;
-  --lm-warning-solid: #d98a0b;
-  --lm-warning-bg: #fff6e3;
-  --lm-warning-border: #f3dcae;
+  --lm-warning-fg: #8a5200;
+  --lm-warning-solid: #c27803;
+  --lm-warning-bg: #fff5e0;
+  --lm-warning-border: #f2daa8;
 
-  --lm-danger-fg: #b4232c;
-  --lm-danger-solid: #e5484d;
-  --lm-danger-bg: #fdeeee;
-  --lm-danger-border: #f6caca;
+  --lm-danger-fg: #b3232d;
+  --lm-danger-solid: #e0454b;
+  --lm-danger-bg: #fdecec;
+  --lm-danger-border: #f5c6c8;
 
-  --lm-violet-fg: #5b3fb0;
-  --lm-violet-solid: #8b5cf6;
-  --lm-violet-bg: #f3effe;
-  --lm-violet-border: #ddd3fb;
+  /* Committed / held for someone (booked, reserved, borrowed). Cyan, because
+     violet is the brand accent and must not double as a status. */
+  --lm-reserved-fg: #0b6b80;
+  --lm-reserved-solid: #0e9ab8;
+  --lm-reserved-bg: #e5f6fa;
+  --lm-reserved-border: #b5e2ec;
 
-  --lm-neutral-fg: #475569;
-  --lm-neutral-solid: #8a97a8;
-  --lm-neutral-bg: #f1f4f7;
-  --lm-neutral-border: #dde3ea;
+  --lm-neutral-fg: #4d485c;
+  --lm-neutral-solid: #8a8698;
+  --lm-neutral-bg: #f1eff5;
+  --lm-neutral-border: #dedae6;
 
-  --lm-shadow-sm: 0 1px 2px rgba(15, 30, 45, 0.05);
-  --lm-shadow-md: 0 4px 14px rgba(15, 30, 45, 0.08);
-  --lm-shadow-lg: 0 16px 40px rgba(15, 30, 45, 0.14);
-  --lm-focus-ring: 0 0 0 3px rgba(13, 138, 126, 0.28);
-  --lm-overlay: rgba(15, 18, 28, 0.45);
+  --lm-shadow-sm: 0 1px 2px rgba(26, 23, 35, 0.05);
+  --lm-shadow-md: 0 4px 14px rgba(26, 23, 35, 0.08);
+  --lm-shadow-lg: 0 16px 40px rgba(26, 23, 35, 0.14);
+  --lm-focus-ring: 0 0 0 3px rgba(109, 63, 214, 0.28);
+  --lm-overlay: rgba(18, 15, 28, 0.45);
 
-  /* Dashboard "paper" skin */
-  --lm-paper-top: #fffbf2;
-  --lm-paper-bottom: #f6ecdb;
-  --lm-paper-ink: #221c17;
-  --lm-paper-edge: #382a22;
-  --lm-paper-highlight: #ffffff;
-  --lm-paper-accent: #7b2d26;
+  /* Seasonal header pack. Off-season the chip falls back to the brand accent
+     and the motif colours are transparent; html[data-season] overrides them. */
+  --lm-season-fg: var(--lm-primary-fg);
+  --lm-season-bg: var(--lm-primary-bg);
+  --lm-season-border: var(--lm-primary-border);
+  --lm-season-1: transparent;
+  --lm-season-2: transparent;
 
   /* Chart series (categorical, ordered for contrast between neighbours) */
-  --lm-chart-1: #0d9488;
-  --lm-chart-2: #e0446d;
-  --lm-chart-3: #6366f1;
-  --lm-chart-4: #e3a008;
+  --lm-chart-1: #7347dc;
+  --lm-chart-2: #0d9488;
+  --lm-chart-3: #e0446d;
+  --lm-chart-4: #d99a08;
   --lm-chart-5: #2f7fd8;
-  --lm-chart-6: #9b59d0;
+  --lm-chart-6: #5a9e2f;
   --lm-chart-7: #ec7a2c;
-  --lm-chart-8: #7a8597;
-  --lm-chart-grid: #e8edf2;
-  --lm-chart-axis: #8492a3;
+  --lm-chart-8: #7f7a8f;
+  --lm-chart-grid: #ebe8f1;
+  --lm-chart-axis: #8a8698;
 }
 
 html[data-theme='dark'] {
-  --lm-bg: #0b1117;
-  --lm-surface: #121a22;
-  --lm-surface-subtle: #16202a;
-  --lm-surface-muted: #1c2833;
-  --lm-surface-raised: #18222d;
-  --lm-surface-inverse: #e6edf3;
+  --lm-bg: #0e0d13;
+  --lm-surface: #16151d;
+  --lm-surface-subtle: #1b1a24;
+  --lm-surface-muted: #23222e;
+  --lm-surface-raised: #1e1d28;
+  --lm-surface-inverse: #ecebf2;
 
-  --lm-text: #e6edf3;
-  --lm-text-secondary: #b6c2ce;
-  --lm-text-tertiary: #8796a7;
-  --lm-text-disabled: #5b6878;
-  --lm-text-inverse: #0b1117;
+  --lm-text: #ecebf2;
+  --lm-text-secondary: #b9b6c9;
+  --lm-text-tertiary: #8c889e;
+  --lm-text-disabled: #5d5a6e;
+  --lm-text-inverse: #0e0d13;
 
-  --lm-border: #233040;
-  --lm-border-subtle: #1b2632;
-  --lm-border-strong: #34455a;
+  --lm-border: #2c2a3a;
+  --lm-border-subtle: #211f2c;
+  --lm-border-strong: #3f3c52;
 
-  --lm-primary: #2bb3a3;
-  --lm-primary-hover: #3cc6b5;
-  --lm-primary-fg: #5fd4c4;
-  --lm-primary-bg: #0f2d2b;
-  --lm-primary-border: #1d5550;
-  --lm-on-primary: #04201d;
+  --lm-primary: #7c5ce6;
+  --lm-primary-hover: #8d70ee;
+  --lm-primary-fg: #b9a6ff;
+  --lm-primary-bg: #211a3d;
+  --lm-primary-border: #3d2f75;
+  --lm-on-primary: #ffffff;
 
-  --lm-success-fg: #5fd38d;
-  --lm-success-solid: #34b56a;
-  --lm-success-bg: #0f2a1b;
-  --lm-success-border: #1d4d31;
+  --lm-success-fg: #63d394;
+  --lm-success-solid: #2fae69;
+  --lm-success-bg: #10271b;
+  --lm-success-border: #1e4a32;
 
-  --lm-info-fg: #8cbcf8;
-  --lm-info-solid: #4f8ff0;
-  --lm-info-bg: #11233b;
-  --lm-info-border: #1f3d63;
+  --lm-info-fg: #8ab8f7;
+  --lm-info-solid: #4a8cf0;
+  --lm-info-bg: #11213a;
+  --lm-info-border: #213c63;
 
-  --lm-warning-fg: #f2c46b;
-  --lm-warning-solid: #e3a33a;
-  --lm-warning-bg: #2b210e;
-  --lm-warning-border: #57411a;
+  --lm-warning-fg: #f0c36a;
+  --lm-warning-solid: #e0a23a;
+  --lm-warning-bg: #2a200d;
+  --lm-warning-border: #55401a;
 
-  --lm-danger-fg: #f6979b;
-  --lm-danger-solid: #ec5e66;
-  --lm-danger-bg: #33161a;
-  --lm-danger-border: #5f262c;
+  --lm-danger-fg: #f4959a;
+  --lm-danger-solid: #e85c64;
+  --lm-danger-bg: #32151a;
+  --lm-danger-border: #5d252b;
 
-  --lm-violet-fg: #c2b0ff;
-  --lm-violet-solid: #9b7bf2;
-  --lm-violet-bg: #221b3d;
-  --lm-violet-border: #3b2f6a;
+  --lm-reserved-fg: #6fd3e8;
+  --lm-reserved-solid: #22a9c6;
+  --lm-reserved-bg: #0c2730;
+  --lm-reserved-border: #17485a;
 
-  --lm-neutral-fg: #b6c2ce;
-  --lm-neutral-solid: #8796a7;
-  --lm-neutral-bg: #1c2833;
-  --lm-neutral-border: #2c3a4a;
+  --lm-neutral-fg: #b9b6c9;
+  --lm-neutral-solid: #8c889e;
+  --lm-neutral-bg: #23222e;
+  --lm-neutral-border: #36334a;
 
   --lm-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
   --lm-shadow-md: 0 4px 14px rgba(0, 0, 0, 0.45);
   --lm-shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.6);
-  --lm-focus-ring: 0 0 0 3px rgba(43, 179, 163, 0.4);
+  --lm-focus-ring: 0 0 0 3px rgba(124, 92, 230, 0.45);
   --lm-overlay: rgba(0, 0, 0, 0.6);
 
-  --lm-paper-top: #18222d;
-  --lm-paper-bottom: #121a22;
-  --lm-paper-ink: #e6edf3;
-  --lm-paper-edge: #8796a7;
-  --lm-paper-highlight: #2a3746;
-  --lm-paper-accent: #f6979b;
-
-  --lm-chart-1: #2bb3a3;
-  --lm-chart-2: #f2648b;
-  --lm-chart-3: #8b8ff5;
+  --lm-chart-1: #9a7df5;
+  --lm-chart-2: #2bb3a3;
+  --lm-chart-3: #f2648b;
   --lm-chart-4: #f2bf3b;
   --lm-chart-5: #5fa4f2;
-  --lm-chart-6: #c08af0;
+  --lm-chart-6: #86c75a;
   --lm-chart-7: #f59a5a;
-  --lm-chart-8: #98a1b2;
-  --lm-chart-grid: #1f2b37;
-  --lm-chart-axis: #7b8a9b;
+  --lm-chart-8: #9d99ad;
+  --lm-chart-grid: #252330;
+  --lm-chart-axis: #8c889e;
 }
+
+/* Season packs: only these five tokens change with the season. */
+html[data-season='tet'] { --lm-season-fg: #a8431a; --lm-season-bg: #fff1e3; --lm-season-border: #f4d2b0; --lm-season-1: #e0454b; --lm-season-2: #e2a416; }
+html[data-season='tet'][data-theme='dark'] { --lm-season-fg: #f5b56b; --lm-season-bg: #2e1c0f; --lm-season-border: #5c3a1c; --lm-season-1: #e85c64; --lm-season-2: #f0c36a; }
+html[data-season='mid-autumn'] { --lm-season-fg: #99500a; --lm-season-bg: #fff3df; --lm-season-border: #f1d6a6; --lm-season-1: #e07a1f; --lm-season-2: #e2a416; }
+html[data-season='mid-autumn'][data-theme='dark'] { --lm-season-fg: #f3c069; --lm-season-bg: #2b1f0c; --lm-season-border: #57401a; --lm-season-1: #f0913f; --lm-season-2: #f3c069; }
+html[data-season='christmas'] { --lm-season-fg: #1d6b45; --lm-season-bg: #e8f5ee; --lm-season-border: #bfe3cf; --lm-season-1: #1f9d57; --lm-season-2: #e0454b; }
+html[data-season='christmas'][data-theme='dark'] { --lm-season-fg: #7fd3a5; --lm-season-bg: #10271c; --lm-season-border: #1f4a34; --lm-season-1: #2fae69; --lm-season-2: #e85c64; }

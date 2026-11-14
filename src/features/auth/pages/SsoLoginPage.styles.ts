@@ -169,7 +169,7 @@ export const PAGE_STYLE: CSSProperties = {
   alignItems: 'center',
   justifyContent: 'center',
   minHeight: '100vh',
-  background: 'rgba(245, 245, 245, 1)',
+  background: 'var(--lm-bg)',
 };
 
 export const DIVIDER_STYLE: CSSProperties = {

@@ -1,94 +1,63 @@
-import { Col, Grid, Layout, Row, Tooltip, Typography } from 'antd';
+import { Layout, Tooltip } from 'antd';
 import { MoonOutlined, SunOutlined } from '@ant-design/icons';
+import { Gamepad2 } from 'lucide-react';
 import React, { Suspense, lazy, useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { LogoBosch, LogoLabMango, LionDanceIcon, Year2026Icon } from '@/components/svg';
-import styleCss from './layout.module.css';
+import { LogoBosch, LogoLabMango } from '@/components/svg';
+import { useSeason } from '@/shared/season/useSeason';
 import { useTheme } from '@/shared/theme/ThemeContext';
+import { SeasonDecor } from './SeasonDecor';
+import styleCss from './layout.module.css';
 
 const { Header: AntHeader } = Layout;
 const GameWidget = lazy(() => import('@/features/game-widget/components/GameWidget'));
 
+/**
+ * App header: brand, the current season's decoration, theme toggle, partner logo.
+ * Everything seasonal comes from shared/season; the header itself stays a plain
+ * surface so it sits on the same ground as the rest of the app.
+ */
 const AppHeader = () => {
-  const { lg } = Grid.useBreakpoint();
   const [showGame, setShowGame] = useState(false);
   const { isDark, toggleTheme } = useTheme();
+  const season = useSeason();
+  const themeLabel = `Switch to ${isDark ? 'light' : 'dark'} mode`;
 
   return (
-    <AntHeader className={styleCss.header}>
-      <div className="xmas-lights" style={{ marginBottom: 4 }}>
-        <div className="xmas-light red"></div>
-        <div className="xmas-light green"></div>
-        <div className="xmas-light gold"></div>
-        <div className="xmas-light white"></div>
-        <div className="xmas-light darkgreen"></div>
-        <div className="xmas-light darkred"></div>
+    <AntHeader className={`${styleCss.header} ${season ? styleCss.headerInSeason : ''}`}>
+      <NavLink to="/" className={styleCss.brand} aria-label="Lab Mango home">
+        <LogoLabMango />
+        <span className={styleCss.appTitle}>Lab Mango</span>
+      </NavLink>
+
+      {season ? (
+        <Tooltip title="Play the mini game">
+          <button type="button" className={styleCss.seasonChip} onClick={() => setShowGame(true)}>
+            {season.label}
+          </button>
+        </Tooltip>
+      ) : null}
+
+      {season ? <SeasonDecor season={season.id} /> : <div className={styleCss.headerSpacer} />}
+
+      <div className={styleCss.headerActions}>
+        {season ? null : (
+          <Tooltip title="Play the mini game">
+            <button type="button" className={styleCss.headerIconButton} onClick={() => setShowGame(true)} aria-label="Play the mini game">
+              <Gamepad2 size={16} />
+            </button>
+          </Tooltip>
+        )}
+        <Tooltip title={themeLabel}>
+          <button type="button" className={styleCss.headerIconButton} onClick={toggleTheme} aria-label={themeLabel} aria-pressed={isDark}>
+            {isDark ? <SunOutlined /> : <MoonOutlined />}
+          </button>
+        </Tooltip>
+        <span className={styleCss.partnerLogo}>
+          <LogoBosch />
+        </span>
       </div>
 
-      <div className={styleCss.reindeer}>
-        <LionDanceIcon />
-      </div>
-
-      <Row style={{ width: '100%' }}>
-        <Col span={21}>
-          <NavLink to="/">
-            <Row align="middle">
-              <Col className={styleCss.headerLeftSection}>
-                <div className={styleCss.logoContainer} style={{ position: 'relative' }}>
-                  <LogoLabMango />
-                </div>
-              </Col>
-
-              {lg ? (
-                <Col className={styleCss.titleContainer}>
-                  <div style={{ position: 'relative', display: 'inline-block' }}>
-                    <Typography.Title level={3} className={styleCss.xmasTitle} aria-label="Lab Mango TET Edition">
-                      Lab Mango
-                      <span
-                        className={styleCss.xmasTag}
-                        onClick={(event) => {
-                          event.preventDefault();
-                          setShowGame(true);
-                        }}
-                      >
-                        TET EDITION
-                      </span>
-                      <span className={styleCss.xmasEmoji} role="img" aria-label="2026">
-                        <Year2026Icon />
-                      </span>
-                    </Typography.Title>
-
-                    <div className={styleCss.xmasSparkle}>
-                      <span style={{ top: '10%', left: '20%' }}>🌸</span>
-                      <span style={{ top: '50%', left: '70%' }}>🌸</span>
-                      <span style={{ top: '80%', left: '40%' }}>🌸</span>
-                    </div>
-                  </div>
-                </Col>
-              ) : null}
-            </Row>
-          </NavLink>
-        </Col>
-
-        <Col span={3}>
-          <div className={`${styleCss.headerRightSection} ${styleCss.logoContainer}`}>
-            <Tooltip title={`Switch to ${isDark ? 'light' : 'dark'} mode`}>
-              <button
-                type="button"
-                className={styleCss.themeToggle}
-                onClick={toggleTheme}
-                aria-label={`Switch to ${isDark ? 'light' : 'dark'} mode`}
-                aria-pressed={isDark}
-              >
-                {isDark ? <SunOutlined /> : <MoonOutlined />}
-              </button>
-            </Tooltip>
-            <LogoBosch />
-          </div>
-        </Col>
-      </Row>
-
-      <div className={styleCss.xmasUnderline} />
       {showGame && (
         <Suspense fallback={null}>
           <GameWidget onClose={() => setShowGame(false)} />

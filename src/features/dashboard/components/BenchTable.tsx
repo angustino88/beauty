@@ -175,8 +175,8 @@ export const BenchTable = memo(function BenchTable({
         } as React.CSSProperties
       }
     >
-      <Row className="toolbar">
-        <Col span={16}>
+      <Row className="toolbar" gutter={[12, 12]} align="middle">
+        <Col flex="1 1 360px" style={{ minWidth: 0 }}>
           <FullTextSearch
             value={state.search}
             onSearch={state.setSearch}
@@ -184,7 +184,7 @@ export const BenchTable = memo(function BenchTable({
           />
         </Col>
         <Col
-          flex="auto"
+          flex="none"
           style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}
         >
           <TooltipButton

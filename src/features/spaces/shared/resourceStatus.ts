@@ -100,7 +100,7 @@ export interface ResourceBadgeResult {
  * 4. availability.value === "unavailable" && blocked_by -> { text: "Unavailable (type name)", tone: "warning" }
  * 5. If room or station and operational -> { text: "Operational", tone: "success" }
  * 6. activity_status === "active" -> { text: "In use", tone: "info" }
- * 7. activity_status === "scheduled" -> { text: "Booked today", tone: "violet" }
+ * 7. activity_status === "scheduled" -> { text: "Booked today", tone: "reserved" }
  * 8. Default (bench/asset) -> { text: "Available", tone: "success" }
  */
 export function resourceBadge(
@@ -129,7 +129,7 @@ export function resourceBadge(
     return { text: 'Operational', tone: 'success' };
   }
   if (r.activity_status?.value === 'active') return { text: 'In use', tone: 'info' };
-  if (r.activity_status?.value === 'scheduled') return { text: 'Booked today', tone: 'violet' };
+  if (r.activity_status?.value === 'scheduled') return { text: 'Booked today', tone: 'reserved' };
   return { text: 'Available', tone: 'success' };
 }
 

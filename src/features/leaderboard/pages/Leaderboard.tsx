@@ -76,7 +76,7 @@ export default function Leaderboard() {
     <div className={styles.page}>
       <div className={styles.header}>
         <Title level={3} className={styles.title}>
-          <TrophyOutlined style={{ color: '#FFD700' }} />
+          <TrophyOutlined style={{ color: 'var(--lm-warning-solid)' }} />
           Leaderboard
         </Title>
         <Segmented

@@ -894,7 +894,7 @@
 .compactVisualization .statusDot {
   width: 5px;
   height: 5px;
-  box-shadow: 0 0 0 2px rgba(31, 122, 77, 0.12);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--lm-primary) 18%, transparent);
 }
 
 .compactVisualization .connector {

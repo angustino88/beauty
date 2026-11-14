@@ -71,7 +71,7 @@
 /* Tones */
 .success { --tone-fg: var(--lm-success-fg); --tone-solid: var(--lm-success-solid); --tone-bg: var(--lm-success-bg); --tone-border: var(--lm-success-border); }
 .info { --tone-fg: var(--lm-info-fg); --tone-solid: var(--lm-info-solid); --tone-bg: var(--lm-info-bg); --tone-border: var(--lm-info-border); }
-.violet { --tone-fg: var(--lm-violet-fg); --tone-solid: var(--lm-violet-solid); --tone-bg: var(--lm-violet-bg); --tone-border: var(--lm-violet-border); }
+.reserved { --tone-fg: var(--lm-reserved-fg); --tone-solid: var(--lm-reserved-solid); --tone-bg: var(--lm-reserved-bg); --tone-border: var(--lm-reserved-border); }
 .warning { --tone-fg: var(--lm-warning-fg); --tone-solid: var(--lm-warning-solid); --tone-bg: var(--lm-warning-bg); --tone-border: var(--lm-warning-border); }
 .danger { --tone-fg: var(--lm-danger-fg); --tone-solid: var(--lm-danger-solid); --tone-bg: var(--lm-danger-bg); --tone-border: var(--lm-danger-border); }
 .neutral { --tone-fg: var(--lm-neutral-fg); --tone-solid: var(--lm-neutral-solid); --tone-bg: var(--lm-neutral-bg); --tone-border: var(--lm-neutral-border); }

@@ -26,7 +26,7 @@ export function PersonaTable({ data, loading, currentUserId, onRowClick }: Perso
         onClick: () => onRowClick?.(record),
         style: {
           ...(currentUserId != null && record.id === currentUserId
-            ? { background: 'linear-gradient(90deg, rgba(126,87,194,0.12) 0%, rgba(126,87,194,0.04) 100%)', fontWeight: 600 }
+            ? { background: 'var(--lm-primary-bg)', fontWeight: 600 }
             : {}),
           cursor: onRowClick ? 'pointer' : 'default',
         },

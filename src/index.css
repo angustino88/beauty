@@ -1,14 +1,8 @@
 @import './shared/styles/tailwind.css';
 
-/* Corporate font is not distributed in the public repo. Internal builds drop the
-   file into public/fonts/ (gitignored); otherwise the --lm-font-sans fallbacks apply. */
-@font-face {
-  font-family: "Bosch Sans";
-  src: url("/fonts/BoschSans-Regular-v5_003.woff") format("woff");
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
+/* Inter is self-hosted (variable font, all weights) so headings and numbers
+   render with real weights instead of synthesised bold. */
+@import '@fontsource-variable/inter/wght.css';
 
 *, *::before, *::after {
   box-sizing: border-box;

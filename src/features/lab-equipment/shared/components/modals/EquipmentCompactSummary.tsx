@@ -77,7 +77,7 @@ function facetsOf(record: Record<string, unknown>): Facet[] {
   });
   if (record.loan) {
     const loan = record.loan as Record<string, unknown>;
-    facets.push({ label: 'Loan', value: loan.overdue ? 'Overdue' : 'Active loan', tone: loan.overdue ? 'danger' : 'violet', icon: <Activity /> });
+    facets.push({ label: 'Loan', value: loan.overdue ? 'Overdue' : 'Active loan', tone: loan.overdue ? 'danger' : 'reserved', icon: <Activity /> });
   }
   if (record.calibration_required) {
     facets.push({

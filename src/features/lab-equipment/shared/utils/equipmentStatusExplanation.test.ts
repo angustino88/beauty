@@ -9,7 +9,7 @@ test('borrowed equipment names the borrower and flags an overdue return', () => 
     display_status: { value: 'borrowed', label: 'Borrowed' },
     loan: { borrower_name: 'Le Van C', handed_over_at: '2026-11-02T08:00:00Z', due_at: '2026-11-12T17:00:00Z', overdue: true, purpose: 'Site test' },
   }, now);
-  assert.equal(result.tone, 'violet');
+  assert.equal(result.tone, 'reserved');
   assert.match(result.description, /Le Van C/);
   const overdue = result.facts.find((fact) => fact.label === 'Overdue');
   assert.equal(overdue?.tone, 'danger');

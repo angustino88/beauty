@@ -526,7 +526,7 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
                 const total = Number(entry.total || 0);
                 const used = Number(entry.used || 0);
                 const percent = total > 0 ? Math.min(100, Math.round((used / total) * 100)) : 0;
-                const strokeColor = percent < 75 ? '#28a745' : percent > 90 ? '#dc3545' : '#f39c12';
+                const strokeColor = percent < 75 ? 'var(--lm-success-solid)' : percent > 90 ? 'var(--lm-danger-solid)' : 'var(--lm-warning-solid)';
                 return (
                   <div key={entry.name} style={{ marginBottom: 4 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>

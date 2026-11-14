@@ -161,7 +161,7 @@
 .form :global(.ant-input-focused),
 .form :global(.ant-select-focused .ant-select-selector) {
   border-color: var(--lm-primary);
-  box-shadow: 0 0 0 2px rgba(0, 136, 74, 0.1);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--lm-primary) 18%, transparent);
 }
 
 @media (max-width: 640px) {

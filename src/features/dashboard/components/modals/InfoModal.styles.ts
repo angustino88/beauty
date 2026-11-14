@@ -16,7 +16,7 @@ export const useInfoModalStyles = createStyles(({ css }) => ({
     overflow: hidden;
     border: 1px solid var(--lm-border-strong);
     border-radius: 8px;
-    background: linear-gradient(135deg, rgba(226, 240, 232, 0.72), transparent 52%), var(--lm-surface-subtle);
+    background: var(--lm-surface-subtle);
 
     @media (max-width: 640px) { grid-template-columns: 1fr; }
   `,
@@ -26,7 +26,7 @@ export const useInfoModalStyles = createStyles(({ css }) => ({
     min-height: 176px;
     place-items: center;
     overflow: hidden;
-    background: linear-gradient(rgba(255,255,255,.06) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.06) 1px, transparent 1px), #214b3d;
+    background: linear-gradient(rgba(255,255,255,.06) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.06) 1px, transparent 1px), var(--lm-surface-inverse);
     background-size: 18px 18px;
 
     .ant-image, .ant-image-img { width: 100%; height: 100%; min-height: 176px; }
@@ -93,7 +93,7 @@ export const useInfoModalStyles = createStyles(({ css }) => ({
     border-radius: 6px;
     background: rgba(255, 255, 255, 0.76);
     > span { padding-right: 10px; border-right: 1px solid var(--lm-border); color: var(--lm-text-tertiary); font-size: 10px; font-weight: 700; line-height: 1.3; text-transform: uppercase; }
-    > strong { display: flex; align-items: center; gap: 9px; color: var(--lm-primary-fg); font-size: 14px; font-weight: 800; line-height: 1.3; }
+    > strong { display: flex; align-items: center; gap: 9px; color: var(--lm-primary-fg); font-size: 14px; font-weight: 700; line-height: 1.3; }
     > strong small { color: var(--lm-text-tertiary); font-size: 10px; font-weight: 600; white-space: nowrap; }
     &[data-status='active'] {
       > strong { color: var(--lm-danger-fg); }
@@ -122,16 +122,16 @@ export const useInfoModalStyles = createStyles(({ css }) => ({
   `,
   bookingStatusBooked: css`
     background: var(--lm-danger-solid);
-    box-shadow: 0 0 0 3px rgba(161, 58, 48, 0.12);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--lm-danger-solid) 18%, transparent);
   `,
   bookingStatusAvailable: css`
     background: var(--lm-success-solid);
-    box-shadow: 0 0 0 3px rgba(62, 135, 97, 0.12);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--lm-success-solid) 18%, transparent);
   `,
   eyebrow: css`
     color: var(--lm-text-tertiary);
     font-size: 11px;
-    font-weight: 800;
+    font-weight: 700;
     text-transform: uppercase;
   `,
   quickFacts: css`
@@ -160,7 +160,7 @@ export const useInfoModalStyles = createStyles(({ css }) => ({
     margin-top: 12px;
     padding: 7px 10px;
     border-left: 3px solid var(--lm-neutral-solid);
-    background: rgba(225,237,230,.55);
+    background: var(--lm-surface-muted);
     color: var(--lm-text-secondary);
     font-size: 12px;
     line-height: 1.45;
@@ -277,7 +277,7 @@ export const useInfoModalStyles = createStyles(({ css }) => ({
     overflow: hidden;
     color: var(--lm-text);
     font-size: 11px;
-    font-weight: 800;
+    font-weight: 700;
     text-overflow: ellipsis;
     white-space: nowrap;
   `,

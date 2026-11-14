@@ -292,7 +292,7 @@
 }
 
 .calendarSurface :global(.fc-highlight) {
-    background: rgba(35, 131, 92, 0.14) !important;
+    background: color-mix(in srgb, var(--lm-primary) 18%, transparent) !important;
 }
 
 .calendarSurface :global(.fc-list-day-cushion) {

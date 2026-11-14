@@ -17,13 +17,13 @@ import { StatusBadge } from '@/shared/components/StatusBadge';
 import type { StatusTone } from '@/shared/status/statusTone';
 
 const statusToneMap: Record<string, StatusTone> = {
-  reserved: 'violet',
+  reserved: 'reserved',
   in_progress: 'info',
   completed: 'success',
   cancelled: 'neutral',
   expired: 'danger',
   // Fallbacks for any legacy records
-  available: 'violet',
+  available: 'reserved',
   'in-progress': 'info',
   done: 'success',
   cancel: 'neutral',
@@ -397,14 +397,14 @@ export function buildMyBookingColumns({
             <TooltipButton
               placement="top"
               tooltip="Approve"
-              icon={<CheckCircleFilled style={{ color: canApprove ? '#468847' : undefined, fontSize: 16 }} />}
+              icon={<CheckCircleFilled style={{ color: canApprove ? 'var(--lm-success-solid)' : undefined, fontSize: 16 }} />}
               disabled={!canApprove}
               onClick={() => onApproveBooking(record.id)}
             />
             <TooltipButton
               placement="top"
               tooltip="Reject"
-              icon={<CloseCircleFilled style={{ color: canApprove ? '#be124b' : undefined, fontSize: 16 }} />}
+              icon={<CloseCircleFilled style={{ color: canApprove ? 'var(--lm-danger-solid)' : undefined, fontSize: 16 }} />}
               disabled={!canApprove}
               onClick={() => onRejectBooking(record.id)}
             />

@@ -83,7 +83,7 @@ function facetsOf(kind: SpaceKind, state: Partial<ResourceState & LocationState>
   if (access) {
     const restricted = (typeof access === 'string' ? access : access.value) === 'restricted';
     facets.push({
-      label: 'Access', value: restricted ? 'Restricted' : 'Open', tone: restricted ? 'violet' : 'success',
+      label: 'Access', value: restricted ? 'Restricted' : 'Open', tone: restricted ? 'reserved' : 'success',
       icon: restricted ? <Lock /> : <LockOpen />,
     });
   }
@@ -92,7 +92,7 @@ function facetsOf(kind: SpaceKind, state: Partial<ResourceState & LocationState>
     facets.push({
       label: 'Booking activity',
       value: activity === 'active' ? 'In use now' : activity === 'scheduled' ? 'Booked today' : 'Idle',
-      tone: activity === 'active' ? 'info' : activity === 'scheduled' ? 'violet' : 'neutral',
+      tone: activity === 'active' ? 'info' : activity === 'scheduled' ? 'reserved' : 'neutral',
       icon: <Activity />,
     });
   }
@@ -232,7 +232,7 @@ export const SpaceDetailSummary: React.FC<SpaceDetailSummaryProps> = ({ spaceKin
     const blocker = state.availability.blocked_by;
     facts.push({ label: 'Blocked by', value: `${blocker.type.charAt(0).toUpperCase()}${blocker.type.slice(1)} ${blocker.name}`, tone: 'warning' });
   }
-  if (restricted) facts.push({ label: 'Access', value: 'Restricted — approval needed', tone: 'violet' });
+  if (restricted) facts.push({ label: 'Access', value: 'Restricted — approval needed', tone: 'reserved' });
 
   const remark = text(record, 'remark');
 

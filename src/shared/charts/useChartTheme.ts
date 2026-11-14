@@ -16,7 +16,7 @@ export interface ChartTheme {
   gridProps: { stroke: string; strokeDasharray: string; vertical: false };
 }
 
-const FALLBACK = ['#0d9488', '#e0446d', '#6366f1', '#e3a008', '#2f7fd8', '#9b59d0', '#ec7a2c', '#7a8597'];
+const FALLBACK = ['#7347dc', '#0d9488', '#e0446d', '#d99a08', '#2f7fd8', '#5a9e2f', '#ec7a2c', '#7f7a8f'];
 
 /**
  * Resolves the --lm-* chart tokens to literal colours for Recharts (SVG gradient
@@ -41,7 +41,7 @@ export function useChartTheme(): ChartTheme {
       tone: {
         success: read('--lm-success-solid', '#2f9e62'),
         info: read('--lm-info-solid', '#3b7ddd'),
-        violet: read('--lm-violet-solid', '#8a6fdc'),
+        reserved: read('--lm-reserved-solid', '#0e9ab8'),
         warning: read('--lm-warning-solid', '#d48a10'),
         danger: read('--lm-danger-solid', '#d9475a'),
         neutral: read('--lm-neutral-solid', '#8d94a5'),

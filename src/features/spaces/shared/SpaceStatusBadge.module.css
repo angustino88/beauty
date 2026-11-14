@@ -1,4 +1,4 @@
 .wrap { display: inline-flex; align-items: center; gap: 6px; }
 .badge { flex-shrink: 0; }
 /* Reserved even when empty so restricted and open rows keep the badge aligned. */
-.lockSlot { display: inline-flex; width: 14px; flex: 0 0 14px; justify-content: center; color: var(--lm-violet-solid); font-size: 13px; }
+.lockSlot { display: inline-flex; width: 14px; flex: 0 0 14px; justify-content: center; color: var(--lm-reserved-solid); font-size: 13px; }

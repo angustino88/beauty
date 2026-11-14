@@ -25,7 +25,7 @@ export function PageHeader({ title, controls, style, sticky }: PageHeaderProps) 
     >
       <Typography.Title
         level={4}
-        style={{ flex: '0 0 auto', margin: 0, fontWeight: 800, fontSize: 18, ...style?.title }}
+        style={{ flex: '0 0 auto', margin: 0, fontWeight: 600, fontSize: 20, letterSpacing: '-0.015em', ...style?.title }}
       >
         {title}
       </Typography.Title>

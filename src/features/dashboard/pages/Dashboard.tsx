@@ -76,7 +76,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       <PageHeader title="Dashboard" />
 
       {isError &&
