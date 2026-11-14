@@ -88,6 +88,10 @@
   --lm-focus-ring: 0 0 0 3px rgba(109, 63, 214, 0.28);
   --lm-overlay: rgba(18, 15, 28, 0.45);
 
+  /* Outline of the mango mark: ink in light, a quiet warm brown in dark so the
+     fruit keeps its shape without a bright rim. */
+  --lm-logo-outline: #31352e;
+
   /* Seasonal header pack. Off-season the chip falls back to the brand accent
      and the motif colours are transparent; html[data-season] overrides them. */
   --lm-season-fg: var(--lm-primary-fg);
@@ -169,6 +173,8 @@ html[data-theme='dark'] {
   --lm-shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.6);
   --lm-focus-ring: 0 0 0 3px rgba(124, 92, 230, 0.45);
   --lm-overlay: rgba(0, 0, 0, 0.6);
+
+  --lm-logo-outline: #4a3a22;
 
   --lm-chart-1: #9a7df5;
   --lm-chart-2: #2bb3a3;

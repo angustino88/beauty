@@ -4,8 +4,7 @@ import {
   CheckCircleFilled,
   ClockCircleFilled,
   CloseCircleFilled,
-  QuestionCircleOutlined,
-} from '@ant-design/icons';
+  QuestionCircleOutlined, UserOutlined } from '@ant-design/icons';
 import { Space, Switch, Tag, Tooltip, Typography } from 'antd';
 import dayjs from 'dayjs';
 import type { ColumnsType } from 'antd/es/table';
@@ -237,7 +236,7 @@ export function buildMyBookingColumns({
                 whiteSpace: 'nowrap',
               }}
             >
-              👤 {username}
+              <UserOutlined style={{ marginRight: 5, color: 'var(--lm-text-tertiary)', fontSize: 12 }} />{username}
             </Tag>
           </Tooltip>
         );

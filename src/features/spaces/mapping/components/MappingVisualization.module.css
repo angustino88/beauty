@@ -509,7 +509,21 @@
   transform: translateY(-1px);
 }
 
-.selectedNode {
+/* Category colours: each kind of thing in the chain keeps one hue everywhere
+   (icon tile, left rule, type label). These are categorical chart colours, not
+   status colours. */
+.node[data-tone="lab"] { --node-accent: var(--lm-chart-1); }
+.node[data-tone="rack"] { --node-accent: var(--lm-chart-2); }
+.node[data-tone="computer"] { --node-accent: var(--lm-chart-5); }
+.node[data-tone="monitor"] { --node-accent: var(--lm-chart-3); }
+.node[data-tone="debug"] { --node-accent: var(--lm-chart-7); }
+.node[data-tone="network"] { --node-accent: var(--lm-reserved-solid); }
+.node[data-tone="power"] { --node-accent: var(--lm-chart-4); }
+.node[data-tone="sample"] { --node-accent: var(--lm-chart-6); }
+.node[data-tone="accessory"] { --node-accent: var(--lm-chart-8); }
+.node[data-tone="license"] { --node-accent: var(--lm-primary-fg); }
+
+.node.selectedNode {
   --node-accent: var(--lm-primary);
   border-color: var(--lm-primary) !important;
   background-color: var(--lm-primary-bg) !important;
@@ -517,7 +531,7 @@
 }
 
 
-.mutedNode {
+.node.mutedNode {
   --node-accent: var(--lm-neutral-solid);
   --node-soft: var(--lm-surface-subtle);
   border-style: dashed;
@@ -535,14 +549,16 @@
   height: 30px;
   margin-right: 10px;
   border-radius: 4px;
-  color: #fff;
-  background: var(--node-accent);
+  color: var(--node-accent);
+  background: color-mix(in srgb, var(--node-accent) 16%, var(--lm-surface));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--node-accent) 32%, transparent);
   font-size: 16px;
 }
 
 .mutedNode .nodeIcon {
   color: var(--lm-text-tertiary);
-  background: var(--lm-border);
+  background: var(--lm-surface-muted);
+  box-shadow: none;
 }
 
 .nodeText {
