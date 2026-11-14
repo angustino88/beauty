@@ -1,0 +1,72 @@
+/* Bench activity badge for the dashboard.
+   One fixed-width tag per status so the column reads as a clean strip: a status
+   glyph (shape differs per status, so colour is never the only cue), the label,
+   and — only when the bench is booked right now — a calendar glyph in an
+   attached end cap. The fill is a stronger tint of the status colour than the
+   generic StatusBadge uses, because on the dashboard status is the main signal. */
+.badge {
+  --tone-mix: 15%;
+  display: inline-flex;
+  box-sizing: border-box;
+  width: 146px;
+  max-width: 100%;
+  height: 26px;
+  align-items: stretch;
+  overflow: hidden;
+  color: var(--tone-fg);
+  background: color-mix(in srgb, var(--tone-solid) var(--tone-mix), var(--lm-surface));
+  border-radius: 7px;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tone-solid) 34%, transparent);
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+:global(html[data-theme='dark']) .badge {
+  --tone-mix: 22%;
+}
+
+.fit {
+  width: auto;
+}
+
+.main {
+  display: inline-flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  align-items: center;
+  gap: 7px;
+  padding: 0 10px 0 8px;
+}
+
+.glyph {
+  flex: 0 0 auto;
+  color: var(--tone-solid);
+}
+
+.label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Booked end cap: same colour family, one step deeper, so it reads as part of
+   the badge rather than a second badge. */
+.booked {
+  display: inline-flex;
+  flex: 0 0 28px;
+  align-items: center;
+  justify-content: center;
+  color: var(--tone-fg);
+  background: color-mix(in srgb, var(--tone-solid) 20%, transparent);
+  border-left: 1px solid color-mix(in srgb, var(--tone-solid) 34%, transparent);
+}
+
+.success { --tone-fg: var(--lm-success-fg); --tone-solid: var(--lm-success-solid); }
+.danger { --tone-fg: var(--lm-danger-fg); --tone-solid: var(--lm-danger-solid); }
+.warning { --tone-fg: var(--lm-warning-fg); --tone-solid: var(--lm-warning-solid); }
+.info { --tone-fg: var(--lm-info-fg); --tone-solid: var(--lm-info-solid); }
+.reserved { --tone-fg: var(--lm-reserved-fg); --tone-solid: var(--lm-reserved-solid); }
+.neutral { --tone-fg: var(--lm-neutral-fg); --tone-solid: var(--lm-neutral-solid); }

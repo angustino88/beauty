@@ -16,6 +16,7 @@ import { MappingVisualization } from '@/features/spaces/mapping/components/Mappi
 import { useGetLicenseOptionsQuery } from '@/features/lab-equipment/license/api';
 import type { MappingEquipmentItem, MappingLicenseItem, ResourceMappingRow } from '@/features/spaces/mapping/types';
 import dayjs from 'dayjs';
+import { LabStatus } from '@/components/display/LabStatus';
 import { useInfoModalStyles } from './InfoModal.styles';
 
 function calcDuration(startTime: string): { formatted: string; intervalMs: number } {
@@ -188,9 +189,6 @@ export default function InfoModal({ data }: InfoModalProps) {
     || data.current_activity?.remote_ip,
   );
   const status = (data.computer?.status || 'unknown').toLowerCase();
-  const statusLabel = status === 'unknown'
-    ? 'Unknown'
-    : status[0].toUpperCase() + status.slice(1);
 
   return (
     <div className={styles.modalContent}>
@@ -214,14 +212,8 @@ export default function InfoModal({ data }: InfoModalProps) {
             </div>
             <div className={styles.statusMeta} data-status={status}>
               <span>Status</span>
-              <strong>
-                <i
-                  className={`${styles.bookingStatus} ${booked ? styles.bookingStatusBooked : styles.bookingStatusAvailable}`}
-                  aria-label={booked ? 'Booked' : 'Not booked'}
-                  title={booked ? 'Booked' : 'Not booked'}
-                />
-                {statusLabel}{duration !== '–' && <small>({duration})</small>}
-              </strong>
+              <LabStatus labStatus={status} isBooked={booked} fit />
+              {duration !== '–' && <small>{duration}</small>}
             </div>
           </div>
           <div className={styles.quickFacts}>

@@ -273,7 +273,7 @@
 .modernSidebar .username { color: var(--lm-text-tertiary); }
 .modernSidebar .accountTrigger:hover,
 .modernSidebar .accountTrigger[aria-expanded="true"] { background: var(--lm-surface-subtle); border-color: var(--lm-border); }
-.modernSidebar .userAvatar :global(.ant-avatar) { border-color: var(--lm-border-subtle); background: var(--lm-primary); box-shadow: none; }
+.modernSidebar .userAvatar :global(.ant-avatar) { color: var(--lm-primary-fg); border-color: var(--lm-primary-border); background: var(--lm-primary-bg); box-shadow: none; }
 .modernSidebar .accountTrigger:hover .userAvatar :global(.ant-avatar) { border-color: var(--lm-border); box-shadow: none; transform: none; }
 
 .navigationTools {

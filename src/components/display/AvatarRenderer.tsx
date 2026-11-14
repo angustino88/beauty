@@ -18,18 +18,15 @@ function getInitials(displayname?: string, username?: string): string {
   return name.slice(0, 2).toUpperCase() || '?';
 }
 
-// Mid-tone hues that carry white initials in both themes.
-const AVATAR_COLORS = [
-  '#6d3fd6', '#0e7f99', '#1f8a52', '#b3611a', '#b0396b',
-  '#3f6bc4', '#7a5a9e', '#5e6b7d', '#8a6d1f', '#a8463c',
-];
+// Tinted pairs from the theme tokens, so initials stay legible in both themes.
+const AVATAR_TONES = ['primary', 'info', 'success', 'warning', 'reserved', 'danger', 'neutral'] as const;
 
-function colorForUsername(username: string): string {
+function toneForUsername(username: string): (typeof AVATAR_TONES)[number] {
   let hash = 0;
   for (let i = 0; i < username.length; i++) {
     hash = username.charCodeAt(i) + ((hash << 5) - hash);
   }
-  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+  return AVATAR_TONES[Math.abs(hash) % AVATAR_TONES.length];
 }
 
 const avatarLookupApi = baseApi.injectEndpoints({
@@ -51,7 +48,7 @@ const { useGetAvatarByUsernameQuery } = avatarLookupApi;
 
 export function AvatarRenderer({ username, displayname }: AvatarRendererProps) {
   const initials = useMemo(() => getInitials(displayname, username), [displayname, username]);
-  const color = useMemo(() => colorForUsername(username), [username]);
+  const tone = useMemo(() => toneForUsername(username), [username]);
   const { data: avatarSrc } = useGetAvatarByUsernameQuery(username, { skip: !username });
 
   return (
@@ -60,8 +57,9 @@ export function AvatarRenderer({ username, displayname }: AvatarRendererProps) {
         size={32}
         src={avatarSrc ?? undefined}
         style={{
-          backgroundColor: avatarSrc ? 'var(--lm-surface-muted)' : color,
-          color: '#ffffff',
+          backgroundColor: avatarSrc ? 'var(--lm-surface-muted)' : `var(--lm-${tone}-bg)`,
+          color: `var(--lm-${tone}-fg)`,
+          border: `1px solid var(--lm-${tone}-border)`,
           fontSize: 11,
           fontWeight: 600,
           letterSpacing: '0.04em',

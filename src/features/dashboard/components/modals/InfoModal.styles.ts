@@ -26,7 +26,7 @@ export const useInfoModalStyles = createStyles(({ css }) => ({
     min-height: 176px;
     place-items: center;
     overflow: hidden;
-    background: linear-gradient(rgba(255,255,255,.06) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.06) 1px, transparent 1px), var(--lm-surface-inverse);
+    background: linear-gradient(var(--lm-border) 1px, transparent 1px), linear-gradient(90deg, var(--lm-border) 1px, transparent 1px), var(--lm-surface-muted);
     background-size: 18px 18px;
 
     .ant-image, .ant-image-img { width: 100%; height: 100%; min-height: 176px; }
@@ -36,7 +36,7 @@ export const useInfoModalStyles = createStyles(({ css }) => ({
     display: grid;
     gap: 12px;
     place-items: center;
-    color: rgba(255,255,255,.9);
+    color: var(--lm-text-tertiary);
     font-size: 12px;
     font-weight: 700;
     > .anticon { font-size: 58px; }
@@ -48,11 +48,11 @@ export const useInfoModalStyles = createStyles(({ css }) => ({
     left: 12px;
     overflow: hidden;
     padding: 7px 9px;
-    border: 1px solid rgba(255,255,255,.15);
+    border: 1px solid var(--lm-border);
     border-radius: 4px;
-    background: rgba(12,32,25,.78);
-    color: rgba(255,255,255,.88);
-    font-family: Consolas, monospace;
+    background: var(--lm-surface);
+    color: var(--lm-text-secondary);
+    font-family: var(--lm-font-mono);
     font-size: 10px;
     text-align: center;
     text-overflow: ellipsis;
@@ -91,42 +91,14 @@ export const useInfoModalStyles = createStyles(({ css }) => ({
     padding: 8px 11px;
     border: 1px solid var(--lm-border-strong);
     border-radius: 6px;
-    background: rgba(255, 255, 255, 0.76);
-    > span { padding-right: 10px; border-right: 1px solid var(--lm-border); color: var(--lm-text-tertiary); font-size: 10px; font-weight: 700; line-height: 1.3; text-transform: uppercase; }
-    > strong { display: flex; align-items: center; gap: 9px; color: var(--lm-primary-fg); font-size: 14px; font-weight: 700; line-height: 1.3; }
-    > strong small { color: var(--lm-text-tertiary); font-size: 10px; font-weight: 600; white-space: nowrap; }
-    &[data-status='active'] {
-      > strong { color: var(--lm-danger-fg); }
-    }
-    &[data-status='inactive'] {
-      > strong { color: var(--lm-primary-fg); }
-    }
-    &[data-status='offline'], &[data-status='unknown'] {
-      > strong { color: var(--lm-text-secondary); }
-    }
-    &[data-status='maintaining'], &[data-status='maintenance'] {
-      > strong { color: var(--lm-primary-fg); }
-    }
+    background: var(--lm-surface);
+    > span:first-child { padding-right: 10px; border-right: 1px solid var(--lm-border); color: var(--lm-text-tertiary); font-size: 10px; font-weight: 600; line-height: 1.3; text-transform: uppercase; letter-spacing: 0.04em; }
+    > small { color: var(--lm-text-tertiary); font-size: 11px; font-weight: 500; white-space: nowrap; font-variant-numeric: tabular-nums; }
 
     @media (max-width: 480px) {
       width: 100%;
       justify-content: space-between;
     }
-  `,
-  bookingStatus: css`
-    display: block;
-    width: 10px;
-    height: 10px;
-    flex: 0 0 10px;
-    border-radius: 50%;
-  `,
-  bookingStatusBooked: css`
-    background: var(--lm-danger-solid);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--lm-danger-solid) 18%, transparent);
-  `,
-  bookingStatusAvailable: css`
-    background: var(--lm-success-solid);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--lm-success-solid) 18%, transparent);
   `,
   eyebrow: css`
     color: var(--lm-text-tertiary);
@@ -142,7 +114,7 @@ export const useInfoModalStyles = createStyles(({ css }) => ({
     overflow: hidden;
     border: 1px solid var(--lm-border);
     border-radius: 6px;
-    background: rgba(255, 255, 255, 0.68);
+    background: var(--lm-surface);
     > div { display: flex; min-width: 0; align-items: center; gap: 10px; padding: 10px 12px; color: var(--lm-primary-fg); font-size: 15px; }
     > div:nth-child(odd) { border-right: 1px solid var(--lm-border); }
     > div:nth-child(-n + 2) { border-bottom: 1px solid var(--lm-border); }
@@ -185,7 +157,7 @@ export const useInfoModalStyles = createStyles(({ css }) => ({
     height: 32px;
     place-items: center;
     border-radius: 6px;
-    background: var(--lm-surface-muted);
+    background: var(--lm-primary-bg);
     color: var(--lm-primary-fg);
     font-size: 15px;
   `,
@@ -269,7 +241,7 @@ export const useInfoModalStyles = createStyles(({ css }) => ({
     flex: 0 0 25px;
     place-items: center;
     border-radius: 5px;
-    background: var(--lm-surface-muted);
+    background: var(--lm-primary-bg);
     color: var(--lm-primary-fg);
     font-size: 13px;
   `,
@@ -306,7 +278,7 @@ export const useInfoModalStyles = createStyles(({ css }) => ({
     overflow: hidden;
     margin-top: 3px;
     color: var(--lm-text-tertiary);
-    font-family: Consolas, monospace;
+    font-family: var(--lm-font-mono);
     font-size: 9px;
     font-weight: 500;
     text-overflow: ellipsis;

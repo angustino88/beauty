@@ -8,6 +8,7 @@ import {
 import type { ColumnsType } from 'antd/es/table';
 import type { NavigateFunction } from 'react-router-dom';
 import type { MouseEvent } from 'react';
+import dayjs from 'dayjs';
 import { AvatarRenderer } from '@/components/display/AvatarRenderer';
 import { LabStatus } from '@/components/display/LabStatus';
 import { MultipleTagCell } from '@/components/display/MultipleTagCell';
@@ -72,7 +73,7 @@ export function buildColumns({
       title: 'Status',
       key: 'status',
       align: 'left' as const,
-      minWidth: 200,
+      minWidth: 178,
       filters: STATUS_FILTER_OPTIONS,
       filterSearch: true,
       filterMultiple: true,
@@ -87,7 +88,14 @@ export function buildColumns({
             ? String((rawStatus as { value?: unknown }).value ?? 'unknown')
             : 'unknown';
         const isBooked = isCurrentlyBooked(record.current_booking ?? record.booking_status);
-        return <LabStatus labStatus={status} isBooked={isBooked} />;
+        const booking = record.current_booking;
+        const bookingDetail = isBooked && booking
+          ? [
+              booking.ends_at ? `until ${dayjs(booking.ends_at).format('HH:mm')}` : '',
+              booking.user?.display_name || booking.user?.username || '',
+            ].filter(Boolean).join(' · ')
+          : undefined;
+        return <LabStatus labStatus={status} isBooked={isBooked} bookingDetail={bookingDetail} />;
       },
     },
     {
@@ -157,7 +165,7 @@ export function buildColumns({
       title: 'License',
       key: 'licenses',
       align: 'center' as const,
-      minWidth: 200,
+      minWidth: 178,
       render: (_: unknown, record: DashboardBench) => {
         const licenses = record.licenses ?? record.license_list ?? [];
         return Array.isArray(licenses) && licenses.length ? (
