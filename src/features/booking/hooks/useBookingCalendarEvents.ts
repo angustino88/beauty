@@ -79,11 +79,11 @@ export function useBookingCalendarEvents() {
                   diffHours >= 23
                     ? dayjs(endStr).add(1, 'day').format(CALENDAR_DATETIME_FORMAT)
                     : endStr,
-                color: access ? 'rgb(255, 230, 200)' : 'rgb(223, 237, 204)',
-                borderColor: access ? 'rgb(230, 120, 30)' : 'rgb(113, 150, 62)',
+                // Colours come from the theme (App.css .lm-event-*): own bookings in
+                // the brand accent, other people's in neutral.
+                classNames: ['lm-event', access ? 'lm-event-mine' : 'lm-event-other'],
                 allDay: diffHours >= 23,
                 stick: true,
-                textColor: 'black',
               },
             ];
           });
@@ -116,9 +116,7 @@ export function useBookingCalendarEvents() {
                   title: `[Unavailable] ${condLabel} (${reasonLabel})`,
                   start: startStr,
                   end: endStr,
-                  color: 'rgba(209, 213, 219, 0.85)',
-                  borderColor: 'var(--lm-neutral-solid)',
-                  textColor: '#374151',
+                  classNames: ['lm-event', 'lm-event-downtime'],
                   allDay: false,
                   editable: false,
                   extendedProps: {

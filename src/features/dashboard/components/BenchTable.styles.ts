@@ -182,14 +182,14 @@ export const useBenchTableStyles = createStyles(({ css }) => ({
       margin: 0;
       background: rgba(92, 45, 145, 0.16);
       border-color: rgba(92, 45, 145, 0.40);
-      color: color-mix(in srgb, var(--lm-violet-fg) 92%, transparent);
+      color: color-mix(in srgb, var(--lm-primary-fg) 92%, transparent);
       font-weight: 700;
       box-shadow: inset 0 1px 0 color-mix(in srgb, var(--lm-paper-highlight) 40%, transparent);
     }
   `,
 
   favoriteActiveBtn: css`
-    &:hover .anticon { color: var(--lm-warning-solid) !important; }
+    &:hover .anticon { color: var(--lm-primary) !important; }
   `,
 }));
 

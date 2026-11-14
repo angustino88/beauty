@@ -37,7 +37,7 @@
   overflow: hidden;
   min-height: 174px;
   padding: 28px 32px;
-  border: 1px solid var(--lm-success-solid);
+  border: 1px solid var(--lm-primary);
   border-radius: 18px;
   background: radial-gradient(circle at 87% 12%, rgba(116, 196, 151, .19), transparent 34%), linear-gradient(116deg, #122c2a, #1b4a3d 70%, #215747);
   color: #fff;
@@ -67,7 +67,7 @@
   align-items: center;
   gap: 8px;
   margin-bottom: 12px;
-  color: var(--lm-success-solid);
+  color: var(--lm-primary);
   font-size: 11px;
   font-weight: 700;
   letter-spacing: .13em;
@@ -151,7 +151,7 @@
   inset: 0 auto 0 0;
   width: 3px;
   content: '';
-  background: var(--metric-accent, var(--lm-success-solid));
+  background: var(--lm-border);
 }
 
 .metricTop {
@@ -175,8 +175,8 @@
   height: 36px;
   place-items: center;
   border-radius: 10px;
-  background: var(--metric-tint, var(--lm-surface-muted));
-  color: var(--metric-accent, var(--lm-success-fg));
+  background: var(--lm-primary-bg);
+  color: var(--lm-primary-fg);
   font-size: 17px;
 }
 

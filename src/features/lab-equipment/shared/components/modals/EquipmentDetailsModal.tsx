@@ -760,6 +760,9 @@ export default function EquipmentDetailsModal({
               record={record}
               connectedRows={connectedMappingRows}
               displayStatus={displayStatus}
+              mappingLoading={equipmentMappingQuery.isFetching}
+              mappingError={equipmentMappingQuery.isError}
+              onRetryMapping={() => void equipmentMappingQuery.refetch()}
             />
           </>
         ) : (

@@ -18,7 +18,6 @@ type CalendarEventContentProps = {
 
 const CalendarEventContent = ({ arg, refetchBooking }: CalendarEventContentProps) => {
   const { timeText, event, view } = arg;
-  const eventColor = event.backgroundColor;
   const creator = event.extendedProps?.creator as string | undefined;
   const isMonthView = view.type === 'dayGridMonth';
   const isListView = view.type.startsWith('list');
@@ -97,7 +96,6 @@ const CalendarEventContent = ({ arg, refetchBooking }: CalendarEventContentProps
         <EventDetailModal
           refetchBooking={refetchBooking}
           eventId={event.id}
-          headerColor={eventColor}
         />
       )}
       placement="right"
@@ -157,7 +155,6 @@ const CustomizedFullCalendar = ({
       firstDay={1}
       scrollTime={dayjs().subtract(2, 'hour').format('HH') + ':00:00'}
       events={events}
-      eventTextColor="#263b33"
       eventMinHeight={20}
       eventContent={(arg) => <CalendarEventContent arg={arg} refetchBooking={refetchBooking} />}
       selectable={true}

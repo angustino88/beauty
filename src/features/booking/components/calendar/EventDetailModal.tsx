@@ -15,13 +15,11 @@ import { BenchBookingEdit } from '../BenchBookingEdit';
 interface EventDetailModalProps {
   eventId?: string | number;
   refetchBooking?: () => void;
-  headerColor?: string;
 }
 
 export const EventDetailModal: React.FC<EventDetailModalProps> = ({
   eventId,
   refetchBooking,
-  headerColor,
 }) => {
   const { token } = theme.useToken();
   const { username, permissionGroups } = useAuthState();
@@ -68,7 +66,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
                 padding: '8px 10px 6px 10px',
                 borderBottom: '1px solid var(--lm-border)',
                 borderRadius: '8px 8px 0 0',
-                backgroundColor: headerColor || token.colorPrimaryBg,
+                backgroundColor: token.colorPrimaryBg,
                 borderColor: token.colorPrimaryBorder,
               }}
               onClick={(e) => e.stopPropagation()}

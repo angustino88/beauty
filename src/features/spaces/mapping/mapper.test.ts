@@ -260,3 +260,15 @@ test("mapResourceMappingListResponse handles pagination meta count", () => {
   assert.equal(response.data.length, 1);
   assert.equal(response.data[0].bench.sku, "BN-5");
 });
+
+test("mapBenchToMappingRow renders utility and criticality references as text, never [object Object]", () => {
+  const row = mapBenchToMappingRow({
+    id: 1,
+    sku: "BENCH-01",
+    name: "BENCH-01",
+    criticality: { id: 2, name: "High" },
+    required_utilities: [{ id: 1, name: "Compressed air" }, "230 V"],
+  });
+  assert.equal(row.bench.criticality, "High");
+  assert.deepEqual(row.bench.required_utilities, ["Compressed air", "230 V"]);
+});

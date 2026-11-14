@@ -302,7 +302,7 @@
 .commandIcon {
   flex-shrink: 0;
   font-size: 16px;
-  color: var(--lm-success-fg);
+  color: var(--lm-primary-fg);
   width: 24px;
   display: flex;
   align-items: center;
@@ -451,13 +451,13 @@
    ========================================================= */
 
 :root {
-  --v-paper: var(--lm-warning-bg);        /* parchment */
-  --v-cream: var(--lm-warning-bg);        /* soft cream surface */
+  --v-paper: var(--lm-primary-bg);        /* parchment */
+  --v-cream: var(--lm-primary-bg);        /* soft cream surface */
   --v-ink: rgba(34, 30, 20, 0.92);
   --v-muted: rgba(34, 30, 20, 0.56);
 
-  --v-brass: var(--lm-warning-solid);        /* brass accent */
-  --v-olive: var(--lm-success-solid);        /* worn olive (flat) */
+  --v-brass: var(--lm-primary);        /* brass accent */
+  --v-olive: var(--lm-primary);        /* worn olive (flat) */
   --v-rust: var(--lm-danger-solid);         /* warm rust for user bubbles */
 
   --v-border: rgba(160, 115, 60, 0.18);

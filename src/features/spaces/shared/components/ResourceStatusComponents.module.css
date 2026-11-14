@@ -164,7 +164,7 @@
 .tileLinkBtn {
   background: none;
   border: none;
-  color: var(--lm-info-fg);
+  color: var(--lm-primary-fg);
   font-weight: 600;
   cursor: pointer;
   padding: 0;
@@ -172,7 +172,7 @@
 }
 
 .tileLinkBtn:hover {
-  color: var(--lm-info-fg);
+  color: var(--lm-primary-fg);
 }
 
 .tabHeader {
@@ -196,7 +196,7 @@
 .conflictBookingLink {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-weight: 600;
-  color: var(--lm-info-fg);
+  color: var(--lm-primary-fg);
 }
 
 .warningBox {

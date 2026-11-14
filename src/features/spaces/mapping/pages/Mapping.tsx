@@ -255,7 +255,7 @@ export default function MappingPage() {
             <TooltipButton
               responsive
               tooltip="Export mapping"
-              type="primary"
+              type="default"
               icon={<ExportOutlined />}
               loading={export_.exportMappingLoading}
               onClick={() => void export_.handleExportMapping()}
@@ -265,7 +265,7 @@ export default function MappingPage() {
             <TooltipButton
               responsive
               tooltip="Export change log"
-              type="primary"
+              type="default"
               icon={<ExportOutlined />}
               loading={export_.exportChangeLogLoading}
               onClick={() => void export_.handleExportChangeLog()}

@@ -19,7 +19,7 @@
 .registerPage .table :global(.ant-table-tbody > tr:nth-child(even) > td) { background: var(--lm-surface-subtle); }
 .registerPage .table :global(.ant-table-tbody > tr:hover > td), .registerPage .table :global(.ant-table-tbody > tr > td.ant-table-cell-row-hover) { background: var(--lm-surface-muted); }
 .registerPage .table :global(.ant-table-tbody > tr.ant-table-row-selected > td) { background: var(--lm-surface-muted); }
-.registerPage .table :global(.ant-table-filter-trigger.active) { color: var(--lm-info-fg); background: var(--lm-surface-muted); box-shadow: inset 0 0 0 1px #c5d0dd; }
+.registerPage .table :global(.ant-table-filter-trigger.active) { color: var(--lm-primary-fg); background: var(--lm-surface-muted); box-shadow: inset 0 0 0 1px #c5d0dd; }
 .registerPage .table :global(.ant-pagination) { margin: 0; padding: 10px 12px; background: var(--lm-surface); }
 .registerPage .table :global(.ant-pagination-total-text) { margin-inline-end: auto; color: var(--lm-text-tertiary); font-size: 12px; }
 .registerPage .table :global(.ant-pagination-item-active) { border-color: var(--lm-primary); background: var(--lm-surface-muted); }
@@ -221,7 +221,7 @@
 }
 
 .table :global(.ant-table-tbody > tr.ant-table-row-selected > td) {
-  background: var(--lm-info-bg);
+  background: var(--lm-primary-bg);
 }
 
 .table :global(.ant-table-cell-fix-left),
@@ -236,8 +236,8 @@
 
 .table :global(.ant-table-filter-trigger:hover),
 .table :global(.ant-table-filter-trigger.active) {
-  color: var(--lm-info-fg);
-  background: var(--lm-info-bg);
+  color: var(--lm-primary-fg);
+  background: var(--lm-primary-bg);
 }
 
 .table :global(.ant-table-column-sorter-up.active),
@@ -250,11 +250,11 @@
 }
 
 .table :global(.ant-pagination-item-active) {
-  border-color: var(--lm-info-solid);
+  border-color: var(--lm-primary);
 }
 
 .table :global(.ant-pagination-item-active a) {
-  color: var(--lm-info-fg);
+  color: var(--lm-primary-fg);
 }
 
 .table :global(.ant-pagination-total-text),

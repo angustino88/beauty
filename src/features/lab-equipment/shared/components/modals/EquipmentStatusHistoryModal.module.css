@@ -87,7 +87,7 @@
 .eventHeader :global(.ant-btn) {
   flex-shrink: 0;
   height: 26px;
-  color: var(--lm-info-fg);
+  color: var(--lm-primary-fg);
   font-size: 12px;
   font-weight: 600;
 }

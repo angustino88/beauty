@@ -98,7 +98,7 @@
     border: 1px solid rgba(32, 51, 44, 0.12);
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.62);
-    color: var(--lm-success-fg);
+    color: var(--lm-primary-fg);
     font-size: 8px;
     font-weight: 700;
 }
@@ -168,7 +168,7 @@
     flex: 0 0 20px;
     place-items: center;
     border-radius: 50%;
-    background: var(--lm-success-solid);
+    background: var(--lm-primary);
     color: #ffffff;
     font-size: 9px;
     font-weight: 700;
@@ -248,7 +248,7 @@
     --fc-border-color: var(--lm-border);
     --fc-neutral-bg-color: var(--lm-surface-subtle);
     --fc-page-bg-color: var(--lm-surface);
-    --fc-today-bg-color: var(--lm-surface-muted);
+    --fc-today-bg-color: color-mix(in srgb, var(--lm-primary) 6%, transparent);
     --fc-now-indicator-color: var(--lm-danger-solid);
     color: var(--lm-text);
 }
@@ -269,7 +269,7 @@
 
 .calendarSurface :global(.fc-col-header-cell-cushion) {
     padding: 10px 6px;
-    color: var(--lm-success-fg) !important;
+    color: var(--lm-text-secondary) !important;
     font-size: 12px;
     font-weight: 700;
     letter-spacing: 0;
@@ -287,7 +287,7 @@
 }
 
 .calendarSurface :global(.fc-day-today .fc-daygrid-day-number) {
-    color: var(--lm-success-fg);
+    color: var(--lm-primary-fg);
     font-weight: 700;
 }
 
@@ -369,4 +369,8 @@
     .creatorBadge {
         max-width: 96px;
     }
+}
+
+.calendarSurface :global(.fc-day-today .fc-col-header-cell-cushion) {
+    color: var(--lm-primary-fg) !important;
 }

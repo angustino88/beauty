@@ -16,7 +16,7 @@ export interface ChartTheme {
   gridProps: { stroke: string; strokeDasharray: string; vertical: false };
 }
 
-const FALLBACK = ['#0f9f8f', '#e0446d', '#6155d9', '#e3a008', '#2f7fd8', '#9b59d0', '#ec7a2c', '#7a8597'];
+const FALLBACK = ['#0d9488', '#e0446d', '#6366f1', '#e3a008', '#2f7fd8', '#9b59d0', '#ec7a2c', '#7a8597'];
 
 /**
  * Resolves the --lm-* chart tokens to literal colours for Recharts (SVG gradient

@@ -93,19 +93,19 @@ export const useInfoModalStyles = createStyles(({ css }) => ({
     border-radius: 6px;
     background: rgba(255, 255, 255, 0.76);
     > span { padding-right: 10px; border-right: 1px solid var(--lm-border); color: var(--lm-text-tertiary); font-size: 10px; font-weight: 700; line-height: 1.3; text-transform: uppercase; }
-    > strong { display: flex; align-items: center; gap: 9px; color: var(--lm-success-fg); font-size: 14px; font-weight: 800; line-height: 1.3; }
+    > strong { display: flex; align-items: center; gap: 9px; color: var(--lm-primary-fg); font-size: 14px; font-weight: 800; line-height: 1.3; }
     > strong small { color: var(--lm-text-tertiary); font-size: 10px; font-weight: 600; white-space: nowrap; }
     &[data-status='active'] {
       > strong { color: var(--lm-danger-fg); }
     }
     &[data-status='inactive'] {
-      > strong { color: var(--lm-warning-fg); }
+      > strong { color: var(--lm-primary-fg); }
     }
     &[data-status='offline'], &[data-status='unknown'] {
       > strong { color: var(--lm-text-secondary); }
     }
     &[data-status='maintaining'], &[data-status='maintenance'] {
-      > strong { color: var(--lm-info-fg); }
+      > strong { color: var(--lm-primary-fg); }
     }
 
     @media (max-width: 480px) {
@@ -129,7 +129,7 @@ export const useInfoModalStyles = createStyles(({ css }) => ({
     box-shadow: 0 0 0 3px rgba(62, 135, 97, 0.12);
   `,
   eyebrow: css`
-    color: var(--lm-success-fg);
+    color: var(--lm-text-tertiary);
     font-size: 11px;
     font-weight: 800;
     text-transform: uppercase;
@@ -143,7 +143,7 @@ export const useInfoModalStyles = createStyles(({ css }) => ({
     border: 1px solid var(--lm-border);
     border-radius: 6px;
     background: rgba(255, 255, 255, 0.68);
-    > div { display: flex; min-width: 0; align-items: center; gap: 10px; padding: 10px 12px; color: var(--lm-success-fg); font-size: 15px; }
+    > div { display: flex; min-width: 0; align-items: center; gap: 10px; padding: 10px 12px; color: var(--lm-primary-fg); font-size: 15px; }
     > div:nth-child(odd) { border-right: 1px solid var(--lm-border); }
     > div:nth-child(-n + 2) { border-bottom: 1px solid var(--lm-border); }
     span, strong { display: block; min-width: 0; }
@@ -186,7 +186,7 @@ export const useInfoModalStyles = createStyles(({ css }) => ({
     place-items: center;
     border-radius: 6px;
     background: var(--lm-surface-muted);
-    color: var(--lm-success-fg);
+    color: var(--lm-primary-fg);
     font-size: 15px;
   `,
   activityFlow: css`
@@ -239,7 +239,7 @@ export const useInfoModalStyles = createStyles(({ css }) => ({
     color: var(--lm-text-tertiary);
     font-size: 9px;
     text-transform: uppercase;
-    strong { color: var(--lm-success-fg); font-size: 22px; font-variant-numeric: tabular-nums; }
+    strong { color: var(--lm-primary-fg); font-size: 22px; font-variant-numeric: tabular-nums; }
   `,
   equipmentGrid: css`
     display: grid;
@@ -270,7 +270,7 @@ export const useInfoModalStyles = createStyles(({ css }) => ({
     place-items: center;
     border-radius: 5px;
     background: var(--lm-surface-muted);
-    color: var(--lm-success-fg);
+    color: var(--lm-primary-fg);
     font-size: 13px;
   `,
   equipmentLabel: css`
@@ -321,8 +321,8 @@ export const useInfoModalStyles = createStyles(({ css }) => ({
     text-align: center;
   `,
   bookButton: css`
-    background: var(--lm-success-solid);
-    border-color: var(--lm-success-solid);
+    background: var(--lm-primary);
+    border-color: var(--lm-primary);
 
     &:hover,
     &:focus {

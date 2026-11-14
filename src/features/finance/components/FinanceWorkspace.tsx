@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import styles from './FinanceWorkspace.module.css';
 
 interface WorkspaceHeroProps {
@@ -31,14 +31,13 @@ interface MetricCardProps {
   tint?: string;
 }
 
-export function MetricCard({ label, value, note, icon, accent, tint }: MetricCardProps) {
-  const accentStyle = {
-    '--metric-accent': accent ?? '#348364',
-    '--metric-tint': tint ?? '#ebf5ef',
-  } as CSSProperties;
-
+/**
+ * KPI card. `accent`/`tint` are accepted for compatibility but ignored: KPI cards
+ * use the brand accent so the colour palette stays reserved for status.
+ */
+export function MetricCard({ label, value, note, icon }: MetricCardProps) {
   return (
-    <div className={styles.metric} style={accentStyle}>
+    <div className={styles.metric}>
       <div className={styles.metricTop}>
         <span className={styles.metricLabel}>{label}</span>
         <span className={styles.metricIcon} aria-hidden="true">{icon}</span>

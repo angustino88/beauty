@@ -13,7 +13,7 @@
 }
 
 .modal :global(.ant-modal-title) {
-  color: var(--lm-info-fg);
+  color: var(--lm-text);
 }
 
 .modalTitle {
@@ -52,7 +52,7 @@
 }
 
 .modal :global(.ant-modal-close:hover) {
-  color: var(--lm-info-fg);
+  color: var(--lm-primary-fg);
   background: var(--lm-surface-muted);
 }
 
@@ -124,7 +124,7 @@
   align-items: center;
   gap: 8px;
   margin: 0 0 12px;
-  color: var(--lm-info-fg);
+  color: var(--lm-text);
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.06em;

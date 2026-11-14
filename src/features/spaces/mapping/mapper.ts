@@ -1,3 +1,4 @@
+import { refLabel } from "../../../shared/utils/refLabel.ts";
 import type {
   MappingBenchRef,
   MappingEquipmentCategory,
@@ -15,6 +16,13 @@ import type {
 interface RawRecord {
   [key: string]: unknown;
 }
+
+
+/** Utilities arrive as strings or reference objects ({ id, name }); never stringify an object. */
+const mapUtilities = (raw: unknown): string[] | string | null => {
+  if (Array.isArray(raw)) return raw.map(refLabel).filter(Boolean);
+  return refLabel(raw) || null;
+};
 
 const asRecord = (v: unknown): RawRecord =>
   v && typeof v === "object" && !Array.isArray(v) ? (v as RawRecord) : {};
@@ -209,13 +217,11 @@ export function mapResourceMappingDataToRows(rawData: unknown): ResourceMappingR
       station_slot_id: asNullableNumber(b.station_slot_id),
       status: asNullableString(asRecord(b.status).label ?? b.status),
       remark: asNullableString(b.remark),
-      criticality: asNullableString(b.criticality),
+      criticality: refLabel(b.criticality) || null,
       requested_power_w: asNullableNumber(b.requested_power_w),
       requested_load_kg: asNullableNumber(b.requested_load_kg),
       requested_cooling_w: asNullableNumber(b.requested_cooling_w),
-      required_utilities: Array.isArray(b.required_utilities)
-        ? b.required_utilities.map((utility) => String(utility))
-        : asNullableString(b.required_utilities),
+      required_utilities: mapUtilities(b.required_utilities),
     };
 
     const stationSlot = benchRef.station_slot_id
@@ -278,13 +284,11 @@ export function mapBenchToMappingRow(benchRaw: unknown): ResourceMappingRow {
     station_slot_id: asNullableNumber(b.station_slot_id),
     status: asNullableString(asRecord(b.status).label ?? b.status),
     remark: asNullableString(b.remark),
-    criticality: asNullableString(b.criticality),
+    criticality: refLabel(b.criticality) || null,
     requested_power_w: asNullableNumber(b.requested_power_w),
     requested_load_kg: asNullableNumber(b.requested_load_kg),
     requested_cooling_w: asNullableNumber(b.requested_cooling_w),
-    required_utilities: Array.isArray(b.required_utilities)
-      ? b.required_utilities.map((utility) => String(utility))
-      : asNullableString(b.required_utilities),
+    required_utilities: mapUtilities(b.required_utilities),
   };
 
   const rawStation = asRecord(b.station);

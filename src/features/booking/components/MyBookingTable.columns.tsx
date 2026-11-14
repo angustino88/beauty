@@ -226,8 +226,8 @@ export function buildMyBookingColumns({
           <Tooltip title={displayName !== username ? displayName : null} placement="right">
             <Tag
               style={{
-                color: 'var(--lm-primary)',
-                background: 'var(--lm-info-bg)',
+                color: 'var(--lm-text-secondary)',
+                background: 'var(--lm-surface-muted)',
                 border: 'none',
                 borderRadius: 14,
                 fontWeight: 500,

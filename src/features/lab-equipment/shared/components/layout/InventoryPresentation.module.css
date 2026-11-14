@@ -37,8 +37,8 @@
 .inventory :global(.ant-input-affix-wrapper) { height: 36px; border-radius: 7px; }
 .inventory :global(.ant-btn), .inventory :global(.ant-input) { font-family: inherit; font-size: 12px; }
 .inventory :global(.ant-btn:not(.ant-btn-primary)) { border-color: var(--register-border); color: var(--lm-text-secondary); }
-.inventory :global(.ant-btn:not(.ant-btn-primary):hover) { border-color: var(--lm-warning-solid); color: var(--register-accent); }
-.inventory :global(.ant-input-affix-wrapper:focus-within) { border-color: var(--lm-warning-solid); box-shadow: 0 0 0 3px rgba(173, 102, 47, .1); }
+.inventory :global(.ant-btn:not(.ant-btn-primary):hover) { border-color: var(--lm-primary); color: var(--register-accent); }
+.inventory :global(.ant-input-affix-wrapper:focus-within) { border-color: var(--lm-primary); box-shadow: 0 0 0 3px rgba(173, 102, 47, .1); }
 .inventory :global(.ant-segmented) { padding: 3px; font-size: 12px; color: var(--lm-text-secondary); background: var(--lm-surface-subtle); }
 .inventory :global(.ant-segmented-item-label) { min-height: 24px; line-height: 24px; }
 .inventory :global(.ant-segmented-item-selected) { color: var(--lm-text); font-weight: 600; }
@@ -87,7 +87,7 @@
 .grid :global(.ant-table-cell-fix-right-first) { border-inline-start: 1px solid var(--lm-border); }
 .grid :global(.ant-table-tbody > tr.ant-table-row-selected > td) { background: var(--lm-primary-bg); }
 .grid :global(.ant-table-filter-trigger:hover) { color: var(--lm-text-secondary); background: var(--lm-surface-muted); }
-.grid :global(.ant-table-filter-trigger.active) { color: var(--lm-info-fg); background: var(--lm-surface-muted); box-shadow: inset 0 0 0 1px #c5d0dd; }
+.grid :global(.ant-table-filter-trigger.active) { color: var(--lm-primary-fg); background: var(--lm-surface-muted); box-shadow: inset 0 0 0 1px #c5d0dd; }
 .grid :global(.ant-table-filter-trigger:focus-visible) { outline: 2px solid var(--lm-neutral-solid); outline-offset: 2px; }
 .activeFilters { margin: 0; padding: 2px 8px; color: var(--lm-text-secondary); background: var(--lm-surface-muted); border: 1px solid var(--lm-border); border-radius: 4px; font-size: 12px; font-weight: 500; }
 .grid :global(.ant-pagination) { padding: 14px 16px; gap: 4px; border-radius: 0 0 11px 11px; background: var(--lm-surface); }
@@ -102,7 +102,7 @@
 .statusButton :global(.ant-tag) { margin: 0; width: auto; white-space: nowrap; padding-inline: 8px; font-size: 11px; }
 .statusButton :global([class*="indicator_"]) { min-height: 24px; padding: 2px 7px; font-size: 11px; }
 .informationButton { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; padding: 0; color: var(--lm-text-secondary); background: var(--lm-surface-muted); border: 1px solid var(--lm-border); border-radius: 5px; cursor: pointer; font-size: 16px; }
-.informationButton:hover { color: var(--lm-info-fg); background: var(--lm-info-bg); border-color: var(--lm-info-border); }
+.informationButton:hover { color: var(--lm-primary-fg); background: var(--lm-primary-bg); border-color: var(--lm-primary-border); }
 .informationContent { max-width: 340px; max-height: 360px; overflow: auto; font-size: 12px; }
 .informationContent strong { color: var(--lm-text-secondary); font-weight: 600; }
 .textPreview { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; overflow-wrap: anywhere; color: var(--lm-text-tertiary); }

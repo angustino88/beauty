@@ -62,7 +62,7 @@
 }
 
 .kpiGrid :global(.ant-statistic-content) {
-  color: var(--lm-success-fg);
+  color: var(--lm-text);
   font-size: 30px;
   font-weight: 700;
   line-height: 1.15;

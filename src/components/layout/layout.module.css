@@ -153,7 +153,7 @@
 .modernSidebar :global(.ant-menu-dark .ant-menu-sub .ant-menu-item-selected) {
   color: var(--lm-primary) !important;
   background: var(--lm-primary-bg) !important;
-  box-shadow: inset 3px 0 #6155d9, inset 0 0 0 1px #e2dfff !important;
+  box-shadow: inset 3px 0 var(--lm-primary), inset 0 0 0 1px var(--lm-primary-border) !important;
   font-weight: 600;
 }
 .modernSidebar :global(.ant-menu-dark .ant-menu-item-selected:hover),
@@ -289,7 +289,7 @@
 }
 
 .btn__collapsed:focus-visible {
-  outline: 2px solid var(--lm-warning-solid);
+  outline: 2px solid var(--lm-primary);
   outline-offset: 2px;
 }
 
@@ -343,7 +343,7 @@
 }
 
 .sidebar :global(.ant-menu-dark .ant-menu-submenu-selected > .ant-menu-submenu-title) {
-  color: var(--lm-warning-solid);
+  color: var(--lm-primary);
   background: rgba(224, 166, 112, 0.08);
 }
 
@@ -386,11 +386,11 @@
 
 .sidebar :global(.ant-menu-dark .ant-menu-item:hover .anticon),
 .sidebar :global(.ant-menu-dark .ant-menu-submenu-title:hover .anticon) {
-  color: var(--lm-warning-solid);
+  color: var(--lm-primary);
 }
 
 .sidebar :global(.ant-menu-dark .ant-menu-item-selected .anticon) {
-  color: var(--lm-warning-solid);
+  color: var(--lm-primary);
 }
 
 .sidebar :global(.ant-menu-dark .ant-menu-sub) {
@@ -748,7 +748,7 @@
 .sidebar.modernSidebar :global(.ant-menu-dark .ant-menu-sub .ant-menu-item-selected) {
   color: var(--lm-primary) !important;
   background: var(--lm-primary-bg) !important;
-  box-shadow: inset 3px 0 #6155d9, inset 0 0 0 1px #e2dfff !important;
+  box-shadow: inset 3px 0 var(--lm-primary), inset 0 0 0 1px var(--lm-primary-border) !important;
   font-weight: 600;
 }
 
@@ -817,32 +817,32 @@
 }
 
 .themeToggle:hover {
-  color: var(--lm-success-fg);
+  color: var(--lm-primary-fg);
   background: var(--lm-surface-subtle);
   border-color: var(--lm-border-strong);
 }
 
 .themeToggle:focus-visible {
-  outline: 2px solid var(--lm-success-solid);
+  outline: 2px solid var(--lm-primary);
   outline-offset: 2px;
 }
 
 :global(html[data-theme='dark']) .header {
-  color: #e8eaed;
-  background: #22262d;
-  border-bottom-color: #323841;
+  color: var(--lm-text);
+  background: var(--lm-surface);
+  border-bottom-color: var(--lm-border);
 }
 
 :global(html[data-theme='dark']) .layout,
 :global(html[data-theme='dark']) .layoutCollapsed {
-  background: #171a1f;
+  background: var(--lm-bg);
 }
 
 :global(html[data-theme='dark']) .sidebar.modernSidebar,
 :global(html[data-theme='dark']) .modernSidebar .sidebarInner {
-  color: #e8eaed;
-  background: #22262d !important;
-  border-right-color: #323841;
+  color: var(--lm-text);
+  background: var(--lm-surface) !important;
+  border-right-color: var(--lm-border);
 }
 
 :global(html[data-theme='dark']) .modernSidebar .navigationCaption,
@@ -850,83 +850,83 @@
 :global(html[data-theme='dark']) .modernSidebar .searchResult small,
 :global(html[data-theme='dark']) .modernSidebar .navigationEmpty,
 :global(html[data-theme='dark']) .modernSidebar .username {
-  color: #a4aab4;
+  color: var(--lm-text-tertiary);
 }
 
 :global(html[data-theme='dark']) .modernSidebar .navigationTools :global(.ant-input-affix-wrapper) {
-  color: #e8eaed;
-  background: #2a2f37;
-  border-color: #454c56;
+  color: var(--lm-text);
+  background: var(--lm-surface-muted);
+  border-color: var(--lm-border-strong);
 }
 
 :global(html[data-theme='dark']) .modernSidebar .navigationTools :global(.ant-input),
 :global(html[data-theme='dark']) .modernSidebar .navigationTools :global(.ant-input-clear-icon),
 :global(html[data-theme='dark']) .modernSidebar .navigationTools :global(.ant-input-prefix) {
-  color: #c6cbd3;
+  color: var(--lm-text-secondary);
   background: transparent;
 }
 
 :global(html[data-theme='dark']) .modernSidebar :global(.ant-menu-dark .ant-menu-item),
 :global(html[data-theme='dark']) .modernSidebar :global(.ant-menu-dark .ant-menu-submenu-title) {
-  color: #c6cbd3 !important;
+  color: var(--lm-text-secondary) !important;
 }
 
 :global(html[data-theme='dark']) .modernSidebar :global(.ant-menu-dark .ant-menu-item:hover),
 :global(html[data-theme='dark']) .modernSidebar :global(.ant-menu-dark .ant-menu-submenu-title:hover) {
-  color: #ffffff !important;
-  background: #303640 !important;
+  color: var(--lm-text) !important;
+  background: var(--lm-surface-muted) !important;
 }
 
 :global(html[data-theme='dark']) .modernSidebar :global(.ant-menu-dark .ant-menu-item-selected),
 :global(html[data-theme='dark']) .modernSidebar :global(.ant-menu-dark .ant-menu-submenu-selected > .ant-menu-submenu-title) {
-  color: #b8aaff !important;
-  background: #343044 !important;
+  color: var(--lm-primary-fg) !important;
+  background: var(--lm-primary-bg) !important;
 }
 
 :global(html[data-theme='dark']) .modernSidebar :global(.ant-menu-dark .ant-menu-item-selected:hover) {
-  color: #d0c7ff !important;
-  background: #3d3752 !important;
+  color: var(--lm-primary-fg) !important;
+  background: var(--lm-primary-bg) !important;
 }
 
 :global(html[data-theme='dark']) .modernSidebar :global(.ant-menu-dark .ant-menu-sub),
 :global(html[data-theme='dark']) .modernSidebar :global(.ant-menu-dark .ant-menu-submenu .ant-menu-sub) {
-  background: #1d2026 !important;
+  background: var(--lm-bg) !important;
 }
 
 :global(html[data-theme='dark']) .modernSidebar :global(.ant-menu-dark .ant-menu-item-group-title) {
-  color: #9299a5 !important;
+  color: var(--lm-text-tertiary) !important;
 }
 
 :global(html[data-theme='dark']) .modernSidebar :global(.ant-menu-dark .ant-menu-item-divider),
 :global(html[data-theme='dark']) .modernSidebar :global(.ant-menu-submenu .ant-menu-sub) {
-  border-color: #3c424b !important;
+  border-color: var(--lm-border) !important;
 }
 
 :global(html[data-theme='dark']) .modernSidebar .usernameContainer {
-  color: #e8eaed;
-  background: #22262d;
-  border-top-color: #323841;
+  color: var(--lm-text);
+  background: var(--lm-surface);
+  border-top-color: var(--lm-border);
 }
 
 :global(html[data-theme='dark']) .modernSidebar .displayName {
-  color: #e8eaed;
+  color: var(--lm-text);
 }
 
 :global(html[data-theme='dark']) .modernSidebar .accountTrigger:hover,
 :global(html[data-theme='dark']) .modernSidebar .accountTrigger[aria-expanded='true'] {
-  background: #2a2f37;
-  border-color: #454c56;
+  background: var(--lm-surface-muted);
+  border-color: var(--lm-border-strong);
 }
 
 :global(html[data-theme='dark']) .themeToggle {
-  color: #f3cc72;
-  border-color: #454c56;
+  color: var(--lm-text-secondary);
+  border-color: var(--lm-border-strong);
 }
 
 :global(html[data-theme='dark']) .themeToggle:hover {
-  color: #ffe29a;
-  background: #34302a;
-  border-color: #716142;
+  color: var(--lm-primary-fg);
+  background: var(--lm-surface-muted);
+  border-color: var(--lm-primary-border);
 }
 
 .titleContainer {

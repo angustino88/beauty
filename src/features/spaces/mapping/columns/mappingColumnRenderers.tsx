@@ -1,3 +1,4 @@
+import { StatusBadge } from "@/shared/components/StatusBadge";
 /* eslint-disable react-refresh/only-export-components */
 import { CheckCircleFilled, ExclamationCircleFilled } from "@ant-design/icons";
 import { Badge, Popover, Space, Tag, Tooltip } from "antd";
@@ -148,7 +149,7 @@ export const renderMappingStatus = (row: ResourceMappingRow) => {
           <small>{equipment_count} eq · {license_count} lic{!is_fully_mapped && missingParts.length > 1 ? ` · ${missingParts.slice(1).join(", ")}` : ""}</small>
         </span>
       </span>
-      {entityStatus && <Tag color="blue">Bench: {entityStatus}</Tag>}
+      {entityStatus && <StatusBadge fit status={entityStatus} label={`Bench: ${entityStatus}`} />}
       {supplemental.length > 0 && (
         <Tooltip title={supplemental.join(" · ")}>
           <small className={styles.mappingSupplemental}>{supplemental.join(" · ")}</small>
@@ -247,7 +248,7 @@ export const renderEquipmentCategories = (equipment: MappingEquipmentItem[]) => 
           return (
             <Tag key={catKey} color="blue" style={{ cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 4 }}>
               <span style={{ fontSize: 11 }}>{displayName}</span>
-              <Badge count={data.count} size="small" style={{ backgroundColor: "var(--lm-info-solid)" }} />
+              <Badge count={data.count} size="small" style={{ backgroundColor: "var(--lm-neutral-solid)" }} />
             </Tag>
           );
         })}

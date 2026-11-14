@@ -132,8 +132,8 @@ export const useLoginStyles = createStyles(({ css, token }) => ({
     height: 44px;
     border: 0;
     border-radius: 999px;
-    color: #fff;
-    background: var(--lm-success-solid);
+    color: var(--lm-on-primary);
+    background: var(--lm-primary);
     font-weight: 600;
 
     &:hover,
@@ -158,7 +158,7 @@ export const useLoginStyles = createStyles(({ css, token }) => ({
     }
 
     a {
-      color: var(--lm-info-solid);
+      color: var(--lm-primary);
       text-decoration: underline;
     }
   `,

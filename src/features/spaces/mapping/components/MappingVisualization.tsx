@@ -1,3 +1,4 @@
+import { StatusBadge } from "@/shared/components/StatusBadge";
 import {
   ReloadOutlined,
   ZoomInOutlined,
@@ -131,7 +132,7 @@ const Node = ({
         {!compact && <span className={styles.nodeType}>{type}</span>}
         <strong title={name ?? undefined}>{name || "Not mapped"}</strong>
         {sku && <span className={styles.sku}>{subLabel ? `${subLabel} · ${sku}` : sku}</span>}
-        {statusLabel && <span className={styles.entityStatus}>{statusLabel}</span>}
+        {statusLabel && <span className={styles.entityStatus}><StatusBadge fit status={statusLabel} label={statusLabel} /></span>}
       </span>
     </>
   );

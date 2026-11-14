@@ -1,6 +1,10 @@
 /*
  * LabMango semantic design tokens.
  *
+ * Palette rules: neutral surfaces and text; ONE brand accent (teal) for actions,
+ * links, focus and selection; status colours are used only to express a status;
+ * charts lead with the brand teal. Dark mode uses navy-slate surfaces.
+ *
  * Every component colour should come from here so light and dark themes stay in
  * sync. Components never test the theme themselves: the html[data-theme] switch
  * below re-points every token at once (antd, Tailwind utilities, CSS modules).
@@ -20,64 +24,64 @@
     "Helvetica Neue", Arial, "Noto Sans", sans-serif;
   --lm-font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
 
-  --lm-bg: #f5f6fa;
+  --lm-bg: #f4f6f8;
   --lm-surface: #ffffff;
-  --lm-surface-subtle: #f8f9fb;
-  --lm-surface-muted: #f0f2f6;
+  --lm-surface-subtle: #f8fafb;
+  --lm-surface-muted: #eef2f5;
   --lm-surface-raised: #ffffff;
-  --lm-surface-inverse: #202536;
+  --lm-surface-inverse: #14202b;
 
-  --lm-text: #202536;
-  --lm-text-secondary: #4f5668;
-  --lm-text-tertiary: #717789;
-  --lm-text-disabled: #a3a8b6;
+  --lm-text: #14202b;
+  --lm-text-secondary: #475569;
+  --lm-text-tertiary: #64748b;
+  --lm-text-disabled: #a3aebb;
   --lm-text-inverse: #ffffff;
 
-  --lm-border: #e4e7ee;
-  --lm-border-subtle: #eef0f4;
-  --lm-border-strong: #cfd4de;
+  --lm-border: #e2e8ee;
+  --lm-border-subtle: #edf1f5;
+  --lm-border-strong: #cbd5df;
 
-  --lm-primary: #6155d9;
-  --lm-primary-hover: #5146b9;
-  --lm-primary-fg: #4b40b0;
-  --lm-primary-bg: #f2f1fc;
-  --lm-primary-border: #dcd8f8;
+  --lm-primary: #0d8a7e;
+  --lm-primary-hover: #0a7569;
+  --lm-primary-fg: #0b6f65;
+  --lm-primary-bg: #e6f6f3;
+  --lm-primary-border: #b5e3dc;
   --lm-on-primary: #ffffff;
 
-  --lm-success-fg: #17673f;
-  --lm-success-solid: #2f9e62;
-  --lm-success-bg: #ecf8f1;
-  --lm-success-border: #c6e9d4;
+  --lm-success-fg: #157a3c;
+  --lm-success-solid: #22a05a;
+  --lm-success-bg: #eaf7ef;
+  --lm-success-border: #c3e8d0;
 
-  --lm-info-fg: #23589f;
-  --lm-info-solid: #3b7ddd;
-  --lm-info-bg: #eef4fd;
-  --lm-info-border: #cfe0f7;
+  --lm-info-fg: #1d5fae;
+  --lm-info-solid: #3b82f6;
+  --lm-info-bg: #edf4fe;
+  --lm-info-border: #cfe0fb;
 
-  --lm-warning-fg: #8a5400;
-  --lm-warning-solid: #d48a10;
-  --lm-warning-bg: #fff6e5;
-  --lm-warning-border: #f2dcae;
+  --lm-warning-fg: #8a5300;
+  --lm-warning-solid: #d98a0b;
+  --lm-warning-bg: #fff6e3;
+  --lm-warning-border: #f3dcae;
 
-  --lm-danger-fg: #a52a38;
-  --lm-danger-solid: #d9475a;
-  --lm-danger-bg: #fdf0f1;
-  --lm-danger-border: #f3cdd2;
+  --lm-danger-fg: #b4232c;
+  --lm-danger-solid: #e5484d;
+  --lm-danger-bg: #fdeeee;
+  --lm-danger-border: #f6caca;
 
-  --lm-violet-fg: #5b45a8;
-  --lm-violet-solid: #8a6fdc;
-  --lm-violet-bg: #f4f0fc;
-  --lm-violet-border: #e0d6f6;
+  --lm-violet-fg: #5b3fb0;
+  --lm-violet-solid: #8b5cf6;
+  --lm-violet-bg: #f3effe;
+  --lm-violet-border: #ddd3fb;
 
-  --lm-neutral-fg: #4f5668;
-  --lm-neutral-solid: #8d94a5;
-  --lm-neutral-bg: #f2f4f7;
-  --lm-neutral-border: #dde1e8;
+  --lm-neutral-fg: #475569;
+  --lm-neutral-solid: #8a97a8;
+  --lm-neutral-bg: #f1f4f7;
+  --lm-neutral-border: #dde3ea;
 
-  --lm-shadow-sm: 0 1px 2px rgba(32, 37, 54, 0.05);
-  --lm-shadow-md: 0 4px 14px rgba(32, 37, 54, 0.08);
-  --lm-shadow-lg: 0 16px 40px rgba(32, 37, 54, 0.14);
-  --lm-focus-ring: 0 0 0 3px rgba(97, 85, 217, 0.28);
+  --lm-shadow-sm: 0 1px 2px rgba(15, 30, 45, 0.05);
+  --lm-shadow-md: 0 4px 14px rgba(15, 30, 45, 0.08);
+  --lm-shadow-lg: 0 16px 40px rgba(15, 30, 45, 0.14);
+  --lm-focus-ring: 0 0 0 3px rgba(13, 138, 126, 0.28);
   --lm-overlay: rgba(15, 18, 28, 0.45);
 
   /* Dashboard "paper" skin */
@@ -89,94 +93,94 @@
   --lm-paper-accent: #7b2d26;
 
   /* Chart series (categorical, ordered for contrast between neighbours) */
-  --lm-chart-1: #0f9f8f;
+  --lm-chart-1: #0d9488;
   --lm-chart-2: #e0446d;
-  --lm-chart-3: #6155d9;
+  --lm-chart-3: #6366f1;
   --lm-chart-4: #e3a008;
   --lm-chart-5: #2f7fd8;
   --lm-chart-6: #9b59d0;
   --lm-chart-7: #ec7a2c;
   --lm-chart-8: #7a8597;
-  --lm-chart-grid: #e9ecf2;
-  --lm-chart-axis: #8a90a2;
+  --lm-chart-grid: #e8edf2;
+  --lm-chart-axis: #8492a3;
 }
 
 html[data-theme='dark'] {
-  --lm-bg: #14171c;
-  --lm-surface: #1d2127;
-  --lm-surface-subtle: #232830;
-  --lm-surface-muted: #2a3039;
-  --lm-surface-raised: #262b33;
-  --lm-surface-inverse: #e8eaed;
+  --lm-bg: #0b1117;
+  --lm-surface: #121a22;
+  --lm-surface-subtle: #16202a;
+  --lm-surface-muted: #1c2833;
+  --lm-surface-raised: #18222d;
+  --lm-surface-inverse: #e6edf3;
 
-  --lm-text: #e8eaed;
-  --lm-text-secondary: #c2c7d0;
-  --lm-text-tertiary: #959cab;
-  --lm-text-disabled: #656c7a;
-  --lm-text-inverse: #14171c;
+  --lm-text: #e6edf3;
+  --lm-text-secondary: #b6c2ce;
+  --lm-text-tertiary: #8796a7;
+  --lm-text-disabled: #5b6878;
+  --lm-text-inverse: #0b1117;
 
-  --lm-border: #333a44;
-  --lm-border-subtle: #2a3039;
-  --lm-border-strong: #4a525f;
+  --lm-border: #233040;
+  --lm-border-subtle: #1b2632;
+  --lm-border-strong: #34455a;
 
-  --lm-primary: #6f62e6;
-  --lm-primary-hover: #8378ee;
-  --lm-primary-fg: #b8b0ff;
-  --lm-primary-bg: #29264a;
-  --lm-primary-border: #433d78;
-  --lm-on-primary: #ffffff;
+  --lm-primary: #2bb3a3;
+  --lm-primary-hover: #3cc6b5;
+  --lm-primary-fg: #5fd4c4;
+  --lm-primary-bg: #0f2d2b;
+  --lm-primary-border: #1d5550;
+  --lm-on-primary: #04201d;
 
-  --lm-success-fg: #7ad7a2;
-  --lm-success-solid: #46b878;
-  --lm-success-bg: #16301f;
-  --lm-success-border: #24543a;
+  --lm-success-fg: #5fd38d;
+  --lm-success-solid: #34b56a;
+  --lm-success-bg: #0f2a1b;
+  --lm-success-border: #1d4d31;
 
-  --lm-info-fg: #8dbbf5;
-  --lm-info-solid: #5b9af0;
-  --lm-info-bg: #172a45;
-  --lm-info-border: #264873;
+  --lm-info-fg: #8cbcf8;
+  --lm-info-solid: #4f8ff0;
+  --lm-info-bg: #11233b;
+  --lm-info-border: #1f3d63;
 
-  --lm-warning-fg: #f3c272;
-  --lm-warning-solid: #e5a238;
-  --lm-warning-bg: #352710;
-  --lm-warning-border: #5e4519;
+  --lm-warning-fg: #f2c46b;
+  --lm-warning-solid: #e3a33a;
+  --lm-warning-bg: #2b210e;
+  --lm-warning-border: #57411a;
 
-  --lm-danger-fg: #f59aa5;
-  --lm-danger-solid: #ea6274;
-  --lm-danger-bg: #3a1a20;
-  --lm-danger-border: #6a2c36;
+  --lm-danger-fg: #f6979b;
+  --lm-danger-solid: #ec5e66;
+  --lm-danger-bg: #33161a;
+  --lm-danger-border: #5f262c;
 
-  --lm-violet-fg: #c3b2ff;
-  --lm-violet-solid: #a08af0;
-  --lm-violet-bg: #2a2246;
-  --lm-violet-border: #463a75;
+  --lm-violet-fg: #c2b0ff;
+  --lm-violet-solid: #9b7bf2;
+  --lm-violet-bg: #221b3d;
+  --lm-violet-border: #3b2f6a;
 
-  --lm-neutral-fg: #c2c7d0;
-  --lm-neutral-solid: #8d94a5;
-  --lm-neutral-bg: #262b33;
-  --lm-neutral-border: #3a414c;
+  --lm-neutral-fg: #b6c2ce;
+  --lm-neutral-solid: #8796a7;
+  --lm-neutral-bg: #1c2833;
+  --lm-neutral-border: #2c3a4a;
 
-  --lm-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
-  --lm-shadow-md: 0 4px 14px rgba(0, 0, 0, 0.4);
-  --lm-shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.55);
-  --lm-focus-ring: 0 0 0 3px rgba(139, 128, 240, 0.4);
+  --lm-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --lm-shadow-md: 0 4px 14px rgba(0, 0, 0, 0.45);
+  --lm-shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.6);
+  --lm-focus-ring: 0 0 0 3px rgba(43, 179, 163, 0.4);
   --lm-overlay: rgba(0, 0, 0, 0.6);
 
-  --lm-paper-top: #2c2823;
-  --lm-paper-bottom: #221f1b;
-  --lm-paper-ink: #f1e8da;
-  --lm-paper-edge: #d8c7b2;
-  --lm-paper-highlight: #6f6456;
-  --lm-paper-accent: #e8968c;
+  --lm-paper-top: #18222d;
+  --lm-paper-bottom: #121a22;
+  --lm-paper-ink: #e6edf3;
+  --lm-paper-edge: #8796a7;
+  --lm-paper-highlight: #2a3746;
+  --lm-paper-accent: #f6979b;
 
-  --lm-chart-1: #2dc7b3;
+  --lm-chart-1: #2bb3a3;
   --lm-chart-2: #f2648b;
-  --lm-chart-3: #9b90f5;
+  --lm-chart-3: #8b8ff5;
   --lm-chart-4: #f2bf3b;
   --lm-chart-5: #5fa4f2;
   --lm-chart-6: #c08af0;
   --lm-chart-7: #f59a5a;
   --lm-chart-8: #98a1b2;
-  --lm-chart-grid: #2b313a;
-  --lm-chart-axis: #7f8797;
+  --lm-chart-grid: #1f2b37;
+  --lm-chart-axis: #7b8a9b;
 }

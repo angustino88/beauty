@@ -3,7 +3,7 @@
 }
 
 .bookingForm :global(.ant-form-item-label > label) {
-  color: var(--lm-info-fg);
+  color: var(--lm-text);
   font-size: 13px;
   font-weight: 700;
 }
@@ -33,15 +33,15 @@
   font-size: 12px;
   border: 1px solid var(--lm-border);
   border-radius: 5px;
-  background: var(--lm-success-bg);
+  background: var(--lm-primary-bg);
 }
 
 .durationNotice strong {
-  color: var(--lm-success-fg);
+  color: var(--lm-text);
 }
 
 .durationNotice :global(.anticon) {
-  color: var(--lm-success-fg);
+  color: var(--lm-primary-fg);
 }
 
 .suggestions {

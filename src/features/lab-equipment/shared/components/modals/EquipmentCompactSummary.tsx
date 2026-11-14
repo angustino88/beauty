@@ -1,8 +1,8 @@
 import React from 'react';
-import { Collapse } from 'antd';
+import { Alert, Button, Spin } from 'antd';
 import { Link } from 'react-router-dom';
 import {
-  Activity, Cable, Cpu, IdCard, KeyRound, Monitor, Network, Package, ReceiptText, Users, Wrench, Zap,
+  Activity, Cable, Cpu, IdCard, KeyRound, Monitor, Network, Package, ReceiptText, Users, Waypoints, Wrench, Zap,
 } from 'lucide-react';
 import { MappingVisualization } from '@/features/spaces/mapping/components/MappingVisualization';
 import type { ResourceMappingRow } from '@/features/spaces/mapping/types';
@@ -18,6 +18,9 @@ interface EquipmentCompactSummaryProps {
   record: Record<string, unknown>;
   connectedRows: ResourceMappingRow[];
   displayStatus: unknown;
+  mappingLoading?: boolean;
+  mappingError?: boolean;
+  onRetryMapping?: () => void;
 }
 
 const CATEGORY_ICONS: Record<string, React.ReactNode> = {
@@ -86,7 +89,9 @@ function facetsOf(record: Record<string, unknown>): Facet[] {
   return facets;
 }
 
-export const EquipmentCompactSummary: React.FC<EquipmentCompactSummaryProps> = ({ equipmentType, record, connectedRows, displayStatus }) => {
+export const EquipmentCompactSummary: React.FC<EquipmentCompactSummaryProps> = ({
+  equipmentType, record, connectedRows, displayStatus, mappingLoading = false, mappingError = false, onRetryMapping,
+}) => {
   const status = explainEquipmentStatus({ ...record, display_status: displayStatus ?? record.display_status });
   const image = typeof record.image === 'string' && record.image ? record.image : null;
   const name = refLabel(record.name) || refLabel(record.sku) || 'Equipment';
@@ -117,6 +122,34 @@ export const EquipmentCompactSummary: React.FC<EquipmentCompactSummaryProps> = (
       />
 
       <FacetGrid items={facetsOf(record)} />
+
+      <DetailSection
+        title="Connected resources"
+        icon={<Waypoints />}
+        action={<Link to="/spaces/mapping">Open mapping →</Link>}
+      >
+        {mappingLoading ? (
+          <div className="tw:grid tw:min-h-24 tw:place-items-center"><Spin size="small" /></div>
+        ) : mappingError ? (
+          <Alert type="warning" showIcon message="The equipment mapping could not be loaded" action={onRetryMapping && <Button size="small" onClick={onRetryMapping}>Retry</Button>} />
+        ) : connectedRows.length > 0 ? (
+          <>
+            <p className="tw:m-0 tw:text-xs tw:text-muted-foreground">Room → Station → Bench → Equipment → Licenses. This unit is highlighted.</p>
+            <MappingVisualization
+              rows={connectedRows}
+              loading={false}
+              showPagination={false}
+              compact
+              selectedDeviceType={equipmentType}
+              selectedDeviceId={Number(record.id)}
+            />
+          </>
+        ) : (
+          <NoteBox title="Not connected yet">
+            This unit is not assigned to a bench, so it has no room, station or bench connections. Use “Change status → Assign to bench” or the mapping page to place it.
+          </NoteBox>
+        )}
+      </DetailSection>
 
       {(price || warranty || replacement || lastCalibrated) && (
         <DetailSection title="Lifecycle & cost" icon={<ReceiptText />}>
@@ -169,24 +202,6 @@ export const EquipmentCompactSummary: React.FC<EquipmentCompactSummaryProps> = (
 
       {notes.length > 0 && <NoteBox title="Notes">{[...new Set(notes)].join('\n')}</NoteBox>}
 
-      {connectedRows.length > 0 && (
-        <Collapse
-          items={[{
-            key: 'topology',
-            label: 'Placement topology',
-            children: (
-              <MappingVisualization
-                rows={connectedRows}
-                loading={false}
-                showPagination={false}
-                compact
-                selectedDeviceType={equipmentType}
-                selectedDeviceId={Number(record.id)}
-              />
-            ),
-          }]}
-        />
-      )}
     </div>
   );
 };
