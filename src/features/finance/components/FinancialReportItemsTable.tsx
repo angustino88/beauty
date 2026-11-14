@@ -177,8 +177,8 @@ export const FinancialReportItemsTable: React.FC<FinancialReportItemsTableProps>
       title: 'Status',
       dataIndex: 'payment_status',
       key: 'payment_status',
-      align: 'center',
-      width: 150,
+      align: 'left',
+      width: 120,
       render: (status: string) => {
         return <StatusBadge tone={paymentStatusTone(status)} label={purchaseStatusLabel(status)} />;
       },

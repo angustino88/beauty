@@ -266,18 +266,6 @@ export const analyticsColumnIndex = {
   ],
 };
 
-export const hardwareStatuses = [
-  { value: "available", text: "Available", bgColor: "#468847" },
-  { value: "in_use", text: "In Use", bgColor: "#0eb9cf" },
-  { value: "in_storage", text: "In Storage", bgColor: "#2f5597" },
-  { value: "transferred", text: "Transferred", bgColor: "#c55a11" },
-  { value: "maintenance", text: "Maintenance", bgColor: "#0077b6" },
-  { value: "borrowed", text: "Borrowed", bgColor: "#dd890b" },
-  { value: "broken", text: "Broken", bgColor: "#767171" },
-  { value: "lost", text: "Lost", bgColor: "#767171" },
-  { value: "on_order", text: "On Order", bgColor: "#cc00cc" },
-];
-
 const [_weekStart, _weekEnd] = PERIOD.LAST_WEEK.split(" - ");
 
 export const DEFAULT_DURATION: ChartDurationParams = {

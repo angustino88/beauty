@@ -161,7 +161,7 @@ export const PurchasesPage: React.FC = () => {
       title: 'Status',
       dataIndex: 'status',
       key: 'status',
-      width: 160,
+      width: 130,
       render: (status: string, record: IPurchase) => {
         return <StatusBadge tone={purchaseStatusTone(status)} label={record.status_label || purchaseStatusLabel(status)} />;
       },

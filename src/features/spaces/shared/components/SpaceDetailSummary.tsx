@@ -170,7 +170,7 @@ function properties(kind: SpaceKind, record: Record<string, unknown>) {
     const d = num(record, 'depth_mm');
     return [
       ['SKU', sku && <Code>{sku}</Code>],
-      ['Hardware label', label],
+      ['Label', label],
       ['Room', text(record, 'room_name', 'room')],
       ['Slot', text(record, 'slot_code', 'slot_id')],
       ['Dimensions (H × W × D)', h && w && d ? `${h} × ${w} × ${d} mm` : null],

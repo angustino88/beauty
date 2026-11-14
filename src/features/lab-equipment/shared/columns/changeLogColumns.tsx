@@ -52,7 +52,7 @@ export const createChangeLogColumns = (
   {
     title: 'Status',
     key: 'status',
-    align: 'center',
+    align: 'left',
     width: 150,
     render: (_: unknown, record: IChangeLog) => {
       const status = readStatus(record);

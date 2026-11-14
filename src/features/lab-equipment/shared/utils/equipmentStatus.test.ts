@@ -14,7 +14,9 @@ test('missing lifecycle status is not invented or confused with activity', () =>
 });
 test('supports legacy strings and unknown future lifecycle choices', () => {
   assert.equal(equipmentStatusValue(' AVAILABLE '), 'available');
-  assert.equal(equipmentStatusLabel('on_order'), 'On Order');
+  assert.equal(equipmentStatusLabel('on_order'), 'On order');
+  assert.equal(equipmentStatusLabel('calibration_overdue'), 'Calibration overdue');
+  assert.equal(equipmentStatusLabel('brand_new_state'), 'Brand new state');
   assert.equal(equipmentStatusLabel({ value: 'future', label: 'Future status' }), 'Future status');
 });
 

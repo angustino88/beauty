@@ -149,7 +149,7 @@ export function useGetEquipmentSummaryQuery(
   return useGetEquipmentSummaryByTypeQuery(equipmentType, options);
 }
 
-const HARDWARE_CARDS = [
+const EQUIPMENT_STATUS_CARDS = [
   { label: "Total", key: "total", bg: "#172554", color: "#ffffff" },
   { label: "In Use", key: "in_use", bg: "#1d4ed8", color: "#ffffff" },
   { label: "Available", key: "available", bg: "#047857", color: "#ffffff" },
@@ -204,7 +204,7 @@ const EquipmentSummary: React.FC<EquipmentSummaryProps> = ({
     summaryData.total = overrideTotal;
   }
 
-  const config = isLicense ? LICENSE_CARDS : HARDWARE_CARDS;
+  const config = isLicense ? LICENSE_CARDS : EQUIPMENT_STATUS_CARDS;
 
   if (summaryData.total !== undefined && summaryData.others === undefined) {
     const knownKeys = isLicense

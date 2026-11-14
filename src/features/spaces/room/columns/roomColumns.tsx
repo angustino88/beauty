@@ -94,8 +94,8 @@ export const buildRoomColumns = ({
     {
       title: "Status",
       key: "status",
-      width: 184,
-      align: "center" as const,
+      width: 172,
+      align: "left" as const,
       onHeaderCell: () => ({ className: 'centeredFilterHeader' }),
       filters: statusFilters,
       filterSearch: true,

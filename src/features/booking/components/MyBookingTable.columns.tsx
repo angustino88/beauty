@@ -126,8 +126,8 @@ export function buildMyBookingColumns({
       dataIndex: 'status',
       key: 'status',
       title: 'Status',
-      align: 'center',
-      width: 160,
+      align: 'left',
+      width: 136,
       filters: [
         { text: 'Reserved', value: 'reserved' },
         { text: 'In progress', value: 'in_progress' },
@@ -145,8 +145,8 @@ export function buildMyBookingColumns({
       dataIndex: 'approval_status',
       key: 'approval_status',
       title: 'Approval',
-      align: 'center',
-      width: 160,
+      align: 'left',
+      width: 136,
       filters: [
         { text: 'Pending', value: 'pending' },
         { text: 'Approved', value: 'approved' },

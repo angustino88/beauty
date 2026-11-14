@@ -2,11 +2,12 @@
    Tone classes come from shared/status/statusTone.ts; the overviewGreen etc. and successSubtle
    names are aliases kept for older call sites. All colours are theme tokens. */
 .indicator {
-  /* Every status pill has the same width so table columns line up; long
-     labels truncate and show in full on hover (StatusBadge sets title). */
+  /* Pills hug their label, with a minimum width so short states ("Paid")
+     don't look cramped. Columns align on the left edge; text only truncates
+     if the cell itself is too narrow (StatusBadge sets a title for that). */
   display: inline-flex;
   box-sizing: border-box;
-  width: var(--status-badge-width, 128px);
+  min-width: var(--status-badge-min-width, 72px);
   max-width: 100%;
   align-items: center;
   justify-content: flex-start;
@@ -24,7 +25,7 @@
   border-radius: 999px;
 }
 
-.fit { width: auto; }
+.fit { min-width: 0; }
 
 .label {
   min-width: 0;

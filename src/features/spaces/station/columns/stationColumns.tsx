@@ -53,8 +53,8 @@ export const buildStationColumns = ({
     {
       title: "Status",
       key: "status",
-      width: 184,
-      align: "center",
+      width: 172,
+      align: "left",
       filters: statusFilters,
       filteredValue: activeFilters.status ?? null,
       onFilter: (value: boolean | Key, record: IStation) => {

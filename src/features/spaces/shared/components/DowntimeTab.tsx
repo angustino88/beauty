@@ -147,7 +147,7 @@ export const DowntimeTab: React.FC<DowntimeTabProps> = ({
       title: 'State',
       dataIndex: 'state',
       key: 'state',
-      width: 160,
+      width: 136,
       render: (state: string) => {
         if (state === 'current') return <StatusBadge tone="warning" label="Active" icon={<span className={styles.pulsingDot} style={{ width: 6, height: 6, margin: 0 }} />} />;
         if (state === 'scheduled') return <StatusBadge tone="info" label="Scheduled" icon={<CalendarOutlined />} />;

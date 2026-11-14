@@ -462,8 +462,8 @@ export const buildSampleColumns = ({
   {
     title: 'Status',
     key: 'status',
-    width: 160,
-    align: 'center' as const,
+    width: 140,
+    align: 'left' as const,
     onHeaderCell: () => ({ className: 'centeredFilterHeader' }),
     filters: statusFilters,
     filterSearch: true,

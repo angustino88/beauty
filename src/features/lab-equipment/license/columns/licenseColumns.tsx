@@ -388,7 +388,7 @@ export const buildLicenseColumns = ({
     title: 'Status',
     key: 'status',
     width: 150,
-    align: 'center' as const,
+    align: 'left' as const,
     onHeaderCell: () => ({ className: 'centeredFilterHeader' }),
     filters: statusFilters,
     filterSearch: true,

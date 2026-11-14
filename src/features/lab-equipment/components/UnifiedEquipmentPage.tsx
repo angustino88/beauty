@@ -700,8 +700,8 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
       {
         title: 'Status',
         key: 'status',
-        width: 160,
-        align: 'center' as const,
+        width: 184,
+        align: 'left' as const,
         onHeaderCell: () => ({ className: 'centeredFilterHeader' }),
         ...equipmentStaticColumnFilter(facetToAntdFilters(getFacetOptions(facets, 'status', 'status_type')) ?? EQUIPMENT_STATUS_FILTER_OPTIONS),
         filteredValue: filters.status ?? null,

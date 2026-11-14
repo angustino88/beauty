@@ -104,7 +104,7 @@ export function OperationalAnalyticsCards() {
                           <span className={styles.downtime}>{hours(value)}<small>{row.outage_count ?? 0} {row.outage_count === 1 ? 'outage' : 'outages'}</small></span>
                         ),
                       },
-                      { title: 'Status', dataIndex: 'current_status', width: 160, render: (status: string) => <StatusBadge tone={equipmentStatusTone(status)} label={equipmentStatusLabel(status)} /> },
+                      { title: 'Status', dataIndex: 'current_status', width: 140, render: (status: string) => <StatusBadge tone={equipmentStatusTone(status)} label={equipmentStatusLabel(status)} /> },
                     ]}
                   />
                 </>

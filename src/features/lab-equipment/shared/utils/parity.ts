@@ -188,8 +188,8 @@ export const summarizeHardwareRows = (rows: unknown[], totalCount?: number) => {
 /**
  * Summarize Computer rows using RemoteComputerActivity statuses.
  * Computer's current_status.status comes from RemoteComputerActivity (free/active/offline/inactive/maintaining)
- * which is different from LabDeviceStatusLog statuses used by other hardware pages.
- * We map these to the HARDWARE_CARDS format: Total/In Use/Available/Borrowed/In Storage/Others.
+ * which is different from the equipment display_status used by other equipment pages.
+ * We map these to the EQUIPMENT_STATUS_CARDS format: Total/In use/Available/Borrowed/Others.
  *   - "active" → In Use (computer is actively being used)
  *   - "free" → Available (computer is ready)
  *   - "offline","inactive","maintaining" → Others
