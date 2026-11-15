@@ -1,3 +1,4 @@
+import { PersonIcon } from '@/components/display/PersonIcon';
 /**
  * Shared column renderers and helpers for equipment tables.
  * Eliminates duplication of audit, image, status, info, and action columns.
@@ -5,7 +6,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import { Button, Dropdown, Image, Popconfirm, Popover, Space, Tag, Tooltip, Upload } from 'antd';
 import type { MenuProps } from 'antd';
-import { CheckCircleOutlined, CloseCircleOutlined, DeleteOutlined, EditOutlined, HistoryOutlined, LoadingOutlined, MoreOutlined, PlusOutlined, PrinterOutlined, UserOutlined } from '@ant-design/icons';
+import { CheckCircleOutlined, CloseCircleOutlined, DeleteOutlined, EditOutlined, HistoryOutlined, LoadingOutlined, MoreOutlined, PlusOutlined, PrinterOutlined } from '@ant-design/icons';
 import { useState } from 'react';
 import dayjs from 'dayjs';
 import EquipmentStatus from '../components/status/EquipmentStatus';
@@ -147,7 +148,7 @@ export function renderOwnerCell(owner: IPrimaryOwner | null | undefined) {
         fontWeight: 500,
       }}
     >
-      <UserOutlined style={{ marginRight: 5, color: 'var(--lm-text-tertiary)', fontSize: 12 }} />{owner.username}
+      <PersonIcon />{owner.username}
     </Tag>
     </Tooltip>
   );

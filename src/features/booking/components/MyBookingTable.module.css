@@ -34,52 +34,38 @@
   cursor: help;
 }
 
-/* Approve / reject: a joined pair shown only when a decision is actually
-   pending for this user. Tinted at rest, solid on hover, so the row stays calm
-   until the pointer commits to one of them. */
-.decision {
-  display: inline-flex;
+/* Approve / reject: the filled circle icon carries the colour, as an accent on
+   an otherwise quiet button. Hover tints the button in the same colour; when no
+   decision is pending the buttons stay in place, disabled, so rows align. */
+.approveButton:global(.ant-btn) { --decision: var(--lm-success-solid); --decision-bg: var(--lm-success-bg); }
+.rejectButton:global(.ant-btn) { --decision: var(--lm-danger-solid); --decision-bg: var(--lm-danger-bg); }
+
+.approveButton:global(.ant-btn) :global(.anticon),
+.rejectButton:global(.ant-btn) :global(.anticon) {
+  color: var(--decision);
+  font-size: 18px;
+  transition: transform 140ms ease;
 }
 
-.approveButton:global(.ant-btn),
-.rejectButton:global(.ant-btn) {
-  width: 32px;
-  color: var(--decision-fg);
-  background: var(--decision-bg);
-  border-color: var(--decision-border);
-  box-shadow: none;
-  transition: color 140ms ease, background-color 140ms ease, border-color 140ms ease;
+.approveButton:global(.ant-btn):not(:disabled):hover,
+.rejectButton:global(.ant-btn):not(:disabled):hover,
+.approveButton:global(.ant-btn):not(:disabled):focus-visible,
+.rejectButton:global(.ant-btn):not(:disabled):focus-visible {
+  background: var(--decision-bg) !important;
+  border-color: var(--decision) !important;
 }
 
-.approveButton:global(.ant-btn) {
-  --decision-fg: var(--lm-success-fg);
-  --decision-bg: var(--lm-success-bg);
-  --decision-border: var(--lm-success-border);
-  --decision-solid: var(--lm-success-solid);
-  border-radius: 8px 0 0 8px;
+.approveButton:global(.ant-btn):not(:disabled):hover :global(.anticon),
+.rejectButton:global(.ant-btn):not(:disabled):hover :global(.anticon) {
+  transform: scale(1.12);
 }
 
-.rejectButton:global(.ant-btn) {
-  --decision-fg: var(--lm-danger-fg);
-  --decision-bg: var(--lm-danger-bg);
-  --decision-border: var(--lm-danger-border);
-  --decision-solid: var(--lm-danger-solid);
-  margin-left: -1px;
-  border-radius: 0 8px 8px 0;
+.approveButton:global(.ant-btn):disabled :global(.anticon),
+.rejectButton:global(.ant-btn):disabled :global(.anticon) {
+  color: var(--lm-text-disabled);
 }
 
-.approveButton:global(.ant-btn):hover,
-.rejectButton:global(.ant-btn):hover,
-.approveButton:global(.ant-btn):focus-visible,
-.rejectButton:global(.ant-btn):focus-visible {
-  z-index: 1;
-  color: #ffffff !important;
-  background: var(--decision-solid) !important;
-  border-color: var(--decision-solid) !important;
-}
-
-.approveButton:global(.ant-btn):focus-visible,
-.rejectButton:global(.ant-btn):focus-visible {
-  outline: 2px solid var(--lm-primary);
-  outline-offset: 2px;
+@media (prefers-reduced-motion: reduce) {
+  .approveButton:global(.ant-btn) :global(.anticon),
+  .rejectButton:global(.ant-btn) :global(.anticon) { transition: none; }
 }

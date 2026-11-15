@@ -1,4 +1,4 @@
-import { UserOutlined } from '@ant-design/icons';
+import { PersonIcon } from '@/components/display/PersonIcon';
 import { Tag, Tooltip } from 'antd';
 
 interface TagCellProps {
@@ -27,7 +27,7 @@ export function TagCell({ item, displayKey, tooltipKey }: TagCellProps) {
           fontWeight: 500,
         }}
       >
-        <UserOutlined style={{ marginRight: 5, color: 'var(--lm-text-tertiary)', fontSize: 12 }} />{displayValue}
+        <PersonIcon />{displayValue}
       </Tag>
     </Tooltip>
   );
