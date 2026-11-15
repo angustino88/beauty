@@ -16,6 +16,7 @@ import {
   message,
 } from "antd";
 import { DeleteOutlined, PlusOutlined } from "@ant-design/icons";
+import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
 import { useLabsEquipmentOptionsRetrieveQuery } from "@/shared/api/generated/api";
 import {
   useAssignEquipmentMutation,
@@ -38,14 +39,16 @@ export function EquipmentAssignmentModal({
 }: EquipmentAssignmentModalProps) {
   const [form] = Form.useForm<{ equipmentId: number; role?: string; position?: number }>();
   const [search, setSearch] = useState("");
+  // The equipment selector is a large catalog: the API rejects it unless `q` is sent, so wait for input.
+  const debouncedSearch = useDebouncedValue(search.trim(), 300);
 
   const { data: optionsData, isFetching: loadingOptions } = useLabsEquipmentOptionsRetrieveQuery(
     {
       assignable: true,
       assigned: false,
-      q: search || undefined,
+      q: debouncedSearch || undefined,
     },
-    { skip: !open },
+    { skip: !open || !debouncedSearch },
   );
 
   const [assignEquipment, { isLoading: assigning }] = useAssignEquipmentMutation();
@@ -172,7 +175,8 @@ export function EquipmentAssignmentModal({
             >
               <Select
                 showSearch
-                placeholder="Search equipment by name or SKU"
+                placeholder="Type to search equipment by name or SKU"
+                notFoundContent={debouncedSearch ? undefined : "Type a name or SKU to find equipment"}
                 options={equipmentOptions}
                 loading={loadingOptions}
                 onSearch={setSearch}

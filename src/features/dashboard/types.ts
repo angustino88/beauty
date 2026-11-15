@@ -206,6 +206,9 @@ export interface DerivedDashboardStats {
   offlineCount: number;
 }
 
+/** Booking statuses that mean the bench is booked now (backend sends `reserved` / `in_progress`; the rest are legacy). */
+const BOOKING_LIVE_STATUSES: ReadonlySet<string> = new Set(['reserved', 'in_progress', 'in-progress', 'active', 'available']);
+
 /** Returns true if a bench/lab has an active booking RIGHT NOW */
 export function isCurrentlyBooked(bookingStatus?: DashboardBench['current_booking'] | BookingStatus | null): boolean {
   if (!bookingStatus) return false;
@@ -218,7 +221,7 @@ export function isCurrentlyBooked(bookingStatus?: DashboardBench['current_bookin
     return (
       now.isAfter(dayjs.utc(starts_at)) &&
       now.isBefore(dayjs.utc(ends_at)) &&
-      (status === 'available' || status === 'in-progress' || status === 'active')
+      BOOKING_LIVE_STATUSES.has(status)
     );
   }
 
@@ -229,7 +232,7 @@ export function isCurrentlyBooked(bookingStatus?: DashboardBench['current_bookin
     return (
       now.isAfter(dayjs.utc(from_date_time)) &&
       now.isBefore(dayjs.utc(to_date_time)) &&
-      (status === 'available' || status === 'in-progress' || status === 'active')
+      BOOKING_LIVE_STATUSES.has(status)
     );
   }
 

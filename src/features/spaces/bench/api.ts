@@ -102,7 +102,7 @@ export const benchApi = baseApi.injectEndpoints({
     }),
 
     getBenchGroups: build.query<IBenchGroup[], void>({
-      query: () => ({ url: "/api/labs/bench-groups" }),
+      query: () => ({ url: "/api/labs/bench-groups/options" }),
       transformResponse: (res: unknown): IBenchGroup[] => {
         const envelope = (res as Record<string, unknown>) ?? {};
         const data = (envelope.data ?? envelope) as Record<string, unknown>;

@@ -134,26 +134,35 @@ export const roomRtkApi = baseApi.injectEndpoints({
       }),
       providesTags: (_result, _error, { id }) => [{ type: "ChangeLog", id }],
     }),
+    // Reference lists come from the selector endpoints; `/rooms/filters` only describes filters.
     getRoomDropdown: build.query<IRoomDropdownOptions, void>({
-      query: () => ({ url: "/api/labs/rooms/filters" }),
-      providesTags: invalidateList(TAG),
-      transformResponse: (res: unknown): IRoomDropdownOptions => {
-        const envelope = (res as Record<string, unknown>) ?? {};
-        const data = (envelope.data as Record<string, unknown>) ?? envelope;
-        const extract = (arr: unknown) =>
-          Array.isArray(arr)
-            ? arr.map((item: Record<string, unknown>) => ({
+      async queryFn(_arg, _api, _extra, fetchWithBQ) {
+        const [countries, cities, buildings] = await Promise.all([
+          fetchWithBQ("/api/labs/countries/options"),
+          fetchWithBQ("/api/labs/cities/options"),
+          fetchWithBQ("/api/labs/buildings/options"),
+        ]);
+        const failed = countries.error ?? cities.error ?? buildings.error;
+        if (failed) return { error: failed };
+        const extract = (res: { data?: unknown }) => {
+          const list = (res.data as { data?: unknown })?.data;
+          return Array.isArray(list)
+            ? (list as Array<Record<string, unknown>>).map((item) => ({
                 id: (item.id as number) ?? 0,
-                name: (item.name as string) ?? (item.room_name as string) ?? "",
+                name: String(item.name || item.sku || item.id),
               }))
             : [];
+        };
         return {
-          countries: extract(data.countries),
-          cities: extract(data.cities),
-          buildings: extract(data.buildings),
-          floors: extract(data.floors),
+          data: {
+            countries: extract(countries),
+            cities: extract(cities),
+            buildings: extract(buildings),
+            floors: [],
+          },
         };
       },
+      providesTags: invalidateList(TAG),
     }),
     getRoomFilters: build.query<FilterFacets, void>({
       query: () => ({ url: "/api/labs/rooms/filters" }),
