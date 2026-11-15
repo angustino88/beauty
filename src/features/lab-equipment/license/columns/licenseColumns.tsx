@@ -1,4 +1,5 @@
-import AssignedEquipmentCell from './AssignedEquipmentCell';
+import { CarrierNameCell, CarrierSkuCell } from './CarrierCells';
+import type { EquipmentOption } from '../hooks/useEquipmentSearchOptions';
 import type { Key, ReactNode } from 'react';
 import { DatePicker, Input, Select } from 'antd';
 import dayjs, { type Dayjs } from 'dayjs';
@@ -59,6 +60,9 @@ interface BuildColumnsArgs {
   typeOptions: SelectOption[];
   restrictionOptions: SelectOption[];
   ownerOptions: SelectOption[];
+  carrierOptions: EquipmentOption[];
+  onCarrierSearch: (query: string) => void;
+  carrierLoading: boolean;
   isEditing: (record: ILicense) => boolean;
   editingDraft: LicenseInlineDraft | null;
   updateDraftField: <K extends keyof LicenseInlineDraft>(
@@ -101,6 +105,9 @@ export const buildLicenseColumns = ({
   typeOptions,
   restrictionOptions,
   ownerOptions,
+  carrierOptions,
+  onCarrierSearch,
+  carrierLoading,
   isEditing,
   editingDraft,
   updateDraftField,
@@ -190,17 +197,33 @@ export const buildLicenseColumns = ({
     ),
   },
   {
-    title: 'License Carrier',
-    key: 'assigned_equipment',
-    width: 260,
+    title: 'Carrier SKU',
+    key: 'carrier_sku',
+    width: 200,
     render: (_: unknown, record: ILicense) => (
-      <AssignedEquipmentCell
+      <CarrierSkuCell
         key={record.id}
         assigned={record.assigned_equipment}
         editing={isEditing(record)}
         value={editingDraft?.assigned_equipment_ids ?? []}
         onChange={(ids) => updateDraftField('assigned_equipment_ids', ids)}
         seats={record.license_seats}
+        options={carrierOptions}
+        onSearch={onCarrierSearch}
+        loading={carrierLoading}
+      />
+    ),
+  },
+  {
+    title: 'Carrier Name',
+    key: 'carrier_name',
+    width: 220,
+    render: (_: unknown, record: ILicense) => (
+      <CarrierNameCell
+        assigned={record.assigned_equipment}
+        editing={isEditing(record)}
+        value={editingDraft?.assigned_equipment_ids ?? []}
+        options={carrierOptions}
       />
     ),
   },

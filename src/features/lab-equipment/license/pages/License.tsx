@@ -53,7 +53,8 @@ export default function LicensePage() {
     historyId ?? skipToken,
   );
 
-  const equipmentSearch = useEquipmentSearchOptions();
+  const editingAssigned = table.rows.find((row) => row.id === editingId)?.assigned_equipment;
+  const equipmentSearch = useEquipmentSearchOptions(editingAssigned);
 
   const formFields = useMemo<FieldConfig[]>(
     () => [
@@ -192,6 +193,9 @@ export default function LicensePage() {
     typeOptions: table.typeOptions,
     restrictionOptions: table.restrictionOptions,
     ownerOptions: table.ownerOptions,
+    carrierOptions: equipmentSearch.options,
+    onCarrierSearch: equipmentSearch.onSearch,
+    carrierLoading: equipmentSearch.loading,
     isEditing,
     editingDraft,
     updateDraftField,

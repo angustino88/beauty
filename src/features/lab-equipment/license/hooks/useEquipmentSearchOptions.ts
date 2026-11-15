@@ -3,7 +3,8 @@ import { useLabsEquipmentOptionsRetrieveQuery } from '@/shared/api/generated/api
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 import { equipmentLabel } from '../equipmentLabel';
 
-export type EquipmentOption = { value: number; label: string };
+/** One selectable equipment item: `label` for the dropdown, `sku` for the selected tag. */
+export type EquipmentOption = { value: number; label: string; sku: string; name: string };
 
 type Known = { id: number; sku?: string; name: string };
 
@@ -11,30 +12,32 @@ type Known = { id: number; sku?: string; name: string };
  * Search-as-you-type equipment options for a multi-select.
  *
  * The equipment selector is a large catalog: the API answers only when `q` is sent, so nothing is
- * requested until the user types. Labels already shown (`known`) and every label seen in earlier
- * searches stay in the list, so selected items keep their name while the search text changes.
+ * requested until the user types. Items already shown (`known`) and every item seen in earlier
+ * searches stay in the list, so selected items keep their SKU and name while the search text changes.
  */
 export function useEquipmentSearchOptions(known: readonly Known[] = []) {
   const [search, setSearch] = useState('');
   const query = useDebouncedValue(search.trim(), 300);
   const { data, isFetching } = useLabsEquipmentOptionsRetrieveQuery({ q: query }, { skip: !query });
-  const [seen, setSeen] = useState<Record<number, string>>({});
+  const [seen, setSeen] = useState<Record<number, { sku: string; name: string }>>({});
 
   useEffect(() => {
     if (!data?.data?.length) return;
-    // Remember every label the search returned so a picked item keeps its name afterwards.
+    // Remember every item the search returned so a picked one keeps its SKU and name afterwards.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setSeen((previous) => ({
       ...previous,
-      ...Object.fromEntries(data.data.map((item) => [item.id, equipmentLabel(item)])),
+      ...Object.fromEntries(data.data.map((item) => [item.id, { sku: item.sku ?? '', name: item.name ?? '' }])),
     }));
   }, [data]);
 
   const options = useMemo<EquipmentOption[]>(() => {
-    const labels = new Map<number, string>(Object.entries(seen).map(([id, label]) => [Number(id), label]));
-    for (const item of known) labels.set(item.id, equipmentLabel(item));
-    for (const item of data?.data ?? []) labels.set(item.id, equipmentLabel(item));
-    return [...labels].map(([value, label]) => ({ value, label }));
+    const items = new Map<number, { sku: string; name: string }>(
+      Object.entries(seen).map(([id, item]) => [Number(id), item]),
+    );
+    for (const item of known) items.set(item.id, { sku: item.sku ?? '', name: item.name });
+    for (const item of data?.data ?? []) items.set(item.id, { sku: item.sku ?? '', name: item.name ?? '' });
+    return [...items].map(([value, item]) => ({ value, ...item, label: equipmentLabel({ id: value, ...item }) }));
   }, [seen, known, data]);
 
   return { options, onSearch: setSearch, loading: isFetching };
