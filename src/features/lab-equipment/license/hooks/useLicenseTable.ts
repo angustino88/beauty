@@ -1,3 +1,4 @@
+import { mapLicenseRead } from '../mapper';
 import { useMemo } from 'react';
 import {
   useGetLicenseCategoriesQuery,
@@ -57,7 +58,7 @@ export function useLicenseTable() {
     search: debouncedSearch || undefined,
     ordering: 'id',
   });
-  const serverFilter = useServerEquipmentFilter<ILicense>({ filters, filterKey: 'License', filterRules: EQUIPMENT_FILTER_RULES.License ?? { single: [] as string[], multiple: [] as string[] }, page });
+  const serverFilter = useServerEquipmentFilter<ILicense>({ filters, filterKey: 'License', filterRules: EQUIPMENT_FILTER_RULES.License ?? { single: [] as string[], multiple: [] as string[] }, page, mapItem: mapLicenseRead });
   const summaryState = useGetLicenseStatusSummaryQuery();
   const usersQuery = useGetUsersQuery();
   const productQuery = useGetLicenseProductsQuery();

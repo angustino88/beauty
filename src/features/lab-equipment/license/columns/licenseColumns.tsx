@@ -4,7 +4,7 @@ import dayjs, { type Dayjs } from 'dayjs';
 import {
   InlineImageUpload,
   readStatusFromRecord,
-  renderAuditCell,
+  LastAuditCell,
   renderImageCell,
   renderOwnerCell,
 } from '../../shared';
@@ -69,7 +69,7 @@ interface BuildColumnsArgs {
     value: LicenseInlineDraft[K],
   ) => void;
   actionsRenderer: (_: unknown, record: ILicense) => ReactNode;
-  onImageChange?: (file: File) => void;
+  onImageChange?: (file: File, record: ILicense) => void;
   onStatusChange?: (record: ILicense, values: { status_type: string; status_data: Record<string, unknown> }) => void;
 }
 
@@ -370,7 +370,7 @@ export const buildLicenseColumns = ({
     key: 'lab_audit',
     width: 180,
     align: 'center' as const,
-    render: (_: unknown, record: ILicense) => renderAuditCell(record.lab_audit),
+    render: (_: unknown, record: ILicense) => <LastAuditCell resourceType="license" resourceId={record.id} />,
   },
   {
     title: 'Image',
@@ -379,8 +379,8 @@ export const buildLicenseColumns = ({
     width: 150,
     align: 'center' as const,
     render: (_: unknown, record: ILicense) => (
-      isEditing(record) && onImageChange
-        ? <InlineImageUpload currentImage={record.image} onImageChange={onImageChange} />
+      onImageChange
+        ? <InlineImageUpload key={record.id} currentImage={record.image} onImageChange={(file) => onImageChange(file, record)} />
         : renderImageCell(record.image)
     ),
   },

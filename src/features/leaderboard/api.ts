@@ -25,6 +25,8 @@ import type {
   LabsBenchesWeeklyUsageRetrieveByIdApiResponse,
 } from '@/shared/api/generated/api';
 
+export type LeaderboardExportType = 'persona' | 'lab';
+
 export interface DetailQueryArg {
   id: number;
   filter: LeaderboardFilter;
@@ -78,21 +80,25 @@ export const {
 
 const leaderboardExportApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
-    downloadLeaderboard: build.query<Blob, LeaderboardFilter>({
-      query: (filter) => ({
+    // The export endpoint returns the ranking rows as JSON; the workbook is built on the client.
+    downloadLeaderboard: build.query<Array<Record<string, unknown>>, LeaderboardFilter & { type: LeaderboardExportType }>({
+      query: ({ type, start_date, end_date }) => ({
         url: '/api/labs/leaderboard/export',
-        params: { start_date: filter.start_date, end_date: filter.end_date },
-        responseHandler: (response) => response.blob(),
+        params: { type, start_date, end_date },
       }),
+      transformResponse: (res: { data?: Array<Record<string, unknown>> }) => res?.data ?? [],
       keepUnusedDataFor: 0,
     }),
   }),
 });
 
 /** Fetch the export through the shared authenticated base query, including 401 retry. */
-export async function exportLeaderboard(filter: LeaderboardFilter): Promise<Blob> {
+export async function exportLeaderboard(
+  filter: LeaderboardFilter,
+  type: LeaderboardExportType,
+): Promise<Array<Record<string, unknown>>> {
   const request = store.dispatch(leaderboardExportApi.endpoints.downloadLeaderboard.initiate(
-    filter,
+    { ...filter, type },
     { subscribe: false, forceRefetch: true },
   ));
   try {

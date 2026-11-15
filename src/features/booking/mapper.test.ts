@@ -77,8 +77,8 @@ test('buildBookingListQuery generates query params with bench_id and creator sup
 
   assert.match(qs, /view_side=my_booking/);
   assert.match(qs, /status=reserved/);
-  assert.match(qs, /bench_id=1/);
-  assert.match(qs, /bench_id=2/);
+  // The API takes one bench per request and rejects repeated params.
+  assert.deepEqual(new URLSearchParams(qs).getAll('bench_id'), ['1']);
   assert.match(qs, /project_id=1/);
   assert.equal(qs.includes('project='), false);
   // Ensure creator appears only once in query string
@@ -234,4 +234,11 @@ test('extractBookingErrorMessage extracts nested conflict and validation error m
 
   const fallbackResult = extractBookingErrorMessage({}, 'Default fallback');
   assert.equal(fallbackResult, 'Default fallback');
+});
+
+test('buildBookingListQuery never repeats a filter parameter', () => {
+  const qs = buildBookingListQuery({ filterParams: { status: ['reserved', 'in_progress'], approval_status: ['approved'] } });
+  const params = new URLSearchParams(qs);
+  assert.deepEqual(params.getAll('status'), ['reserved']);
+  assert.deepEqual(params.getAll('approval_status'), ['approved']);
 });

@@ -33,15 +33,20 @@ export function useBookingCalendarEvents() {
       const startsAtAfter = dateRange?.starts_at_after ?? dateRange?.start;
       const startsAtBefore = dateRange?.starts_at_before ?? dateRange?.end;
 
-      const bookingsPromise = fetchBookings(
-        {
-          view_side: 'booking_calendar',
-          bench_id: benchIds,
-          starts_at_after: startsAtAfter,
-          starts_at_before: startsAtBefore,
-        },
-        true,
-      ).unwrap();
+      // The list filters on one bench per request, so each visible bench is fetched separately.
+      const bookingsPromise = Promise.all(
+        benchIds.map((benchId) =>
+          fetchBookings(
+            {
+              view_side: 'booking_calendar',
+              bench_id: [benchId],
+              starts_at_after: startsAtAfter,
+              starts_at_before: startsAtBefore,
+            },
+            true,
+          ).unwrap(),
+        ),
+      ).then((pages) => ({ data: pages.flatMap((page) => page.data) }));
 
       const downtimesPromise = fetchDowntimes({ page_size: 100 }, true).unwrap();
 

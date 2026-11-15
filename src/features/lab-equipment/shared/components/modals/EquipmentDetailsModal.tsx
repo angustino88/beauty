@@ -1,3 +1,4 @@
+import { LastAuditCell } from '../../columns/sharedColumns';
 import { Alert, Button, Collapse, ConfigProvider, Descriptions, Image, Spin, Tabs, Tag } from 'antd';
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Button as UiButton } from '@/components/ui/button';
@@ -699,7 +700,11 @@ export default function EquipmentDetailsModal({
           {overviewItems.map(([label, value]) => (
             <div className={styles.overviewItem} key={label}>
               <span>{label}</span>
-              <strong>{renderValue(value)}</strong>
+              <strong>
+                {label === 'Last audited'
+                  ? <LastAuditCell resourceType="license" resourceId={Number(record.id)} />
+                  : renderValue(value)}
+              </strong>
             </div>
           ))}
         </div>

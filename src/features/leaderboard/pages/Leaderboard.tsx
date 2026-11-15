@@ -6,6 +6,7 @@ import { useAppSelector } from '@/app/store';
 import { useLeaderboardState } from '../hooks/useLeaderboardState';
 import { useGetPersonaQuery, useGetLabQuery, exportLeaderboard } from '../api';
 import { LeaderboardPodium } from '../components/charts/LeaderboardPodium';
+import { exportLeaderboardExcel } from '../utils/exportExcel';
 import { PersonaTable } from '../components/tables/PersonaTable';
 import { LabTable } from '../components/tables/LabTable';
 import { LeaderboardDetailModal } from '../components/modals/LeaderboardDetailModal';
@@ -53,17 +54,10 @@ export default function Leaderboard() {
   async function handleExport() {
     setExportLoading(true);
     try {
-      const blob = await exportLeaderboard(filter);
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `Leaderboard_${new Date().toISOString().slice(0, 10)}.xlsx`;
-      document.body.appendChild(a);
-      a.click();
-      setTimeout(() => {
-        a.remove();
-        URL.revokeObjectURL(url);
-      }, 100);
+      // Export the ranking that is on screen: users on the persona tab, labs on the lab tab.
+      const type = activeTab === 'lab' ? 'lab' : 'persona';
+      const rows = await exportLeaderboard(filter, type);
+      await exportLeaderboardExcel(rows, type, `Leaderboard_${type}_${new Date().toISOString().slice(0, 10)}`);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Unknown error';
       void message.error(`Export failed: ${msg}`);

@@ -22,8 +22,10 @@ const TAG = "ResourceMapping";
 
 export const mappingApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
+    // There is no collection-level mapping endpoint: list the benches, then load each bench's
+        // mapping graph (station, room, equipment, licenses) and merge it into its row.
     getMappings: build.query<ResourceMappingListResponse, ResourceMappingParams>({
-      query: (params) => {
+      async queryFn(params, _api, _extra, fetchWithBQ) {
         const queryParams = new URLSearchParams();
         if (params.page) queryParams.set("page", String(params.page));
         if (params.page_size) queryParams.set("page_size", String(params.page_size));
@@ -34,9 +36,19 @@ export const mappingApi = baseApi.injectEndpoints({
         if (params.status) queryParams.set("status", params.status);
 
         const qs = queryParams.toString();
-        return { url: `/api/labs/benches${qs ? `?${qs}` : ""}` };
+        const listRes = await fetchWithBQ(`/api/labs/benches${qs ? `?${qs}` : ""}`);
+        if (listRes.error) return { error: listRes.error };
+
+        const list = mapResourceMappingListResponse(listRes.data);
+        const rows = await Promise.all(
+          list.data.map(async (row) => {
+            const graphRes = await fetchWithBQ(`/api/labs/benches/${row.id}/mapping`);
+            if (graphRes.error) return row;
+            return mapResourceMappingDataToRows(graphRes.data)[0] ?? row;
+          }),
+        );
+        return { data: { total_count: list.total_count, data: rows } };
       },
-      transformResponse: (res: unknown) => mapResourceMappingListResponse(res),
       providesTags: (result) => generateListTags(TAG, result),
     }),
 

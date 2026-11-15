@@ -1,4 +1,5 @@
-import { useLabsStationsOptionsRetrieveQuery, useLabsStationsSlotsRetrieveByStationIdQuery } from "@/shared/api/generated/api";
+import { useLabsBenchTypesOptionsRetrieveQuery, useLabsStationsOptionsRetrieveQuery, useLabsStationsSlotsRetrieveByStationIdQuery } from "@/shared/api/generated/api";
+import { useGetUsersQuery } from "@/features/lab-equipment/shared";
 import { useCallback, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 import { skipToken } from "@reduxjs/toolkit/query";
@@ -44,7 +45,7 @@ export default function BenchPage() {
   // The slot list follows the station chosen in whichever form is open.
   const [formStationId, setFormStationId] = useState<number | null>(null);
   const { data: slotsData } = useLabsStationsSlotsRetrieveByStationIdQuery(
-    formStationId == null ? skipToken : { stationId: formStationId, pageSize: 200 },
+    formStationId == null ? skipToken : { stationId: formStationId, pageSize: 100 },
   );
   const slotOptions = useMemo(
     () => (slotsData?.data ?? [])
@@ -70,9 +71,15 @@ export default function BenchPage() {
     })) ?? fallback ?? [], [facets]);
   const groupFallback = useMemo(() => (benchGroups ?? []).map((group) => ({ text: group.name, value: String(group.id) })), [benchGroups]);
   const groupFilters = useMemo(() => facetFilters(['bench_group', 'bench_group_id', 'group'], groupFallback), [facetFilters, groupFallback]);
-  const typeFilters = useMemo(() => facetFilters(['type', 'type_id', 'bench_type']), [facetFilters]);
-  const locationFilters = useMemo(() => facetFilters(['setup_location', 'setup_location_id', 'location', 'room']), [facetFilters]);
-  const ownerFilters = useMemo(() => facetFilters(['owner', 'owner_id', 'primary_owner']), [facetFilters]);
+  // ID-valued filters ship no choices in `/filters` (only an options_key), so list them from the selectors.
+  const { data: benchTypeOptions } = useLabsBenchTypesOptionsRetrieveQuery({});
+  const { data: users } = useGetUsersQuery();
+  const typeFallback = useMemo(() => (benchTypeOptions?.data ?? []).map((t) => ({ text: String(t.name || t.sku || t.id), value: String(t.id) })), [benchTypeOptions]);
+  const stationFallback = useMemo(() => stationOptions.map((s) => ({ text: String(s.label), value: String(s.value) })), [stationOptions]);
+  const ownerFallback = useMemo(() => (users ?? []).map((u) => ({ text: u.display_name || u.username || String(u.id), value: String(u.id) })), [users]);
+  const typeFilters = useMemo(() => facetFilters(['type', 'type_id', 'bench_type'], typeFallback), [facetFilters, typeFallback]);
+  const locationFilters = useMemo(() => facetFilters(['setup_location', 'setup_location_id', 'location', 'room'], stationFallback), [facetFilters, stationFallback]);
+  const ownerFilters = useMemo(() => facetFilters(['owner', 'owner_id', 'primary_owner'], ownerFallback), [facetFilters, ownerFallback]);
   const statusFilters = useMemo(() => facetFilters(['status', 'status_type']), [facetFilters]);
 
   const formFields: FieldConfig[] = useMemo(

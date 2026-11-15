@@ -17,15 +17,20 @@ test('room mapper maps lifecycle_status, access_policy, condition, availability,
       reason: null,
     },
     activity_status: { value: 'idle', label: 'Idle' },
-    rack_list: [],
-    setup_capacity: 10,
-    temperature: 21,
-    humidity: 45,
-    max_power: 5000,
-    power_usage: 1200,
+    slot_capacity: 10,
+    power_capacity_w: 5000,
+    layout_rows: 2,
+    layout_columns: 5,
+    length_m: '8.50',
+    width_m: '4.00',
+    area_m2: '34.00',
+    owner: { id: 3, name: 'Ada Lovelace' },
+    country: { id: 1, name: 'Germany' },
+    city: { id: 2, name: 'Berlin' },
+    building: { id: 4, name: 'B1' },
+    floor: '2',
+    location_path: 'Germany / Berlin / B1 / Room 12',
     label: 'Main Lab',
-    current_status: null,
-    lab_audit: null,
   });
 
   assert.equal(result.id, 12);
@@ -35,4 +40,13 @@ test('room mapper maps lifecycle_status, access_policy, condition, availability,
   assert.deepEqual(result.condition, { value: 'operational', label: 'Operational' });
   assert.equal(result.availability.value, 'available');
   assert.deepEqual(result.activity_status, { value: 'idle', label: 'Idle' });
+  assert.equal(result.setup_capacity, 10);
+  assert.equal(result.max_power, 5000);
+  assert.equal(result.rows, 2);
+  assert.equal(result.cols, 5);
+  assert.equal(result.length, 8.5);
+  assert.equal(result.primary_owner?.username, 'Ada Lovelace');
+  assert.equal(result.location_info?.location_string, 'Germany / Berlin / B1 / Room 12');
+  assert.equal(result.location_info?.city?.id, 2);
+  assert.equal(result.floor, '2');
 });

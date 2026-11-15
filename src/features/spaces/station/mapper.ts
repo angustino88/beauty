@@ -51,7 +51,8 @@ export function mapStationApiItem(raw: unknown): IStation {
     room: room
       ? {
           id: asNumber(room.id),
-          sku: asString(room.sku),
+          // Room references carry uid and name; the name is what the list search matches.
+          sku: asString(room.sku || room.name),
           name: asNullableString(room.name || room.room_name),
         }
       : null,
@@ -95,7 +96,7 @@ export function mapStationApiItem(raw: unknown): IStation {
     power_usage: asNullableNumber(st.power_usage),
     image: asNullableString(st.image_url ?? st.image),
     location: asNullableString(st.location),
-    location_string: asNullableString(st.location_string || st.location),
+    location_string: asNullableString(st.location_path || st.location_string || st.location),
     slots: Array.isArray(st.slots)
       ? st.slots.map((s: unknown) => {
           const slot = isRecord(s) ? s : {};

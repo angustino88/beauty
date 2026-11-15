@@ -18,9 +18,9 @@ export function useStationTable() {
       page_size: pageSize,
       search: debouncedSearch || undefined,
       ordering: "id",
-      room_id: filters.room?.[0] != null ? String(filters.room[0]) : undefined,
-      owner_id: filters.owner?.[0] != null ? String(filters.owner[0]) : undefined,
-      status: filters.status?.[0] != null ? String(filters.status[0]) : undefined,
+      room_id: filters.room?.length ? filters.room.join(',') : undefined,
+      owner_id: filters.owner?.length ? filters.owner.join(',') : undefined,
+      status: filters.status?.length ? filters.status.join(',') : undefined,
     };
   }, [page, pageSize, debouncedSearch, filters]);
 

@@ -56,7 +56,7 @@ export function mapBenchApiItem(raw: unknown): IBench {
     station_slot_id: stationSlot ? asNumber(stationSlot.id) : asNullableNumber(b.station_slot_id),
     station_slot_name: stationSlot ? asNullableString(stationSlot.name) : null,
     location_path: asNullableString(b.setup_location_path),
-    station: station ? { id: asNumber(station.id), sku: asString(station.sku), name: asString(station.name) } : null,
+    station: station ? { id: asNumber(station.id), sku: asString(station.sku || station.name), name: asString(station.name) } : null,
     room: room ? { id: asNumber(room.id), sku: asString(room.sku), name: asString(room.name) } : null,
     equipment_count: asNumber(b.equipment_count, 0),
     is_favorite: Boolean(b.is_favorite),

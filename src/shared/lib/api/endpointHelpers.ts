@@ -79,21 +79,12 @@ export function buildSortableListQuery(params: SortableListParams & object): str
   const searchParams = new URLSearchParams();
   appendQueryParams(searchParams, rest);
 
+  // The list endpoints take one `ordering` param: comma-separated fields, `-` for descending.
   if (sorts?.length) {
-    for (const sort of sorts) {
-      searchParams.append('_sort[]', sort);
-      searchParams.append('_sort', sort);
-    }
-  }
-  if (orders?.length) {
-    for (const order of orders) {
-      searchParams.append('_order[]', order);
-      searchParams.append('_order', order);
-    }
-  }
-  if (sorts?.[0]) {
-    const direction = (orders?.[0] ?? 'asc').toLowerCase() === 'desc' ? '-' : '';
-    searchParams.append('ordering', `${direction}${sorts[0]}`);
+    searchParams.append(
+      'ordering',
+      sorts.map((field, index) => ((orders?.[index] ?? 'asc').toLowerCase() === 'desc' ? `-${field}` : field)).join(','),
+    );
   }
   return searchParams.toString();
 }

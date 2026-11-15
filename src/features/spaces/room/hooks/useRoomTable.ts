@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 import { useGetRoomsQuery, useGetRoomDropdownQuery, useGetRoomFiltersQuery } from '../api';
 import { useGetStationsQuery } from '../../station/api';
+import { mapRoomApiItem } from '../mapper';
 import { useGetUsersQuery, useServerEquipmentFilter } from '@/features/lab-equipment/shared';
 import { EQUIPMENT_FILTER_RULES } from '@/features/lab-equipment/shared/utils/equipmentFilterRules';
 import type { IRoom } from '../types';
@@ -27,13 +28,30 @@ export function useRoomTable() {
       skipPollingIfUnfocused: true,
     },
   );
-  const serverFilter = useServerEquipmentFilter<IRoom>({ filters, filterKey: 'Room', filterRules: EQUIPMENT_FILTER_RULES.Room, page });
+  const serverFilter = useServerEquipmentFilter<IRoom>({ filters, filterKey: 'Room', filterRules: EQUIPMENT_FILTER_RULES.Room, page, mapItem: mapRoomApiItem });
   const dropdownQuery = useGetRoomDropdownQuery();
   const facetsQuery = useGetRoomFiltersQuery();
   const stationAllQuery = useGetStationsQuery({ page: 1, page_size: 100, ordering: 'id' });
   const usersQuery    = useGetUsersQuery();
 
-  const rows        = useMemo(() => serverFilter.hasActiveFilters ? serverFilter.data : listQuery.data?.data ?? [], [listQuery.data?.data, serverFilter.data, serverFilter.hasActiveFilters]);
+  const baseRows    = useMemo(() => serverFilter.hasActiveFilters ? serverFilter.data : listQuery.data?.data ?? [], [listQuery.data?.data, serverFilter.data, serverFilter.hasActiveFilters]);
+  // The room payload carries no stations, so load those of the rooms on this page and attach them.
+  const pageRoomIds = useMemo(() => baseRows.map((room) => room.id).join(','), [baseRows]);
+  const pageStationsQuery = useGetStationsQuery(
+    { page: 1, page_size: 100, ordering: 'id', room_id: pageRoomIds },
+    { skip: !pageRoomIds },
+  );
+  const rows = useMemo(() => {
+    const byRoom = new Map<number, IRoom['rack_list']>();
+    for (const station of pageStationsQuery.data?.data ?? []) {
+      const roomId = station.room?.id;
+      if (roomId == null) continue;
+      const list = (byRoom.get(roomId) ?? []) as Array<{ id: number; sku: string; name?: string | null }>;
+      list.push({ id: station.id, sku: station.sku, name: station.name });
+      byRoom.set(roomId, list);
+    }
+    return baseRows.map((room) => ({ ...room, rack_list: byRoom.get(room.id) ?? room.rack_list }));
+  }, [baseRows, pageStationsQuery.data?.data]);
   // Collect raw data keyed by ROOM_OPTIONS_CONFIG key
   const rawSources = useMemo(() => {
     const owners = (usersQuery.data ?? []).map((u) => ({

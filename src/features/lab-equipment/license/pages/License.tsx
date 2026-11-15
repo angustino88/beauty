@@ -145,8 +145,10 @@ export default function LicensePage() {
     cancelEdit();
   };
 
-  const handleImageChange = (file: File) => {
-    setInlineImageFile(file);
+  // The API has no license create, update or delete route: licenses are read-only apart from
+  // their image and status actions, so the image uploads as soon as a file is picked.
+  const handleImageChange = (file: File, record: ILicense) => {
+    void form.updateImage?.(record.id, file);
   };
 
   const handleStatusChange = (_record: ILicense, values: { status_type: string; status_data: Record<string, unknown> }) => {
@@ -155,7 +157,8 @@ export default function LicensePage() {
   };
 
   const defaultActionsRenderer = createActionsRenderer<ILicense>({
-    isAdmin,
+    // Edit and delete need license write routes the API does not offer.
+    isAdmin: false,
     deleting: form.deleting,
     onEdit: handleEdit,
     onDelete: form.deleteById,
@@ -196,7 +199,7 @@ export default function LicensePage() {
     editingDraft,
     updateDraftField,
     actionsRenderer,
-    onImageChange: handleImageChange,
+    onImageChange: isAdmin ? handleImageChange : undefined,
     onStatusChange: handleStatusChange,
   });
 
@@ -243,7 +246,7 @@ export default function LicensePage() {
             ]}
           />
         </>}
-        showCreate={isAdmin}
+        showCreate={false}
         createLabel="New License"
         onCreate={() => setModalOpen(true)}
         scrollX={3200}

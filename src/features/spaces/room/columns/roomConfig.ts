@@ -75,20 +75,7 @@ export const ROOM_FIELD_CONFIG: RoomFieldConfig[] = [
     reader: (r) => r.location ?? "",
     draftReader: (r) => r.location ?? "",
   },
-  {
-    key: "temperature",
-    label: "Temperature (C)",
-    type: "number",
-    inCreate: false,
-  },
-  { key: "humidity", label: "Humidity (%)", type: "number", inCreate: false },
   { key: "max_power", label: "Max Power (W)", type: "number", inCreate: true },
-  {
-    key: "power_usage",
-    label: "Power Usage (kW)",
-    type: "number",
-    inCreate: false,
-  },
   // ─── dropdown fields ──────────────────────────────────────────────────────
   {
     key: "primary_owner",
@@ -258,27 +245,6 @@ export const ROOM_SPECS_FIELDS: RoomSpecField[] = [
     type: "text",
     inEdit: false,
     reader: (r) => r.size ?? "",
-  },
-  {
-    name: "temperature",
-    label: "Temperature (C)",
-    type: "number",
-    inEdit: false,
-    reader: (r) => (r.temperature != null ? `${r.temperature} C` : ""),
-  },
-  {
-    name: "humidity",
-    label: "Humidity (%)",
-    type: "number",
-    inEdit: false,
-    reader: (r) => (r.humidity != null ? `${r.humidity} %` : ""),
-  },
-  {
-    name: "power_usage",
-    label: "Power Usage (kW)",
-    type: "number",
-    inEdit: false,
-    reader: (r) => (r.power_usage != null ? `${r.power_usage} kW` : ""),
   },
   { name: "label", label: "Label", type: "text", reader: (r) => r.label ?? "" },
 ];

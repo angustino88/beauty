@@ -7,15 +7,15 @@ import { Alert, Avatar, Modal, Skeleton, Typography } from 'antd';
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { getAvatarUrl } from '@/shared/utils/avatar';
 import type {
-  LeaderboardFilter, LabProfile, RankedLabItem,
-  RankedPersonaItem, TopProjectItem, UserProfile, WeeklyUsageItem,
+  LeaderboardFilter, RankedLabItem,
+  RankedPersonaItem, TopProjectItem, WeeklyUsageItem,
 } from '../../types';
 import {
   useLazyGetUserProfileQuery, useLazyGetUserWeeklyUsageQuery,
   useLazyGetLabProfileQuery, useLazyGetLabWeeklyUsageQuery,
 } from '../../api';
 import {
-  toDateTime, toHours, toNumber, toPercent, toPercentAbsolute,
+  toDateTime, toHours, toNumber, toPercent,
 } from '../../formatters';
 import { TopProjectsBar } from '../charts/TopProjectsBar';
 import { WeeklyUsageHeatmap } from '../charts/WeeklyUsageHeatmap';
@@ -53,8 +53,6 @@ export function LeaderboardDetailModal({ open, type, userRow, labRow, filter, on
   // mounted flag prevents state updates after modal closes (race condition guard).
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [labProfile, setLabProfile] = useState<LabProfile | null>(null);
   const [weeklyUsage, setWeeklyUsage] = useState<WeeklyUsageItem[]>([]);
   const [topProjects, setTopProjects] = useState<TopProjectItem[]>([]);
 
@@ -79,8 +77,6 @@ export function LeaderboardDetailModal({ open, type, userRow, labRow, filter, on
             fetchUserWeeklyUsage(arg).unwrap(),
           ]);
           if (!mounted) return;
-          setUserProfile(profileResult);
-          setLabProfile(null);
           setWeeklyUsage(usageResult);
           setTopProjects(profileResult.top_projects ?? []);
         } else {
@@ -89,8 +85,6 @@ export function LeaderboardDetailModal({ open, type, userRow, labRow, filter, on
             fetchLabWeeklyUsage(arg).unwrap(),
           ]);
           if (!mounted) return;
-          setLabProfile(profileResult);
-          setUserProfile(null);
           setWeeklyUsage(usageResult);
           setTopProjects(profileResult.top_projects ?? []);
         }
@@ -110,29 +104,26 @@ export function LeaderboardDetailModal({ open, type, userRow, labRow, filter, on
   const avatarSrc = getAvatarUrl(userRow?.avatar ?? null, userRow?.username ?? null) ?? undefined;
 
   const personaMetrics = useMemo<MetricRowProps[]>(() => [
-    { icon: <ClockCircleOutlined />, title: 'Last Remote',        value: toDateTime(userProfile?.last_remote) },
-    { icon: <TeamOutlined />,        title: 'Total Sessions',     value: toNumber(userProfile?.total_sessions) },
-    { icon: <LineChartOutlined />,   title: 'WFO',                value: toPercent(userProfile?.wfo_rate) },
-    { icon: <FieldTimeOutlined />,   title: 'Total Usage',        value: toHours(userProfile?.total_usage_minutes != null ? userProfile.total_usage_minutes / 60 : undefined) },
-    { icon: <LineChartOutlined />,   title: 'WFH',                value: toPercent(userProfile?.wfh_rate) },
-    { icon: <FieldTimeOutlined />,   title: 'Avg Session',        value: toHours(userProfile?.avg_session_minutes != null ? userProfile.avg_session_minutes / 60 : undefined) },
-    { icon: <FieldTimeOutlined />,   title: 'Work Late',          value: toPercent(userProfile?.late_rate) },
-    { icon: <FieldTimeOutlined />,   title: 'Longest Session',    value: toHours(userProfile?.longest_session_minutes != null ? userProfile.longest_session_minutes / 60 : undefined) },
-    { icon: <EnvironmentOutlined />, title: 'Labs Accessed',      value: toNumber(userProfile?.labs_accessed) },
-    { icon: <RadarChartOutlined />,  title: 'Usage Efficiency',   value: toPercent(userProfile?.usage_efficiency) },
-    { icon: <DesktopOutlined />,     title: 'Booking Compliance', value: toPercent(userProfile?.booking_compliance) },
-  ], [userProfile]);
+    { icon: <ClockCircleOutlined />, title: 'Last Remote',        value: toDateTime(userRow?.last_remote) },
+    { icon: <TeamOutlined />,        title: 'Total Sessions',     value: toNumber(userRow?.total_sessions) },
+    { icon: <LineChartOutlined />,   title: 'WFO',                value: toPercent(userRow?.wfo_rate) },
+    { icon: <FieldTimeOutlined />,   title: 'Total Usage',        value: toHours(userRow?.total_usage_minutes != null ? userRow.total_usage_minutes / 60 : undefined) },
+    { icon: <LineChartOutlined />,   title: 'WFH',                value: toPercent(userRow?.wfh_rate) },
+    { icon: <FieldTimeOutlined />,   title: 'Avg Session',        value: toHours(userRow?.avg_session_minutes != null ? userRow.avg_session_minutes / 60 : undefined) },
+    { icon: <FieldTimeOutlined />,   title: 'Work Late',          value: toPercent(userRow?.late_rate) },
+    { icon: <FieldTimeOutlined />,   title: 'Longest Session',    value: toHours(userRow?.longest_session_minutes != null ? userRow.longest_session_minutes / 60 : undefined) },
+    { icon: <EnvironmentOutlined />, title: 'Labs Accessed',      value: toNumber(userRow?.labs_accessed) },
+    { icon: <RadarChartOutlined />,  title: 'Usage Efficiency',   value: toPercent(userRow?.usage_efficiency) },
+    { icon: <DesktopOutlined />,     title: 'Booking Compliance', value: toPercent(userRow?.booking_compliance) },
+  ], [userRow]);
 
+  // The ranking row already carries these figures; the profile endpoint adds only the top projects.
   const labMetrics = useMemo<MetricRowProps[]>(() => [
-    { icon: <ClockCircleOutlined />, title: 'Last Remote',        value: toDateTime(labProfile?.last_remote) },
-    { icon: <TeamOutlined />,        title: 'Total Sessions',     value: toNumber(labProfile?.total_sessions) },
-    { icon: <UserOutlined />,        title: 'Active Users',       value: toNumber(labProfile?.active_users) },
-    { icon: <FieldTimeOutlined />,   title: 'Total Usage',        value: toHours(labProfile?.total_usage_minutes != null ? labProfile.total_usage_minutes / 60 : undefined) },
-    { icon: <LineChartOutlined />,   title: 'Utilization',        value: toPercent(labProfile?.utilization_rate) },
-    { icon: <FieldTimeOutlined />,   title: 'Downtime',           value: toHours(labProfile?.downtime_hours) },
-    { icon: <DesktopOutlined />,     title: 'Booking Compliance', value: toPercent(labProfile?.booking_compliance) },
-    { icon: <RadarChartOutlined />,  title: 'Availability',       value: toPercentAbsolute(labProfile?.availability) },
-  ], [labProfile]);
+    { icon: <ClockCircleOutlined />, title: 'Last Remote',        value: toDateTime(labRow?.last_remote) },
+    { icon: <TeamOutlined />,        title: 'Total Sessions',     value: toNumber(labRow?.total_sessions) },
+    { icon: <UserOutlined />,        title: 'Active Users',       value: toNumber(labRow?.active_users) },
+    { icon: <FieldTimeOutlined />,   title: 'Downtime',           value: toHours(labRow?.downtime_hours) },
+  ], [labRow]);
 
   const metrics = type === 'persona' ? personaMetrics : labMetrics;
 

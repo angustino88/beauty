@@ -54,27 +54,11 @@ export const dashboardApi = baseApi.injectEndpoints({
         searchParams.set('page', String(params.page));
         searchParams.set('page_size', String(params.page_size));
         if (params.search) searchParams.set('q', params.search);
-        if (params.status?.length) {
-          for (const status of params.status) {
-            searchParams.append('status', status);
-          }
-        }
+        // The list takes one value per filter and rejects repeated or unknown params, so a
+        // multi-select sends its first value; sample and license filters are applied on the page.
+        if (params.status?.length) searchParams.set('activity_status', params.status[0]);
         const groups = params.bench_group ?? params.lab_group;
-        if (groups?.length) {
-          for (const groupId of groups) {
-            searchParams.append('bench_group', String(groupId));
-          }
-        }
-        if (params.sample_ids?.length) {
-          for (const sampleId of params.sample_ids) {
-            searchParams.append('sample_ids', String(sampleId));
-          }
-        }
-        if (params.license_ids?.length) {
-          for (const licenseId of params.license_ids) {
-            searchParams.append('license_ids', String(licenseId));
-          }
-        }
+        if (groups?.length) searchParams.set('bench_group', String(groups[0]));
         if (params.is_favorite !== undefined) {
           searchParams.set('is_favorite', String(params.is_favorite));
         }

@@ -242,18 +242,11 @@ export function buildBookingListQuery(params: IBenchBookingListParams): string {
       let resolvedKey = key === 'project' ? 'project_id' : key;
       if (resolvedKey === 'starts_at') resolvedKey = 'starts_at_after';
       if (resolvedKey === 'ends_at') resolvedKey = 'starts_at_before';
-      if (values?.length) {
-        for (const value of values) {
-          searchParams.append(resolvedKey, String(value));
-        }
-      }
+      // The API takes one value per filter and rejects repeated params, so only the first is sent.
+      if (values?.length) searchParams.append(resolvedKey, String(values[0]));
     }
   }
-  if (bench_id?.length) {
-    for (const id of bench_id) {
-      searchParams.append('bench_id', String(id));
-    }
-  }
+  if (bench_id?.length) searchParams.append('bench_id', String(bench_id[0]));
 
   return searchParams.toString();
 }

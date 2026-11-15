@@ -59,7 +59,17 @@ export default function Dashboard() {
     refetch,
   } = useGetDashboardPageQuery(state.queryParams);
 
-  const tableData = pageData?.results ?? EMPTY_DATA;
+  // Sample and license filters have no server-side parameter; they narrow the loaded page.
+  const { sample_ids: sampleIds, license_ids: licenseIds } = state.columnFilters;
+  const tableData = useMemo(() => {
+    const rows = pageData?.results ?? EMPTY_DATA;
+    if (!sampleIds.length && !licenseIds.length) return rows;
+    return rows.filter(
+      (row) =>
+        (!sampleIds.length || (row.samples ?? []).some((sample) => sampleIds.includes(sample.id))) &&
+        (!licenseIds.length || (row.licenses ?? []).some((license) => licenseIds.includes(license.id))),
+    );
+  }, [pageData?.results, sampleIds, licenseIds]);
   const totalCount = pageData?.total_count ?? 0;
 
   const { handleFavoriteClick } = useDashboardFavorites();

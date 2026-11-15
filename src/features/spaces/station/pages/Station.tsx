@@ -1,3 +1,4 @@
+import { useGetUsersQuery } from "@/features/lab-equipment/shared";
 import { useCallback, useMemo, useState } from "react";
 import { skipToken } from "@reduxjs/toolkit/query";
 import { useLabsRoomsSlotsRetrieveByRoomIdQuery } from "@/shared/api/generated/api";
@@ -52,15 +53,26 @@ export default function StationPage() {
   // except the one this station already holds.
   const [formRoomId, setFormRoomId] = useState<number | null>(null);
   const [formSlotId, setFormSlotId] = useState<number | null>(null);
-  const { data: roomSlotsData } = useLabsRoomsSlotsRetrieveByRoomIdQuery(
-    formRoomId == null ? skipToken : { roomId: formRoomId, pageSize: 500 },
+  // Slots arrive 100 per page; read up to three pages so large rooms stay selectable.
+  const roomSlotsPage1 = useLabsRoomsSlotsRetrieveByRoomIdQuery(
+    formRoomId == null ? skipToken : { roomId: formRoomId, pageSize: 100, page: 1 },
+  );
+  const roomSlotsPage2 = useLabsRoomsSlotsRetrieveByRoomIdQuery(
+    formRoomId == null || !roomSlotsPage1.data?.meta.pagination.next ? skipToken : { roomId: formRoomId, pageSize: 100, page: 2 },
+  );
+  const roomSlotsPage3 = useLabsRoomsSlotsRetrieveByRoomIdQuery(
+    formRoomId == null || !roomSlotsPage2.data?.meta.pagination.next ? skipToken : { roomId: formRoomId, pageSize: 100, page: 3 },
+  );
+  const roomSlots = useMemo(
+    () => [roomSlotsPage1.data, roomSlotsPage2.data, roomSlotsPage3.data].flatMap((page) => page?.data ?? []),
+    [roomSlotsPage1.data, roomSlotsPage2.data, roomSlotsPage3.data],
   );
   const currentSlotId = editingStation?.slot_id ?? null;
   const slotOptions = useMemo(
-    () => (roomSlotsData?.data ?? [])
+    () => roomSlots
       .filter((slot) => !slot.is_occupied || slot.id === currentSlotId || slot.id === formSlotId)
       .map((slot) => ({ label: slot.slot_code, value: slot.id })),
-    [roomSlotsData, currentSlotId, formSlotId],
+    [roomSlots, currentSlotId, formSlotId],
   );
   const handleFormValues = useCallback((values: Record<string, unknown>) => {
     setFormRoomId(values.room_id == null || values.room_id === '' ? null : Number(values.room_id));
@@ -72,7 +84,9 @@ export default function StationPage() {
     value: String(room.id),
   })), [dropdownData?.rooms]);
   const roomFilters = useMemo(() => facetToAntdFilters(getFacetOptions(facets, 'room', 'room_id'))?.map(({ text, value }) => ({ text, value: String(value) })) ?? roomFallback, [facets, roomFallback]);
-  const ownerFilters = useMemo(() => facetToAntdFilters(getFacetOptions(facets, 'owner', 'owner_id', 'primary_owner'))?.map(({ text, value }) => ({ text, value: String(value) })) ?? [], [facets]);
+  const { data: users } = useGetUsersQuery();
+  const ownerFallback = useMemo(() => (users ?? []).map((u) => ({ text: u.display_name || u.username || String(u.id), value: String(u.id) })), [users]);
+  const ownerFilters = useMemo(() => facetToAntdFilters(getFacetOptions(facets, 'owner', 'owner_id', 'primary_owner'))?.map(({ text, value }) => ({ text, value: String(value) })) ?? ownerFallback, [facets, ownerFallback]);
   const statusFilters = useMemo(() => facetToAntdFilters(getFacetOptions(facets, 'status', 'status_type'))?.map(({ text, value }) => ({ text, value: String(value) })) ?? [], [facets]);
 
   const formFields: FieldConfig[] = useMemo(

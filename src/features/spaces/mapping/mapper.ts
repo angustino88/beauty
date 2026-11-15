@@ -183,7 +183,7 @@ export function mapResourceMappingDataToRows(rawData: unknown): ResourceMappingR
       bench_id: benchId,
       role: asNullableString(assignment.role) ?? undefined,
       position: asNullableNumber(assignment.position) ?? undefined,
-      is_monitored: typeof assignment.monitor === "boolean" ? assignment.monitor : undefined,
+      is_monitored: typeof assignment.is_monitored === "boolean" ? assignment.is_monitored : undefined,
       assigned_at: asNullableString(assignment.assigned_at) ?? undefined,
       display_status: eq.display_status && typeof eq.display_status === "object"
         ? {
@@ -291,7 +291,8 @@ export function mapBenchToMappingRow(benchRaw: unknown): ResourceMappingRow {
     required_utilities: mapUtilities(b.required_utilities),
   };
 
-  const rawStation = asRecord(b.station);
+  // A bench list item names its station as `setup_location`; the graph uses `station`.
+  const rawStation = asRecord(b.station ?? b.setup_location);
   const stationId = asNullableNumber(rawStation.id) ?? benchRef.setup_location_id;
   const station: MappingStationRef | null = stationId
     ? {
@@ -312,7 +313,7 @@ export function mapBenchToMappingRow(benchRaw: unknown): ResourceMappingRow {
         id: stationSlotId,
         station_id: asNumber(rawStationSlot.station_id || station?.id),
         position_index: asNumber(rawStationSlot.position_index),
-        slot_code: asString(rawStationSlot.slot_code),
+        slot_code: asString(rawStationSlot.slot_code || rawStationSlot.name),
         label: asNullableString(rawStationSlot.label) ?? undefined,
       }
     : null;
@@ -363,7 +364,7 @@ export function mapBenchToMappingRow(benchRaw: unknown): ResourceMappingRow {
       bench_id: id,
       role: asNullableString(eq.role) ?? undefined,
       position: asNullableNumber(eq.position) ?? undefined,
-      is_monitored: typeof eq.monitor === "boolean" ? eq.monitor : undefined,
+      is_monitored: typeof eq.is_monitored === "boolean" ? eq.is_monitored : undefined,
       assigned_at: asNullableString(eq.assigned_at) ?? undefined,
       display_status: eq.display_status && typeof eq.display_status === "object"
         ? {
