@@ -7,8 +7,8 @@ const record = (value: unknown): Record<string, unknown> =>
 const fields = [
   'sku', 'name', 'kind_id', 'type_id', 'manufacturer_id', 'product_model_id',
   'serial_number', 'log_label', 'details', 'metadata', 'replacement_date',
-  'firmware_version', 'power_draw_w', 'weight_kg', 'warranty_until',
-  'calibration_required', 'mac_address', 'channels', 'power_rating', 'dimensions',
+  'firmware_version', 'power_draw_w', 'weight_kg', 'warranty_end_date',
+  'is_calibration_required', 'mac_address', 'channels', 'power_rating', 'dimensions',
   'owner_id', 'department_id', 'group_id', 'material_id', 'size_id',
   'resolution_id', 'protocol_id', 'customer_id', 'interfaces_ids', 'characteristics_ids',
 ] as const;
@@ -35,6 +35,7 @@ export function mapEquipmentRead(item: EquipmentItemRead | EquipmentDetailRead):
   const metadata = record(item.metadata);
   return {
     ...item,
+    image: item.image_url ?? null,
     status: item.display_status,
     remark: typeof metadata.remark === 'string' ? metadata.remark : null,
     information: typeof metadata.information === 'string' ? metadata.information : null,

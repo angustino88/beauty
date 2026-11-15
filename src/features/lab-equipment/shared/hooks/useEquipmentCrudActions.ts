@@ -4,6 +4,7 @@ type MutationResult = { unwrap: () => Promise<unknown> };
 
 type UpdateMutation<TBody> = (args: { id: number; body: TBody }) => MutationResult;
 type UpdateImageMutation = (args: { id: number; image: File }) => MutationResult;
+type DeleteImageMutation = (id: number) => MutationResult;
 type DeleteMutation = (id: number) => MutationResult;
 export interface EquipmentStatusValues {
   status_type: string;
@@ -19,6 +20,7 @@ export interface EquipmentCrudLabels {
 interface UseEquipmentCrudActionsConfig<TUpdateBody> {
   updateMutation: UpdateMutation<TUpdateBody>;
   updateImageMutation: UpdateImageMutation;
+  deleteImageMutation?: DeleteImageMutation;
   deleteMutation: DeleteMutation;
   labels: EquipmentCrudLabels;
   mapStatusBody: (values: EquipmentStatusValues) => TUpdateBody;
@@ -58,6 +60,7 @@ const normalizeStatusBody = <TUpdateBody>(
 export function useEquipmentCrudActions<TUpdateBody>({
   updateMutation,
   updateImageMutation,
+  deleteImageMutation,
   deleteMutation,
   labels,
   mapStatusBody,
@@ -75,6 +78,15 @@ export function useEquipmentCrudActions<TUpdateBody>({
   const updateImage = async (id: number, imageFile: File) => {
     try {
       await updateImageMutation({ id, image: imageFile }).unwrap();
+    } catch (err) {
+      notifyEquipmentError('update', 'image', err);
+    }
+  };
+
+  const removeImage = async (id: number) => {
+    if (!deleteImageMutation) return;
+    try {
+      await deleteImageMutation(id).unwrap();
     } catch (err) {
       notifyEquipmentError('update', 'image', err);
     }
@@ -102,6 +114,7 @@ export function useEquipmentCrudActions<TUpdateBody>({
   return {
     updateInline,
     updateImage,
+    removeImage,
     updateStatus,
     deleteById,
   };

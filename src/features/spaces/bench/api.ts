@@ -18,6 +18,7 @@ import {
   mapBenchListApiResponse,
 } from "./mapper";
 import { normalizeFilterFacets, type FilterFacets } from "@/features/lab-equipment/shared/facets/filterFacets";
+import { resourceImageFormData, resourceImageUrl } from "@/shared/lib/api/resourceImage";
 
 const ENDPOINTS = createResourceEndpoints("labs/benches");
 const TAG = "Bench";
@@ -33,12 +34,24 @@ generatedApi.enhanceEndpoints({
 
 export const benchApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
+    updateBenchImage: build.mutation<void, { id: number; image: File }>({
+      query: ({ id, image }) => ({
+        url: resourceImageUrl("benches", id),
+        method: "PUT",
+        body: resourceImageFormData(image),
+      }),
+      invalidatesTags: (_r, _e, { id }) => [...generateItemTag(TAG, id), ...invalidateList(TAG)],
+    }),
+    deleteBenchImage: build.mutation<void, number>({
+      query: (id) => ({ url: resourceImageUrl("benches", id), method: "DELETE" }),
+      invalidatesTags: (_r, _e, id) => [...generateItemTag(TAG, id), ...invalidateList(TAG)],
+    }),
     getBenches: build.query<IBenchListResponse, IBenchParams>({
       query: (params) => {
         const queryParams = new URLSearchParams();
         if (params.page) queryParams.set("page", String(params.page));
         if (params.page_size) queryParams.set("page_size", String(params.page_size));
-        if (params.search) queryParams.set("search", params.search);
+        if (params.search) queryParams.set("q", params.search);
         if (params.ordering) queryParams.set("ordering", params.ordering);
         if (params.bench_group_id != null) queryParams.set("bench_group_id", String(params.bench_group_id));
         if (params.type_id != null) queryParams.set("type_id", String(params.type_id));
@@ -116,8 +129,8 @@ export const benchApi = baseApi.injectEndpoints({
 
     unfavoriteBench: build.mutation<void, number>({
       query: (id) => ({
-        url: `/api/labs/benches/${id}/actions/unfavorite`,
-        method: "POST",
+        url: `/api/labs/benches/${id}/actions/favorite`,
+        method: "DELETE",
       }),
       invalidatesTags: (_res, _err, id) => [...generateItemTag(TAG, id), ...invalidateList(TAG)],
     }),
@@ -153,6 +166,8 @@ export const {
   useGetBenchFiltersQuery,
   useFavoriteBenchMutation,
   useUnfavoriteBenchMutation,
+  useUpdateBenchImageMutation,
+  useDeleteBenchImageMutation,
   useChangeBenchLifecycleMutation,
 } = benchApi;
 

@@ -93,7 +93,7 @@ export function mapStationApiItem(raw: unknown): IStation {
     temperature: asNullableNumber(st.temperature),
     humidity: asNullableNumber(st.humidity),
     power_usage: asNullableNumber(st.power_usage),
-    image: asNullableString(st.image),
+    image: asNullableString(st.image_url ?? st.image),
     location: asNullableString(st.location),
     location_string: asNullableString(st.location_string || st.location),
     slots: Array.isArray(st.slots)
@@ -104,7 +104,7 @@ export function mapStationApiItem(raw: unknown): IStation {
             slot_code: asString(slot.slot_code),
             label: asNullableString(slot.label),
             service_status: asNullableString(slot.service_status) ?? undefined,
-            occupied: Boolean(slot.occupied),
+            occupied: Boolean(slot.is_occupied),
           };
         })
       : undefined,

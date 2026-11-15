@@ -45,7 +45,7 @@ const patchDashboardPageCaches = (
 export const dashboardApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
     /**
-     * GET /api/labs/dashboard/?page=N&page_size=M&search=...&status=...&bench_group=...
+     * GET /api/labs/dashboard/?page=N&page_size=M&q=...&status=...&bench_group=...
      * Operational dashboard bench listing with real-time telemetry and schedule data.
      */
     getDashboardPage: build.query<DashboardPageResponse, DashboardPageParams>({
@@ -53,7 +53,7 @@ export const dashboardApi = baseApi.injectEndpoints({
         const searchParams = new URLSearchParams();
         searchParams.set('page', String(params.page));
         searchParams.set('page_size', String(params.page_size));
-        if (params.search) searchParams.set('search', params.search);
+        if (params.search) searchParams.set('q', params.search);
         if (params.status?.length) {
           for (const status of params.status) {
             searchParams.append('status', status);

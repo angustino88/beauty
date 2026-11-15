@@ -31,6 +31,7 @@ export function useMyBookingTable(
   const [approveBooking] = useApproveBenchBookingMutation();
   const [rejectBooking] = useRejectBenchBookingMutation();
   const currentUsername = user?.username;
+  const currentUserId = user?.id;
   const isShowingAll = isCoordinator && showAll;
 
   const queryParams = useMemo<IBenchBookingListParams>(() => {
@@ -42,12 +43,12 @@ export function useMyBookingTable(
       sorts: sorts.length ? sorts : ['id'],
       orders: sorts.length ? orders : ['desc'],
     };
-    if (search.trim()) params.search = search.trim();
-    if (!isShowingAll && currentUsername) {
-      params.creator = currentUsername;
+    if (search.trim()) params.q = search.trim();
+    if (!isShowingAll && currentUserId != null) {
+      params.creator_id = currentUserId;
     }
     return params;
-  }, [currentPage, pageSize, filterParams, sorts, orders, search, isShowingAll, currentUsername]);
+  }, [currentPage, pageSize, filterParams, sorts, orders, search, isShowingAll, currentUserId]);
 
   const { data, isFetching, refetch } = useGetBenchBookingsQuery(queryParams);
 

@@ -58,6 +58,7 @@ export default function BenchPage() {
       { name: "name", label: "Name", type: "text", required: true },
       { name: "group_id", label: "Bench Group", type: "select", options: groupOptions },
       { name: "remark", label: "Remark", type: "textarea" },
+      { name: "image", label: "Image", type: "image" as const },
     ],
     [groupOptions],
   );
@@ -117,8 +118,8 @@ export default function BenchPage() {
         mode="create"
         title="New Bench"
         fields={formFields}
-        onSubmit={async (values) => {
-          await form.createFromValues(values);
+        onSubmit={async (values, imageFile) => {
+          await form.createFromValues(values, imageFile);
           setCreateModalOpen(false);
           void table.refetch();
         }}
@@ -131,7 +132,7 @@ export default function BenchPage() {
         title="Edit Bench"
         fields={formFields}
         initialValues={editingBench ? { ...editingBench, group_id: editingBench.bench_group?.id } : undefined}
-        onSubmit={async (values) => {
+        onSubmit={async (values, imageFile) => {
           if (!editingBench) return;
           const payload: IBenchPayload = {
             sku: String(values.sku ?? ''),
@@ -140,6 +141,8 @@ export default function BenchPage() {
             remark: values.remark == null ? (editingBench.remark ?? "") : String(values.remark),
           };
           await form.updateInline(editingBench.id, payload);
+          if (imageFile) await form.updateImage(editingBench.id, imageFile);
+          else if (imageFile === null) await form.removeImage(editingBench.id);
           setEditingBench(null);
           void table.refetch();
         }}

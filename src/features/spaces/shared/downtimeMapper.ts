@@ -33,7 +33,7 @@ export function mapDowntimeItem(raw: unknown): Downtime {
     >,
     kind: mapChoice(d.kind, 'planned', 'Planned') as Choice<DowntimeKind>,
     reason: mapChoice(d.reason, 'other', 'Other') as Choice<DowntimeReason>,
-    state: (typeof d.state === 'string' ? d.state : 'scheduled') as DowntimeState,
+    state: mapChoice(d.state, 'scheduled', 'Scheduled').value as DowntimeState,
     starts_at: String(d.starts_at || ''),
     ends_at: typeof d.ends_at === 'string' && d.ends_at.trim() ? d.ends_at : null,
     cancelled_at: typeof d.cancelled_at === 'string' && d.cancelled_at.trim() ? d.cancelled_at : null,
@@ -41,15 +41,15 @@ export function mapDowntimeItem(raw: unknown): Downtime {
     actor: actor
       ? {
           id: Number(actor.id) || 0,
-          username: String(actor.username || ''),
-          display_name: String(actor.display_name || actor.username || ''),
+          username: String(actor.name || ''),
+          display_name: String(actor.name || ''),
         }
       : null,
     ended_by: endedBy
       ? {
           id: Number(endedBy.id) || 0,
-          username: String(endedBy.username || ''),
-          display_name: String(endedBy.display_name || endedBy.username || ''),
+          username: String(endedBy.name || ''),
+          display_name: String(endedBy.name || ''),
         }
       : null,
     created_at: String(d.created_at || ''),

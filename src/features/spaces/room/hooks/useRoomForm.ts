@@ -3,6 +3,7 @@ import {
     useDeleteRoomMutation,
     useUpdateRoomMutation,
     useUpdateRoomImageMutation,
+    useDeleteRoomImageMutation,
 } from '../api';
 import { notifyEquipmentCreated, notifyEquipmentError, useEquipmentCrudActions } from '@/features/lab-equipment/shared';
 import type { IRoomPayload } from '../types';
@@ -22,10 +23,12 @@ export function useRoomForm() {
     const [updateRoom,          { isLoading: updating }] = useUpdateRoomMutation();
     const [deleteRoom,          { isLoading: deleting }] = useDeleteRoomMutation();
     const [updateRoomImageMutation]                       = useUpdateRoomImageMutation();
+    const [deleteRoomImageMutation]                       = useDeleteRoomImageMutation();
 
     const actions = useEquipmentCrudActions<IRoomPayload>({
         updateMutation:      updateRoom,
         updateImageMutation: updateRoomImageMutation,
+        deleteImageMutation: deleteRoomImageMutation,
         deleteMutation:      deleteRoom,
         mapStatusBody:       (values) => values as unknown as IRoomPayload,
         labels: { entityName: 'Room', entityNameLower: 'room', errorPrefix: 'room' },

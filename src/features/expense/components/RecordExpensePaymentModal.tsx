@@ -45,6 +45,7 @@ export const RecordExpensePaymentModal: React.FC<RecordExpensePaymentModalProps>
     try {
       const payload: ICreateExpensePaymentPayload = {
         transaction_type: values.transaction_type,
+        currency,
         amount: Number(values.amount).toFixed(2),
         paid_at: values.paid_at.format('YYYY-MM-DD'),
         reference: values.reference?.trim() || undefined,

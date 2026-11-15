@@ -109,6 +109,8 @@ export interface ICreatePurchasePayload {
 export interface ICreatePurchaseItemPayload {
   description: string;
   quantity: number;
+  /** Line money uses the purchase currency (wire: `unit_price: {amount, currency}`). */
+  currency: string;
   unit_price: string;
   unit?: string;
   purpose?: string;
@@ -119,6 +121,7 @@ export interface ICreatePurchaseItemPayload {
 export interface IUpdatePurchaseItemPayload {
   description?: string;
   quantity?: number;
+  currency: string;
   unit_price?: string;
   unit?: string;
   purpose?: string;
@@ -138,6 +141,7 @@ export interface IUpdatePurchaseDraftHeaderPayload {
 
 export interface ICreatePurchaseTransactionPayload {
   transaction_type: TransactionType;
+  currency: string;
   amount: string;
   settled_at: string;
   reference?: string;
@@ -148,5 +152,6 @@ export interface IAllocateResourcePayload {
   resource_kind?: ResourceKind;
   resource_type_id?: number;
   resource_id: number;
+  currency: string;
   acquisition_price: string;
 }

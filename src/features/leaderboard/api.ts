@@ -19,10 +19,10 @@ import {
 import type {
   LabsLeaderboardLabRetrieveApiResponse,
   LabsLeaderboardPersonaRetrieveApiResponse,
-  LabsProfileRetrieveByIdApiResponse,
-  LabsUsersProfileRetrieveByIdApiResponse,
-  LabsUsersWeeklyUsageRetrieveByIdApiResponse,
-  LabsWeeklyUsageRetrieveByIdApiResponse,
+  LabsBenchesProfileRetrieveByIdApiResponse,
+  LabsLeaderboardUsersProfileRetrieveByIdApiResponse,
+  LabsLeaderboardUsersWeeklyUsageRetrieveByIdApiResponse,
+  LabsBenchesWeeklyUsageRetrieveByIdApiResponse,
 } from '@/shared/api/generated/api';
 
 export interface DetailQueryArg {
@@ -46,22 +46,22 @@ export const leaderboardApi = baseApi.injectEndpoints({
 
     getUserProfile: build.query<UserProfile, DetailQueryArg>({
       query: ({ id, filter }) => ({ url: `/api/labs/leaderboard/users/${id}/profile`, params: filter }),
-      transformResponse: (res: LabsUsersProfileRetrieveByIdApiResponse) => mapUserProfileResponse(res),
+      transformResponse: (res: LabsLeaderboardUsersProfileRetrieveByIdApiResponse) => mapUserProfileResponse(res),
     }),
 
     getUserWeeklyUsage: build.query<WeeklyUsageItem[], DetailQueryArg>({
       query: ({ id, filter }) => ({ url: `/api/labs/leaderboard/users/${id}/weekly-usage`, params: filter }),
-      transformResponse: (res: LabsUsersWeeklyUsageRetrieveByIdApiResponse) => mapUserWeeklyUsageResponse(res),
+      transformResponse: (res: LabsLeaderboardUsersWeeklyUsageRetrieveByIdApiResponse) => mapUserWeeklyUsageResponse(res),
     }),
 
     getLabProfile: build.query<LabProfile, DetailQueryArg>({
       query: ({ id, filter }) => ({ url: `/api/labs/benches/${id}/profile`, params: filter }),
-      transformResponse: (res: LabsProfileRetrieveByIdApiResponse) => mapLabProfileResponse(res),
+      transformResponse: (res: LabsBenchesProfileRetrieveByIdApiResponse) => mapLabProfileResponse(res),
     }),
 
     getLabWeeklyUsage: build.query<WeeklyUsageItem[], DetailQueryArg>({
       query: ({ id, filter }) => ({ url: `/api/labs/benches/${id}/weekly-usage`, params: filter }),
-      transformResponse: (res: LabsWeeklyUsageRetrieveByIdApiResponse) => mapLabWeeklyUsageResponse(res),
+      transformResponse: (res: LabsBenchesWeeklyUsageRetrieveByIdApiResponse) => mapLabWeeklyUsageResponse(res),
     }),
   }),
   overrideExisting: false,

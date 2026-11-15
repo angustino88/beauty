@@ -82,7 +82,7 @@ export function mapRoomApiItem(raw: unknown): IRoom {
     status: normalizeSpaceStatus(room.status) || normalizeSpaceStatus(currentStatus?.status_type) || normalizeSpaceStatus(currentStatus?.status) || null,
     lab_audit: mapLabAudit(room.lab_audit),
     remark: (room.remark as string) ?? null,
-    image: (room.image as string) ?? null,
+    image: (room.image_url ?? room.image ?? null) as string | null,
   };
 }
 

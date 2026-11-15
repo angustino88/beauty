@@ -68,6 +68,7 @@ export default function StationPage() {
       { name: "network_port_capacity", label: "Network Ports", type: "number" },
       { name: "label", label: "Position Label", type: "text" },
       { name: "remark", label: "Remark", type: "textarea" },
+      { name: "image", label: "Image", type: "image" as const },
     ],
     [roomOptions],
   );
@@ -142,8 +143,8 @@ export default function StationPage() {
         mode="create"
         title="New Station"
         fields={formFields}
-        onSubmit={async (values) => {
-          await form.createFromValues(values);
+        onSubmit={async (values, imageFile) => {
+          await form.createFromValues(values, imageFile);
           setCreateModalOpen(false);
           void table.refetch();
         }}
@@ -159,7 +160,7 @@ export default function StationPage() {
           ...editingStation,
           room_id: editingStation.room?.id ?? editingStation.room_id,
         } : undefined}
-        onSubmit={async (values) => {
+        onSubmit={async (values, imageFile) => {
           if (!editingStation) return;
           const payload: IStationPayload = {
             sku: String(values.sku ?? ''),
@@ -175,6 +176,8 @@ export default function StationPage() {
             remark: values.remark == null ? (editingStation.remark ?? "") : String(values.remark),
           };
           await form.updateInline(editingStation.id, payload);
+          if (imageFile) await form.updateImage(editingStation.id, imageFile);
+          else if (imageFile === null) await form.removeImage(editingStation.id);
           setEditingStation(null);
           void table.refetch();
         }}

@@ -8,7 +8,7 @@ import { useAuthState } from '@/features/auth/hooks/useAuthState';
 const CALENDAR_DATETIME_FORMAT = 'YYYY-MM-DDTHH:mm:ss';
 
 export function useBookingCalendarEvents() {
-  const { id: myUserId, username: myUsername, permissionGroups } = useAuthState();
+  const { id: myUserId, permissionGroups } = useAuthState();
   const [bookingEvents, setBookingEvents] = useState<EventInput[]>([]);
   const [fetchBookings, { isFetching: isFetchingBookings }] = useLazyGetBenchBookingsQuery();
   const [fetchDowntimes, { isFetching: isFetchingDowntimes }] = useLazyGetDowntimesQuery();
@@ -61,9 +61,7 @@ export function useBookingCalendarEvents() {
 
             const access =
               !!permissionGroups['lab-coordinator'] ||
-              (myUserId !== null && booking.creator?.id === myUserId) ||
-              (booking.creator?.username != null &&
-                booking.creator.username.trim().toLowerCase() === myUsername.trim().toLowerCase());
+              (myUserId !== null && booking.creator?.id === myUserId);
 
             const diffHours = dayjs(endStr).diff(dayjs(startStr), 'hours');
             const projectName = booking.project?.name || 'Unknown Project';
@@ -134,7 +132,7 @@ export function useBookingCalendarEvents() {
         },
       );
     },
-    [fetchBookings, fetchDowntimes, myUserId, myUsername, permissionGroups],
+    [fetchBookings, fetchDowntimes, myUserId, permissionGroups],
   );
 
   return {

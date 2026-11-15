@@ -11,6 +11,7 @@ import { ChartEmpty, RankedList, formatNumber, useChartTheme } from '@/shared/ch
 import { equipmentStatusLabel, equipmentStatusTone } from '@/features/lab-equipment/shared/utils/equipmentStatus';
 import { DEFAULT_DURATION, DEFAULT_TIMEZONE } from '../../utils/charts';
 import styles from './OperationalAnalyticsCards.module.css';
+import type { EquipmentAvailabilityItemRead } from '@/shared/api/generated/api';
 
 const { RangePicker } = DatePicker;
 const hours = (value: unknown) => `${formatNumber(Number(value ?? 0))} h`;
@@ -60,7 +61,7 @@ export function OperationalAnalyticsCards() {
                       color={theme.series[0]}
                       unit="h"
                       items={[...bookingData.benches].sort((a, b) => b.booked_hours - a.booked_hours).slice(0, 5)
-                        .map((bench) => ({ key: String(bench.bench_id), label: bench.bench_name, value: bench.booked_hours }))}
+                        .map((bench) => ({ key: String(bench.bench.id), label: bench.bench.name, value: bench.booked_hours }))}
                     />
                   ) : <ChartEmpty>No bench bookings in this period</ChartEmpty>}
                 </>
@@ -79,12 +80,12 @@ export function OperationalAnalyticsCards() {
                   </StatGrid>
                   <Table
                     className={styles.table}
-                    rowKey="equipment_id"
+                    rowKey={(row) => String(row.equipment.id)}
                     size="small"
                     pagination={{ pageSize: 5, hideOnSinglePage: true }}
                     dataSource={equipmentData.items}
                     columns={[
-                      { title: 'Equipment', dataIndex: 'equipment_name', ellipsis: true },
+                      { title: 'Equipment', key: 'equipment', ellipsis: true, render: (_: unknown, row: EquipmentAvailabilityItemRead) => row.equipment.name },
                       {
                         title: 'Uptime', dataIndex: 'uptime_percent', width: 132,
                         render: (value: number) => {
@@ -100,7 +101,7 @@ export function OperationalAnalyticsCards() {
                       },
                       {
                         title: 'Downtime', dataIndex: 'unavailable_hours', align: 'right', width: 110,
-                        render: (value: number, row: { outage_count?: number }) => (
+                        render: (value: number, row: EquipmentAvailabilityItemRead) => (
                           <span className={styles.downtime}>{hours(value)}<small>{row.outage_count ?? 0} {row.outage_count === 1 ? 'outage' : 'outages'}</small></span>
                         ),
                       },

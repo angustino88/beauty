@@ -61,7 +61,7 @@ export const AllocateResourceModal: React.FC<AllocateResourceModalProps> = ({
   // 1. Equipment query (uses full equipment catalog list, does not 400 when empty)
   const { data: equipmentData, isFetching: loadingEquipment } =
     useLabsEquipmentRetrieveQuery(
-      { search: search || undefined },
+      { q: search || undefined },
       { skip: !open || selectedKind !== 'equipment' || inputMode !== 'select' },
     );
 
@@ -89,6 +89,7 @@ export const AllocateResourceModal: React.FC<AllocateResourceModalProps> = ({
   const handleFinish = async (values: FormValues) => {
     try {
       const payload: IAllocateResourcePayload = {
+        currency,
         resource_kind: values.resource_kind,
         resource_id: Number(values.resource_id),
         acquisition_price: Number(values.acquisition_price).toFixed(2),

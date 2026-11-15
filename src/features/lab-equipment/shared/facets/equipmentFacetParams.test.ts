@@ -15,7 +15,7 @@ test('Kind menu retains alternatives after Kind and descendants are selected', (
   assert.equal(params.product_model_id, undefined);
   assert.equal(params.owner_id, '5');
   assert.equal(params.status, 'AVAILABLE');
-  assert.equal(params.search, 'laptop');
+  assert.equal(params.q, 'laptop');
 });
 
 test('Type menu is scoped to Kind but not locked to its own selection or model', () => {

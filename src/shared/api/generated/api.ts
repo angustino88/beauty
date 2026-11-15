@@ -180,18 +180,6 @@ const injectedRtkApi = api.injectEndpoints({
         },
       }),
     }),
-    labsAnalyticsDashboardSummaryRetrieve: build.query<
-      LabsAnalyticsDashboardSummaryRetrieveApiResponse,
-      LabsAnalyticsDashboardSummaryRetrieveApiArg
-    >({
-      query: (queryArg) => ({
-        url: `/api/labs/analytics/dashboard-summary`,
-        params: {
-          from_date_time: queryArg.fromDateTime,
-          to_date_time: queryArg.toDateTime,
-        },
-      }),
-    }),
     labsAnalyticsEquipmentAvailabilityRetrieve: build.query<
       LabsAnalyticsEquipmentAvailabilityRetrieveApiResponse,
       LabsAnalyticsEquipmentAvailabilityRetrieveApiArg
@@ -278,12 +266,6 @@ const injectedRtkApi = api.injectEndpoints({
       LabsAnalyticsLabEquipmentStatusRetrieveApiArg
     >({
       query: () => ({ url: `/api/labs/analytics/lab-equipment-status` }),
-    }),
-    labsAnalyticsLabGroupRetrieve: build.query<
-      LabsAnalyticsLabGroupRetrieveApiResponse,
-      LabsAnalyticsLabGroupRetrieveApiArg
-    >({
-      query: () => ({ url: `/api/labs/analytics/lab-group` }),
     }),
     labsAnalyticsLabUsageByTimeframeRetrieve: build.query<
       LabsAnalyticsLabUsageByTimeframeRetrieveApiResponse,
@@ -420,9 +402,9 @@ const injectedRtkApi = api.injectEndpoints({
           auditor_id: queryArg.auditorId,
           page: queryArg.page,
           page_size: queryArg.pageSize,
+          q: queryArg.q,
           resource_type: queryArg.resourceType,
           result: queryArg.result,
-          search: queryArg.search,
         },
       }),
     }),
@@ -468,7 +450,6 @@ const injectedRtkApi = api.injectEndpoints({
           page_size: queryArg.pageSize,
           project_id: queryArg.projectId,
           q: queryArg.q,
-          search: queryArg.search,
           starts_at_after: queryArg.startsAtAfter,
           starts_at_before: queryArg.startsAtBefore,
           status: queryArg.status,
@@ -583,10 +564,10 @@ const injectedRtkApi = api.injectEndpoints({
       query: (queryArg) => ({
         url: `/api/labs/bench-bookings/reference-data/projects`,
         params: {
-          active: queryArg.active,
+          is_active: queryArg.isActive,
           page: queryArg.page,
           page_size: queryArg.pageSize,
-          search: queryArg.search,
+          q: queryArg.q,
         },
       }),
     }),
@@ -754,7 +735,6 @@ const injectedRtkApi = api.injectEndpoints({
           page: queryArg.page,
           page_size: queryArg.pageSize,
           q: queryArg.q,
-          search: queryArg.search,
           setup_location_id: queryArg.setupLocationId,
           status: queryArg.status,
           type_id: queryArg.typeId,
@@ -854,15 +834,6 @@ const injectedRtkApi = api.injectEndpoints({
         body: queryArg.patchedBenchPlacement,
       }),
     }),
-    labsBenchesActionsUnfavoriteCreateByBenchId: build.mutation<
-      LabsBenchesActionsUnfavoriteCreateByBenchIdApiResponse,
-      LabsBenchesActionsUnfavoriteCreateByBenchIdApiArg
-    >({
-      query: (queryArg) => ({
-        url: `/api/labs/benches/${queryArg.benchId}/actions/unfavorite`,
-        method: "POST",
-      }),
-    }),
     labsBenchesEquipmentRetrieveByBenchId: build.query<
       LabsBenchesEquipmentRetrieveByBenchIdApiResponse,
       LabsBenchesEquipmentRetrieveByBenchIdApiArg
@@ -873,6 +844,33 @@ const injectedRtkApi = api.injectEndpoints({
           page: queryArg.page,
           page_size: queryArg.pageSize,
         },
+      }),
+    }),
+    labsBenchesImageRetrieveByBenchId: build.query<
+      LabsBenchesImageRetrieveByBenchIdApiResponse,
+      LabsBenchesImageRetrieveByBenchIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/benches/${queryArg.benchId}/image`,
+      }),
+    }),
+    labsBenchesImageUpdateByBenchId: build.mutation<
+      LabsBenchesImageUpdateByBenchIdApiResponse,
+      LabsBenchesImageUpdateByBenchIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/benches/${queryArg.benchId}/image`,
+        method: "PUT",
+        body: queryArg.resourceImageUpload,
+      }),
+    }),
+    labsBenchesImageDestroyByBenchId: build.mutation<
+      LabsBenchesImageDestroyByBenchIdApiResponse,
+      LabsBenchesImageDestroyByBenchIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/benches/${queryArg.benchId}/image`,
+        method: "DELETE",
       }),
     }),
     labsBenchesProfileRetrieveById: build.query<
@@ -956,10 +954,10 @@ const injectedRtkApi = api.injectEndpoints({
       query: (queryArg) => ({
         url: `/api/labs/benches/reference-data/groups`,
         params: {
-          active: queryArg.active,
+          is_active: queryArg.isActive,
           page: queryArg.page,
           page_size: queryArg.pageSize,
-          search: queryArg.search,
+          q: queryArg.q,
         },
       }),
     }),
@@ -991,10 +989,10 @@ const injectedRtkApi = api.injectEndpoints({
       query: (queryArg) => ({
         url: `/api/labs/benches/reference-data/types`,
         params: {
-          active: queryArg.active,
+          is_active: queryArg.isActive,
           page: queryArg.page,
           page_size: queryArg.pageSize,
-          search: queryArg.search,
+          q: queryArg.q,
         },
       }),
     }),
@@ -1144,7 +1142,7 @@ const injectedRtkApi = api.injectEndpoints({
           location: queryArg.location,
           page: queryArg.page,
           page_size: queryArg.pageSize,
-          search: queryArg.search,
+          q: queryArg.q,
         },
       }),
     }),
@@ -1275,7 +1273,6 @@ const injectedRtkApi = api.injectEndpoints({
           protocol_id: queryArg.protocolId,
           q: queryArg.q,
           resolution_id: queryArg.resolutionId,
-          search: queryArg.search,
           size_id: queryArg.sizeId,
           status: queryArg.status,
           technical_user_id: queryArg.technicalUserId,
@@ -1595,33 +1592,6 @@ const injectedRtkApi = api.injectEndpoints({
         },
       }),
     }),
-    labsEquipmentActionsAssignRetrieveByEquipmentId: build.query<
-      LabsEquipmentActionsAssignRetrieveByEquipmentIdApiResponse,
-      LabsEquipmentActionsAssignRetrieveByEquipmentIdApiArg
-    >({
-      query: (queryArg) => ({
-        url: `/api/labs/equipment/${queryArg.equipmentId}/actions/assign`,
-      }),
-    }),
-    labsEquipmentActionsAssignCreateByEquipmentId: build.mutation<
-      LabsEquipmentActionsAssignCreateByEquipmentIdApiResponse,
-      LabsEquipmentActionsAssignCreateByEquipmentIdApiArg
-    >({
-      query: (queryArg) => ({
-        url: `/api/labs/equipment/${queryArg.equipmentId}/actions/assign`,
-        method: "POST",
-        body: queryArg.equipmentAssignment,
-      }),
-    }),
-    labsEquipmentActionsAssignDestroyByEquipmentId: build.mutation<
-      LabsEquipmentActionsAssignDestroyByEquipmentIdApiResponse,
-      LabsEquipmentActionsAssignDestroyByEquipmentIdApiArg
-    >({
-      query: (queryArg) => ({
-        url: `/api/labs/equipment/${queryArg.equipmentId}/actions/assign`,
-        method: "DELETE",
-      }),
-    }),
     labsEquipmentActionsChangeConditionCreateByEquipmentId: build.mutation<
       LabsEquipmentActionsChangeConditionCreateByEquipmentIdApiResponse,
       LabsEquipmentActionsChangeConditionCreateByEquipmentIdApiArg
@@ -1688,13 +1658,13 @@ const injectedRtkApi = api.injectEndpoints({
         url: `/api/labs/equipment/${queryArg.equipmentId}/assignment`,
       }),
     }),
-    labsEquipmentAssignmentCreateByEquipmentId: build.mutation<
-      LabsEquipmentAssignmentCreateByEquipmentIdApiResponse,
-      LabsEquipmentAssignmentCreateByEquipmentIdApiArg
+    labsEquipmentAssignmentUpdateByEquipmentId: build.mutation<
+      LabsEquipmentAssignmentUpdateByEquipmentIdApiResponse,
+      LabsEquipmentAssignmentUpdateByEquipmentIdApiArg
     >({
       query: (queryArg) => ({
         url: `/api/labs/equipment/${queryArg.equipmentId}/assignment`,
-        method: "POST",
+        method: "PUT",
         body: queryArg.equipmentAssignment,
       }),
     }),
@@ -1704,6 +1674,33 @@ const injectedRtkApi = api.injectEndpoints({
     >({
       query: (queryArg) => ({
         url: `/api/labs/equipment/${queryArg.equipmentId}/assignment`,
+        method: "DELETE",
+      }),
+    }),
+    labsEquipmentImageRetrieveByEquipmentId: build.query<
+      LabsEquipmentImageRetrieveByEquipmentIdApiResponse,
+      LabsEquipmentImageRetrieveByEquipmentIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/equipment/${queryArg.equipmentId}/image`,
+      }),
+    }),
+    labsEquipmentImageUpdateByEquipmentId: build.mutation<
+      LabsEquipmentImageUpdateByEquipmentIdApiResponse,
+      LabsEquipmentImageUpdateByEquipmentIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/equipment/${queryArg.equipmentId}/image`,
+        method: "PUT",
+        body: queryArg.resourceImageUpload,
+      }),
+    }),
+    labsEquipmentImageDestroyByEquipmentId: build.mutation<
+      LabsEquipmentImageDestroyByEquipmentIdApiResponse,
+      LabsEquipmentImageDestroyByEquipmentIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/equipment/${queryArg.equipmentId}/image`,
         method: "DELETE",
       }),
     }),
@@ -1844,7 +1841,6 @@ const injectedRtkApi = api.injectEndpoints({
           protocol_id: queryArg.protocolId,
           q: queryArg.q,
           resolution_id: queryArg.resolutionId,
-          search: queryArg.search,
           size_id: queryArg.sizeId,
           status: queryArg.status,
           technical_user_id: queryArg.technicalUserId,
@@ -1902,10 +1898,10 @@ const injectedRtkApi = api.injectEndpoints({
       query: (queryArg) => ({
         url: `/api/labs/equipment/reference-data/categories`,
         params: {
-          active: queryArg.active,
+          is_active: queryArg.isActive,
           page: queryArg.page,
           page_size: queryArg.pageSize,
-          search: queryArg.search,
+          q: queryArg.q,
         },
       }),
     }),
@@ -1924,10 +1920,10 @@ const injectedRtkApi = api.injectEndpoints({
       query: (queryArg) => ({
         url: `/api/labs/equipment/reference-data/departments`,
         params: {
-          active: queryArg.active,
+          is_active: queryArg.isActive,
           page: queryArg.page,
           page_size: queryArg.pageSize,
-          search: queryArg.search,
+          q: queryArg.q,
         },
       }),
     }),
@@ -1961,7 +1957,7 @@ const injectedRtkApi = api.injectEndpoints({
         params: {
           page: queryArg.page,
           page_size: queryArg.pageSize,
-          search: queryArg.search,
+          q: queryArg.q,
         },
       }),
     }),
@@ -1996,7 +1992,7 @@ const injectedRtkApi = api.injectEndpoints({
         params: {
           page: queryArg.page,
           page_size: queryArg.pageSize,
-          search: queryArg.search,
+          q: queryArg.q,
         },
       }),
     }),
@@ -2028,11 +2024,11 @@ const injectedRtkApi = api.injectEndpoints({
       query: (queryArg) => ({
         url: `/api/labs/equipment/reference-data/groups`,
         params: {
-          active: queryArg.active,
           department_id: queryArg.departmentId,
+          is_active: queryArg.isActive,
           page: queryArg.page,
           page_size: queryArg.pageSize,
-          search: queryArg.search,
+          q: queryArg.q,
         },
       }),
     }),
@@ -2066,7 +2062,7 @@ const injectedRtkApi = api.injectEndpoints({
         params: {
           page: queryArg.page,
           page_size: queryArg.pageSize,
-          search: queryArg.search,
+          q: queryArg.q,
         },
       }),
     }),
@@ -2098,11 +2094,11 @@ const injectedRtkApi = api.injectEndpoints({
       query: (queryArg) => ({
         url: `/api/labs/equipment/reference-data/kinds`,
         params: {
-          active: queryArg.active,
           category_id: queryArg.categoryId,
+          is_active: queryArg.isActive,
           page: queryArg.page,
           page_size: queryArg.pageSize,
-          search: queryArg.search,
+          q: queryArg.q,
         },
       }),
     }),
@@ -2134,10 +2130,10 @@ const injectedRtkApi = api.injectEndpoints({
       query: (queryArg) => ({
         url: `/api/labs/equipment/reference-data/manufacturers`,
         params: {
-          active: queryArg.active,
+          is_active: queryArg.isActive,
           page: queryArg.page,
           page_size: queryArg.pageSize,
-          search: queryArg.search,
+          q: queryArg.q,
         },
       }),
     }),
@@ -2171,7 +2167,7 @@ const injectedRtkApi = api.injectEndpoints({
         params: {
           page: queryArg.page,
           page_size: queryArg.pageSize,
-          search: queryArg.search,
+          q: queryArg.q,
         },
       }),
     }),
@@ -2205,7 +2201,7 @@ const injectedRtkApi = api.injectEndpoints({
         params: {
           page: queryArg.page,
           page_size: queryArg.pageSize,
-          search: queryArg.search,
+          q: queryArg.q,
         },
       }),
     }),
@@ -2242,7 +2238,7 @@ const injectedRtkApi = api.injectEndpoints({
           page: queryArg.page,
           page_size: queryArg.pageSize,
           product_model_id: queryArg.productModelId,
-          search: queryArg.search,
+          q: queryArg.q,
         },
       }),
     }),
@@ -2275,12 +2271,12 @@ const injectedRtkApi = api.injectEndpoints({
       query: (queryArg) => ({
         url: `/api/labs/equipment/reference-data/product-models`,
         params: {
-          active: queryArg.active,
           equipment_type_id: queryArg.equipmentTypeId,
+          is_active: queryArg.isActive,
           manufacturer_id: queryArg.manufacturerId,
           page: queryArg.page,
           page_size: queryArg.pageSize,
-          search: queryArg.search,
+          q: queryArg.q,
         },
       }),
     }),
@@ -2314,7 +2310,7 @@ const injectedRtkApi = api.injectEndpoints({
         params: {
           page: queryArg.page,
           page_size: queryArg.pageSize,
-          search: queryArg.search,
+          q: queryArg.q,
         },
       }),
     }),
@@ -2349,7 +2345,7 @@ const injectedRtkApi = api.injectEndpoints({
         params: {
           page: queryArg.page,
           page_size: queryArg.pageSize,
-          search: queryArg.search,
+          q: queryArg.q,
         },
       }),
     }),
@@ -2381,11 +2377,11 @@ const injectedRtkApi = api.injectEndpoints({
       query: (queryArg) => ({
         url: `/api/labs/equipment/reference-data/specification-definitions`,
         params: {
-          active: queryArg.active,
           category_id: queryArg.categoryId,
+          is_active: queryArg.isActive,
           page: queryArg.page,
           page_size: queryArg.pageSize,
-          search: queryArg.search,
+          q: queryArg.q,
         },
       }),
     }),
@@ -2420,7 +2416,7 @@ const injectedRtkApi = api.injectEndpoints({
         params: {
           page: queryArg.page,
           page_size: queryArg.pageSize,
-          search: queryArg.search,
+          q: queryArg.q,
         },
       }),
     }),
@@ -2452,11 +2448,11 @@ const injectedRtkApi = api.injectEndpoints({
       query: (queryArg) => ({
         url: `/api/labs/equipment/reference-data/types`,
         params: {
-          active: queryArg.active,
+          is_active: queryArg.isActive,
           kind_id: queryArg.kindId,
           page: queryArg.page,
           page_size: queryArg.pageSize,
-          search: queryArg.search,
+          q: queryArg.q,
         },
       }),
     }),
@@ -2543,7 +2539,7 @@ const injectedRtkApi = api.injectEndpoints({
       query: (queryArg) => ({
         url: `/api/labs/expenses/${queryArg.expenseId}/payments`,
         method: "POST",
-        body: queryArg.expensePayment,
+        body: queryArg.expensePaymentWrite,
       }),
     }),
     labsExpensesReportRetrieve: build.query<
@@ -2552,23 +2548,6 @@ const injectedRtkApi = api.injectEndpoints({
     >({
       query: (queryArg) => ({
         url: `/api/labs/expenses/report`,
-        params: {
-          billing_period: queryArg.billingPeriod,
-          currency: queryArg.currency,
-          expense_type: queryArg.expenseType,
-          from_date: queryArg.fromDate,
-          room_id: queryArg.roomId,
-          status: queryArg.status,
-          to_date: queryArg.toDate,
-        },
-      }),
-    }),
-    labsFinancialReportRetrieve: build.query<
-      LabsFinancialReportRetrieveApiResponse,
-      LabsFinancialReportRetrieveApiArg
-    >({
-      query: (queryArg) => ({
-        url: `/api/labs/financial-report`,
         params: {
           billing_period: queryArg.billingPeriod,
           currency: queryArg.currency,
@@ -2620,54 +2599,6 @@ const injectedRtkApi = api.injectEndpoints({
     >({
       query: () => ({ url: `/api/labs/lab-dashboard` }),
     }),
-    labsLabDashboardSummaryRetrieve: build.query<
-      LabsLabDashboardSummaryRetrieveApiResponse,
-      LabsLabDashboardSummaryRetrieveApiArg
-    >({
-      query: () => ({ url: `/api/labs/lab-dashboard/summary` }),
-    }),
-    labsLabMonitoringRetrieve: build.query<
-      LabsLabMonitoringRetrieveApiResponse,
-      LabsLabMonitoringRetrieveApiArg
-    >({
-      query: (queryArg) => ({
-        url: `/api/labs/lab-monitoring`,
-        params: {
-          page: queryArg.page,
-          page_size: queryArg.pageSize,
-        },
-      }),
-    }),
-    labsLabMonitoringCreate: build.mutation<
-      LabsLabMonitoringCreateApiResponse,
-      LabsLabMonitoringCreateApiArg
-    >({
-      query: (queryArg) => ({
-        url: `/api/labs/lab-monitoring`,
-        method: "POST",
-        body: queryArg.monitoringEventCreate,
-      }),
-    }),
-    labsLabMonitoringExportRetrieve: build.query<
-      LabsLabMonitoringExportRetrieveApiResponse,
-      LabsLabMonitoringExportRetrieveApiArg
-    >({
-      query: (queryArg) => ({
-        url: `/api/labs/lab-monitoring/export`,
-        params: {
-          action: queryArg.action,
-          bench_id: queryArg.benchId,
-          computer_id: queryArg.computerId,
-          computer_sku: queryArg.computerSku,
-          from_date: queryArg.fromDate,
-          from_date_time: queryArg.fromDateTime,
-          lab: queryArg.lab,
-          subject_type: queryArg.subjectType,
-          to_date: queryArg.toDate,
-          to_date_time: queryArg.toDateTime,
-        },
-      }),
-    }),
     labsLabProjectsRetrieve: build.query<
       LabsLabProjectsRetrieveApiResponse,
       LabsLabProjectsRetrieveApiArg
@@ -2675,10 +2606,10 @@ const injectedRtkApi = api.injectEndpoints({
       query: (queryArg) => ({
         url: `/api/labs/lab-projects`,
         params: {
-          active: queryArg.active,
+          is_active: queryArg.isActive,
           page: queryArg.page,
           page_size: queryArg.pageSize,
-          search: queryArg.search,
+          q: queryArg.q,
         },
       }),
     }),
@@ -2940,7 +2871,6 @@ const injectedRtkApi = api.injectEndpoints({
           page: queryArg.page,
           page_size: queryArg.pageSize,
           q: queryArg.q,
-          search: queryArg.search,
           status: queryArg.status,
         },
       }),
@@ -2982,16 +2912,6 @@ const injectedRtkApi = api.injectEndpoints({
         body: queryArg.licenseStatus,
       }),
     }),
-    labsLicensesActionsUnassignCreateByLicenseId: build.mutation<
-      LabsLicensesActionsUnassignCreateByLicenseIdApiResponse,
-      LabsLicensesActionsUnassignCreateByLicenseIdApiArg
-    >({
-      query: (queryArg) => ({
-        url: `/api/labs/licenses/${queryArg.licenseId}/actions/unassign`,
-        method: "POST",
-        body: queryArg.licenseAssignmentRequest,
-      }),
-    }),
     labsLicensesAgreementsRetrieveByLicenseId: build.query<
       LabsLicensesAgreementsRetrieveByLicenseIdApiResponse,
       LabsLicensesAgreementsRetrieveByLicenseIdApiArg
@@ -3024,6 +2944,33 @@ const injectedRtkApi = api.injectEndpoints({
           page: queryArg.page,
           page_size: queryArg.pageSize,
         },
+      }),
+    }),
+    labsLicensesImageRetrieveByLicenseId: build.query<
+      LabsLicensesImageRetrieveByLicenseIdApiResponse,
+      LabsLicensesImageRetrieveByLicenseIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/licenses/${queryArg.licenseId}/image`,
+      }),
+    }),
+    labsLicensesImageUpdateByLicenseId: build.mutation<
+      LabsLicensesImageUpdateByLicenseIdApiResponse,
+      LabsLicensesImageUpdateByLicenseIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/licenses/${queryArg.licenseId}/image`,
+        method: "PUT",
+        body: queryArg.resourceImageUpload,
+      }),
+    }),
+    labsLicensesImageDestroyByLicenseId: build.mutation<
+      LabsLicensesImageDestroyByLicenseIdApiResponse,
+      LabsLicensesImageDestroyByLicenseIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/licenses/${queryArg.licenseId}/image`,
+        method: "DELETE",
       }),
     }),
     labsLicensesCategoriesSummaryRetrieve: build.query<
@@ -3059,7 +3006,7 @@ const injectedRtkApi = api.injectEndpoints({
         params: {
           page: queryArg.page,
           page_size: queryArg.pageSize,
-          search: queryArg.search,
+          q: queryArg.q,
         },
       }),
     }),
@@ -3093,7 +3040,7 @@ const injectedRtkApi = api.injectEndpoints({
         params: {
           page: queryArg.page,
           page_size: queryArg.pageSize,
-          search: queryArg.search,
+          q: queryArg.q,
           vendor_id: queryArg.vendorId,
         },
       }),
@@ -3128,7 +3075,7 @@ const injectedRtkApi = api.injectEndpoints({
         params: {
           page: queryArg.page,
           page_size: queryArg.pageSize,
-          search: queryArg.search,
+          q: queryArg.q,
         },
       }),
     }),
@@ -3162,7 +3109,7 @@ const injectedRtkApi = api.injectEndpoints({
         params: {
           page: queryArg.page,
           page_size: queryArg.pageSize,
-          search: queryArg.search,
+          q: queryArg.q,
         },
       }),
     }),
@@ -3196,7 +3143,7 @@ const injectedRtkApi = api.injectEndpoints({
         params: {
           page: queryArg.page,
           page_size: queryArg.pageSize,
-          search: queryArg.search,
+          q: queryArg.q,
         },
       }),
     }),
@@ -3237,7 +3184,7 @@ const injectedRtkApi = api.injectEndpoints({
           city_id: queryArg.cityId,
           page: queryArg.page,
           page_size: queryArg.pageSize,
-          search: queryArg.search,
+          q: queryArg.q,
         },
       }),
     }),
@@ -3272,7 +3219,7 @@ const injectedRtkApi = api.injectEndpoints({
           country_id: queryArg.countryId,
           page: queryArg.page,
           page_size: queryArg.pageSize,
-          search: queryArg.search,
+          q: queryArg.q,
         },
       }),
     }),
@@ -3306,7 +3253,7 @@ const injectedRtkApi = api.injectEndpoints({
         params: {
           page: queryArg.page,
           page_size: queryArg.pageSize,
-          search: queryArg.search,
+          q: queryArg.q,
         },
       }),
     }),
@@ -3340,7 +3287,7 @@ const injectedRtkApi = api.injectEndpoints({
         params: {
           page: queryArg.page,
           page_size: queryArg.pageSize,
-          search: queryArg.search,
+          q: queryArg.q,
         },
       }),
     }),
@@ -3412,18 +3359,6 @@ const injectedRtkApi = api.injectEndpoints({
           subject_type: queryArg.subjectType,
           to_date: queryArg.toDate,
           to_date_time: queryArg.toDateTime,
-        },
-      }),
-    }),
-    labsProfileRetrieveById: build.query<
-      LabsProfileRetrieveByIdApiResponse,
-      LabsProfileRetrieveByIdApiArg
-    >({
-      query: (queryArg) => ({
-        url: `/api/labs/profile/${queryArg.id}`,
-        params: {
-          end_date: queryArg.endDate,
-          start_date: queryArg.startDate,
         },
       }),
     }),
@@ -3586,7 +3521,7 @@ const injectedRtkApi = api.injectEndpoints({
       query: (queryArg) => ({
         url: `/api/labs/purchases/${queryArg.purchaseId}/transactions`,
         method: "POST",
-        body: queryArg.purchaseTransaction,
+        body: queryArg.purchaseTransactionWrite,
       }),
     }),
     labsResourcesAuditsRetrieveByResourceTypeResourceId: build.query<
@@ -3703,7 +3638,6 @@ const injectedRtkApi = api.injectEndpoints({
           page: queryArg.page,
           page_size: queryArg.pageSize,
           q: queryArg.q,
-          search: queryArg.search,
           status: queryArg.status,
         },
       }),
@@ -3820,7 +3754,7 @@ const injectedRtkApi = api.injectEndpoints({
       query: (queryArg) => ({
         url: `/api/labs/rooms/${queryArg.roomId}/expenses`,
         method: "POST",
-        body: queryArg.expense,
+        body: queryArg.expenseWrite,
       }),
     }),
     labsRoomsExpensesReportRetrieveByRoomId: build.query<
@@ -3850,6 +3784,33 @@ const injectedRtkApi = api.injectEndpoints({
           page: queryArg.page,
           page_size: queryArg.pageSize,
         },
+      }),
+    }),
+    labsRoomsImageRetrieveByRoomId: build.query<
+      LabsRoomsImageRetrieveByRoomIdApiResponse,
+      LabsRoomsImageRetrieveByRoomIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/rooms/${queryArg.roomId}/image`,
+      }),
+    }),
+    labsRoomsImageUpdateByRoomId: build.mutation<
+      LabsRoomsImageUpdateByRoomIdApiResponse,
+      LabsRoomsImageUpdateByRoomIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/rooms/${queryArg.roomId}/image`,
+        method: "PUT",
+        body: queryArg.resourceImageUpload,
+      }),
+    }),
+    labsRoomsImageDestroyByRoomId: build.mutation<
+      LabsRoomsImageDestroyByRoomIdApiResponse,
+      LabsRoomsImageDestroyByRoomIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/rooms/${queryArg.roomId}/image`,
+        method: "DELETE",
       }),
     }),
     labsRoomsObservationsRetrieveByRoomId: build.query<
@@ -4000,7 +3961,6 @@ const injectedRtkApi = api.injectEndpoints({
           page_size: queryArg.pageSize,
           q: queryArg.q,
           room_id: queryArg.roomId,
-          search: queryArg.search,
           status: queryArg.status,
           type_id: queryArg.typeId,
         },
@@ -4124,6 +4084,33 @@ const injectedRtkApi = api.injectEndpoints({
         },
       }),
     }),
+    labsStationsImageRetrieveByStationId: build.query<
+      LabsStationsImageRetrieveByStationIdApiResponse,
+      LabsStationsImageRetrieveByStationIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/stations/${queryArg.stationId}/image`,
+      }),
+    }),
+    labsStationsImageUpdateByStationId: build.mutation<
+      LabsStationsImageUpdateByStationIdApiResponse,
+      LabsStationsImageUpdateByStationIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/stations/${queryArg.stationId}/image`,
+        method: "PUT",
+        body: queryArg.resourceImageUpload,
+      }),
+    }),
+    labsStationsImageDestroyByStationId: build.mutation<
+      LabsStationsImageDestroyByStationIdApiResponse,
+      LabsStationsImageDestroyByStationIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/stations/${queryArg.stationId}/image`,
+        method: "DELETE",
+      }),
+    }),
     labsStationsSlotsRetrieveByStationId: build.query<
       LabsStationsSlotsRetrieveByStationIdApiResponse,
       LabsStationsSlotsRetrieveByStationIdApiArg
@@ -4221,32 +4208,6 @@ const injectedRtkApi = api.injectEndpoints({
     >({
       query: () => ({ url: `/api/labs/stations/status-summary` }),
     }),
-    labsUsersProfileRetrieveById: build.query<
-      LabsUsersProfileRetrieveByIdApiResponse,
-      LabsUsersProfileRetrieveByIdApiArg
-    >({
-      query: (queryArg) => ({
-        url: `/api/labs/users/profile/${queryArg.id}`,
-        params: {
-          end_date: queryArg.endDate,
-          start_date: queryArg.startDate,
-        },
-      }),
-    }),
-    labsUsersWeeklyUsageRetrieveById: build.query<
-      LabsUsersWeeklyUsageRetrieveByIdApiResponse,
-      LabsUsersWeeklyUsageRetrieveByIdApiArg
-    >({
-      query: (queryArg) => ({
-        url: `/api/labs/users/weekly-usage/${queryArg.id}`,
-      }),
-    }),
-    labsWeeklyUsageRetrieveById: build.query<
-      LabsWeeklyUsageRetrieveByIdApiResponse,
-      LabsWeeklyUsageRetrieveByIdApiArg
-    >({
-      query: (queryArg) => ({ url: `/api/labs/weekly-usage/${queryArg.id}` }),
-    }),
     loginCreate: build.mutation<LoginCreateApiResponse, LoginCreateApiArg>({
       query: (queryArg) => ({
         url: `/api/login`,
@@ -4278,7 +4239,7 @@ const injectedRtkApi = api.injectEndpoints({
       query: (queryArg) => ({
         url: `/api/notifications`,
         method: "POST",
-        body: queryArg.notification,
+        body: queryArg.notificationWrite,
       }),
     }),
     refreshTokenCreate: build.mutation<
@@ -4712,22 +4673,42 @@ const injectedRtkApi = api.injectEndpoints({
         body: queryArg.patchedTicketUpdateRequest,
       }),
     }),
+    supportTicketsActionsAssignCreateByKey: build.mutation<
+      SupportTicketsActionsAssignCreateByKeyApiResponse,
+      SupportTicketsActionsAssignCreateByKeyApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/support/tickets/${queryArg.key}/actions/assign`,
+        method: "POST",
+        body: queryArg.ticketAssignRequest,
+      }),
+    }),
+    supportTicketsActionsSubmitCsatCreateByKey: build.mutation<
+      SupportTicketsActionsSubmitCsatCreateByKeyApiResponse,
+      SupportTicketsActionsSubmitCsatCreateByKeyApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/support/tickets/${queryArg.key}/actions/submit-csat`,
+        method: "POST",
+        body: queryArg.csatRequest,
+      }),
+    }),
+    supportTicketsActionsTransitionCreateByKey: build.mutation<
+      SupportTicketsActionsTransitionCreateByKeyApiResponse,
+      SupportTicketsActionsTransitionCreateByKeyApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/support/tickets/${queryArg.key}/actions/transition`,
+        method: "POST",
+        body: queryArg.ticketTransitionRequest,
+      }),
+    }),
     supportTicketsActivityRetrieveByKey: build.query<
       SupportTicketsActivityRetrieveByKeyApiResponse,
       SupportTicketsActivityRetrieveByKeyApiArg
     >({
       query: (queryArg) => ({
         url: `/api/support/tickets/${queryArg.key}/activity`,
-      }),
-    }),
-    supportTicketsAssignCreateByKey: build.mutation<
-      SupportTicketsAssignCreateByKeyApiResponse,
-      SupportTicketsAssignCreateByKeyApiArg
-    >({
-      query: (queryArg) => ({
-        url: `/api/support/tickets/${queryArg.key}/assign`,
-        method: "POST",
-        body: queryArg.ticketAssignRequest,
       }),
     }),
     supportTicketsAttachmentsCreateByKey: build.mutation<
@@ -4786,16 +4767,6 @@ const injectedRtkApi = api.injectEndpoints({
         method: "DELETE",
       }),
     }),
-    supportTicketsCsatCreateByKey: build.mutation<
-      SupportTicketsCsatCreateByKeyApiResponse,
-      SupportTicketsCsatCreateByKeyApiArg
-    >({
-      query: (queryArg) => ({
-        url: `/api/support/tickets/${queryArg.key}/csat`,
-        method: "POST",
-        body: queryArg.csatRequest,
-      }),
-    }),
     supportTicketsLinksRetrieveByKey: build.query<
       SupportTicketsLinksRetrieveByKeyApiResponse,
       SupportTicketsLinksRetrieveByKeyApiArg
@@ -4840,16 +4811,6 @@ const injectedRtkApi = api.injectEndpoints({
       query: (queryArg) => ({
         url: `/api/support/tickets/${queryArg.key}/resources`,
         method: "DELETE",
-      }),
-    }),
-    supportTicketsTransitionsCreateByKey: build.mutation<
-      SupportTicketsTransitionsCreateByKeyApiResponse,
-      SupportTicketsTransitionsCreateByKeyApiArg
-    >({
-      query: (queryArg) => ({
-        url: `/api/support/tickets/${queryArg.key}/transitions`,
-        method: "POST",
-        body: queryArg.ticketTransitionRequest,
       }),
     }),
     supportTicketsWatchersCreateByKey: build.mutation<
@@ -5028,7 +4989,7 @@ export type EnrollAgentApiArg = {
   enrollAgentRequest: EnrollAgentRequest;
 };
 export type AgentReportActivityApiResponse =
-  /** status 200 Activity recorded */ AgentActivityResponse;
+  /** status 200 Activity recorded */ AgentActivityResponseRead;
 export type AgentReportActivityApiArg = {
   patchedAgentActivityReport: PatchedAgentActivityReport;
 };
@@ -5041,8 +5002,8 @@ export type GetAgentInfoApiResponse =
   /** status 200 Server agent metadata */ AgentInfoResponse;
 export type GetAgentInfoApiArg = void;
 export type AgentRecordSessionLogApiResponse =
-  | /** status 200 Same event already stored; no change */ AgentSessionLogResponse
-  | /** status 201 Session stored */ AgentSessionLogResponse;
+  | /** status 200 Same event already stored; no change */ AgentSessionLogResponseRead
+  | /** status 201 Session stored */ AgentSessionLogResponseRead;
 export type AgentRecordSessionLogApiArg = {
   agentSessionLogReport: AgentSessionLogReport;
 };
@@ -5094,7 +5055,7 @@ export type LabsAnalyticsBenchGroupRetrieveApiResponse =
   /** status 200  */ BenchGroupSummarySerializersBenchGroupSummaryListResponse;
 export type LabsAnalyticsBenchGroupRetrieveApiArg = void;
 export type LabsAnalyticsBookedVsUsedRetrieveApiResponse =
-  /** status 200  */ BookedVsUsedAnalyticsSerializersBookedVsUsedDetailResponse;
+  /** status 200  */ BookedVsUsedAnalyticsSerializersBookedVsUsedDetailResponseRead;
 export type LabsAnalyticsBookedVsUsedRetrieveApiArg = {
   fromDateTime: string;
   toDateTime: string;
@@ -5113,20 +5074,14 @@ export type LabsAnalyticsBookingRetrieveApiArg = {
    * `year` - year */
   unit?: "day" | "week" | "month" | "quarter" | "year";
 };
-export type LabsAnalyticsDashboardSummaryRetrieveApiResponse =
-  /** status 200  */ DashboardSummaryAnalyticsSerializersDashboardSummaryDetailResponse;
-export type LabsAnalyticsDashboardSummaryRetrieveApiArg = {
-  fromDateTime: string;
-  toDateTime: string;
-};
 export type LabsAnalyticsEquipmentAvailabilityRetrieveApiResponse =
-  /** status 200  */ EquipmentAvailabilityAnalyticsSerializersEquipmentAvailabilityDetailResponse;
+  /** status 200  */ EquipmentAvailabilityAnalyticsSerializersEquipmentAvailabilityDetailResponseRead;
 export type LabsAnalyticsEquipmentAvailabilityRetrieveApiArg = {
   fromDateTime: string;
   toDateTime: string;
 };
 export type LabsAnalyticsFinanceExpenseTypeBreakdownRetrieveApiResponse =
-  /** status 200  */ FinanceBreakdownAnalyticsSerializersFinanceBreakdownDetailResponse;
+  /** status 200  */ FinanceBreakdownAnalyticsSerializersFinanceBreakdownDetailResponseRead;
 export type LabsAnalyticsFinanceExpenseTypeBreakdownRetrieveApiArg = {
   /** Explicit three-letter currency; no FX conversion. */
   currency: string;
@@ -5186,9 +5141,6 @@ export type LabsAnalyticsLabEfficiencyRetrieveApiArg = {
 export type LabsAnalyticsLabEquipmentStatusRetrieveApiResponse =
   /** status 200  */ EquipmentStatusSummarySerializersEquipmentStatusSummaryListResponse;
 export type LabsAnalyticsLabEquipmentStatusRetrieveApiArg = void;
-export type LabsAnalyticsLabGroupRetrieveApiResponse =
-  /** status 200  */ BenchGroupSummarySerializersBenchGroupSummaryListResponse;
-export type LabsAnalyticsLabGroupRetrieveApiArg = void;
 export type LabsAnalyticsLabUsageByTimeframeRetrieveApiResponse =
   /** status 200  */ LabUsageTimeframeSerializersLabUsageTimeframeListResponse;
 export type LabsAnalyticsLabUsageByTimeframeRetrieveApiArg = {
@@ -5264,7 +5216,7 @@ export type LabsAnalyticsUserLabUsageRetrieveApiArg = {
   top?: number;
 };
 export type LabsAuditCatalogRetrieveApiResponse =
-  /** status 200  */ AuditCatalogResponse;
+  /** status 200  */ AuditCatalogResponseRead;
 export type LabsAuditCatalogRetrieveApiArg = {
   /** Return only rows created, changed or deleted at or after this time. Omit for a full download. */
   changedSince?: string;
@@ -5278,6 +5230,8 @@ export type LabsAuditsRetrieveApiArg = {
   auditorId?: number;
   page?: number;
   pageSize?: number;
+  /** Free-text search term. */
+  q?: string;
   resourceType?: string;
   /** * `PASS` - PASS
    * `FAIL` - FAIL
@@ -5285,7 +5239,6 @@ export type LabsAuditsRetrieveApiArg = {
    * `OK` - OK
    * `NOK` - NOK */
   result?: "PASS" | "FAIL" | "NOT_ASSESSED" | "OK" | "NOK";
-  search?: string;
 };
 export type LabsAuditsRetrieveByAuditIdApiResponse =
   /** status 200  */ ResourceAuditDetailSerializersResourceAuditItemDetailResponseRead;
@@ -5316,7 +5269,6 @@ export type LabsBenchBookingsRetrieveApiArg = {
   pageSize?: number;
   projectId?: number;
   q?: string;
-  search?: string;
   /** Inclusive lower bound. Accepts strict YYYY-MM-DD in Django TIME_ZONE or an offset-aware RFC3339 datetime (YYYY-MM-DDTHH:MM:SS[.fraction](Z|±HH:MM)). */
   startsAtAfter?: string;
   /** Exclusive upper bound. Accepts strict YYYY-MM-DD in Django TIME_ZONE or an offset-aware RFC3339 datetime (YYYY-MM-DDTHH:MM:SS[.fraction](Z|±HH:MM)). A date-only value is midnight at the start of that date; to include November 2–8, use starts_at_after=2026-11-02 and starts_at_before=2026-11-09. */
@@ -5388,10 +5340,11 @@ export type LabsBenchBookingsCodeActionsCancelCreateByBookingCodeApiArg = {
 export type LabsBenchBookingsReferenceDataProjectsRetrieveApiResponse =
   /** status 200  */ LabProjectReferenceListSerializersLabProjectCatalogRecordPaginatedResponseRead;
 export type LabsBenchBookingsReferenceDataProjectsRetrieveApiArg = {
-  active?: boolean | null;
+  isActive?: boolean | null;
   page?: number;
   pageSize?: number;
-  search?: string;
+  /** Free-text search term. */
+  q?: string;
 };
 export type LabsBenchBookingsReferenceDataProjectsCreateApiResponse =
   /** status 201  */ LabProjectReferenceCreateSerializersLabProjectCatalogRecordDetailResponseRead;
@@ -5498,7 +5451,6 @@ export type LabsBenchesRetrieveApiArg = {
   page?: number;
   pageSize?: number;
   q?: string;
-  search?: string;
   /** Comma-separated values; OR within this filter. */
   setupLocationId?: string;
   /** Comma-separated values; OR within this filter. */
@@ -5559,16 +5511,27 @@ export type LabsBenchesActionsPlacePartialUpdateByBenchIdApiArg = {
   benchId: number;
   patchedBenchPlacement: PatchedBenchPlacement;
 };
-export type LabsBenchesActionsUnfavoriteCreateByBenchIdApiResponse = unknown;
-export type LabsBenchesActionsUnfavoriteCreateByBenchIdApiArg = {
-  benchId: number;
-};
 export type LabsBenchesEquipmentRetrieveByBenchIdApiResponse =
   /** status 200  */ BenchEquipmentListSerializersBenchSetupEquipmentPaginatedResponseRead;
 export type LabsBenchesEquipmentRetrieveByBenchIdApiArg = {
   benchId: number;
   page?: number;
   pageSize?: number;
+};
+export type LabsBenchesImageRetrieveByBenchIdApiResponse =
+  /** status 200  */ ResourceImageResourceImagesResourceImageDetailResponseRead;
+export type LabsBenchesImageRetrieveByBenchIdApiArg = {
+  benchId: number;
+};
+export type LabsBenchesImageUpdateByBenchIdApiResponse =
+  /** status 200  */ ResourceImageResourceImagesResourceImageDetailResponseRead;
+export type LabsBenchesImageUpdateByBenchIdApiArg = {
+  benchId: number;
+  resourceImageUpload: ResourceImageUpload;
+};
+export type LabsBenchesImageDestroyByBenchIdApiResponse = unknown;
+export type LabsBenchesImageDestroyByBenchIdApiArg = {
+  benchId: number;
 };
 export type LabsBenchesProfileRetrieveByIdApiResponse =
   /** status 200  */ LabProfileSerializersLabProfileDetailResponse;
@@ -5621,10 +5584,11 @@ export type LabsBenchesReferenceDataRetrieveApiArg = void;
 export type LabsBenchesReferenceDataGroupsRetrieveApiResponse =
   /** status 200  */ BenchGroupReferenceListSerializersBenchGroupCatalogRecordPaginatedResponseRead;
 export type LabsBenchesReferenceDataGroupsRetrieveApiArg = {
-  active?: boolean | null;
+  isActive?: boolean | null;
   page?: number;
   pageSize?: number;
-  search?: string;
+  /** Free-text search term. */
+  q?: string;
 };
 export type LabsBenchesReferenceDataGroupsCreateApiResponse =
   /** status 201  */ BenchGroupReferenceCreateSerializersBenchGroupCatalogRecordDetailResponseRead;
@@ -5641,10 +5605,11 @@ export type LabsBenchesReferenceDataGroupsRetrieveByReferenceIdApiArg = {
 export type LabsBenchesReferenceDataTypesRetrieveApiResponse =
   /** status 200  */ BenchTypeReferenceListSerializersBenchTypeCatalogRecordPaginatedResponseRead;
 export type LabsBenchesReferenceDataTypesRetrieveApiArg = {
-  active?: boolean | null;
+  isActive?: boolean | null;
   page?: number;
   pageSize?: number;
-  search?: string;
+  /** Free-text search term. */
+  q?: string;
 };
 export type LabsBenchesReferenceDataTypesCreateApiResponse =
   /** status 201  */ BenchTypeReferenceCreateSerializersBenchTypeCatalogRecordDetailResponseRead;
@@ -5731,7 +5696,7 @@ export type LabsCountriesOptionsRetrieveApiArg = {
   q?: string;
 };
 export type LabsDashboardRetrieveApiResponse =
-  /** status 200  */ DashboardBenchListSerializersDashboardBenchPaginatedResponse;
+  /** status 200  */ DashboardBenchListSerializersDashboardBenchPaginatedResponseRead;
 export type LabsDashboardRetrieveApiArg = {
   /** Filter by computing activity status (free, active, inactive, offline, maintaining).
     
@@ -5762,8 +5727,8 @@ export type LabsDashboardRetrieveApiArg = {
   location?: number;
   page?: number;
   pageSize?: number;
-  /** Case-insensitive text search across bench name, SKU, location, host, and remote user. */
-  search?: string;
+  /** Free-text search term. */
+  q?: string;
 };
 export type LabsDashboardBenchesRetrieveByBenchIdApiResponse =
   /** status 200  */ DashboardBenchDetailDataSerializersDashboardBenchDetailDetailResponseRead;
@@ -5865,7 +5830,6 @@ export type LabsEquipmentRetrieveApiArg = {
   protocolId?: number;
   q?: string;
   resolutionId?: number;
-  search?: string;
   sizeId?: number;
   /** Comma-separated values; OR within this filter. */
   status?: string;
@@ -6080,21 +6044,6 @@ export type LabsEquipmentTypesOptionsRetrieveApiArg = {
   /** Search text (1 to 100 characters). */
   q?: string;
 };
-export type LabsEquipmentActionsAssignRetrieveByEquipmentIdApiResponse =
-  /** status 200  */ EquipmentAssignmentDetailSerializersEquipmentAssignmentResultDetailResponseRead;
-export type LabsEquipmentActionsAssignRetrieveByEquipmentIdApiArg = {
-  equipmentId: number;
-};
-export type LabsEquipmentActionsAssignCreateByEquipmentIdApiResponse =
-  /** status 200  */ EquipmentAssignmentSerializersEquipmentAssignmentResultDetailResponseRead;
-export type LabsEquipmentActionsAssignCreateByEquipmentIdApiArg = {
-  equipmentId: number;
-  equipmentAssignment: EquipmentAssignment;
-};
-export type LabsEquipmentActionsAssignDestroyByEquipmentIdApiResponse = unknown;
-export type LabsEquipmentActionsAssignDestroyByEquipmentIdApiArg = {
-  equipmentId: number;
-};
 export type LabsEquipmentActionsChangeConditionCreateByEquipmentIdApiResponse =
   /** status 200  */ EquipmentDetailAfterConditionChangeCollectionEquipmentDetailDetailResponseRead;
 export type LabsEquipmentActionsChangeConditionCreateByEquipmentIdApiArg = {
@@ -6135,14 +6084,29 @@ export type LabsEquipmentAssignmentRetrieveByEquipmentIdApiResponse =
 export type LabsEquipmentAssignmentRetrieveByEquipmentIdApiArg = {
   equipmentId: number;
 };
-export type LabsEquipmentAssignmentCreateByEquipmentIdApiResponse =
+export type LabsEquipmentAssignmentUpdateByEquipmentIdApiResponse =
   /** status 200  */ EquipmentAssignmentSerializersEquipmentAssignmentResultDetailResponseRead;
-export type LabsEquipmentAssignmentCreateByEquipmentIdApiArg = {
+export type LabsEquipmentAssignmentUpdateByEquipmentIdApiArg = {
   equipmentId: number;
   equipmentAssignment: EquipmentAssignment;
 };
 export type LabsEquipmentAssignmentDestroyByEquipmentIdApiResponse = unknown;
 export type LabsEquipmentAssignmentDestroyByEquipmentIdApiArg = {
+  equipmentId: number;
+};
+export type LabsEquipmentImageRetrieveByEquipmentIdApiResponse =
+  /** status 200  */ ResourceImageResourceImagesResourceImageDetailResponseRead;
+export type LabsEquipmentImageRetrieveByEquipmentIdApiArg = {
+  equipmentId: number;
+};
+export type LabsEquipmentImageUpdateByEquipmentIdApiResponse =
+  /** status 200  */ ResourceImageResourceImagesResourceImageDetailResponseRead;
+export type LabsEquipmentImageUpdateByEquipmentIdApiArg = {
+  equipmentId: number;
+  resourceImageUpload: ResourceImageUpload;
+};
+export type LabsEquipmentImageDestroyByEquipmentIdApiResponse = unknown;
+export type LabsEquipmentImageDestroyByEquipmentIdApiArg = {
   equipmentId: number;
 };
 export type LabsEquipmentLoanRetrieveByEquipmentIdApiResponse =
@@ -6260,7 +6224,6 @@ export type LabsEquipmentFacetsRetrieveApiArg = {
   protocolId?: number;
   q?: string;
   resolutionId?: number;
-  search?: string;
   sizeId?: number;
   /** Comma-separated values; OR within this filter. */
   status?: string;
@@ -6331,10 +6294,11 @@ export type LabsEquipmentReferenceDataRetrieveApiArg = {
 export type LabsEquipmentReferenceDataCategoriesRetrieveApiResponse =
   /** status 200  */ EquipmentCategoryReferenceListSerializersEquipmentCategoryCatalogRecordPaginatedResponseRead;
 export type LabsEquipmentReferenceDataCategoriesRetrieveApiArg = {
-  active?: boolean | null;
+  isActive?: boolean | null;
   page?: number;
   pageSize?: number;
-  search?: string;
+  /** Free-text search term. */
+  q?: string;
 };
 export type LabsEquipmentReferenceDataCategoriesRetrieveByReferenceIdApiResponse =
   /** status 200  */ EquipmentCategoryReferenceDetailSerializersEquipmentCategoryCatalogRecordDetailResponseRead;
@@ -6344,10 +6308,11 @@ export type LabsEquipmentReferenceDataCategoriesRetrieveByReferenceIdApiArg = {
 export type LabsEquipmentReferenceDataDepartmentsRetrieveApiResponse =
   /** status 200  */ DepartmentReferenceListSerializersDepartmentCatalogRecordPaginatedResponseRead;
 export type LabsEquipmentReferenceDataDepartmentsRetrieveApiArg = {
-  active?: boolean | null;
+  isActive?: boolean | null;
   page?: number;
   pageSize?: number;
-  search?: string;
+  /** Free-text search term. */
+  q?: string;
 };
 export type LabsEquipmentReferenceDataDepartmentsCreateApiResponse =
   /** status 201  */ DepartmentReferenceCreateSerializersDepartmentCatalogRecordDetailResponseRead;
@@ -6366,7 +6331,8 @@ export type LabsEquipmentReferenceDataDisplayResolutionsRetrieveApiResponse =
 export type LabsEquipmentReferenceDataDisplayResolutionsRetrieveApiArg = {
   page?: number;
   pageSize?: number;
-  search?: string;
+  /** Free-text search term. */
+  q?: string;
 };
 export type LabsEquipmentReferenceDataDisplayResolutionsCreateApiResponse =
   /** status 201  */ DisplayResolutionReferenceCreateSerializersDisplayResolutionCatalogRecordDetailResponseRead;
@@ -6386,7 +6352,8 @@ export type LabsEquipmentReferenceDataDisplaySizesRetrieveApiResponse =
 export type LabsEquipmentReferenceDataDisplaySizesRetrieveApiArg = {
   page?: number;
   pageSize?: number;
-  search?: string;
+  /** Free-text search term. */
+  q?: string;
 };
 export type LabsEquipmentReferenceDataDisplaySizesCreateApiResponse =
   /** status 201  */ DisplaySizeReferenceCreateSerializersDisplaySizeCatalogRecordDetailResponseRead;
@@ -6404,11 +6371,12 @@ export type LabsEquipmentReferenceDataDisplaySizesRetrieveByReferenceIdApiArg =
 export type LabsEquipmentReferenceDataGroupsRetrieveApiResponse =
   /** status 200  */ GroupReferenceListSerializersGroupCatalogRecordPaginatedResponseRead;
 export type LabsEquipmentReferenceDataGroupsRetrieveApiArg = {
-  active?: boolean | null;
   departmentId?: number;
+  isActive?: boolean | null;
   page?: number;
   pageSize?: number;
-  search?: string;
+  /** Free-text search term. */
+  q?: string;
 };
 export type LabsEquipmentReferenceDataGroupsCreateApiResponse =
   /** status 201  */ GroupReferenceCreateSerializersGroupCatalogRecordDetailResponseRead;
@@ -6427,7 +6395,8 @@ export type LabsEquipmentReferenceDataInterfacesRetrieveApiResponse =
 export type LabsEquipmentReferenceDataInterfacesRetrieveApiArg = {
   page?: number;
   pageSize?: number;
-  search?: string;
+  /** Free-text search term. */
+  q?: string;
 };
 export type LabsEquipmentReferenceDataInterfacesCreateApiResponse =
   /** status 201  */ EquipmentInterfaceReferenceCreateSerializersEquipmentInterfaceCatalogRecordDetailResponseRead;
@@ -6444,11 +6413,12 @@ export type LabsEquipmentReferenceDataInterfacesRetrieveByReferenceIdApiArg = {
 export type LabsEquipmentReferenceDataKindsRetrieveApiResponse =
   /** status 200  */ EquipmentKindReferenceListSerializersEquipmentKindCatalogRecordPaginatedResponseRead;
 export type LabsEquipmentReferenceDataKindsRetrieveApiArg = {
-  active?: boolean | null;
   categoryId?: number;
+  isActive?: boolean | null;
   page?: number;
   pageSize?: number;
-  search?: string;
+  /** Free-text search term. */
+  q?: string;
 };
 export type LabsEquipmentReferenceDataKindsCreateApiResponse =
   /** status 201  */ EquipmentKindReferenceCreateSerializersEquipmentKindCatalogRecordDetailResponseRead;
@@ -6465,10 +6435,11 @@ export type LabsEquipmentReferenceDataKindsRetrieveByReferenceIdApiArg = {
 export type LabsEquipmentReferenceDataManufacturersRetrieveApiResponse =
   /** status 200  */ EquipmentManufacturerReferenceListSerializersEquipmentManufacturerCatalogRecordPaginatedResponseRead;
 export type LabsEquipmentReferenceDataManufacturersRetrieveApiArg = {
-  active?: boolean | null;
+  isActive?: boolean | null;
   page?: number;
   pageSize?: number;
-  search?: string;
+  /** Free-text search term. */
+  q?: string;
 };
 export type LabsEquipmentReferenceDataManufacturersCreateApiResponse =
   /** status 201  */ EquipmentManufacturerReferenceCreateSerializersEquipmentManufacturerCatalogRecordDetailResponseRead;
@@ -6488,7 +6459,8 @@ export type LabsEquipmentReferenceDataMaterialsRetrieveApiResponse =
 export type LabsEquipmentReferenceDataMaterialsRetrieveApiArg = {
   page?: number;
   pageSize?: number;
-  search?: string;
+  /** Free-text search term. */
+  q?: string;
 };
 export type LabsEquipmentReferenceDataMaterialsCreateApiResponse =
   /** status 201  */ MaterialReferenceCreateSerializersMaterialCatalogRecordDetailResponseRead;
@@ -6507,7 +6479,8 @@ export type LabsEquipmentReferenceDataNetworkingProtocolsRetrieveApiResponse =
 export type LabsEquipmentReferenceDataNetworkingProtocolsRetrieveApiArg = {
   page?: number;
   pageSize?: number;
-  search?: string;
+  /** Free-text search term. */
+  q?: string;
 };
 export type LabsEquipmentReferenceDataNetworkingProtocolsCreateApiResponse =
   /** status 201  */ NetworkingProtocolReferenceCreateSerializersNetworkingProtocolCatalogRecordDetailResponseRead;
@@ -6530,7 +6503,8 @@ export type LabsEquipmentReferenceDataProductModelSpecificationsRetrieveApiArg =
     page?: number;
     pageSize?: number;
     productModelId?: number;
-    search?: string;
+    /** Free-text search term. */
+    q?: string;
   };
 export type LabsEquipmentReferenceDataProductModelSpecificationsCreateApiResponse =
   /** status 201  */ ProductModelSpecificationReferenceCreateSerializersProductModelSpecificationCatalogRecordDetailResponseRead;
@@ -6548,12 +6522,13 @@ export type LabsEquipmentReferenceDataProductModelSpecificationsRetrieveByRefere
 export type LabsEquipmentReferenceDataProductModelsRetrieveApiResponse =
   /** status 200  */ EquipmentProductModelReferenceListSerializersEquipmentProductModelCatalogRecordPaginatedResponseRead;
 export type LabsEquipmentReferenceDataProductModelsRetrieveApiArg = {
-  active?: boolean | null;
   equipmentTypeId?: number;
+  isActive?: boolean | null;
   manufacturerId?: number;
   page?: number;
   pageSize?: number;
-  search?: string;
+  /** Free-text search term. */
+  q?: string;
 };
 export type LabsEquipmentReferenceDataProductModelsCreateApiResponse =
   /** status 201  */ EquipmentProductModelReferenceCreateSerializersEquipmentProductModelCatalogRecordDetailResponseRead;
@@ -6573,7 +6548,8 @@ export type LabsEquipmentReferenceDataSampleCharacteristicsRetrieveApiResponse =
 export type LabsEquipmentReferenceDataSampleCharacteristicsRetrieveApiArg = {
   page?: number;
   pageSize?: number;
-  search?: string;
+  /** Free-text search term. */
+  q?: string;
 };
 export type LabsEquipmentReferenceDataSampleCharacteristicsCreateApiResponse =
   /** status 201  */ SampleCharacteristicReferenceCreateSerializersSampleCharacteristicCatalogRecordDetailResponseRead;
@@ -6593,7 +6569,8 @@ export type LabsEquipmentReferenceDataSampleCustomersRetrieveApiResponse =
 export type LabsEquipmentReferenceDataSampleCustomersRetrieveApiArg = {
   page?: number;
   pageSize?: number;
-  search?: string;
+  /** Free-text search term. */
+  q?: string;
 };
 export type LabsEquipmentReferenceDataSampleCustomersCreateApiResponse =
   /** status 201  */ SampleCustomerReferenceCreateSerializersSampleCustomerCatalogRecordDetailResponseRead;
@@ -6611,11 +6588,12 @@ export type LabsEquipmentReferenceDataSampleCustomersRetrieveByReferenceIdApiArg
 export type LabsEquipmentReferenceDataSpecificationDefinitionsRetrieveApiResponse =
   /** status 200  */ SpecificationDefinitionReferenceListSerializersSpecificationDefinitionCatalogRecordPaginatedResponseRead;
 export type LabsEquipmentReferenceDataSpecificationDefinitionsRetrieveApiArg = {
-  active?: boolean | null;
   categoryId?: number;
+  isActive?: boolean | null;
   page?: number;
   pageSize?: number;
-  search?: string;
+  /** Free-text search term. */
+  q?: string;
 };
 export type LabsEquipmentReferenceDataSpecificationDefinitionsCreateApiResponse =
   /** status 201  */ SpecificationDefinitionReferenceCreateSerializersSpecificationDefinitionCatalogRecordDetailResponseRead;
@@ -6635,7 +6613,8 @@ export type LabsEquipmentReferenceDataTechnicalUsersRetrieveApiResponse =
 export type LabsEquipmentReferenceDataTechnicalUsersRetrieveApiArg = {
   page?: number;
   pageSize?: number;
-  search?: string;
+  /** Free-text search term. */
+  q?: string;
 };
 export type LabsEquipmentReferenceDataTechnicalUsersCreateApiResponse =
   /** status 201  */ TechnicalUserReferenceCreateSerializersTechnicalUserCatalogRecordDetailResponseRead;
@@ -6653,11 +6632,12 @@ export type LabsEquipmentReferenceDataTechnicalUsersRetrieveByReferenceIdApiArg 
 export type LabsEquipmentReferenceDataTypesRetrieveApiResponse =
   /** status 200  */ EquipmentTypeReferenceListSerializersEquipmentTypeCatalogRecordPaginatedResponseRead;
 export type LabsEquipmentReferenceDataTypesRetrieveApiArg = {
-  active?: boolean | null;
+  isActive?: boolean | null;
   kindId?: number;
   page?: number;
   pageSize?: number;
-  search?: string;
+  /** Free-text search term. */
+  q?: string;
 };
 export type LabsEquipmentReferenceDataTypesCreateApiResponse =
   /** status 201  */ EquipmentTypeReferenceCreateSerializersEquipmentTypeCatalogRecordDetailResponseRead;
@@ -6710,22 +6690,11 @@ export type LabsExpensesPaymentsCreateByExpenseIdApiResponse =
   /** status 201  */ ExpensePaymentSerializersExpensePaymentDetailResponseRead;
 export type LabsExpensesPaymentsCreateByExpenseIdApiArg = {
   expenseId: number;
-  expensePayment: ExpensePayment;
+  expensePaymentWrite: ExpensePaymentWrite;
 };
 export type LabsExpensesReportRetrieveApiResponse =
-  /** status 200  */ FinancialReportSerializersFinancialReportResponseDetailResponse;
+  /** status 200  */ FinancialReportSerializersFinancialReportResponseDetailResponseRead;
 export type LabsExpensesReportRetrieveApiArg = {
-  billingPeriod?: string;
-  currency?: string;
-  expenseType?: string;
-  fromDate?: string;
-  roomId?: number;
-  status?: string;
-  toDate?: string;
-};
-export type LabsFinancialReportRetrieveApiResponse =
-  /** status 200  */ FinancialReportSerializersFinancialReportResponseDetailResponse;
-export type LabsFinancialReportRetrieveApiArg = {
   billingPeriod?: string;
   currency?: string;
   expenseType?: string;
@@ -6762,41 +6731,14 @@ export type LabsGroupsOptionsRetrieveApiArg = {
 export type LabsLabDashboardRetrieveApiResponse =
   /** status 200  */ LabDashboardResponse;
 export type LabsLabDashboardRetrieveApiArg = void;
-export type LabsLabDashboardSummaryRetrieveApiResponse =
-  /** status 200  */ DashboardSummarySerializersDashboardSummaryDataDetailResponse;
-export type LabsLabDashboardSummaryRetrieveApiArg = void;
-export type LabsLabMonitoringRetrieveApiResponse =
-  /** status 200  */ MonitoringEventListSerializersMonitoringEventPaginatedResponseRead;
-export type LabsLabMonitoringRetrieveApiArg = {
-  page?: number;
-  pageSize?: number;
-};
-export type LabsLabMonitoringCreateApiResponse =
-  /** status 201  */ MonitoringEventSerializersMonitoringEventDetailResponseRead;
-export type LabsLabMonitoringCreateApiArg = {
-  monitoringEventCreate: MonitoringEventCreate;
-};
-export type LabsLabMonitoringExportRetrieveApiResponse =
-  /** status 200  */ MonitoringEventExportSerializersMonitoringEventListResponseRead;
-export type LabsLabMonitoringExportRetrieveApiArg = {
-  action?: string;
-  benchId?: number;
-  computerId?: number;
-  computerSku?: string;
-  fromDate?: string;
-  fromDateTime?: string;
-  lab?: number;
-  subjectType?: string;
-  toDate?: string;
-  toDateTime?: string;
-};
 export type LabsLabProjectsRetrieveApiResponse =
   /** status 200  */ LabProjectListSerializersLabProjectPaginatedResponseRead;
 export type LabsLabProjectsRetrieveApiArg = {
-  active?: boolean | null;
+  isActive?: boolean | null;
   page?: number;
   pageSize?: number;
-  search?: string;
+  /** Free-text search term. */
+  q?: string;
 };
 export type LabsLabProjectsRetrieveByProjectIdApiResponse =
   /** status 200  */ LabProjectDetailSerializersLabProjectDetailResponseRead;
@@ -6806,7 +6748,7 @@ export type LabsLabProjectsRetrieveByProjectIdApiArg = {
 export type LabsLabProjectsOptionsRetrieveApiResponse =
   /** status 200 Standard selector options list */ CatalogOptionListRead;
 export type LabsLabProjectsOptionsRetrieveApiArg = {
-  /** Date within project starts_on and ends_on. */
+  /** Date within project start_date and end_date. */
   activeOn?: string;
   /** Comma-separated positive integers (at most 50) of retired rows to include. */
   includeIds?: number[];
@@ -6962,7 +6904,6 @@ export type LabsLicensesRetrieveApiArg = {
   page?: number;
   pageSize?: number;
   q?: string;
-  search?: string;
   /** Comma-separated values; OR within this filter. */
   status?: string;
 };
@@ -6987,11 +6928,6 @@ export type LabsLicensesActionsChangeStatusCreateByLicenseIdApiArg = {
   licenseId: number;
   licenseStatus: LicenseStatus;
 };
-export type LabsLicensesActionsUnassignCreateByLicenseIdApiResponse = unknown;
-export type LabsLicensesActionsUnassignCreateByLicenseIdApiArg = {
-  licenseId: number;
-  licenseAssignmentRequest: LicenseAssignmentRequest;
-};
 export type LabsLicensesAgreementsRetrieveByLicenseIdApiResponse =
   /** status 200  */ LicenseAgreementListSerializersLicenseAgreementPaginatedResponseRead;
 export type LabsLicensesAgreementsRetrieveByLicenseIdApiArg = {
@@ -7012,6 +6948,21 @@ export type LabsLicensesHistoryRetrieveByLicenseIdApiArg = {
   page?: number;
   pageSize?: number;
 };
+export type LabsLicensesImageRetrieveByLicenseIdApiResponse =
+  /** status 200  */ ResourceImageResourceImagesResourceImageDetailResponseRead;
+export type LabsLicensesImageRetrieveByLicenseIdApiArg = {
+  licenseId: number;
+};
+export type LabsLicensesImageUpdateByLicenseIdApiResponse =
+  /** status 200  */ ResourceImageResourceImagesResourceImageDetailResponseRead;
+export type LabsLicensesImageUpdateByLicenseIdApiArg = {
+  licenseId: number;
+  resourceImageUpload: ResourceImageUpload;
+};
+export type LabsLicensesImageDestroyByLicenseIdApiResponse = unknown;
+export type LabsLicensesImageDestroyByLicenseIdApiArg = {
+  licenseId: number;
+};
 export type LabsLicensesCategoriesSummaryRetrieveApiResponse =
   /** status 200  */ LicenseCategorySummaryListSerializersLicenseCategorySummaryPaginatedResponse;
 export type LabsLicensesCategoriesSummaryRetrieveApiArg = {
@@ -7029,7 +6980,8 @@ export type LabsLicensesReferenceDataCategoriesRetrieveApiResponse =
 export type LabsLicensesReferenceDataCategoriesRetrieveApiArg = {
   page?: number;
   pageSize?: number;
-  search?: string;
+  /** Free-text search term. */
+  q?: string;
 };
 export type LabsLicensesReferenceDataCategoriesCreateApiResponse =
   /** status 201  */ LicenseCategoryReferenceCreateSerializersLicenseCategoryCatalogRecordDetailResponseRead;
@@ -7048,7 +7000,8 @@ export type LabsLicensesReferenceDataProductsRetrieveApiResponse =
 export type LabsLicensesReferenceDataProductsRetrieveApiArg = {
   page?: number;
   pageSize?: number;
-  search?: string;
+  /** Free-text search term. */
+  q?: string;
   vendorId?: number;
 };
 export type LabsLicensesReferenceDataProductsCreateApiResponse =
@@ -7068,7 +7021,8 @@ export type LabsLicensesReferenceDataRestrictionsRetrieveApiResponse =
 export type LabsLicensesReferenceDataRestrictionsRetrieveApiArg = {
   page?: number;
   pageSize?: number;
-  search?: string;
+  /** Free-text search term. */
+  q?: string;
 };
 export type LabsLicensesReferenceDataRestrictionsCreateApiResponse =
   /** status 201  */ LicenseRestrictionReferenceCreateSerializersLicenseRestrictionCatalogRecordDetailResponseRead;
@@ -7087,7 +7041,8 @@ export type LabsLicensesReferenceDataTypesRetrieveApiResponse =
 export type LabsLicensesReferenceDataTypesRetrieveApiArg = {
   page?: number;
   pageSize?: number;
-  search?: string;
+  /** Free-text search term. */
+  q?: string;
 };
 export type LabsLicensesReferenceDataTypesCreateApiResponse =
   /** status 201  */ LicenseTypeReferenceCreateSerializersLicenseTypeCatalogRecordDetailResponseRead;
@@ -7106,7 +7061,8 @@ export type LabsLicensesReferenceDataVendorsRetrieveApiResponse =
 export type LabsLicensesReferenceDataVendorsRetrieveApiArg = {
   page?: number;
   pageSize?: number;
-  search?: string;
+  /** Free-text search term. */
+  q?: string;
 };
 export type LabsLicensesReferenceDataVendorsCreateApiResponse =
   /** status 201  */ LicenseVendorReferenceCreateSerializersLicenseVendorCatalogRecordDetailResponseRead;
@@ -7129,7 +7085,8 @@ export type LabsLocationsReferenceDataBuildingsRetrieveApiArg = {
   cityId?: number;
   page?: number;
   pageSize?: number;
-  search?: string;
+  /** Free-text search term. */
+  q?: string;
 };
 export type LabsLocationsReferenceDataBuildingsCreateApiResponse =
   /** status 201  */ BuildingReferenceCreateSerializersBuildingCatalogRecordDetailResponseRead;
@@ -7149,7 +7106,8 @@ export type LabsLocationsReferenceDataCitiesRetrieveApiArg = {
   countryId?: number;
   page?: number;
   pageSize?: number;
-  search?: string;
+  /** Free-text search term. */
+  q?: string;
 };
 export type LabsLocationsReferenceDataCitiesCreateApiResponse =
   /** status 201  */ CityReferenceCreateSerializersCityCatalogRecordDetailResponseRead;
@@ -7168,7 +7126,8 @@ export type LabsLocationsReferenceDataCountriesRetrieveApiResponse =
 export type LabsLocationsReferenceDataCountriesRetrieveApiArg = {
   page?: number;
   pageSize?: number;
-  search?: string;
+  /** Free-text search term. */
+  q?: string;
 };
 export type LabsLocationsReferenceDataCountriesCreateApiResponse =
   /** status 201  */ CountryReferenceCreateSerializersCountryCatalogRecordDetailResponseRead;
@@ -7187,7 +7146,8 @@ export type LabsLocationsReferenceDataStationTypesRetrieveApiResponse =
 export type LabsLocationsReferenceDataStationTypesRetrieveApiArg = {
   page?: number;
   pageSize?: number;
-  search?: string;
+  /** Free-text search term. */
+  q?: string;
 };
 export type LabsLocationsReferenceDataStationTypesCreateApiResponse =
   /** status 201  */ StationTypeReferenceCreateSerializersStationTypeCatalogRecordDetailResponseRead;
@@ -7231,13 +7191,6 @@ export type LabsMonitoringEventsExportRetrieveApiArg = {
   subjectType?: string;
   toDate?: string;
   toDateTime?: string;
-};
-export type LabsProfileRetrieveByIdApiResponse =
-  /** status 200  */ LabProfileSerializersLabProfileDetailResponse;
-export type LabsProfileRetrieveByIdApiArg = {
-  endDate?: string;
-  id: number;
-  startDate?: string;
 };
 export type LabsPurchaseItemsResourcesRetrieveByPurchaseItemIdApiResponse =
   /** status 200  */ PurchaseItemResourceListSerializersPurchaseItemResourcePaginatedResponseRead;
@@ -7335,7 +7288,7 @@ export type LabsPurchasesTransactionsCreateByPurchaseIdApiResponse =
   /** status 201  */ PurchaseTransactionSerializersPurchaseTransactionDetailResponseRead;
 export type LabsPurchasesTransactionsCreateByPurchaseIdApiArg = {
   purchaseId: number;
-  purchaseTransaction: PurchaseTransaction;
+  purchaseTransactionWrite: PurchaseTransactionWrite;
 };
 export type LabsResourcesAuditsRetrieveByResourceTypeResourceIdApiResponse =
   /** status 200  */ TypedResourceAuditListSerializersResourceAuditItemPaginatedResponseRead;
@@ -7422,7 +7375,6 @@ export type LabsRoomsRetrieveApiArg = {
   page?: number;
   pageSize?: number;
   q?: string;
-  search?: string;
   /** Comma-separated values; OR within this filter. */
   status?: string;
 };
@@ -7494,10 +7446,10 @@ export type LabsRoomsExpensesCreateByRoomIdApiResponse =
   /** status 201  */ RoomExpenseSerializersExpenseDetailResponseRead;
 export type LabsRoomsExpensesCreateByRoomIdApiArg = {
   roomId: number;
-  expense: Expense;
+  expenseWrite: ExpenseWrite;
 };
 export type LabsRoomsExpensesReportRetrieveByRoomIdApiResponse =
-  /** status 200  */ RoomFinancialReportSerializersFinancialReportResponseDetailResponse;
+  /** status 200  */ RoomFinancialReportSerializersFinancialReportResponseDetailResponseRead;
 export type LabsRoomsExpensesReportRetrieveByRoomIdApiArg = {
   billingPeriod?: string;
   currency?: string;
@@ -7513,6 +7465,21 @@ export type LabsRoomsHistoryRetrieveByRoomIdApiResponse =
 export type LabsRoomsHistoryRetrieveByRoomIdApiArg = {
   page?: number;
   pageSize?: number;
+  roomId: number;
+};
+export type LabsRoomsImageRetrieveByRoomIdApiResponse =
+  /** status 200  */ ResourceImageResourceImagesResourceImageDetailResponseRead;
+export type LabsRoomsImageRetrieveByRoomIdApiArg = {
+  roomId: number;
+};
+export type LabsRoomsImageUpdateByRoomIdApiResponse =
+  /** status 200  */ ResourceImageResourceImagesResourceImageDetailResponseRead;
+export type LabsRoomsImageUpdateByRoomIdApiArg = {
+  roomId: number;
+  resourceImageUpload: ResourceImageUpload;
+};
+export type LabsRoomsImageDestroyByRoomIdApiResponse = unknown;
+export type LabsRoomsImageDestroyByRoomIdApiArg = {
   roomId: number;
 };
 export type LabsRoomsObservationsRetrieveByRoomIdApiResponse =
@@ -7613,7 +7580,6 @@ export type LabsStationsRetrieveApiArg = {
   q?: string;
   /** Comma-separated values; OR within this filter. */
   roomId?: string;
-  search?: string;
   /** Comma-separated values; OR within this filter. */
   status?: string;
   /** Comma-separated values; OR within this filter. */
@@ -7690,6 +7656,21 @@ export type LabsStationsHistoryRetrieveByStationIdApiArg = {
   pageSize?: number;
   stationId: number;
 };
+export type LabsStationsImageRetrieveByStationIdApiResponse =
+  /** status 200  */ ResourceImageResourceImagesResourceImageDetailResponseRead;
+export type LabsStationsImageRetrieveByStationIdApiArg = {
+  stationId: number;
+};
+export type LabsStationsImageUpdateByStationIdApiResponse =
+  /** status 200  */ ResourceImageResourceImagesResourceImageDetailResponseRead;
+export type LabsStationsImageUpdateByStationIdApiArg = {
+  stationId: number;
+  resourceImageUpload: ResourceImageUpload;
+};
+export type LabsStationsImageDestroyByStationIdApiResponse = unknown;
+export type LabsStationsImageDestroyByStationIdApiArg = {
+  stationId: number;
+};
 export type LabsStationsSlotsRetrieveByStationIdApiResponse =
   /** status 200  */ StationSlotListSerializersStationSlotPaginatedResponseRead;
 export type LabsStationsSlotsRetrieveByStationIdApiArg = {
@@ -7750,23 +7731,6 @@ export type LabsStationsReferenceDataRetrieveApiArg = void;
 export type LabsStationsStatusSummaryRetrieveApiResponse =
   /** status 200  */ StationStatusSummaryDataSerializersStationStatusSummaryDetailResponse;
 export type LabsStationsStatusSummaryRetrieveApiArg = void;
-export type LabsUsersProfileRetrieveByIdApiResponse =
-  /** status 200  */ UserProfileSerializersUserProfileDetailResponse;
-export type LabsUsersProfileRetrieveByIdApiArg = {
-  endDate?: string;
-  id: number;
-  startDate?: string;
-};
-export type LabsUsersWeeklyUsageRetrieveByIdApiResponse =
-  /** status 200  */ UserWeeklyUsageSerializersWeeklyUsageSlotListResponse;
-export type LabsUsersWeeklyUsageRetrieveByIdApiArg = {
-  id: number;
-};
-export type LabsWeeklyUsageRetrieveByIdApiResponse =
-  /** status 200  */ LabWeeklyUsageSerializersWeeklyUsageSlotListResponse;
-export type LabsWeeklyUsageRetrieveByIdApiArg = {
-  id: number;
-};
 export type LoginCreateApiResponse =
   /** status 200  */ LoginSerializerLoginResponseDetailResponse;
 export type LoginCreateApiArg = {
@@ -7789,7 +7753,7 @@ export type NotificationsListApiArg = {
 export type NotificationsCreateApiResponse =
   /** status 201  */ NotificationSerializerNotificationDetailResponseRead;
 export type NotificationsCreateApiArg = {
-  notification: Notification;
+  notificationWrite: NotificationWrite;
 };
 export type RefreshTokenCreateApiResponse =
   /** status 200  */ RefreshTokenSerializerRefreshTokenResponseDetailResponse;
@@ -8036,7 +8000,7 @@ export type SupportPrioritiesOptionsRetrieveApiArg = {
   q?: string;
 };
 export type SupportResourcesTicketsRetrieveByResourceTypeResourceIdApiResponse =
-  /** status 200  */ ResourceTicketSummarySerializersResourceTicketSummaryDetailResponse;
+  /** status 200  */ ResourceTicketSummarySerializersResourceTicketSummaryDetailResponseRead;
 export type SupportResourcesTicketsRetrieveByResourceTypeResourceIdApiArg = {
   resourceId: string;
   resourceType: string;
@@ -8146,16 +8110,28 @@ export type SupportTicketsPartialUpdateByKeyApiArg = {
   key: string;
   patchedTicketUpdateRequest: PatchedTicketUpdateRequest;
 };
+export type SupportTicketsActionsAssignCreateByKeyApiResponse =
+  /** status 200  */ TicketAssignSerializersTicketDetailDetailResponseRead;
+export type SupportTicketsActionsAssignCreateByKeyApiArg = {
+  key: string;
+  ticketAssignRequest: TicketAssignRequest;
+};
+export type SupportTicketsActionsSubmitCsatCreateByKeyApiResponse =
+  /** status 200  */ TicketCsatSerializersTicketDetailDetailResponseRead;
+export type SupportTicketsActionsSubmitCsatCreateByKeyApiArg = {
+  key: string;
+  csatRequest: CsatRequest;
+};
+export type SupportTicketsActionsTransitionCreateByKeyApiResponse =
+  /** status 200  */ TicketTransitionSerializersTicketDetailDetailResponseRead;
+export type SupportTicketsActionsTransitionCreateByKeyApiArg = {
+  key: string;
+  ticketTransitionRequest: TicketTransitionRequest;
+};
 export type SupportTicketsActivityRetrieveByKeyApiResponse =
   /** status 200  */ TicketActivityListSerializersTicketActivityListResponseRead;
 export type SupportTicketsActivityRetrieveByKeyApiArg = {
   key: string;
-};
-export type SupportTicketsAssignCreateByKeyApiResponse =
-  /** status 200  */ TicketAssignSerializersTicketDetailDetailResponseRead;
-export type SupportTicketsAssignCreateByKeyApiArg = {
-  key: string;
-  ticketAssignRequest: TicketAssignRequest;
 };
 export type SupportTicketsAttachmentsCreateByKeyApiResponse =
   /** status 201  */ TicketAttachmentCreateSerializersTicketAttachmentDetailResponseRead;
@@ -8192,12 +8168,6 @@ export type SupportTicketsCommentsDestroyByKeyCommentIdApiArg = {
   commentId: number;
   key: string;
 };
-export type SupportTicketsCsatCreateByKeyApiResponse =
-  /** status 200  */ TicketCsatSerializersTicketDetailDetailResponseRead;
-export type SupportTicketsCsatCreateByKeyApiArg = {
-  key: string;
-  csatRequest: CsatRequest;
-};
 export type SupportTicketsLinksRetrieveByKeyApiResponse =
   /** status 200  */ TicketLinkListSerializersTicketLinkListResponseRead;
 export type SupportTicketsLinksRetrieveByKeyApiArg = {
@@ -8224,12 +8194,6 @@ export type SupportTicketsResourcesDestroyByKeyApiResponse = unknown;
 export type SupportTicketsResourcesDestroyByKeyApiArg = {
   key: string;
 };
-export type SupportTicketsTransitionsCreateByKeyApiResponse =
-  /** status 200  */ TicketTransitionSerializersTicketDetailDetailResponseRead;
-export type SupportTicketsTransitionsCreateByKeyApiArg = {
-  key: string;
-  ticketTransitionRequest: TicketTransitionRequest;
-};
 export type SupportTicketsWatchersCreateByKeyApiResponse =
   /** status 201  */ TicketWatcherAddSerializersWatcherDetailResponseRead;
 export type SupportTicketsWatchersCreateByKeyApiArg = {
@@ -8241,7 +8205,7 @@ export type SupportTicketsWatchersDestroyByKeyApiArg = {
   key: string;
 };
 export type SupportTicketsStatsRetrieveApiResponse =
-  /** status 200  */ SupportQueueStatsSerializersQueueStatsDetailResponse;
+  /** status 200  */ SupportQueueStatsSerializersQueueStatsDetailResponseRead;
 export type SupportTicketsStatsRetrieveApiArg = {
   days?: number;
 };
@@ -8324,7 +8288,7 @@ export type GetInternalSnapshotApiArg = {
 };
 export type AgentBookingCheckInData = {
   /** True when the booking is now in progress for this login. */
-  checked_in: boolean;
+  is_checked_in: boolean;
   /** Present only when checked in. */
   booking_code?: string;
   /** Present only when checked in. */
@@ -8355,7 +8319,7 @@ export type AgentBookingValidationRequest = {
 };
 export type AgentBookingCompleteData = {
   /** True when the booking is now completed. */
-  completed: boolean;
+  is_completed: boolean;
   /** Present only when completed. */
   booking_code?: string;
   /** Present only when completed. */
@@ -8368,7 +8332,7 @@ export type AgentBookingCompleteResponse = {
 };
 export type AgentBookingExtendData = {
   /** True when the booking now ends at ends_at. */
-  extended: boolean;
+  is_extended: boolean;
   /** Present only when extended. */
   booking_code?: string;
   /** Present only when extended. */
@@ -8379,33 +8343,27 @@ export type AgentBookingExtendData = {
 export type AgentBookingExtendResponse = {
   data: AgentBookingExtendData;
 };
-export type CodeEnum =
-  | "already_ended"
-  | "not_later"
-  | "too_short"
-  | "needs_approval"
-  | "bench_not_in_service"
-  | "bench_not_free";
-export type AgentBookingExtendErrorDetail = {
-  /** Always ends_at. */
-  field: string;
-  /** Why the extension was refused (stable).
-    
-    * `already_ended` - already_ended
-    * `not_later` - not_later
-    * `too_short` - too_short
-    * `needs_approval` - needs_approval
-    * `bench_not_in_service` - bench_not_in_service
-    * `bench_not_free` - bench_not_free */
-  code: CodeEnum;
-  message: string;
-  /** too_short: earliest accepted end; needs_approval: latest accepted end; bench_not_free: when the next booking starts; otherwise null. */
-  limit: string | null;
-};
 export type AgentBookingExtendErrorBody = {
   code: string;
   message: string;
-  details: AgentBookingExtendErrorDetail[];
+  details: (
+    | {
+        field: string;
+        code:
+          | "already_ended"
+          | "not_later"
+          | "too_short"
+          | "needs_approval"
+          | "bench_not_in_service"
+          | "bench_not_free";
+        message: string;
+        limit_at: string | null;
+      }
+    | {
+        field?: string;
+        message: string;
+      }
+  )[];
   request_id: string;
 };
 export type AgentBookingExtendError = {
@@ -8417,7 +8375,7 @@ export type AgentBookingExtendRequest = {
   ends_at: string;
 };
 export type AgentBookingValidationData = {
-  eligible: boolean;
+  is_eligible: boolean;
   /** Present only when eligible. */
   booking_code?: string;
   /** Present only when eligible. */
@@ -8431,24 +8389,29 @@ export type AgentBookingValidationResponse = {
   data: AgentBookingValidationData;
 };
 export type AgentIdentity = {};
-export type StateEnum = "pending" | "active" | "revoked" | "decommissioned";
-export type KeyAlgorithmEnum = "Ed25519";
-export type KeyStorageEnum = "tpm" | "os_keystore" | "software";
+export type LabsNamedReference = {};
+export type LabsNamedReferenceRead = {
+  id: number;
+  name: string;
+};
+export type Choice = {};
+export type ChoiceRead = {
+  value: string;
+  label: string;
+};
 export type AgentIdentityRead = {
   id: number;
   agent_uid: string;
-  equipment: number;
-  equipment_sku: string;
-  equipment_name: string;
-  state: StateEnum;
-  key_algorithm: KeyAlgorithmEnum;
-  key_storage: KeyStorageEnum;
+  equipment: LabsNamedReferenceRead | null;
+  state: ChoiceRead;
+  key_algorithm: ChoiceRead | null;
+  key_storage: ChoiceRead | null;
   fingerprint: string;
   agent_version: string;
   last_seen_at: string | null;
   enrolled_at: string | null;
-  created: string;
-  modified: string;
+  created_at: string;
+  updated_at: string;
 };
 export type AgentDetailResponse = {
   data: AgentIdentity;
@@ -8456,6 +8419,7 @@ export type AgentDetailResponse = {
 export type AgentDetailResponseRead = {
   data: AgentIdentityRead;
 };
+export type KeyStorageEnum = "tpm" | "os_keystore" | "software";
 export type EnrollAgentRequest = {
   grant: string;
   public_key: string;
@@ -8464,10 +8428,18 @@ export type EnrollAgentRequest = {
   agent_version: string;
   proof: string;
 };
-export type ComputingActivityStatusEnum =
-  "offline" | "free" | "active" | "inactive" | "maintaining";
 export type AgentActivityData = {
-  status: ComputingActivityStatusEnum;
+  remote_user: string;
+  remote_user_display_name: string;
+  remote_computer: string;
+  remote_ip: string | null;
+  booking_code: string;
+  offline_at: string | null;
+  inactive_at: string | null;
+  last_agent_report_at: string | null;
+};
+export type AgentActivityDataRead = {
+  status: ChoiceRead;
   remote_user: string;
   remote_user_display_name: string;
   remote_computer: string;
@@ -8480,6 +8452,11 @@ export type AgentActivityData = {
 export type AgentActivityResponse = {
   data: AgentActivityData;
 };
+export type AgentActivityResponseRead = {
+  data: AgentActivityDataRead;
+};
+export type ComputingActivityStatusEnum =
+  "offline" | "free" | "active" | "inactive" | "maintaining";
 export type PatchedAgentActivityReport = {
   status?: ComputingActivityStatusEnum;
   remote_user?: string;
@@ -8499,7 +8476,8 @@ export type AgentHeartbeatRequest = {
   agent_uid?: string;
 };
 export type AgentInfoResponseData = {
-  backend_id: string;
+  /** Logical name of this department backend (routing-sync backend_id). */
+  backend_key: string;
   server_time: string;
   capabilities: string[];
   /** Paths of the agent routes this backend serves, keyed by capability. */
@@ -8510,29 +8488,32 @@ export type AgentInfoResponseData = {
 export type AgentInfoResponse = {
   data: AgentInfoResponseData;
 };
-export type AccessTypeEnum = "booked" | "ad_hoc" | "unverified_booking";
-export type NullEnum = null;
 export type AgentSessionLogData = {
   id: number;
-  event_id: string;
-  login_time: string;
-  logout_time: string;
+  event_key: string;
+  login_at: string;
+  logout_at: string;
   booking_code: string | null;
-  /** booked: a verified booking for this computer's bench; ad_hoc: no booking code; unverified_booking: a code that did not verify. Null only for sessions stored before access types existed.
-    
-    * `booked` - Booked
-    * `ad_hoc` - Ad hoc (no booking)
-    * `unverified_booking` - Booking not verified */
-  access_type: (AccessTypeEnum | NullEnum) | null;
+};
+export type AgentSessionLogDataRead = {
+  id: number;
+  event_key: string;
+  login_at: string;
+  logout_at: string;
+  booking_code: string | null;
+  access_type: ChoiceRead | null;
 };
 export type AgentSessionLogResponse = {
   data: AgentSessionLogData;
 };
+export type AgentSessionLogResponseRead = {
+  data: AgentSessionLogDataRead;
+};
 export type AgentSessionLogReport = {
   /** Agent-generated id of this session; repeat it on retry. */
-  event_id: string;
-  login_time: string;
-  logout_time: string;
+  event_key: string;
+  login_at: string;
+  logout_at: string;
   active_duration_seconds: number;
   remote_user: string;
   remote_ip?: string | null;
@@ -8618,22 +8599,38 @@ export type BenchGroupSummary = {
 export type BenchGroupSummarySerializersBenchGroupSummaryListResponse = {
   data: BenchGroupSummary[];
 };
+export type ReportPeriod = {
+  starts_at: string;
+  ends_at: string;
+};
 export type BookedVsUsedBench = {
-  bench_id: number;
-  bench_name: string;
+  booked_hours: number;
+};
+export type BookedVsUsedBenchRead = {
+  bench: LabsNamedReferenceRead;
   booked_hours: number;
 };
 export type BookedVsUsed = {
-  period_start: string;
-  period_end: string;
+  period: ReportPeriod;
   total_booked_hours: number;
   total_used_hours: number;
   used_to_booked_ratio: number | null;
   official_working_hours: number;
   benches: BookedVsUsedBench[];
 };
+export type BookedVsUsedRead = {
+  period: ReportPeriod;
+  total_booked_hours: number;
+  total_used_hours: number;
+  used_to_booked_ratio: number | null;
+  official_working_hours: number;
+  benches: BookedVsUsedBenchRead[];
+};
 export type BookedVsUsedAnalyticsSerializersBookedVsUsedDetailResponse = {
   data: BookedVsUsed;
+};
+export type BookedVsUsedAnalyticsSerializersBookedVsUsedDetailResponseRead = {
+  data: BookedVsUsedRead;
 };
 export type AnalyticsCountTrend = {
   count: number;
@@ -8652,45 +8649,45 @@ export type BookingCountAnalyticsResponsePayload =
 export type BookingCountAnalyticsResponse = {
   data: BookingCountAnalyticsResponsePayload;
 };
-export type CountTrendMetric = {
-  count: number;
-  previous_count: number;
-  trend_percent: number;
-};
-export type ActiveBenchesMetric = {
-  count: number;
-};
-export type DashboardSummary = {
-  generated_at: string;
-  period_start: string;
-  period_end: string;
-  bookings: CountTrendMetric;
-  facility_visits: CountTrendMetric;
-  active_benches: ActiveBenchesMetric;
-};
-export type DashboardSummaryAnalyticsSerializersDashboardSummaryDetailResponse =
-  {
-    data: DashboardSummary;
-  };
 export type EquipmentAvailabilityItem = {
-  equipment_id: number;
-  equipment_name: string;
+  uptime_percent: number;
+  unavailable_hours: number;
+  outage_count: number;
+  current_status: string;
+};
+export type EquipmentAvailabilityItemRead = {
+  equipment: LabsNamedReferenceRead;
   uptime_percent: number;
   unavailable_hours: number;
   outage_count: number;
   current_status: string;
 };
 export type EquipmentAvailability = {
-  period_start: string;
-  period_end: string;
+  period: ReportPeriod;
   equipment_count: number;
   average_uptime_percent: number | null;
   items: EquipmentAvailabilityItem[];
+};
+export type EquipmentAvailabilityRead = {
+  period: ReportPeriod;
+  equipment_count: number;
+  average_uptime_percent: number | null;
+  items: EquipmentAvailabilityItemRead[];
 };
 export type EquipmentAvailabilityAnalyticsSerializersEquipmentAvailabilityDetailResponse =
   {
     data: EquipmentAvailability;
   };
+export type EquipmentAvailabilityAnalyticsSerializersEquipmentAvailabilityDetailResponseRead =
+  {
+    data: EquipmentAvailabilityRead;
+  };
+export type FinancePeriod = {
+  /** Inclusive instant at local first-month midnight, represented in UTC. */
+  starts_at: string;
+  /** Exclusive instant at local midnight following end_month, represented in UTC. */
+  ends_at: string;
+};
 export type FinanceMoney = {
   /** Exact decimal string, two source-stored decimal places. */
   amount: string;
@@ -8708,7 +8705,6 @@ export type FinanceSources = {
   expense: FinanceTotals;
   procurement: FinanceTotals;
 };
-export type FinanceBreakdownItemSourceEnum = "expense" | "procurement";
 export type FinanceBreakdownItem = {
   payments: FinanceMoney;
   /** Negative cash-flow contribution of refunds. */
@@ -8718,24 +8714,45 @@ export type FinanceBreakdownItem = {
   transaction_count: number;
   /** Expense-owned type, or procurement for purchases with no expense type. */
   expense_type: string;
-  source: FinanceBreakdownItemSourceEnum;
+};
+export type FinanceBreakdownItemRead = {
+  payments: FinanceMoney;
+  /** Negative cash-flow contribution of refunds. */
+  refunds: FinanceMoney;
+  /** Payments plus signed refunds; may be negative. */
+  net: FinanceMoney;
+  transaction_count: number;
+  /** Expense-owned type, or procurement for purchases with no expense type. */
+  expense_type: string;
+  source: ChoiceRead;
 };
 export type FinanceBreakdown = {
   currency: string;
   start_month: string;
   end_month: string;
   timezone: string;
-  /** Inclusive instant at local first-month midnight, represented in UTC. */
-  period_start: string;
-  /** Exclusive instant at local midnight following end_month, represented in UTC. */
-  period_end: string;
+  period: FinancePeriod;
   combined: FinanceTotals;
   sources: FinanceSources;
   items: FinanceBreakdownItem[];
 };
+export type FinanceBreakdownRead = {
+  currency: string;
+  start_month: string;
+  end_month: string;
+  timezone: string;
+  period: FinancePeriod;
+  combined: FinanceTotals;
+  sources: FinanceSources;
+  items: FinanceBreakdownItemRead[];
+};
 export type FinanceBreakdownAnalyticsSerializersFinanceBreakdownDetailResponse =
   {
     data: FinanceBreakdown;
+  };
+export type FinanceBreakdownAnalyticsSerializersFinanceBreakdownDetailResponseRead =
+  {
+    data: FinanceBreakdownRead;
   };
 export type FinanceProblemResponse = {
   error: ProblemDetail;
@@ -8750,10 +8767,7 @@ export type FinanceMonthlyTrends = {
   start_month: string;
   end_month: string;
   timezone: string;
-  /** Inclusive instant at local first-month midnight, represented in UTC. */
-  period_start: string;
-  /** Exclusive instant at local midnight following end_month, represented in UTC. */
-  period_end: string;
+  period: FinancePeriod;
   combined: FinanceTotals;
   sources: FinanceSources;
   /** Chronological series, zero-filled for every requested month. */
@@ -8768,10 +8782,7 @@ export type FinanceSummary = {
   start_month: string;
   end_month: string;
   timezone: string;
-  /** Inclusive instant at local first-month midnight, represented in UTC. */
-  period_start: string;
-  /** Exclusive instant at local midnight following end_month, represented in UTC. */
-  period_end: string;
+  period: FinancePeriod;
   combined: FinanceTotals;
   sources: FinanceSources;
 };
@@ -8887,11 +8898,8 @@ export type UserLabUsage = {
 export type UserLabUsageSerializersUserLabUsageListResponse = {
   data: UserLabUsage[];
 };
-export type AuditCatalogItemResourceTypeEnum =
-  "equipment" | "bench" | "station" | "room" | "license";
 export type AuditCatalogItem = {
   uid: string;
-  resource_type: AuditCatalogItemResourceTypeEnum;
   sku: string;
   name: string;
   /** Equipment only; empty for other types. */
@@ -8903,10 +8911,29 @@ export type AuditCatalogItem = {
   /** Bench: setup station name. Station: room name. Room: building name. Otherwise empty. */
   location: string;
   /** License expiry; null for other types. */
-  expiry_date: string | null;
+  expires_at: string | null;
   updated_at: string;
   /** True when the resource was deleted; remove it from the local copy. */
-  deleted: boolean;
+  is_deleted: boolean;
+};
+export type AuditCatalogItemRead = {
+  uid: string;
+  resource_type: ChoiceRead;
+  sku: string;
+  name: string;
+  /** Equipment only; empty for other types. */
+  serial_number: string;
+  /** Equipment lifecycle_state; bench, station or room lifecycle_status; or the newest status record of a license; empty when none exists. */
+  status: string;
+  /** Computed from downtime (operational, in_maintenance, out_of_service); empty for licenses. */
+  condition: string;
+  /** Bench: setup station name. Station: room name. Room: building name. Otherwise empty. */
+  location: string;
+  /** License expiry; null for other types. */
+  expires_at: string | null;
+  updated_at: string;
+  /** True when the resource was deleted; remove it from the local copy. */
+  is_deleted: boolean;
 };
 export type AuditCatalogPagination = {
   /** Always null: not computed for cursor pages. */
@@ -8919,10 +8946,14 @@ export type AuditCatalogPagination = {
 export type AuditCatalogMeta = {
   pagination: AuditCatalogPagination;
   /** Time the sync started. Store it and send it as changed_since on the next sync. */
-  server_time: string;
+  sync_started_at: string;
 };
 export type AuditCatalogResponse = {
   data: AuditCatalogItem[];
+  meta: AuditCatalogMeta;
+};
+export type AuditCatalogResponseRead = {
+  data: AuditCatalogItemRead[];
   meta: AuditCatalogMeta;
 };
 export type AllResourceAuditListSerializersResourceAuditItemPagination = {
@@ -8935,31 +8966,28 @@ export type AllResourceAuditListSerializersResourceAuditItemPagination = {
 export type AllResourceAuditListSerializersResourceAuditItemPaginationMeta = {
   pagination: AllResourceAuditListSerializersResourceAuditItemPagination;
 };
-export type ResourceAuditResultEnum = "PASS" | "FAIL" | "NOT_ASSESSED";
 export type ResourceAuditItem = {
-  result: ResourceAuditResultEnum;
   remarks?: string;
   audited_at: string;
 };
-export type ResourceAuditorUserSummary = {
-  /** Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only. */
-  username: string;
-  display_name?: string;
-};
-export type ResourceAuditorUserSummaryRead = {
+export type AuditedResource = {};
+export type AuditedResourceTypeEnum =
+  "equipment" | "bench" | "station" | "room" | "license";
+export type AuditedResourceRead = {
   id: number;
-  /** Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only. */
-  username: string;
-  display_name?: string;
+  name: string;
+  type: AuditedResourceTypeEnum;
+};
+export type UserReference = {};
+export type UserReferenceRead = {
+  id: number;
+  name: string;
 };
 export type ResourceAuditItemRead = {
   id: number;
-  resource_type: string;
-  resource_id: string;
-  resource_name: string;
-  resource_sku: string;
-  auditor: ResourceAuditorUserSummaryRead;
-  result: ResourceAuditResultEnum;
+  resource: AuditedResourceRead;
+  auditor: UserReferenceRead;
+  result: ChoiceRead;
   remarks?: string;
   audited_at: string;
   created_at: string;
@@ -8999,17 +9027,6 @@ export type BenchBookingListSerializersBenchBookingPaginationMeta = {
   pagination: BenchBookingListSerializersBenchBookingPagination;
 };
 export type BenchBooking = {};
-export type LabsResourceOwner = {
-  /** Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only. */
-  username: string;
-  display_name?: string;
-};
-export type LabsResourceOwnerRead = {
-  id: number;
-  /** Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only. */
-  username: string;
-  display_name?: string;
-};
 export type LabsUidNamedReference = {};
 export type LabsUidNamedReferenceRead = {
   id: number;
@@ -9021,15 +9038,10 @@ export type LabsChoiceReferenceRead = {
   value: string;
   label: string;
 };
-export type LabsNamedReference = {};
-export type LabsNamedReferenceRead = {
-  id: number;
-  name: string;
-};
 export type BenchBookingRead = {
   id: number;
   booking_code: string;
-  creator: LabsResourceOwnerRead | null;
+  creator: UserReferenceRead | null;
   bench: LabsUidNamedReferenceRead;
   starts_at: string;
   ends_at: string;
@@ -9156,22 +9168,15 @@ export type LabProjectReferenceListSerializersLabProjectCatalogRecordPaginationM
   {
     pagination: LabProjectReferenceListSerializersLabProjectCatalogRecordPagination;
   };
-export type LabProjectCatalogRecord = {
-  project_name?: string;
-  /** Short unique project code, e.g. a cost-center number. */
-  code?: string | null;
-  starts_on?: string | null;
-  ends_on?: string | null;
-  active?: boolean;
-};
+export type LabProjectCatalogRecord = {};
 export type LabProjectCatalogRecordRead = {
   id: number;
-  project_name?: string;
+  project_name: string;
   /** Short unique project code, e.g. a cost-center number. */
-  code?: string | null;
-  starts_on?: string | null;
-  ends_on?: string | null;
-  active?: boolean;
+  code: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  is_active: boolean;
 };
 export type LabProjectReferenceListSerializersLabProjectCatalogRecordPaginatedResponse =
   {
@@ -9192,12 +9197,12 @@ export type LabProjectReferenceCreateSerializersLabProjectCatalogRecordDetailRes
     data: LabProjectCatalogRecordRead;
   };
 export type LabProjectCatalogCreate = {
-  project_name?: string;
+  project_name: string;
   /** Short unique project code, e.g. a cost-center number. */
   code?: string | null;
-  starts_on?: string | null;
-  ends_on?: string | null;
-  active?: boolean;
+  start_date?: string | null;
+  end_date?: string | null;
+  is_active?: boolean;
 };
 export type LabProjectReferenceDetailSerializersLabProjectCatalogRecordDetailResponse =
   {
@@ -9328,20 +9333,20 @@ export type BenchListSerializersBenchPaginationMeta = {
 };
 export type Bench = {};
 export type LabsAvailability = {};
-export type ValueEnum = "available" | "unavailable";
 export type LabsAvailabilitySource = {};
+export type LabsAvailabilitySourceTypeEnum = "bench" | "station" | "room";
 export type LabsAvailabilitySourceRead = {
-  type: string;
   id: number;
   name: string;
+  type: LabsAvailabilitySourceTypeEnum;
 };
 export type LabsAvailabilityRead = {
-  value: ValueEnum;
+  status: ChoiceRead;
   /** The resource that blocks. */
   blocked_by: LabsAvailabilitySourceRead | null;
-  condition: string | null;
+  condition: ChoiceRead | null;
   /** Lifecycle status, or the downtime reason, of blocked_by. */
-  reason: string | null;
+  reason: ChoiceRead | null;
 };
 export type BenchRead = {
   id: number;
@@ -9352,7 +9357,7 @@ export type BenchRead = {
   department: LabsNamedReferenceRead | null;
   owner: LabsNamedReferenceRead | null;
   remark: string;
-  image: string | null;
+  image_url: string | null;
   type: LabsNamedReferenceRead | null;
   bench_group: LabsNamedReferenceRead | null;
   description: string;
@@ -9401,7 +9406,6 @@ export type BenchCreate = {
   group_id?: number | null;
   owner_id?: number | null;
   remark?: string;
-  image?: string | null;
   type_id?: number | null;
   bench_group_id?: number | null;
   description?: string;
@@ -9429,7 +9433,7 @@ export type BenchResourceDetailRead = {
   department: LabsNamedReferenceRead | null;
   owner: LabsNamedReferenceRead | null;
   remark: string;
-  image: string | null;
+  image_url: string | null;
   type: LabsNamedReferenceRead | null;
   bench_group: LabsNamedReferenceRead | null;
   description: string;
@@ -9476,7 +9480,6 @@ export type BenchUpdate = {
   group_id?: number | null;
   owner_id?: number | null;
   remark?: string;
-  image?: string | null;
   type_id?: number | null;
   bench_group_id?: number | null;
   description?: string;
@@ -9507,7 +9510,6 @@ export type PatchedBenchUpdate = {
   group_id?: number | null;
   owner_id?: number | null;
   remark?: string;
-  image?: string | null;
   type_id?: number | null;
   bench_group_id?: number | null;
   description?: string;
@@ -9578,17 +9580,10 @@ export type BenchEquipmentListSerializersBenchSetupEquipmentPaginationMeta = {
   pagination: BenchEquipmentListSerializersBenchSetupEquipmentPagination;
 };
 export type BenchSetupEquipment = {};
-export type BenchEquipmentReference = {};
-export type BenchEquipmentReferenceRead = {
-  id: number;
-  uid: string;
-  sku: string;
-  name: string;
-  kind: LabsNamedReferenceRead | null;
-};
 export type BenchSetupEquipmentRead = {
   id: number;
-  equipment: BenchEquipmentReferenceRead;
+  equipment: LabsUidNamedReferenceRead;
+  equipment_kind: LabsNamedReferenceRead | null;
   role: string;
   position: number;
   is_monitored: boolean;
@@ -9604,6 +9599,20 @@ export type BenchEquipmentListSerializersBenchSetupEquipmentPaginatedResponseRea
     meta: BenchEquipmentListSerializersBenchSetupEquipmentPaginationMeta;
     data: BenchSetupEquipmentRead[];
   };
+export type ResourceImage = {};
+export type ResourceImageRead = {
+  image_url: string | null;
+};
+export type ResourceImageResourceImagesResourceImageDetailResponse = {
+  data: ResourceImage;
+};
+export type ResourceImageResourceImagesResourceImageDetailResponseRead = {
+  data: ResourceImageRead;
+};
+export type ResourceImageUpload = {
+  /** JPEG, PNG, GIF or WebP, at most 5 MB. The type is detected from the content. */
+  file: Blob;
+};
 export type LabProfile = {
   id: number;
   name: string;
@@ -9674,7 +9683,7 @@ export type MappingEquipmentAssignment = {
   id: number;
   role: string;
   position: number;
-  monitor: boolean;
+  is_monitored: boolean;
   assigned_at: string;
 };
 export type MappingEquipment = {
@@ -9771,14 +9780,11 @@ export type BenchGroupReferenceListSerializersBenchGroupCatalogRecordPaginationM
   {
     pagination: BenchGroupReferenceListSerializersBenchGroupCatalogRecordPagination;
   };
-export type BenchGroupCatalogRecord = {
-  name: string;
-  active?: boolean;
-};
+export type BenchGroupCatalogRecord = {};
 export type BenchGroupCatalogRecordRead = {
   id: number;
   name: string;
-  active?: boolean;
+  is_active: boolean;
 };
 export type BenchGroupReferenceListSerializersBenchGroupCatalogRecordPaginatedResponse =
   {
@@ -9800,7 +9806,7 @@ export type BenchGroupReferenceCreateSerializersBenchGroupCatalogRecordDetailRes
   };
 export type BenchGroupCatalogCreate = {
   name: string;
-  active?: boolean;
+  is_active?: boolean;
 };
 export type BenchGroupReferenceDetailSerializersBenchGroupCatalogRecordDetailResponse =
   {
@@ -9822,14 +9828,11 @@ export type BenchTypeReferenceListSerializersBenchTypeCatalogRecordPaginationMet
   {
     pagination: BenchTypeReferenceListSerializersBenchTypeCatalogRecordPagination;
   };
-export type BenchTypeCatalogRecord = {
-  name: string;
-  active?: boolean;
-};
+export type BenchTypeCatalogRecord = {};
 export type BenchTypeCatalogRecordRead = {
   id: number;
   name: string;
-  active?: boolean;
+  is_active: boolean;
 };
 export type BenchTypeReferenceListSerializersBenchTypeCatalogRecordPaginatedResponse =
   {
@@ -9851,7 +9854,7 @@ export type BenchTypeReferenceCreateSerializersBenchTypeCatalogRecordDetailRespo
   };
 export type BenchTypeCatalogCreate = {
   name: string;
-  active?: boolean;
+  is_active?: boolean;
 };
 export type BenchTypeReferenceDetailSerializersBenchTypeCatalogRecordDetailResponse =
   {
@@ -9894,32 +9897,11 @@ export type BuildingCatalogItem = {
   name: string;
   address?: string;
 };
-export type CityCatalogItem = {
-  name: string;
-};
-export type CountryCatalogItem = {
-  code: string;
-  name: string;
-};
-export type CountryCatalogItemRead = {
-  id: number;
-  code: string;
-  name: string;
-};
-export type CityCatalogItemRead = {
-  id: number;
-  name: string;
-  country: CountryCatalogItemRead;
-};
-export type CityCatalogItemWrite = {
-  name: string;
-  country_id?: number;
-};
 export type BuildingCatalogItemRead = {
   id: number;
   name: string;
   address?: string;
-  city: CityCatalogItemRead;
+  city: LabsNamedReferenceRead | null;
 };
 export type BuildingCatalogItemWrite = {
   name: string;
@@ -9957,6 +9939,18 @@ export type CityCatalogListGeoSerializersCityPagination = {
 export type CityCatalogListGeoSerializersCityPaginationMeta = {
   pagination: CityCatalogListGeoSerializersCityPagination;
 };
+export type CityCatalogItem = {
+  name: string;
+};
+export type CityCatalogItemRead = {
+  id: number;
+  name: string;
+  country: LabsNamedReferenceRead | null;
+};
+export type CityCatalogItemWrite = {
+  name: string;
+  country_id?: number;
+};
 export type CityCatalogListGeoSerializersCityPaginatedResponse = {
   meta: CityCatalogListGeoSerializersCityPaginationMeta;
   data: CityCatalogItem[];
@@ -9988,6 +9982,15 @@ export type CountryCatalogListGeoSerializersCountryPagination = {
 export type CountryCatalogListGeoSerializersCountryPaginationMeta = {
   pagination: CountryCatalogListGeoSerializersCountryPagination;
 };
+export type CountryCatalogItem = {
+  code: string;
+  name: string;
+};
+export type CountryCatalogItemRead = {
+  id: number;
+  code: string;
+  name: string;
+};
 export type CountryCatalogListGeoSerializersCountryPaginatedResponse = {
   meta: CountryCatalogListGeoSerializersCountryPaginationMeta;
   data: CountryCatalogItem[];
@@ -10015,24 +10018,26 @@ export type DashboardBenchListSerializersDashboardBenchPaginationMeta = {
 export type DashboardBenchGroup = {
   id: number;
   name: string;
-  description?: string;
 };
 export type DashboardBenchType = {
   id: number;
   name: string;
 };
 export type DashboardLocation = {
-  station_id: number | null;
-  station_name: string | null;
-  room_id: number | null;
-  room_name: string | null;
-  building_name: string | null;
+  station: LabsNamedReference | null;
+  room: LabsNamedReference | null;
+  building: LabsNamedReference | null;
+  slot_label: string | null;
+};
+export type DashboardLocationRead = {
+  station: LabsNamedReferenceRead | null;
+  room: LabsNamedReferenceRead | null;
+  building: LabsNamedReferenceRead | null;
   slot_label: string | null;
 };
 export type DashboardUser = {
   id: number;
-  username: string;
-  display_name?: string;
+  name: string;
 };
 export type DashboardBooking = {
   id: number;
@@ -10076,9 +10081,30 @@ export type DashboardBench = {
   image_url: string | null;
   updated_at: string;
 };
+export type DashboardBenchRead = {
+  id: number;
+  sku: string;
+  name: string;
+  lifecycle_status: string;
+  bench_group: DashboardBenchGroup | null;
+  bench_type: DashboardBenchType | null;
+  location: DashboardLocationRead | null;
+  is_favorite?: boolean;
+  current_booking: DashboardBooking | null;
+  computing: DashboardComputing | null;
+  samples: DashboardEquipmentReference[];
+  licenses: DashboardEquipmentReference[];
+  assigned_equipment_count: number;
+  image_url: string | null;
+  updated_at: string;
+};
 export type DashboardBenchListSerializersDashboardBenchPaginatedResponse = {
   meta: DashboardBenchListSerializersDashboardBenchPaginationMeta;
   data: DashboardBench[];
+};
+export type DashboardBenchListSerializersDashboardBenchPaginatedResponseRead = {
+  meta: DashboardBenchListSerializersDashboardBenchPaginationMeta;
+  data: DashboardBenchRead[];
 };
 export type DashboardBookingDetail = {
   id: number;
@@ -10163,7 +10189,7 @@ export type DashboardBenchDetailRead = {
   lifecycle_status: string;
   bench_group: DashboardBenchGroup | null;
   bench_type: DashboardBenchType | null;
-  location: DashboardLocation | null;
+  location: DashboardLocationRead | null;
   is_favorite?: boolean;
   current_booking: DashboardBookingDetail | null;
   computing: DashboardComputingDetail | null;
@@ -10220,12 +10246,12 @@ export type DepartmentCatalogListSerializersDepartmentPaginationMeta = {
 };
 export type DepartmentCatalogItem = {
   name: string;
-  active?: boolean;
+  is_active?: boolean;
 };
 export type DepartmentCatalogItemRead = {
   id: number;
   name: string;
-  active?: boolean;
+  is_active?: boolean;
   created_at: string;
   updated_at: string;
 };
@@ -10258,24 +10284,24 @@ export type LabsDowntimeResource = {};
 export type DowntimeResourceTypeEnum =
   "room" | "station" | "bench" | "equipment";
 export type LabsDowntimeResourceRead = {
-  type: DowntimeResourceTypeEnum;
   id: number;
+  name: string;
+  type: DowntimeResourceTypeEnum;
 };
-export type DowntimeStateEnum = "scheduled" | "current" | "ended" | "cancelled";
 export type DowntimeRead = {
   id: number;
   resource: LabsDowntimeResourceRead;
   condition: LabsChoiceReferenceRead;
   kind: LabsChoiceReferenceRead;
   reason: LabsChoiceReferenceRead;
-  state: DowntimeStateEnum;
+  state: ChoiceRead;
   starts_at: string;
   /** Empty while the end is not known. */
   ends_at: string | null;
   cancelled_at: string | null;
   notes: string;
-  actor: LabsResourceOwnerRead | null;
-  ended_by: LabsResourceOwnerRead | null;
+  actor: UserReferenceRead | null;
+  ended_by: UserReferenceRead | null;
   created_at: string;
   updated_at: string;
 };
@@ -10302,6 +10328,7 @@ export type ReasonEnum =
   | "renovation"
   | "other";
 export type KindEnum = "planned" | "unplanned";
+export type NullEnum = null;
 export type DowntimeCreate = {
   resource_type: DowntimeResourceTypeEnum;
   resource_id: number;
@@ -10350,16 +10377,10 @@ export type EquipmentCollectionApiViewCollectionEquipmentItemPaginationMeta = {
 };
 export type EquipmentItem = {};
 export type EquipmentPlacement = {};
-export type TargetTypeEnum = "bench" | "station" | "room" | "note";
 export type EquipmentPlacementRead = {
   id: number;
-  /** Which target is set; ``note`` means an untracked place described by location_note.
-    
-    * `bench` - bench
-    * `station` - station
-    * `room` - room
-    * `note` - note */
-  target_type: TargetTypeEnum;
+  /** Which target is set; ``note`` means an untracked place described by location_note. */
+  target_type: ChoiceRead;
   bench: LabsUidNamedReferenceRead | null;
   station: LabsUidNamedReferenceRead | null;
   room: LabsUidNamedReferenceRead | null;
@@ -10373,14 +10394,14 @@ export type EquipmentLoanRead = {
   id: number;
   batch_id: number;
   equipment: LabsUidNamedReferenceRead;
-  borrower: LabsResourceOwnerRead | null;
+  borrower: UserReferenceRead | null;
   borrower_name: string;
   borrower_contact: string;
   purpose: string;
   booking_id: number | null;
   handed_over_at: string;
   due_at: string;
-  overdue: boolean;
+  is_overdue: boolean;
   condition_out: string;
   returned_at: string | null;
   condition_in: string;
@@ -10438,6 +10459,7 @@ export type EquipmentItemRead = {
   type: LabsNamedReferenceRead | null;
   sku: string;
   name: string;
+  image_url: string | null;
   manufacturer: LabsNamedReferenceRead | null;
   product_model: LabsNamedReferenceRead | null;
   serial_number: string;
@@ -10454,12 +10476,11 @@ export type EquipmentItemRead = {
   /** Nameplate power consumption in watts. */
   power_draw_w: number | null;
   weight_kg: string | null;
-  warranty_until: string | null;
-  /** History and due dates are kept as ResourceServiceRecord (kind=calibration). */
-  calibration_required: boolean;
+  warranty_end_date: string | null;
+  is_calibration_required: boolean;
   last_calibrated_at: string | null;
   next_calibration_due_at: string | null;
-  calibration_overdue: boolean;
+  is_calibration_overdue: boolean;
   metadata: any;
   /** Planned date when the equipment should be replaced. */
   replacement_date: string | null;
@@ -10498,7 +10519,7 @@ export type EquipmentCollectionApiViewCollectionEquipmentItemPaginatedResponseRe
 export type EquipmentDetail = {};
 export type ComputingActivity = {};
 export type ComputingActivityRead = {
-  status: ComputingActivityStatusEnum;
+  status: ChoiceRead;
   remote_user: string;
   remote_user_display_name: string;
   remote_computer: string;
@@ -10507,7 +10528,7 @@ export type ComputingActivityRead = {
   offline_at: string | null;
   inactive_at: string | null;
   inactive_reminder_count: number;
-  modified: string;
+  updated_at: string;
 };
 export type EquipmentDetailRead = {
   id: number;
@@ -10517,6 +10538,7 @@ export type EquipmentDetailRead = {
   type: LabsNamedReferenceRead | null;
   sku: string;
   name: string;
+  image_url: string | null;
   manufacturer: LabsNamedReferenceRead | null;
   product_model: LabsNamedReferenceRead | null;
   serial_number: string;
@@ -10533,12 +10555,11 @@ export type EquipmentDetailRead = {
   /** Nameplate power consumption in watts. */
   power_draw_w: number | null;
   weight_kg: string | null;
-  warranty_until: string | null;
-  /** History and due dates are kept as ResourceServiceRecord (kind=calibration). */
-  calibration_required: boolean;
+  warranty_end_date: string | null;
+  is_calibration_required: boolean;
   last_calibrated_at: string | null;
   next_calibration_due_at: string | null;
-  calibration_overdue: boolean;
+  is_calibration_overdue: boolean;
   metadata: any;
   /** Planned date when the equipment should be replaced. */
   replacement_date: string | null;
@@ -10594,9 +10615,6 @@ export type EquipmentCreate = {
   /** Nameplate power consumption in watts. */
   power_draw_w?: number | null;
   weight_kg?: string | null;
-  warranty_until?: string | null;
-  /** History and due dates are kept as ResourceServiceRecord (kind=calibration). */
-  calibration_required?: boolean;
   /** Changed only by the change_lifecycle command; history is in EquipmentEvent.
     
     * `planned` - Planned
@@ -10622,6 +10640,9 @@ export type EquipmentCreate = {
   department_id?: number | null;
   /** Owning team; must belong to the selected department. */
   group_id?: number | null;
+  warranty_end_date?: string | null;
+  /** History and due dates are kept as ResourceServiceRecord (kind=calibration). */
+  is_calibration_required?: boolean;
   material_id?: number | null;
   size_id?: number | null;
   resolution_id?: number | null;
@@ -10644,25 +10665,17 @@ export type EquipmentCategoriesCatalogListSerializersEquipmentCategoryPagination
   };
 export type EquipmentCategory = {
   /** Stable code used by the code base (e.g. 'computing'). Filled from the name when empty. Renaming the category never changes it. */
-  key?: string | null;
+  key?: ((string | null) | (string | null)) | null;
   name: string;
   definition: string;
 };
-export type CapabilitiesEnum =
-  | "assignable"
-  | "licensable"
-  | "status_tracking"
-  | "auditable"
-  | "bookable"
-  | "calibratable"
-  | "monitored";
 export type EquipmentCategoryRead = {
   id: number;
   /** Stable code used by the code base (e.g. 'computing'). Filled from the name when empty. Renaming the category never changes it. */
-  key?: string | null;
+  key?: ((string | null) | (string | null)) | null;
   name: string;
   definition: string;
-  capabilities: CapabilitiesEnum[];
+  capabilities: ChoiceRead[];
 };
 export type EquipmentCategoriesCatalogListSerializersEquipmentCategoryPaginatedResponse =
   {
@@ -10693,12 +10706,11 @@ export type EquipmentKindCatalogListSerializersEquipmentKindPaginationMeta = {
   pagination: EquipmentKindCatalogListSerializersEquipmentKindPagination;
 };
 export type EquipmentKind = {
-  category: number;
   name: string;
 };
 export type EquipmentKindRead = {
   id: number;
-  category: number;
+  category_id: number;
   name: string;
 };
 export type EquipmentKindCatalogListSerializersEquipmentKindPaginatedResponse =
@@ -10729,7 +10741,7 @@ export type EquipmentLoanReminderRead = {
 };
 export type EquipmentLoanBatchRead = {
   id: number;
-  borrower: LabsResourceOwnerRead | null;
+  borrower: UserReferenceRead | null;
   borrower_name: string;
   borrower_contact: string;
   purpose: string;
@@ -10870,7 +10882,6 @@ export type EquipmentProductModelCatalogListSerializersEquipmentProductModelPagi
     pagination: EquipmentProductModelCatalogListSerializersEquipmentProductModelPagination;
   };
 export type EquipmentProductModel = {
-  manufacturer: number;
   name: string;
   /** Copied to new assets of this model when empty. */
   default_power_draw_w?: number | null;
@@ -10882,15 +10893,14 @@ export type ProductModelSpecification = {
 };
 export type ProductModelSpecificationRead = {
   id: number;
-  definition_id: number;
-  name: string;
+  definition: LabsNamedReferenceRead;
   unit: string;
-  value_type: string;
+  value_type: ChoiceRead;
   value: string;
 };
 export type EquipmentProductModelRead = {
   id: number;
-  manufacturer: number;
+  manufacturer_id: number;
   name: string;
   /** Copied to new assets of this model when empty. */
   default_power_draw_w?: number | null;
@@ -11016,12 +11026,11 @@ export type EquipmentTypeCatalogListSerializersEquipmentTypePaginationMeta = {
   pagination: EquipmentTypeCatalogListSerializersEquipmentTypePagination;
 };
 export type EquipmentType = {
-  kind: number;
   name: string;
 };
 export type EquipmentTypeRead = {
   id: number;
-  kind: number;
+  kind_id: number;
   name: string;
 };
 export type EquipmentTypeCatalogListSerializersEquipmentTypePaginatedResponse =
@@ -11041,35 +11050,6 @@ export type EquipmentTypeCatalogDetailSerializersEquipmentTypeDetailResponseRead
   {
     data: EquipmentTypeRead;
   };
-export type EquipmentAssignmentResult = {};
-export type EquipmentAssignmentResultRead = {
-  id: number;
-  equipment: LabsUidNamedReferenceRead;
-  bench: LabsUidNamedReferenceRead;
-  role: string;
-  position: number;
-};
-export type EquipmentAssignmentDetailSerializersEquipmentAssignmentResultDetailResponse =
-  {
-    data: EquipmentAssignmentResult;
-  };
-export type EquipmentAssignmentDetailSerializersEquipmentAssignmentResultDetailResponseRead =
-  {
-    data: EquipmentAssignmentResultRead;
-  };
-export type EquipmentAssignmentSerializersEquipmentAssignmentResultDetailResponse =
-  {
-    data: EquipmentAssignmentResult;
-  };
-export type EquipmentAssignmentSerializersEquipmentAssignmentResultDetailResponseRead =
-  {
-    data: EquipmentAssignmentResultRead;
-  };
-export type EquipmentAssignment = {
-  bench_id: number;
-  role?: string;
-  position?: number;
-};
 export type EquipmentDetailAfterConditionChangeCollectionEquipmentDetailDetailResponse =
   {
     data: EquipmentDetail;
@@ -11143,6 +11123,35 @@ export type ComputingActivityDetailApiComputingActivityDetailResponse = {
 export type ComputingActivityDetailApiComputingActivityDetailResponseRead = {
   data: ComputingActivityRead;
 };
+export type EquipmentAssignmentResult = {};
+export type EquipmentAssignmentResultRead = {
+  id: number;
+  equipment: LabsUidNamedReferenceRead;
+  bench: LabsUidNamedReferenceRead;
+  role: string;
+  position: number;
+};
+export type EquipmentAssignmentDetailSerializersEquipmentAssignmentResultDetailResponse =
+  {
+    data: EquipmentAssignmentResult;
+  };
+export type EquipmentAssignmentDetailSerializersEquipmentAssignmentResultDetailResponseRead =
+  {
+    data: EquipmentAssignmentResultRead;
+  };
+export type EquipmentAssignmentSerializersEquipmentAssignmentResultDetailResponse =
+  {
+    data: EquipmentAssignmentResult;
+  };
+export type EquipmentAssignmentSerializersEquipmentAssignmentResultDetailResponseRead =
+  {
+    data: EquipmentAssignmentResultRead;
+  };
+export type EquipmentAssignment = {
+  bench_id: number;
+  role?: string;
+  position?: number;
+};
 export type EquipmentLoanDetailSerializersEquipmentLoanDetailResponse = {
   data: EquipmentLoan;
 };
@@ -11191,7 +11200,7 @@ export type EquipmentStatusChangeRead = {
   display_status: LabsChoiceReferenceRead;
   previous_display_status: LabsChoiceReferenceRead | null;
   occurred_at: string;
-  actor: LabsResourceOwnerRead | null;
+  actor: UserReferenceRead | null;
   reason: string;
   details: {
     [key: string]: any;
@@ -11234,9 +11243,6 @@ export type EquipmentUpdate = {
   /** Nameplate power consumption in watts. */
   power_draw_w?: number | null;
   weight_kg?: string | null;
-  warranty_until?: string | null;
-  /** History and due dates are kept as ResourceServiceRecord (kind=calibration). */
-  calibration_required?: boolean;
   mac_address?: string;
   /** Output channels (power). */
   channels?: number | null;
@@ -11254,6 +11260,9 @@ export type EquipmentUpdate = {
   department_id?: number | null;
   /** Owning team; must belong to the selected department. */
   group_id?: number | null;
+  warranty_end_date?: string | null;
+  /** History and due dates are kept as ResourceServiceRecord (kind=calibration). */
+  is_calibration_required?: boolean;
   material_id?: number | null;
   size_id?: number | null;
   resolution_id?: number | null;
@@ -11277,9 +11286,6 @@ export type PatchedEquipmentUpdate = {
   /** Nameplate power consumption in watts. */
   power_draw_w?: number | null;
   weight_kg?: string | null;
-  warranty_until?: string | null;
-  /** History and due dates are kept as ResourceServiceRecord (kind=calibration). */
-  calibration_required?: boolean;
   mac_address?: string;
   /** Output channels (power). */
   channels?: number | null;
@@ -11297,6 +11303,9 @@ export type PatchedEquipmentUpdate = {
   department_id?: number | null;
   /** Owning team; must belong to the selected department. */
   group_id?: number | null;
+  warranty_end_date?: string | null;
+  /** History and due dates are kept as ResourceServiceRecord (kind=calibration). */
+  is_calibration_required?: boolean;
   material_id?: number | null;
   size_id?: number | null;
   resolution_id?: number | null;
@@ -11353,12 +11362,6 @@ export type LabsGroupReferenceRead = {
   id: number;
   name: string;
 };
-export type EquipmentOwner = {};
-export type EquipmentOwnerRead = {
-  id: number;
-  /** Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only. */
-  username: string;
-};
 export type EquipmentMaterialOption = {};
 export type EquipmentMaterialOptionRead = {
   id: number;
@@ -11407,7 +11410,7 @@ export type EquipmentReferenceDataRead = {
   manufacturers: EquipmentManufacturerRead[];
   product_models: EquipmentProductModelRead[];
   groups: LabsGroupReferenceRead[];
-  owners: EquipmentOwnerRead[];
+  owners: UserReferenceRead[];
   categories: EquipmentCategoryRead[];
   materials: EquipmentMaterialOptionRead[];
   sizes: EquipmentDisplaySizeOptionRead[];
@@ -11438,36 +11441,22 @@ export type EquipmentCategoryReferenceListSerializersEquipmentCategoryCatalogRec
   {
     pagination: EquipmentCategoryReferenceListSerializersEquipmentCategoryCatalogRecordPagination;
   };
-export type EquipmentCategoryCatalogRecord = {
-  name: string;
-  /** Stable code used by the code base (e.g. 'computing'). Filled from the name when empty. Renaming the category never changes it. */
-  key?: string | null;
-  definition: string;
-  /** Units can be lent and reserved. */
-  bookable?: boolean;
-  /** Units can be assigned to a bench. */
-  placeable_on_bench?: boolean;
-  /** Units may require calibration. */
-  calibratable?: boolean;
-  /** Units carry computing columns and may run the monitoring agent (ComputingProfile). */
-  monitored?: boolean;
-  active?: boolean;
-};
+export type EquipmentCategoryCatalogRecord = {};
 export type EquipmentCategoryCatalogRecordRead = {
   id: number;
   name: string;
   /** Stable code used by the code base (e.g. 'computing'). Filled from the name when empty. Renaming the category never changes it. */
-  key?: string | null;
+  key: string | null;
   definition: string;
   /** Units can be lent and reserved. */
-  bookable?: boolean;
+  is_bookable: boolean;
   /** Units can be assigned to a bench. */
-  placeable_on_bench?: boolean;
+  is_placeable_on_bench: boolean;
   /** Units may require calibration. */
-  calibratable?: boolean;
+  is_calibratable: boolean;
   /** Units carry computing columns and may run the monitoring agent (ComputingProfile). */
-  monitored?: boolean;
-  active?: boolean;
+  is_monitored: boolean;
+  is_active: boolean;
 };
 export type EquipmentCategoryReferenceListSerializersEquipmentCategoryCatalogRecordPaginatedResponse =
   {
@@ -11499,16 +11488,12 @@ export type DepartmentReferenceListSerializersDepartmentCatalogRecordPaginationM
   {
     pagination: DepartmentReferenceListSerializersDepartmentCatalogRecordPagination;
   };
-export type DepartmentCatalogRecord = {
-  name: string;
-  description?: string;
-  active?: boolean;
-};
+export type DepartmentCatalogRecord = {};
 export type DepartmentCatalogRecordRead = {
   id: number;
   name: string;
-  description?: string;
-  active?: boolean;
+  description: string;
+  is_active: boolean;
 };
 export type DepartmentReferenceListSerializersDepartmentCatalogRecordPaginatedResponse =
   {
@@ -11531,7 +11516,7 @@ export type DepartmentReferenceCreateSerializersDepartmentCatalogRecordDetailRes
 export type DepartmentCatalogCreate = {
   name: string;
   description?: string;
-  active?: boolean;
+  is_active?: boolean;
 };
 export type DepartmentReferenceDetailSerializersDepartmentCatalogRecordDetailResponse =
   {
@@ -11553,18 +11538,13 @@ export type DisplayResolutionReferenceListSerializersDisplayResolutionCatalogRec
   {
     pagination: DisplayResolutionReferenceListSerializersDisplayResolutionCatalogRecordPagination;
   };
-export type DisplayResolutionCatalogRecord = {
-  /** Label shown in the select, e.g. QHD. */
-  resolution: string;
-  width_px?: number | null;
-  height_px?: number | null;
-};
+export type DisplayResolutionCatalogRecord = {};
 export type DisplayResolutionCatalogRecordRead = {
   id: number;
   /** Label shown in the select, e.g. QHD. */
   resolution: string;
-  width_px?: number | null;
-  height_px?: number | null;
+  width_px: number | null;
+  height_px: number | null;
 };
 export type DisplayResolutionReferenceListSerializersDisplayResolutionCatalogRecordPaginatedResponse =
   {
@@ -11610,18 +11590,13 @@ export type DisplaySizeReferenceListSerializersDisplaySizeCatalogRecordPaginatio
   {
     pagination: DisplaySizeReferenceListSerializersDisplaySizeCatalogRecordPagination;
   };
-export type DisplaySizeCatalogRecord = {
-  /** Label shown in the select, e.g. 27". */
-  size: string;
-  /** Diagonal in inches. */
-  diagonal_in?: string | null;
-};
+export type DisplaySizeCatalogRecord = {};
 export type DisplaySizeCatalogRecordRead = {
   id: number;
   /** Label shown in the select, e.g. 27". */
   size: string;
   /** Diagonal in inches. */
-  diagonal_in?: string | null;
+  diagonal_in: string | null;
 };
 export type DisplaySizeReferenceListSerializersDisplaySizeCatalogRecordPaginatedResponse =
   {
@@ -11665,17 +11640,13 @@ export type GroupReferenceListSerializersGroupCatalogRecordPagination = {
 export type GroupReferenceListSerializersGroupCatalogRecordPaginationMeta = {
   pagination: GroupReferenceListSerializersGroupCatalogRecordPagination;
 };
-export type GroupCatalogRecord = {
-  name: string;
-  description?: string;
-  active?: boolean;
-};
+export type GroupCatalogRecord = {};
 export type GroupCatalogRecordRead = {
   id: number;
   name: string;
-  description?: string;
+  description: string;
   department_id: number | null;
-  active?: boolean;
+  is_active: boolean;
 };
 export type GroupReferenceListSerializersGroupCatalogRecordPaginatedResponse = {
   meta: GroupReferenceListSerializersGroupCatalogRecordPaginationMeta;
@@ -11696,8 +11667,8 @@ export type GroupReferenceCreateSerializersGroupCatalogRecordDetailResponseRead 
 export type GroupCatalogCreate = {
   name: string;
   description?: string;
-  active?: boolean;
   department_id?: number | null;
+  is_active?: boolean;
 };
 export type GroupReferenceDetailSerializersGroupCatalogRecordDetailResponse = {
   data: GroupCatalogRecord;
@@ -11718,9 +11689,7 @@ export type EquipmentInterfaceReferenceListSerializersEquipmentInterfaceCatalogR
   {
     pagination: EquipmentInterfaceReferenceListSerializersEquipmentInterfaceCatalogRecordPagination;
   };
-export type EquipmentInterfaceCatalogRecord = {
-  name: string;
-};
+export type EquipmentInterfaceCatalogRecord = {};
 export type EquipmentInterfaceCatalogRecordRead = {
   id: number;
   name: string;
@@ -11766,15 +11735,12 @@ export type EquipmentKindReferenceListSerializersEquipmentKindCatalogRecordPagin
   {
     pagination: EquipmentKindReferenceListSerializersEquipmentKindCatalogRecordPagination;
   };
-export type EquipmentKindCatalogRecord = {
-  name: string;
-  active?: boolean;
-};
+export type EquipmentKindCatalogRecord = {};
 export type EquipmentKindCatalogRecordRead = {
   id: number;
   name: string;
   category_id: number;
-  active?: boolean;
+  is_active: boolean;
 };
 export type EquipmentKindReferenceListSerializersEquipmentKindCatalogRecordPaginatedResponse =
   {
@@ -11796,8 +11762,8 @@ export type EquipmentKindReferenceCreateSerializersEquipmentKindCatalogRecordDet
   };
 export type EquipmentKindCatalogCreate = {
   name: string;
-  active?: boolean;
   category_id: number;
+  is_active?: boolean;
 };
 export type EquipmentKindReferenceDetailSerializersEquipmentKindCatalogRecordDetailResponse =
   {
@@ -11819,15 +11785,12 @@ export type EquipmentManufacturerReferenceListSerializersEquipmentManufacturerCa
   {
     pagination: EquipmentManufacturerReferenceListSerializersEquipmentManufacturerCatalogRecordPagination;
   };
-export type EquipmentManufacturerCatalogRecord = {
-  name: string;
-  active?: boolean;
-};
+export type EquipmentManufacturerCatalogRecord = {};
 export type EquipmentManufacturerCatalogRecordRead = {
   id: number;
   name: string;
-  categories: number[];
-  active?: boolean;
+  category_ids: number[];
+  is_active: boolean;
 };
 export type EquipmentManufacturerReferenceListSerializersEquipmentManufacturerCatalogRecordPaginatedResponse =
   {
@@ -11849,8 +11812,8 @@ export type EquipmentManufacturerReferenceCreateSerializersEquipmentManufacturer
   };
 export type EquipmentManufacturerCatalogCreate = {
   name: string;
-  active?: boolean;
-  categories?: number[];
+  category_ids?: number[];
+  is_active?: boolean;
 };
 export type EquipmentManufacturerReferenceDetailSerializersEquipmentManufacturerCatalogRecordDetailResponse =
   {
@@ -11871,9 +11834,7 @@ export type MaterialReferenceListSerializersMaterialCatalogRecordPaginationMeta 
   {
     pagination: MaterialReferenceListSerializersMaterialCatalogRecordPagination;
   };
-export type MaterialCatalogRecord = {
-  name: string;
-};
+export type MaterialCatalogRecord = {};
 export type MaterialCatalogRecordRead = {
   id: number;
   name: string;
@@ -11919,9 +11880,7 @@ export type NetworkingProtocolReferenceListSerializersNetworkingProtocolCatalogR
   {
     pagination: NetworkingProtocolReferenceListSerializersNetworkingProtocolCatalogRecordPagination;
   };
-export type NetworkingProtocolCatalogRecord = {
-  name: string;
-};
+export type NetworkingProtocolCatalogRecord = {};
 export type NetworkingProtocolCatalogRecordRead = {
   id: number;
   name: string;
@@ -11967,9 +11926,7 @@ export type ProductModelSpecificationReferenceListSerializersProductModelSpecifi
   {
     pagination: ProductModelSpecificationReferenceListSerializersProductModelSpecificationCatalogRecordPagination;
   };
-export type ProductModelSpecificationCatalogRecord = {
-  value: string;
-};
+export type ProductModelSpecificationCatalogRecord = {};
 export type ProductModelSpecificationCatalogRecordRead = {
   id: number;
   product_model_id: number;
@@ -12019,24 +11976,17 @@ export type EquipmentProductModelReferenceListSerializersEquipmentProductModelCa
   {
     pagination: EquipmentProductModelReferenceListSerializersEquipmentProductModelCatalogRecordPagination;
   };
-export type EquipmentProductModelCatalogRecord = {
-  name: string;
-  /** Copied to new assets of this model when empty. */
-  default_power_draw_w?: number | null;
-  /** Copied to new assets of this model when empty. */
-  default_weight_kg?: string | null;
-  active?: boolean;
-};
+export type EquipmentProductModelCatalogRecord = {};
 export type EquipmentProductModelCatalogRecordRead = {
   id: number;
   name: string;
   manufacturer_id: number;
   equipment_type_id: number;
   /** Copied to new assets of this model when empty. */
-  default_power_draw_w?: number | null;
+  default_power_draw_w: number | null;
   /** Copied to new assets of this model when empty. */
-  default_weight_kg?: string | null;
-  active?: boolean;
+  default_weight_kg: string | null;
+  is_active: boolean;
 };
 export type EquipmentProductModelReferenceListSerializersEquipmentProductModelCatalogRecordPaginatedResponse =
   {
@@ -12058,13 +12008,13 @@ export type EquipmentProductModelReferenceCreateSerializersEquipmentProductModel
   };
 export type EquipmentProductModelCatalogCreate = {
   name: string;
+  manufacturer_id: number;
+  equipment_type_id: number;
   /** Copied to new assets of this model when empty. */
   default_power_draw_w?: number | null;
   /** Copied to new assets of this model when empty. */
   default_weight_kg?: string | null;
-  active?: boolean;
-  manufacturer_id: number;
-  equipment_type_id: number;
+  is_active?: boolean;
 };
 export type EquipmentProductModelReferenceDetailSerializersEquipmentProductModelCatalogRecordDetailResponse =
   {
@@ -12086,9 +12036,7 @@ export type SampleCharacteristicReferenceListSerializersSampleCharacteristicCata
   {
     pagination: SampleCharacteristicReferenceListSerializersSampleCharacteristicCatalogRecordPagination;
   };
-export type SampleCharacteristicCatalogRecord = {
-  name: string;
-};
+export type SampleCharacteristicCatalogRecord = {};
 export type SampleCharacteristicCatalogRecordRead = {
   id: number;
   name: string;
@@ -12134,9 +12082,7 @@ export type SampleCustomerReferenceListSerializersSampleCustomerCatalogRecordPag
   {
     pagination: SampleCustomerReferenceListSerializersSampleCustomerCatalogRecordPagination;
   };
-export type SampleCustomerCatalogRecord = {
-  name: string;
-};
+export type SampleCustomerCatalogRecord = {};
 export type SampleCustomerCatalogRecordRead = {
   id: number;
   name: string;
@@ -12182,20 +12128,14 @@ export type SpecificationDefinitionReferenceListSerializersSpecificationDefiniti
   {
     pagination: SpecificationDefinitionReferenceListSerializersSpecificationDefinitionCatalogRecordPagination;
   };
-export type ValueTypeEnum = "text" | "number" | "boolean";
-export type SpecificationDefinitionCatalogRecord = {
-  name: string;
-  unit?: string;
-  value_type?: ValueTypeEnum;
-  active?: boolean;
-};
+export type SpecificationDefinitionCatalogRecord = {};
 export type SpecificationDefinitionCatalogRecordRead = {
   id: number;
   name: string;
   category_id: number | null;
-  unit?: string;
-  value_type?: ValueTypeEnum;
-  active?: boolean;
+  unit: string;
+  value_type: ChoiceRead;
+  is_active: boolean;
 };
 export type SpecificationDefinitionReferenceListSerializersSpecificationDefinitionCatalogRecordPaginatedResponse =
   {
@@ -12215,12 +12155,13 @@ export type SpecificationDefinitionReferenceCreateSerializersSpecificationDefini
   {
     data: SpecificationDefinitionCatalogRecordRead;
   };
+export type ValueTypeEnum = "text" | "number" | "boolean";
 export type SpecificationDefinitionCatalogCreate = {
   name: string;
+  category_id?: number | null;
   unit?: string;
   value_type?: ValueTypeEnum;
-  active?: boolean;
-  category_id?: number | null;
+  is_active?: boolean;
 };
 export type SpecificationDefinitionReferenceDetailSerializersSpecificationDefinitionCatalogRecordDetailResponse =
   {
@@ -12242,9 +12183,7 @@ export type TechnicalUserReferenceListSerializersTechnicalUserCatalogRecordPagin
   {
     pagination: TechnicalUserReferenceListSerializersTechnicalUserCatalogRecordPagination;
   };
-export type TechnicalUserCatalogRecord = {
-  username: string;
-};
+export type TechnicalUserCatalogRecord = {};
 export type TechnicalUserCatalogRecordRead = {
   id: number;
   username: string;
@@ -12290,15 +12229,12 @@ export type EquipmentTypeReferenceListSerializersEquipmentTypeCatalogRecordPagin
   {
     pagination: EquipmentTypeReferenceListSerializersEquipmentTypeCatalogRecordPagination;
   };
-export type EquipmentTypeCatalogRecord = {
-  name: string;
-  active?: boolean;
-};
+export type EquipmentTypeCatalogRecord = {};
 export type EquipmentTypeCatalogRecordRead = {
   id: number;
   name: string;
   kind_id: number;
-  active?: boolean;
+  is_active: boolean;
 };
 export type EquipmentTypeReferenceListSerializersEquipmentTypeCatalogRecordPaginatedResponse =
   {
@@ -12320,8 +12256,8 @@ export type EquipmentTypeReferenceCreateSerializersEquipmentTypeCatalogRecordDet
   };
 export type EquipmentTypeCatalogCreate = {
   name: string;
-  active?: boolean;
   kind_id: number;
+  is_active?: boolean;
 };
 export type EquipmentTypeReferenceDetailSerializersEquipmentTypeCatalogRecordDetailResponse =
   {
@@ -12364,21 +12300,20 @@ export type ExpensePaymentListSerializersExpensePaymentPagination = {
 export type ExpensePaymentListSerializersExpensePaymentPaginationMeta = {
   pagination: ExpensePaymentListSerializersExpensePaymentPagination;
 };
-export type TransactionTypeEnum = "payment" | "refund";
-export type ExpensePayment = {
-  transaction_type?: TransactionTypeEnum;
+export type ExpensePayment = {};
+export type Money = {
+  /** Decimal string; never a float. */
   amount: string;
-  paid_at: string;
-  reference?: string;
-  notes?: string;
+  /** ISO 4217 code, uppercase. */
+  currency: string;
 };
 export type ExpensePaymentRead = {
   id: number;
-  transaction_type?: TransactionTypeEnum;
-  amount: string;
-  paid_at: string;
-  reference?: string;
-  notes?: string;
+  transaction_type: ChoiceRead;
+  total: Money;
+  paid_date: string;
+  reference: string;
+  notes: string;
   created_at: string;
   updated_at: string;
 };
@@ -12396,56 +12331,86 @@ export type ExpensePaymentSerializersExpensePaymentDetailResponse = {
 export type ExpensePaymentSerializersExpensePaymentDetailResponseRead = {
   data: ExpensePaymentRead;
 };
+export type TransactionTypeEnum = "payment" | "refund";
+export type ExpensePaymentWrite = {
+  transaction_type?: TransactionTypeEnum;
+  /** In the expense's currency. */
+  total: Money;
+  paid_date: string;
+  reference?: string;
+  notes?: string;
+};
 export type FinancialReportSummary = {
-  total_budgeted: string;
-  total_paid: string;
-  total_pending: string;
-  total_refunded: string;
+  expense_count: number;
+  payment_count: number;
+};
+export type FinancialReportSummaryRead = {
+  budgeted: Money;
+  paid: Money;
+  pending: Money;
+  refunded: Money;
   expense_count: number;
   payment_count: number;
 };
 export type FinancialReportTypeBreakdown = {
-  expense_type: string;
   count: number;
-  amount: string;
-  paid_amount: string;
-  pending_amount: string;
+};
+export type FinancialReportTypeBreakdownRead = {
+  expense_type: ChoiceRead;
+  count: number;
+  cost: Money;
+  paid: Money;
+  pending: Money;
 };
 export type FinancialReportRoomBreakdown = {
-  room_id: number;
-  room_name: string;
   count: number;
-  amount: string;
-  paid_amount: string;
-  pending_amount: string;
+};
+export type FinancialReportRoomBreakdownRead = {
+  room: LabsNamedReferenceRead;
+  count: number;
+  cost: Money;
+  paid: Money;
+  pending: Money;
 };
 export type FinancialReportStatusBreakdown = {
-  status: string;
   count: number;
-  amount: string;
+};
+export type FinancialReportStatusBreakdownRead = {
+  status: ChoiceRead;
+  count: number;
+  cost: Money;
 };
 export type FinancialReportPeriodBreakdown = {
-  billing_period: string;
   count: number;
-  amount: string;
-  paid_amount: string;
+};
+export type FinancialReportPeriodBreakdownRead = {
+  billing_period: ChoiceRead;
+  count: number;
+  cost: Money;
+  paid: Money;
 };
 export type FinancialReportItem = {
   id: number;
   name: string;
-  expense_type: string;
-  amount: string;
-  paid_amount: string;
-  pending_amount: string;
-  payment_status: string;
-  currency: string;
-  billing_period: string;
   supplier: string;
   reference: string;
-  valid_from: string;
-  valid_until: string | null;
-  room_id: number;
-  room_name: string;
+  start_date: string;
+  end_date: string | null;
+};
+export type FinancialReportItemRead = {
+  id: number;
+  name: string;
+  expense_type: ChoiceRead;
+  cost: Money;
+  paid: Money;
+  pending: Money;
+  payment_status: ChoiceRead;
+  billing_period: ChoiceRead;
+  supplier: string;
+  reference: string;
+  start_date: string;
+  end_date: string | null;
+  room: LabsNamedReferenceRead;
 };
 export type FinancialReportResponse = {
   currency: string;
@@ -12456,9 +12421,22 @@ export type FinancialReportResponse = {
   by_billing_period: FinancialReportPeriodBreakdown[];
   items: FinancialReportItem[];
 };
+export type FinancialReportResponseRead = {
+  currency: string;
+  summary: FinancialReportSummaryRead;
+  by_expense_type: FinancialReportTypeBreakdownRead[];
+  by_room: FinancialReportRoomBreakdownRead[];
+  by_status: FinancialReportStatusBreakdownRead[];
+  by_billing_period: FinancialReportPeriodBreakdownRead[];
+  items: FinancialReportItemRead[];
+};
 export type FinancialReportSerializersFinancialReportResponseDetailResponse = {
   data: FinancialReportResponse;
 };
+export type FinancialReportSerializersFinancialReportResponseDetailResponseRead =
+  {
+    data: FinancialReportResponseRead;
+  };
 export type GroupCatalogListSerializersGroupCatalogPagination = {
   count: number;
   page: number;
@@ -12471,20 +12449,20 @@ export type GroupCatalogListSerializersGroupCatalogPaginationMeta = {
 };
 export type GroupCatalogItem = {
   name: string;
-  active?: boolean;
+  is_active?: boolean;
 };
 export type GroupCatalogItemRead = {
   id: number;
   name: string;
-  department: DepartmentCatalogItemRead;
-  active?: boolean;
+  department: LabsNamedReferenceRead | null;
+  is_active?: boolean;
   created_at: string;
   updated_at: string;
 };
 export type GroupCatalogItemWrite = {
   name: string;
   department_id?: number;
-  active?: boolean;
+  is_active?: boolean;
 };
 export type GroupCatalogListSerializersGroupCatalogPaginatedResponse = {
   meta: GroupCatalogListSerializersGroupCatalogPaginationMeta;
@@ -12524,113 +12502,6 @@ export type DashboardPaginatedResponse = {
 };
 export type LabDashboardResponse =
   DashboardUnpaginatedResponse | DashboardPaginatedResponse;
-export type DashboardSummaryData = {
-  total: number;
-  status: {
-    [key: string]: number;
-  };
-};
-export type DashboardSummarySerializersDashboardSummaryDataDetailResponse = {
-  data: DashboardSummaryData;
-};
-export type MonitoringEventListSerializersMonitoringEventPagination = {
-  count: number;
-  page: number;
-  page_size: number;
-  next: string | null;
-  previous: string | null;
-};
-export type MonitoringEventListSerializersMonitoringEventPaginationMeta = {
-  pagination: MonitoringEventListSerializersMonitoringEventPagination;
-};
-export type MonitoringEvent = {};
-export type MonitoringBenchMinimal = {};
-export type MonitoringBenchMinimalRead = {
-  id: number;
-  sku: string;
-  bench_name: string;
-};
-export type MonitoringEventRead = {
-  id: number;
-  computer_id: number;
-  computer_name: string;
-  bench: MonitoringBenchMinimalRead | null;
-  agent_id: string;
-  agent_version: string;
-  event_id: string;
-  reported_at: string;
-  occurred_at: string;
-  action: string;
-  action_name: string;
-  subject_type: string;
-  subject_id: string;
-  subject_name: string;
-  payload: any;
-  source: string;
-  event_type: string;
-  category: string;
-  object_name: string;
-  object_id: string;
-  details: any;
-  details_str: string;
-  technical_user: string;
-  remote_user: string;
-  remote_user_displayname: string;
-  created: string;
-  modified: string;
-};
-export type MonitoringEventListSerializersMonitoringEventPaginatedResponse = {
-  meta: MonitoringEventListSerializersMonitoringEventPaginationMeta;
-  data: MonitoringEvent[];
-};
-export type MonitoringEventListSerializersMonitoringEventPaginatedResponseRead =
-  {
-    meta: MonitoringEventListSerializersMonitoringEventPaginationMeta;
-    data: MonitoringEventRead[];
-  };
-export type MonitoringEventSerializersMonitoringEventDetailResponse = {
-  data: MonitoringEvent;
-};
-export type MonitoringEventSerializersMonitoringEventDetailResponseRead = {
-  data: MonitoringEventRead;
-};
-export type ActionEnum =
-  | "heartbeat"
-  | "device_inserted"
-  | "device_removed"
-  | "device_changed"
-  | "device_status_changed"
-  | "inventory_snapshot"
-  | "metric_reported"
-  | "alert_raised"
-  | "alert_resolved"
-  | "custom";
-export type MonitoringEventCreate = {
-  computer_sku?: string | null;
-  computer_id?: number | null;
-  action?: ActionEnum;
-  action_name?: string;
-  subject_type?: string;
-  subject_id?: string;
-  subject_name?: string;
-  payload?: any;
-  occurred_at?: string | null;
-  agent_id?: string;
-  agent_version?: string;
-  event_id?: string;
-  source?: string;
-  event_type?: string;
-  category?: string;
-  object_name?: string;
-  object_id?: string;
-  details?: any;
-};
-export type MonitoringEventExportSerializersMonitoringEventListResponse = {
-  data: MonitoringEvent[];
-};
-export type MonitoringEventExportSerializersMonitoringEventListResponseRead = {
-  data: MonitoringEventRead[];
-};
 export type LabProjectListSerializersLabProjectPagination = {
   count: number;
   page: number;
@@ -12647,9 +12518,9 @@ export type LabProjectRead = {
   name: string;
   /** Short unique project code, e.g. a cost-center number. */
   code: string | null;
-  active: boolean;
-  starts_on: string | null;
-  ends_on: string | null;
+  is_active: boolean;
+  start_date: string | null;
+  end_date: string | null;
 };
 export type LabProjectListSerializersLabProjectPaginatedResponse = {
   meta: LabProjectListSerializersLabProjectPaginationMeta;
@@ -12676,7 +12547,7 @@ export type LeaderboardPersona = {
   late_rate?: number;
   usage_efficiency?: number;
   booking_compliance?: number;
-  last_remote?: string | null;
+  last_remote_at?: string | null;
   labs_accessed?: number;
   total_bookings?: number;
   total_sessions: number;
@@ -12694,7 +12565,7 @@ export type LeaderboardLab = {
   points: number;
   total_sessions: number;
   active_users?: number;
-  last_remote?: string | null;
+  last_remote_at?: string | null;
   downtime_minutes?: number;
   top_projects?: string[];
 };
@@ -12769,19 +12640,10 @@ export type LicenseProductCatalogListSerializersLicenseProductPaginationMeta = {
 export type LicenseProductCatalogItem = {
   name: string;
 };
-export type LicenseVendorCatalogItem = {
-  name: string;
-};
-export type LicenseVendorCatalogItemRead = {
-  id: number;
-  name: string;
-  created_at: string;
-  updated_at: string;
-};
 export type LicenseProductCatalogItemRead = {
   id: number;
   name: string;
-  vendor: LicenseVendorCatalogItemRead;
+  vendor: LabsNamedReferenceRead | null;
   created_at: string;
   updated_at: string;
 };
@@ -12899,6 +12761,15 @@ export type LicenseVendorCatalogListSerializersLicenseVendorPagination = {
 export type LicenseVendorCatalogListSerializersLicenseVendorPaginationMeta = {
   pagination: LicenseVendorCatalogListSerializersLicenseVendorPagination;
 };
+export type LicenseVendorCatalogItem = {
+  name: string;
+};
+export type LicenseVendorCatalogItemRead = {
+  id: number;
+  name: string;
+  created_at: string;
+  updated_at: string;
+};
 export type LicenseVendorCatalogListSerializersLicenseVendorPaginatedResponse =
   {
     meta: LicenseVendorCatalogListSerializersLicenseVendorPaginationMeta;
@@ -12935,6 +12806,7 @@ export type LicenseRead = {
   owner: LabsNamedReferenceRead | null;
   department: LabsNamedReferenceRead | null;
   remark: string;
+  image_url: string | null;
   product: LabsNamedReferenceRead | null;
   vendor: LabsNamedReferenceRead | null;
   type: LabsNamedReferenceRead | null;
@@ -12944,7 +12816,7 @@ export type LicenseRead = {
   seats: number;
   seats_in_use: number;
   max_version: string;
-  expiry_date: string | null;
+  expires_at: string | null;
   status: LabsChoiceReferenceRead | null;
   acquisition_price: LabsMoneyRead | null;
   created_at: string;
@@ -13000,14 +12872,13 @@ export type LicenseAgreementListSerializersLicenseAgreementPaginationMeta = {
   pagination: LicenseAgreementListSerializersLicenseAgreementPagination;
 };
 export type LicenseAgreement = {};
-export type BillingPeriodEnum = "one_time" | "monthly" | "quarterly" | "annual";
 export type LicenseAgreementRead = {
   id: number;
   license: LabsNamedReferenceRead;
   price: LabsMoneyRead;
-  billing_period: BillingPeriodEnum;
-  valid_from: string;
-  valid_until: string | null;
+  billing_period: ChoiceRead;
+  start_date: string;
+  end_date: string | null;
   created_at: string;
 };
 export type LicenseAgreementListSerializersLicenseAgreementPaginatedResponse = {
@@ -13025,13 +12896,12 @@ export type LicenseAgreementSerializersLicenseAgreementDetailResponse = {
 export type LicenseAgreementSerializersLicenseAgreementDetailResponseRead = {
   data: LicenseAgreementRead;
 };
+export type BillingPeriodEnum = "one_time" | "monthly" | "quarterly" | "annual";
 export type LicenseAgreementWrite = {
-  /** Amount charged per billing period. */
-  price: string;
-  currency?: string;
+  price: Money;
   billing_period?: BillingPeriodEnum;
-  valid_from: string;
-  valid_until?: string | null;
+  start_date: string;
+  end_date?: string | null;
 };
 export type LicenseHistorySerializersLicenseStatusRecordPagination = {
   count: number;
@@ -13049,7 +12919,7 @@ export type LicenseStatusRecordRead = {
   license: LabsNamedReferenceRead;
   status: LabsChoiceReferenceRead;
   metadata: any;
-  actor: LabsResourceOwnerRead | null;
+  actor: UserReferenceRead | null;
   created_at: string;
 };
 export type LicenseHistorySerializersLicenseStatusRecordPaginatedResponse = {
@@ -13098,9 +12968,7 @@ export type LicenseCategoryReferenceListSerializersLicenseCategoryCatalogRecordP
   {
     pagination: LicenseCategoryReferenceListSerializersLicenseCategoryCatalogRecordPagination;
   };
-export type LicenseCategoryCatalogRecord = {
-  name: string;
-};
+export type LicenseCategoryCatalogRecord = {};
 export type LicenseCategoryCatalogRecordRead = {
   id: number;
   name: string;
@@ -13146,9 +13014,7 @@ export type LicenseProductReferenceListSerializersLicenseProductCatalogRecordPag
   {
     pagination: LicenseProductReferenceListSerializersLicenseProductCatalogRecordPagination;
   };
-export type LicenseProductCatalogRecord = {
-  name: string;
-};
+export type LicenseProductCatalogRecord = {};
 export type LicenseProductCatalogRecordRead = {
   id: number;
   name: string;
@@ -13196,9 +13062,7 @@ export type LicenseRestrictionReferenceListSerializersLicenseRestrictionCatalogR
   {
     pagination: LicenseRestrictionReferenceListSerializersLicenseRestrictionCatalogRecordPagination;
   };
-export type LicenseRestrictionCatalogRecord = {
-  name: string;
-};
+export type LicenseRestrictionCatalogRecord = {};
 export type LicenseRestrictionCatalogRecordRead = {
   id: number;
   name: string;
@@ -13244,9 +13108,7 @@ export type LicenseTypeReferenceListSerializersLicenseTypeCatalogRecordPaginatio
   {
     pagination: LicenseTypeReferenceListSerializersLicenseTypeCatalogRecordPagination;
   };
-export type LicenseTypeCatalogRecord = {
-  name: string;
-};
+export type LicenseTypeCatalogRecord = {};
 export type LicenseTypeCatalogRecordRead = {
   id: number;
   name: string;
@@ -13292,9 +13154,7 @@ export type LicenseVendorReferenceListSerializersLicenseVendorCatalogRecordPagin
   {
     pagination: LicenseVendorReferenceListSerializersLicenseVendorCatalogRecordPagination;
   };
-export type LicenseVendorCatalogRecord = {
-  name: string;
-};
+export type LicenseVendorCatalogRecord = {};
 export type LicenseVendorCatalogRecordRead = {
   id: number;
   name: string;
@@ -13350,15 +13210,12 @@ export type BuildingReferenceListSerializersBuildingCatalogRecordPaginationMeta 
   {
     pagination: BuildingReferenceListSerializersBuildingCatalogRecordPagination;
   };
-export type BuildingCatalogRecord = {
-  name: string;
-  address?: string;
-};
+export type BuildingCatalogRecord = {};
 export type BuildingCatalogRecordRead = {
   id: number;
   name: string;
   city_id: number | null;
-  address?: string;
+  address: string;
 };
 export type BuildingReferenceListSerializersBuildingCatalogRecordPaginatedResponse =
   {
@@ -13380,8 +13237,8 @@ export type BuildingReferenceCreateSerializersBuildingCatalogRecordDetailRespons
   };
 export type BuildingCatalogCreate = {
   name: string;
-  address?: string;
   city_id?: number | null;
+  address?: string;
 };
 export type BuildingReferenceDetailSerializersBuildingCatalogRecordDetailResponse =
   {
@@ -13401,9 +13258,7 @@ export type CityReferenceListSerializersCityCatalogRecordPagination = {
 export type CityReferenceListSerializersCityCatalogRecordPaginationMeta = {
   pagination: CityReferenceListSerializersCityCatalogRecordPagination;
 };
-export type CityCatalogRecord = {
-  name: string;
-};
+export type CityCatalogRecord = {};
 export type CityCatalogRecordRead = {
   id: number;
   name: string;
@@ -13447,10 +13302,7 @@ export type CountryReferenceListSerializersCountryCatalogRecordPaginationMeta =
   {
     pagination: CountryReferenceListSerializersCountryCatalogRecordPagination;
   };
-export type CountryCatalogRecord = {
-  name: string;
-  code: string;
-};
+export type CountryCatalogRecord = {};
 export type CountryCatalogRecordRead = {
   id: number;
   name: string;
@@ -13498,9 +13350,7 @@ export type StationTypeReferenceListSerializersStationTypeCatalogRecordPaginatio
   {
     pagination: StationTypeReferenceListSerializersStationTypeCatalogRecordPagination;
   };
-export type StationTypeCatalogRecord = {
-  name: string;
-};
+export type StationTypeCatalogRecord = {};
 export type StationTypeCatalogRecordRead = {
   id: number;
   name: string;
@@ -13534,6 +13384,86 @@ export type StationTypeReferenceDetailSerializersStationTypeCatalogRecordDetailR
   {
     data: StationTypeCatalogRecordRead;
   };
+export type MonitoringEventListSerializersMonitoringEventPagination = {
+  count: number;
+  page: number;
+  page_size: number;
+  next: string | null;
+  previous: string | null;
+};
+export type MonitoringEventListSerializersMonitoringEventPaginationMeta = {
+  pagination: MonitoringEventListSerializersMonitoringEventPagination;
+};
+export type MonitoringEvent = {};
+export type MonitoringSubject = {};
+export type MonitoringSubjectRead = {
+  type: string;
+  key: string;
+  name: string;
+};
+export type MonitoringEventRead = {
+  id: number;
+  computer: LabsNamedReferenceRead | null;
+  bench: LabsNamedReferenceRead | null;
+  agent_key: string;
+  agent_version: string;
+  event_key: string;
+  reported_at: string;
+  occurred_at: string;
+  action: ChoiceRead;
+  action_name: string;
+  subject: MonitoringSubjectRead;
+  payload: any;
+  technical_user: string;
+  remote_user: string;
+  remote_user_display_name: string;
+};
+export type MonitoringEventListSerializersMonitoringEventPaginatedResponse = {
+  meta: MonitoringEventListSerializersMonitoringEventPaginationMeta;
+  data: MonitoringEvent[];
+};
+export type MonitoringEventListSerializersMonitoringEventPaginatedResponseRead =
+  {
+    meta: MonitoringEventListSerializersMonitoringEventPaginationMeta;
+    data: MonitoringEventRead[];
+  };
+export type MonitoringEventSerializersMonitoringEventDetailResponse = {
+  data: MonitoringEvent;
+};
+export type MonitoringEventSerializersMonitoringEventDetailResponseRead = {
+  data: MonitoringEventRead;
+};
+export type ActionEnum =
+  | "heartbeat"
+  | "device_inserted"
+  | "device_removed"
+  | "device_changed"
+  | "device_status_changed"
+  | "inventory_snapshot"
+  | "metric_reported"
+  | "alert_raised"
+  | "alert_resolved"
+  | "custom";
+export type MonitoringEventCreate = {
+  computer_sku?: string | null;
+  computer_id?: number | null;
+  action?: ActionEnum;
+  action_name?: string;
+  subject_type?: string;
+  subject_id?: string;
+  subject_name?: string;
+  payload?: any;
+  occurred_at?: string | null;
+  agent_id?: string;
+  agent_version?: string;
+  event_id?: string;
+  source?: string;
+  event_type?: string;
+  category?: string;
+  object_name?: string;
+  object_id?: string;
+  details?: any;
+};
 export type MonitoringEventDetailSerializersMonitoringEventDetailResponse = {
   data: MonitoringEvent;
 };
@@ -13541,6 +13471,12 @@ export type MonitoringEventDetailSerializersMonitoringEventDetailResponseRead =
   {
     data: MonitoringEventRead;
   };
+export type MonitoringEventExportSerializersMonitoringEventListResponse = {
+  data: MonitoringEvent[];
+};
+export type MonitoringEventExportSerializersMonitoringEventListResponseRead = {
+  data: MonitoringEventRead[];
+};
 export type PurchaseItemResourceListSerializersPurchaseItemResourcePagination =
   {
     count: number;
@@ -13554,7 +13490,6 @@ export type PurchaseItemResourceListSerializersPurchaseItemResourcePaginationMet
     pagination: PurchaseItemResourceListSerializersPurchaseItemResourcePagination;
   };
 export type PurchaseItemResource = {};
-export type ResourceKindEnum = "bench" | "equipment" | "license" | "station";
 export type PurchaseItemResourceRead = {
   id: number;
   purchase_item: {
@@ -13563,7 +13498,7 @@ export type PurchaseItemResourceRead = {
   resource: {
     [key: string]: number | string;
   } | null;
-  resource_kind: ResourceKindEnum;
+  resource_kind: ChoiceRead;
   acquisition_price: {
     amount: string;
     /** Purchase currency code. */
@@ -13619,10 +13554,7 @@ export type Purchase = {
   supplier: string;
   purchase_order_number?: string;
   purchase_date: string;
-  /** ISO 4217 currency code. */
-  currency?: string;
-  /** Agreed total purchase amount. */
-  total_amount: string;
+  total: Money;
   notes?: string;
 };
 export type PurchaseRead = {
@@ -13630,18 +13562,10 @@ export type PurchaseRead = {
   supplier: string;
   purchase_order_number?: string;
   purchase_date: string;
-  /** ISO 4217 currency code. */
-  currency?: string;
   status: {
     [key: string]: string;
   };
-  /** Agreed total purchase amount. */
-  total_amount: string;
-  total: {
-    amount: string;
-    /** Purchase currency code. */
-    currency: string;
-  };
+  total: Money;
   item_count: number;
   notes?: string;
   created_at: string;
@@ -13666,7 +13590,7 @@ export type PurchaseItemRead = {
 export type PurchaseItemWrite = {
   description: string;
   quantity?: number;
-  unit_price: string;
+  unit_price?: Money;
   notes?: string;
   purpose?: string | null;
   priority_id?: number | null;
@@ -13676,10 +13600,7 @@ export type PurchaseWrite = {
   supplier: string;
   purchase_order_number?: string;
   purchase_date: string;
-  /** ISO 4217 currency code. */
-  currency?: string;
-  /** Agreed total purchase amount. */
-  total_amount: string;
+  total: Money;
   notes?: string;
   items?: PurchaseItemWrite[];
 };
@@ -13705,20 +13626,13 @@ export type PurchaseSerializersPurchaseDetailResponseWrite = {
   data: PurchaseWrite;
 };
 export type PurchaseDetail = {};
-export type PurchaseStatusEnum = "draft" | "ordered" | "received" | "cancelled";
 export type PurchaseDetailRead = {
   id: number;
   supplier: string;
   purchase_order_number: string;
   purchase_date: string;
-  /** ISO 4217 currency code. */
-  currency: string;
-  total_amount: {
-    amount: string;
-    /** Purchase currency code. */
-    currency: string;
-  };
-  status: PurchaseStatusEnum;
+  total: Money;
+  status: ChoiceRead;
   notes: string;
   version: number;
   item_count: number;
@@ -13728,8 +13642,8 @@ export type PurchaseDetailRead = {
     currency: string;
   };
   unpriced_line_count: number;
-  created: string;
-  modified: string;
+  created_at: string;
+  updated_at: string;
 };
 export type PurchaseDetailSerializersPurchaseDetailDetailResponse = {
   data: PurchaseDetail;
@@ -13743,14 +13657,8 @@ export type PurchaseDraftHeaderOutputRead = {
   supplier: string;
   purchase_order_number: string;
   purchase_date: string;
-  /** ISO 4217 currency code. */
-  currency: string;
-  total_amount: {
-    amount: string;
-    /** Purchase currency code. */
-    currency: string;
-  };
-  status: PurchaseStatusEnum;
+  total: Money;
+  status: ChoiceRead;
   notes: string;
   version: number;
 };
@@ -13766,8 +13674,7 @@ export type PatchedPurchaseDraftHeaderInput = {
   supplier?: string;
   purchase_date?: string;
   purchase_order_number?: string;
-  currency?: string;
-  total_amount?: string;
+  total?: Money;
   notes?: string;
 };
 export type PurchaseItemListSerializersPurchaseItemReadPagination = {
@@ -13789,11 +13696,7 @@ export type PurchaseItemReadRead = {
   description: string;
   quantity: number;
   unit: string;
-  unit_price: {
-    amount: string;
-    /** Purchase currency code. */
-    currency: string;
-  };
+  unit_price: Money;
   line_value: {
     amount: string;
     /** Purchase currency code. */
@@ -13829,11 +13732,7 @@ export type PurchaseItemDetailRead = {
   description: string;
   quantity: number;
   unit: string;
-  unit_price: {
-    amount: string;
-    /** Purchase currency code. */
-    currency: string;
-  };
+  unit_price: Money;
   line_value: {
     amount: string;
     /** Purchase currency code. */
@@ -13856,7 +13755,7 @@ export type PurchaseDraftLineSerializersPurchaseItemDetailDetailResponseRead = {
 export type PatchedDraftLinePatchInput = {
   description?: string;
   quantity?: number;
-  unit_price?: string;
+  unit_price?: Money;
   notes?: string;
   purpose?: string | null;
   priority_id?: number | null;
@@ -13878,7 +13777,7 @@ export type PurchaseDraftLineListSerializersPurchaseItemDetailListResponseRead =
 export type DraftLineInput = {
   description: string;
   quantity: number;
-  unit_price: string;
+  unit_price: Money;
   notes?: string;
   purpose?: string | null;
   priority_id?: number | null;
@@ -13895,25 +13794,18 @@ export type PurchaseTransactionListSerializersPurchaseTransactionPaginationMeta 
   {
     pagination: PurchaseTransactionListSerializersPurchaseTransactionPagination;
   };
-export type PurchaseTransaction = {
-  transaction_type: TransactionTypeEnum;
-  amount: string;
-  settled_at: string;
-  /** Invoice, receipt, bank transaction, or refund reference. */
-  reference?: string;
-  notes?: string;
-};
+export type PurchaseTransaction = {};
 export type PurchaseTransactionRead = {
   id: number;
   purchase: {
     [key: string]: number | string;
   };
-  transaction_type: TransactionTypeEnum;
-  amount: string;
+  transaction_type: ChoiceRead;
+  total: Money;
   settled_at: string;
   /** Invoice, receipt, bank transaction, or refund reference. */
-  reference?: string;
-  notes?: string;
+  reference: string;
+  notes: string;
   created_at: string;
 };
 export type PurchaseTransactionListSerializersPurchaseTransactionPaginatedResponse =
@@ -13933,6 +13825,15 @@ export type PurchaseTransactionSerializersPurchaseTransactionDetailResponseRead 
   {
     data: PurchaseTransactionRead;
   };
+export type PurchaseTransactionWrite = {
+  transaction_type: TransactionTypeEnum;
+  /** In the purchase's currency. */
+  total: Money;
+  settled_at: string;
+  /** Invoice, receipt, bank transaction, or refund reference. */
+  reference?: string;
+  notes?: string;
+};
 export type TypedResourceAuditListSerializersResourceAuditItemPagination = {
   count: number;
   page: number;
@@ -14068,7 +13969,7 @@ export type RoomRead = {
   group: LabsNamedReferenceRead | null;
   owner: LabsNamedReferenceRead | null;
   remark: string;
-  image: string | null;
+  image_url: string | null;
   map_url: string;
   length_m: string | null;
   width_m: string | null;
@@ -14264,19 +14165,17 @@ export type RoomSlotGenerateSerializersRoomSlotPaginationMeta = {
   pagination: RoomSlotGenerateSerializersRoomSlotPagination;
 };
 export type RoomSlot = {};
-export type SlotTypeEnum =
-  "station" | "storage" | "aisle" | "safety" | "utility" | "reserved";
 export type RoomSlotRead = {
   id: number;
-  room: number;
+  room_id: number;
   row_index: number;
   col_index: number;
   slot_code: string;
-  slot_type: SlotTypeEnum;
+  slot_type: ChoiceRead;
   /** Deprecated: available, occupied, blocked or retired (occupied is computed). */
   status: LabsChoiceReferenceRead;
   service_status: LabsChoiceReferenceRead;
-  occupied: boolean;
+  is_occupied: boolean;
   x_mm: number | null;
   y_mm: number | null;
   width_mm: number | null;
@@ -14308,47 +14207,21 @@ export type RoomExpenseListSerializersExpensePagination = {
 export type RoomExpenseListSerializersExpensePaginationMeta = {
   pagination: RoomExpenseListSerializersExpensePagination;
 };
-export type ExpenseTypeEnum =
-  | "rent"
-  | "utilities"
-  | "maintenance"
-  | "calibration"
-  | "repair"
-  | "service_contract"
-  | "license_fee"
-  | "insurance"
-  | "service"
-  | "other";
-export type Expense = {
-  name: string;
-  expense_type: ExpenseTypeEnum;
-  supplier?: string;
-  reference?: string;
-  amount: string;
-  currency?: string;
-  billing_period?: BillingPeriodEnum;
-  valid_from: string;
-  valid_until?: string | null;
-  notes?: string;
-};
+export type Expense = {};
 export type ExpenseRead = {
   id: number;
   room: {
     [key: string]: number | string;
   };
   name: string;
-  expense_type: ExpenseTypeEnum;
-  supplier?: string;
-  reference?: string;
-  amount: string;
-  currency?: string;
-  amount_display: {
-    [key: string]: string;
-  };
-  billing_period?: BillingPeriodEnum;
-  valid_from: string;
-  valid_until?: string | null;
-  notes?: string;
+  expense_type: ChoiceRead;
+  supplier: string;
+  reference: string;
+  cost: Money;
+  billing_period: ChoiceRead;
+  start_date: string;
+  end_date: string | null;
+  notes: string;
   created_at: string;
   updated_at: string;
 };
@@ -14366,9 +14239,36 @@ export type RoomExpenseSerializersExpenseDetailResponse = {
 export type RoomExpenseSerializersExpenseDetailResponseRead = {
   data: ExpenseRead;
 };
+export type ExpenseTypeEnum =
+  | "rent"
+  | "utilities"
+  | "maintenance"
+  | "calibration"
+  | "repair"
+  | "service_contract"
+  | "license_fee"
+  | "insurance"
+  | "service"
+  | "other";
+export type ExpenseWrite = {
+  name: string;
+  expense_type: ExpenseTypeEnum;
+  supplier?: string;
+  reference?: string;
+  /** What the expense costs (FMT-2, FMT-7). */
+  cost: Money;
+  billing_period?: BillingPeriodEnum;
+  start_date: string;
+  end_date?: string | null;
+  notes?: string;
+};
 export type RoomFinancialReportSerializersFinancialReportResponseDetailResponse =
   {
     data: FinancialReportResponse;
+  };
+export type RoomFinancialReportSerializersFinancialReportResponseDetailResponseRead =
+  {
+    data: FinancialReportResponseRead;
   };
 export type RoomHistorySerializersRoomStatusRecordPagination = {
   count: number;
@@ -14386,7 +14286,7 @@ export type RoomStatusRecordRead = {
   room: number;
   status: LabsChoiceReferenceRead;
   metadata: any;
-  actor: LabsResourceOwnerRead | null;
+  actor: UserReferenceRead | null;
   created_at: string;
 };
 export type RoomHistorySerializersRoomStatusRecordPaginatedResponse = {
@@ -14574,7 +14474,7 @@ export type StationRead = {
   availability: LabsAvailabilityRead;
   activity_status: LabsChoiceReferenceRead;
   safety_classification: string;
-  image: string | null;
+  image_url: string | null;
   active_bench_count: number;
   allocated_power_w: number;
   available_power_w: number | null;
@@ -14774,7 +14674,7 @@ export type StationStatusRecordRead = {
   station: number;
   status: LabsChoiceReferenceRead;
   metadata: any;
-  actor: LabsResourceOwnerRead | null;
+  actor: UserReferenceRead | null;
   created_at: string;
 };
 export type StationHistorySerializersStationStatusRecordPaginatedResponse = {
@@ -14799,7 +14699,7 @@ export type StationSlotListSerializersStationSlotPaginationMeta = {
 export type StationSlot = {};
 export type StationSlotRead = {
   id: number;
-  station: number;
+  station_id: number;
   position_index: number;
   slot_code: string;
   label: string;
@@ -14816,7 +14716,7 @@ export type StationSlotRead = {
   network_port_count: number | null;
   utilities: any;
   compatible_bench_types: number[];
-  occupied: boolean;
+  is_occupied: boolean;
   created_at: string;
   updated_at: string;
 };
@@ -15010,23 +14910,16 @@ export type NotificationSerializerNotificationPagination = {
 export type NotificationSerializerNotificationPaginationMeta = {
   pagination: NotificationSerializerNotificationPagination;
 };
-export type MessageTypeEnum =
-  "success" | "error" | "warning" | "info" | "announcement";
-export type Notification = {
-  message?: string;
-  details?: string | null;
-  message_type?: MessageTypeEnum;
-  expiry_date: string;
-};
+export type Notification = {};
 export type NotificationRead = {
   id: number;
-  message?: string;
-  details?: string | null;
-  message_type?: MessageTypeEnum;
-  expiry_date: string;
-  target_user: number | null;
-  created: string;
-  modified: string;
+  message: string;
+  details: string | null;
+  message_type: ChoiceRead;
+  expires_at: string;
+  target_user: UserReferenceRead | null;
+  created_at: string;
+  updated_at: string;
 };
 export type NotificationSerializerNotificationPaginatedResponse = {
   meta: NotificationSerializerNotificationPaginationMeta;
@@ -15041,6 +14934,14 @@ export type NotificationSerializerNotificationDetailResponse = {
 };
 export type NotificationSerializerNotificationDetailResponseRead = {
   data: NotificationRead;
+};
+export type MessageTypeEnum =
+  "success" | "error" | "warning" | "info" | "announcement";
+export type NotificationWrite = {
+  message?: string;
+  details?: string | null;
+  message_type?: MessageTypeEnum;
+  expires_at: string;
 };
 export type RefreshTokenResponse = {
   access: string;
@@ -15065,20 +14966,16 @@ export type CannedResponse = {
 };
 export type TeamSummary = {
   name: string;
-  /** Stable machine-readable identifier used by the options API. */
-  code: string;
 };
 export type TeamSummaryRead = {
   id: number;
   name: string;
-  /** Stable machine-readable identifier used by the options API. */
-  code: string;
 };
 export type CannedResponseRead = {
   id: number;
   title: string;
   body: string;
-  team: TeamSummaryRead;
+  team: TeamSummaryRead | null;
   is_active?: boolean;
   created_at: string;
   updated_at: string;
@@ -15116,8 +15013,6 @@ export type PatchedAdminCannedResponseUpdate = {
   clear_team?: boolean;
   is_active?: boolean;
 };
-export type TicketTypeEnum =
-  "incident" | "service_request" | "problem" | "change" | "question";
 export type SupportSettings = {
   /** Days after resolution during which a requester may reopen a ticket. */
   reopen_window_days?: number;
@@ -15131,24 +15026,10 @@ export type SupportSettings = {
   max_attachments_per_ticket?: number;
   /** Minutes after creation during which an author may edit/delete their comment. */
   comment_edit_window_minutes?: number;
-  /** If disabled, requesters describe impact/urgency and the priority is derived (agents still set it). */
-  requesters_can_set_priority?: boolean;
-  /** Compute SLA deadlines and flag breaches from the priority targets. */
-  sla_enabled?: boolean;
   /** A ticket is 'at risk' once this percentage of its SLA window has elapsed. */
   sla_at_risk_percent?: number;
-  /** Allow requesters to rate resolved tickets (1-5). */
-  csat_enabled?: boolean;
   /** Days after resolution during which the requester can submit a satisfaction rating. */
   csat_window_days?: number;
-  /** Type applied when a ticket is created without one.
-    
-    * `incident` - Incident
-    * `service_request` - Service Request
-    * `problem` - Problem
-    * `change` - Change
-    * `question` - Question */
-  default_ticket_type?: TicketTypeEnum;
 };
 export type SupportSettingsRead = {
   /** Days after resolution during which a requester may reopen a ticket. */
@@ -15163,24 +15044,14 @@ export type SupportSettingsRead = {
   max_attachments_per_ticket?: number;
   /** Minutes after creation during which an author may edit/delete their comment. */
   comment_edit_window_minutes?: number;
-  /** If disabled, requesters describe impact/urgency and the priority is derived (agents still set it). */
-  requesters_can_set_priority?: boolean;
-  /** Compute SLA deadlines and flag breaches from the priority targets. */
-  sla_enabled?: boolean;
+  can_requesters_set_priority: boolean;
+  is_sla_enabled: boolean;
   /** A ticket is 'at risk' once this percentage of its SLA window has elapsed. */
   sla_at_risk_percent?: number;
-  /** Allow requesters to rate resolved tickets (1-5). */
-  csat_enabled?: boolean;
+  is_csat_enabled: boolean;
   /** Days after resolution during which the requester can submit a satisfaction rating. */
   csat_window_days?: number;
-  /** Type applied when a ticket is created without one.
-    
-    * `incident` - Incident
-    * `service_request` - Service Request
-    * `problem` - Problem
-    * `change` - Change
-    * `question` - Question */
-  default_ticket_type?: TicketTypeEnum;
+  default_ticket_type: ChoiceRead;
   updated_at: string;
 };
 export type AdminSettingsDetailSerializersSupportSettingsDetailResponse = {
@@ -15195,6 +15066,8 @@ export type AdminSettingsUpdateSerializersSupportSettingsDetailResponse = {
 export type AdminSettingsUpdateSerializersSupportSettingsDetailResponseRead = {
   data: SupportSettingsRead;
 };
+export type TicketTypeEnum =
+  "incident" | "service_request" | "problem" | "change" | "question";
 export type PatchedAdminSettingsUpdate = {
   reopen_window_days?: number;
   auto_close_days?: number;
@@ -15202,60 +15075,30 @@ export type PatchedAdminSettingsUpdate = {
   allowed_attachment_extensions?: string[];
   max_attachments_per_ticket?: number;
   comment_edit_window_minutes?: number;
-  requesters_can_set_priority?: boolean;
-  sla_enabled?: boolean;
+  can_requesters_set_priority?: boolean;
+  is_sla_enabled?: boolean;
   sla_at_risk_percent?: number;
-  csat_enabled?: boolean;
+  is_csat_enabled?: boolean;
   csat_window_days?: number;
   default_ticket_type?: TicketTypeEnum;
 };
 export type StatusTransition = {
   /** List of roles allowed to trigger this transition, e.g. ['agent', 'admin']. */
   allowed_roles?: any;
-  /** Whether this transition requires a reason from the actor. */
-  requires_reason?: boolean;
-  /** Whether this transition requires a resolution summary. */
-  requires_resolution?: boolean;
 };
-export type SystemStateEnum = "open" | "active" | "waiting" | "done";
-export type Status = {
-  name: string;
-  system_state?: SystemStateEnum;
-  /** Optional '#RRGGBB' badge colour. */
-  color_hex?: string;
-  is_initial?: boolean;
-  /** Terminal status (e.g. Closed). Entering it stamps closed_at; auto-close moves tickets here. */
-  is_final?: boolean;
-  /** While a ticket is in this status (e.g. Waiting for Customer) SLA clocks are paused. */
-  pauses_sla?: boolean;
-  sort_order?: number;
-  is_active?: boolean;
-};
-export type StatusRead = {
+export type Relation = {};
+export type RelationRead = {
   id: number;
   name: string;
-  system_state?: SystemStateEnum;
-  /** Optional '#RRGGBB' badge colour. */
-  color_hex?: string;
-  is_initial?: boolean;
-  /** Terminal status (e.g. Closed). Entering it stamps closed_at; auto-close moves tickets here. */
-  is_final?: boolean;
-  /** While a ticket is in this status (e.g. Waiting for Customer) SLA clocks are paused. */
-  pauses_sla?: boolean;
-  sort_order?: number;
-  is_active?: boolean;
-  created_at: string;
 };
 export type StatusTransitionRead = {
   id: number;
-  from_status: StatusRead;
-  to_status: StatusRead;
+  from_status: RelationRead;
+  to_status: RelationRead;
   /** List of roles allowed to trigger this transition, e.g. ['agent', 'admin']. */
   allowed_roles?: any;
-  /** Whether this transition requires a reason from the actor. */
-  requires_reason?: boolean;
-  /** Whether this transition requires a resolution summary. */
-  requires_resolution?: boolean;
+  is_reason_required: boolean;
+  is_resolution_required: boolean;
   created_at: string;
 };
 export type StatusTransitionWrite = {
@@ -15263,10 +15106,6 @@ export type StatusTransitionWrite = {
   to_status_id: number;
   /** List of roles allowed to trigger this transition, e.g. ['agent', 'admin']. */
   allowed_roles?: any;
-  /** Whether this transition requires a reason from the actor. */
-  requires_reason?: boolean;
-  /** Whether this transition requires a resolution summary. */
-  requires_resolution?: boolean;
 };
 export type AdminTransitionListSerializersStatusTransitionListResponse = {
   data: StatusTransition[];
@@ -15292,8 +15131,8 @@ export type AdminTransitionCreate = {
   from_status_id: number;
   to_status_id: number;
   allowed_roles?: string[];
-  requires_reason?: boolean;
-  requires_resolution?: boolean;
+  is_reason_required?: boolean;
+  is_resolution_required?: boolean;
 };
 export type AdminTransitionUpdateSerializersStatusTransitionDetailResponse = {
   data: StatusTransition;
@@ -15308,8 +15147,8 @@ export type AdminTransitionUpdateSerializersStatusTransitionDetailResponseWrite 
   };
 export type PatchedAdminTransitionUpdate = {
   allowed_roles?: string[];
-  requires_reason?: boolean;
-  requires_resolution?: boolean;
+  is_reason_required?: boolean;
+  is_resolution_required?: boolean;
 };
 export type CannedResponseListSerializersCannedResponseListResponse = {
   data: CannedResponse[];
@@ -15331,7 +15170,7 @@ export type CategoryRead = {
   /** Stable machine-readable identifier (exposed as 'sku' by the options API). */
   code?: string;
   description?: string;
-  default_team: TeamSummaryRead;
+  default_team: TeamSummaryRead | null;
   sort_order?: number;
   is_active?: boolean;
   created_at: string;
@@ -15485,7 +15324,17 @@ export type ResourceTicketDtoItem = {
   key: string;
   subject: string;
   status_name: string;
-  system_state: string;
+  priority_name: string;
+  priority_rank: number;
+  created_at: string;
+  is_link_active: boolean;
+};
+export type ResourceTicketDtoItemRead = {
+  id: number;
+  key: string;
+  subject: string;
+  status_name: string;
+  system_state: ChoiceRead;
   priority_name: string;
   priority_rank: number;
   created_at: string;
@@ -15496,10 +15345,43 @@ export type ResourceTicketSummary = {
   total_count: number;
   tickets: ResourceTicketDtoItem[];
 };
+export type ResourceTicketSummaryRead = {
+  open_count: number;
+  total_count: number;
+  tickets: ResourceTicketDtoItemRead[];
+};
 export type ResourceTicketSummarySerializersResourceTicketSummaryDetailResponse =
   {
     data: ResourceTicketSummary;
   };
+export type ResourceTicketSummarySerializersResourceTicketSummaryDetailResponseRead =
+  {
+    data: ResourceTicketSummaryRead;
+  };
+export type Status = {
+  name: string;
+  /** Optional '#RRGGBB' badge colour. */
+  color_hex?: string;
+  is_initial?: boolean;
+  /** Terminal status (e.g. Closed). Entering it stamps closed_at; auto-close moves tickets here. */
+  is_final?: boolean;
+  sort_order?: number;
+  is_active?: boolean;
+};
+export type StatusRead = {
+  id: number;
+  name: string;
+  system_state: ChoiceRead;
+  /** Optional '#RRGGBB' badge colour. */
+  color_hex?: string;
+  is_initial?: boolean;
+  /** Terminal status (e.g. Closed). Entering it stamps closed_at; auto-close moves tickets here. */
+  is_final?: boolean;
+  is_sla_paused: boolean;
+  sort_order?: number;
+  is_active?: boolean;
+  created_at: string;
+};
 export type AdminStatusListSerializersStatusListResponse = {
   data: Status[];
 };
@@ -15512,11 +15394,12 @@ export type AdminStatusCreateSerializersStatusDetailResponse = {
 export type AdminStatusCreateSerializersStatusDetailResponseRead = {
   data: StatusRead;
 };
+export type SystemStateEnum = "open" | "active" | "waiting" | "done";
 export type AdminStatusCreate = {
   name: string;
   color_hex?: string;
   is_final?: boolean;
-  pauses_sla?: boolean;
+  is_sla_paused?: boolean;
   system_state: SystemStateEnum;
   is_initial?: boolean;
   is_active?: boolean;
@@ -15532,7 +15415,7 @@ export type PatchedAdminStatusUpdate = {
   name?: string;
   color_hex?: string;
   is_final?: boolean;
-  pauses_sla?: boolean;
+  is_sla_paused?: boolean;
   system_state?: SystemStateEnum;
   is_initial?: boolean;
   is_active?: boolean;
@@ -15545,23 +15428,14 @@ export type Team = {
   description?: string;
   is_active?: boolean;
 };
-export type UserSummary = {
-  id: number;
-  username: string;
-};
-export type UserSummaryRead = {
-  id: number;
-  username: string;
-  full_name: string;
-};
 export type TeamRead = {
   id: number;
   name: string;
   /** Stable machine-readable identifier used by the options API. */
   code: string;
   description?: string;
-  lead: UserSummaryRead;
-  members: UserSummaryRead[];
+  lead: UserReferenceRead | null;
+  members: UserReferenceRead[];
   is_active?: boolean;
   created_at: string;
 };
@@ -15610,14 +15484,10 @@ export type TicketListSerializersTicketListPagination = {
 export type TicketListSerializersTicketListPaginationMeta = {
   pagination: TicketListSerializersTicketListPagination;
 };
-export type SourceEnum =
-  "web" | "email" | "phone" | "walk_in" | "api" | "system";
 export type UrgencyEnum = "1" | "2" | "3";
 export type BlankEnum = "";
 export type TicketList = {
   subject: string;
-  ticket_type?: TicketTypeEnum;
-  source?: SourceEnum;
   impact?: UrgencyEnum | BlankEnum;
   urgency?: UrgencyEnum | BlankEnum;
   /** Requester/agent-set target date, independent of the SLA. */
@@ -15632,16 +15502,16 @@ export type TicketListRead = {
   key: string;
   number: number;
   subject: string;
-  ticket_type?: TicketTypeEnum;
-  source?: SourceEnum;
+  ticket_type: ChoiceRead;
+  source: ChoiceRead;
   impact?: UrgencyEnum | BlankEnum;
   urgency?: UrgencyEnum | BlankEnum;
-  category: CategoryRead;
-  priority: PriorityRead;
-  status: StatusRead;
-  requester: UserSummaryRead;
-  assignee: UserSummaryRead;
-  team: TeamSummaryRead;
+  category: RelationRead | null;
+  priority: RelationRead | null;
+  status: RelationRead;
+  requester: UserReferenceRead;
+  assignee: UserReferenceRead | null;
+  team: TeamSummaryRead | null;
   labels: string[];
   /** Requester/agent-set target date, independent of the SLA. */
   due_date?: string | null;
@@ -15674,8 +15544,6 @@ export type ResolutionCodeEnum =
 export type TicketDetail = {
   subject: string;
   description: string;
-  ticket_type?: TicketTypeEnum;
-  source?: SourceEnum;
   impact?: UrgencyEnum | BlankEnum;
   urgency?: UrgencyEnum | BlankEnum;
   /** Reference in an external system (vendor RMA / case number, legacy Jira key...). */
@@ -15695,42 +15563,40 @@ export type TicketDetail = {
   csat_submitted_at?: string | null;
   version?: number;
 };
-export type TicketRef = {
-  subject: string;
-};
+export type TicketRef = {};
 export type TicketRefRead = {
   id: number;
-  key: string;
-  subject: string;
-  status: string;
-  system_state: string;
+  name: string;
 };
 export type Watcher = {};
 export type WatcherRead = {
-  user: UserSummaryRead;
+  user: UserReferenceRead;
   created_at: string;
 };
-export type ResourceTypeEnum =
-  "room" | "station" | "bench" | "equipment" | "license";
 export type TicketResourceLink = {
-  resource_type: ResourceTypeEnum;
-  resource_id: string;
   is_active?: boolean;
   unlinked_at?: string | null;
   unlink_reason?: string;
 };
+export type LinkedResource = {};
+export type ResourceTypeEnum =
+  "room" | "station" | "bench" | "equipment" | "license";
+export type LinkedResourceRead = {
+  id: string;
+  name: string;
+  type: ResourceTypeEnum;
+};
 export type TicketResourceLinkRead = {
   id: number;
-  resource_type: ResourceTypeEnum;
-  resource_id: string;
+  resource: LinkedResourceRead;
   snapshot: {
     [key: string]: any;
   };
   is_active?: boolean;
   linked_at: string;
-  linked_by: UserSummaryRead;
+  linked_by: UserReferenceRead;
   unlinked_at?: string | null;
-  unlinked_by: UserSummaryRead;
+  unlinked_by: UserReferenceRead | null;
   unlink_reason?: string;
   badge: string;
 };
@@ -15740,23 +15606,23 @@ export type TicketDetailRead = {
   number: number;
   subject: string;
   description: string;
-  ticket_type?: TicketTypeEnum;
-  source?: SourceEnum;
+  ticket_type: ChoiceRead;
+  source: ChoiceRead;
   impact?: UrgencyEnum | BlankEnum;
   urgency?: UrgencyEnum | BlankEnum;
   /** Reference in an external system (vendor RMA / case number, legacy Jira key...). */
   external_reference?: string;
   /** Requester/agent-set target date, independent of the SLA. */
   due_date?: string | null;
-  category: CategoryRead;
-  priority: PriorityRead;
-  status: StatusRead;
-  requester: UserSummaryRead;
-  created_by: UserSummaryRead;
-  assignee: UserSummaryRead;
-  team: TeamSummaryRead;
+  category: RelationRead | null;
+  priority: RelationRead | null;
+  status: RelationRead;
+  requester: UserReferenceRead;
+  created_by: UserReferenceRead;
+  assignee: UserReferenceRead | null;
+  team: TeamSummaryRead | null;
   labels: string[];
-  parent: TicketRefRead;
+  parent: TicketRefRead | null;
   children: TicketRefRead[];
   ticket_links: {
     [key: string]: any;
@@ -15769,7 +15635,7 @@ export type TicketDetailRead = {
   first_response_at?: string | null;
   resolved_at?: string | null;
   closed_at?: string | null;
-  resolved_by: UserSummaryRead;
+  resolved_by: UserReferenceRead | null;
   reopen_count?: number;
   resolution_code?: ResolutionCodeEnum | BlankEnum;
   resolution_summary?: string;
@@ -15798,8 +15664,7 @@ export type TicketCreateSerializersTicketDetailDetailResponse = {
 export type TicketCreateSerializersTicketDetailDetailResponseRead = {
   data: TicketDetailRead;
 };
-export type TicketCreateRequestSourceEnum =
-  "web" | "email" | "phone" | "walk_in" | "api";
+export type SourceEnum = "web" | "email" | "phone" | "walk_in" | "api";
 export type LinkedResourceItem = {
   resource_type: ResourceTypeEnum;
   resource_id: string;
@@ -15813,7 +15678,7 @@ export type TicketCreateRequest = {
   ticket_type?: TicketTypeEnum;
   impact?: UrgencyEnum | BlankEnum;
   urgency?: UrgencyEnum | BlankEnum;
-  source?: TicketCreateRequestSourceEnum;
+  source?: SourceEnum;
   external_reference?: string;
   due_date?: string | null;
   team_id?: number | null;
@@ -15852,51 +15717,6 @@ export type PatchedTicketUpdateRequest = {
   labels?: string[];
   parent_key?: string | null;
 };
-export type EventTypeEnum =
-  | "created"
-  | "updated"
-  | "assigned"
-  | "unassigned"
-  | "status_changed"
-  | "priority_changed"
-  | "category_changed"
-  | "comment_added"
-  | "comment_edited"
-  | "comment_deleted"
-  | "attachment_added"
-  | "attachment_removed"
-  | "resource_linked"
-  | "resource_unlinked"
-  | "resolved"
-  | "reopened"
-  | "watcher_added"
-  | "watcher_removed"
-  | "ticket_linked"
-  | "ticket_unlinked"
-  | "sla_breached"
-  | "sla_paused"
-  | "sla_resumed"
-  | "csat_submitted";
-export type TicketActivity = {
-  event_type: EventTypeEnum;
-  actor_name: string;
-  payload?: any;
-  correlation_id?: string;
-};
-export type TicketActivityRead = {
-  id: number;
-  event_type: EventTypeEnum;
-  actor_name: string;
-  occurred_at: string;
-  payload?: any;
-  correlation_id?: string;
-};
-export type TicketActivityListSerializersTicketActivityListResponse = {
-  data: TicketActivity[];
-};
-export type TicketActivityListSerializersTicketActivityListResponseRead = {
-  data: TicketActivityRead[];
-};
 export type TicketAssignSerializersTicketDetailDetailResponse = {
   data: TicketDetail;
 };
@@ -15907,14 +15727,54 @@ export type TicketAssignRequest = {
   assignee_id: number | null;
   version?: number | null;
 };
-export type ScanStatusEnum = "clean" | "pending" | "infected";
+export type TicketCsatSerializersTicketDetailDetailResponse = {
+  data: TicketDetail;
+};
+export type TicketCsatSerializersTicketDetailDetailResponseRead = {
+  data: TicketDetailRead;
+};
+export type CsatRequest = {
+  score: number;
+  comment?: string;
+};
+export type TicketTransitionSerializersTicketDetailDetailResponse = {
+  data: TicketDetail;
+};
+export type TicketTransitionSerializersTicketDetailDetailResponseRead = {
+  data: TicketDetailRead;
+};
+export type TicketTransitionRequest = {
+  to_status_id: number;
+  version: number;
+  reason?: string;
+  resolution_summary?: string;
+  root_cause?: string;
+  resolution_code?: ResolutionCodeEnum | BlankEnum;
+};
+export type TicketActivity = {
+  actor_name: string;
+  payload?: any;
+};
+export type TicketActivityRead = {
+  id: number;
+  event_type: ChoiceRead;
+  actor_name: string;
+  occurred_at: string;
+  payload?: any;
+  correlation_key: string;
+};
+export type TicketActivityListSerializersTicketActivityListResponse = {
+  data: TicketActivity[];
+};
+export type TicketActivityListSerializersTicketActivityListResponseRead = {
+  data: TicketActivityRead[];
+};
 export type TicketAttachment = {
   filename: string;
   content_type: string;
   size: number;
   /** Restricted attachments are visible only to support agents and administrators. */
   is_restricted?: boolean;
-  scan_status?: ScanStatusEnum;
 };
 export type TicketAttachmentRead = {
   id: number;
@@ -15923,9 +15783,9 @@ export type TicketAttachmentRead = {
   size: number;
   /** Restricted attachments are visible only to support agents and administrators. */
   is_restricted?: boolean;
-  scan_status?: ScanStatusEnum;
+  scan_status: ChoiceRead;
   created_at: string;
-  uploaded_by: UserSummaryRead;
+  uploaded_by: UserReferenceRead;
   download_url: string;
 };
 export type TicketAttachmentCreateSerializersTicketAttachmentDetailResponse = {
@@ -15940,17 +15800,15 @@ export type AttachmentUploadRequest = {
   comment_id?: number | null;
   is_restricted?: boolean;
 };
-export type TicketCommentVisibilityEnum = "public" | "internal";
 export type TicketComment = {
   body: string;
-  visibility?: TicketCommentVisibilityEnum;
   edited_at?: string | null;
 };
 export type TicketCommentRead = {
   id: number;
-  author: UserSummaryRead;
+  author: UserReferenceRead;
   body: string;
-  visibility?: TicketCommentVisibilityEnum;
+  visibility: ChoiceRead;
   created_at: string;
   edited_at?: string | null;
 };
@@ -15966,10 +15824,10 @@ export type TicketCommentCreateSerializersTicketCommentDetailResponse = {
 export type TicketCommentCreateSerializersTicketCommentDetailResponseRead = {
   data: TicketCommentRead;
 };
-export type CommentCreateRequestVisibilityEnum = "public" | "internal";
+export type VisibilityEnum = "public" | "internal";
 export type CommentCreateRequest = {
   body: string;
-  visibility?: CommentCreateRequestVisibilityEnum;
+  visibility?: VisibilityEnum;
 };
 export type TicketCommentUpdateSerializersTicketCommentDetailResponse = {
   data: TicketComment;
@@ -15980,28 +15838,13 @@ export type TicketCommentUpdateSerializersTicketCommentDetailResponseRead = {
 export type PatchedCommentUpdateRequest = {
   body?: string;
 };
-export type TicketCsatSerializersTicketDetailDetailResponse = {
-  data: TicketDetail;
-};
-export type TicketCsatSerializersTicketDetailDetailResponseRead = {
-  data: TicketDetailRead;
-};
-export type CsatRequest = {
-  score: number;
-  comment?: string;
-};
-export type LinkTypeEnum = "relates_to" | "duplicates" | "blocks" | "caused_by";
-export type TicketLink = {
-  link_type: LinkTypeEnum;
-};
+export type TicketLink = {};
 export type TicketLinkRead = {
   id: number;
-  link_type: LinkTypeEnum;
+  link_type: ChoiceRead;
   direction: string;
   label: string;
-  ticket: {
-    [key: string]: any;
-  };
+  ticket: TicketRefRead;
   created_at: string;
 };
 export type TicketLinkListSerializersTicketLinkListResponse = {
@@ -16016,6 +15859,7 @@ export type TicketLinkCreateSerializersTicketLinkDetailResponse = {
 export type TicketLinkCreateSerializersTicketLinkDetailResponseRead = {
   data: TicketLinkRead;
 };
+export type LinkTypeEnum = "relates_to" | "duplicates" | "blocks" | "caused_by";
 export type TicketLinkRequest = {
   target_key: string;
   link_type: LinkTypeEnum;
@@ -16032,20 +15876,6 @@ export type LinkResourceRequest = {
   resource_type: ResourceTypeEnum;
   resource_id: string;
 };
-export type TicketTransitionSerializersTicketDetailDetailResponse = {
-  data: TicketDetail;
-};
-export type TicketTransitionSerializersTicketDetailDetailResponseRead = {
-  data: TicketDetailRead;
-};
-export type TicketTransitionRequest = {
-  to_status_id: number;
-  version: number;
-  reason?: string;
-  resolution_summary?: string;
-  root_cause?: string;
-  resolution_code?: ResolutionCodeEnum | BlankEnum;
-};
 export type TicketWatcherAddSerializersWatcherDetailResponse = {
   data: Watcher;
 };
@@ -16057,28 +15887,36 @@ export type WatcherRequest = {
   user_id?: number | null;
 };
 export type QueueStatsPriorityItem = {
-  /** Primary key of the support priority. */
-  priority_id: number;
-  /** Name of the priority. */
-  name: string;
+  /** Rank of the priority for ordering. */
+  rank: number;
+  /** Number of open tickets with this priority. */
+  count: number;
+};
+export type QueueStatsPriorityItemRead = {
+  /** The support priority (REL-14). */
+  priority: RelationRead;
   /** Rank of the priority for ordering. */
   rank: number;
   /** Number of open tickets with this priority. */
   count: number;
 };
 export type QueueStatsTeamItem = {
-  /** Primary key of the support team, or null if unassigned. */
-  team_id: number | null;
-  /** Name of the team. */
-  name: string;
+  /** Number of open tickets assigned to this team. */
+  count: number;
+};
+export type QueueStatsTeamItemRead = {
+  /** The support team, or null if unassigned (REL-14). */
+  team: RelationRead | null;
   /** Number of open tickets assigned to this team. */
   count: number;
 };
 export type QueueStatsAssigneeItem = {
-  /** Primary key of the assigned user. */
-  user_id: number;
-  /** Username of the assignee. */
-  username: string;
+  /** Number of open tickets assigned to this user. */
+  count: number;
+};
+export type QueueStatsAssigneeItemRead = {
+  /** The assigned user (REL-14). */
+  assignee: RelationRead;
   /** Number of open tickets assigned to this user. */
   count: number;
 };
@@ -16132,8 +15970,51 @@ export type QueueStats = {
   /** Number of CSAT ratings submitted within the window. */
   csat_responses: number;
 };
+export type QueueStatsRead = {
+  /** Window in days used for recent throughput metrics. */
+  window_days: number;
+  /** Total number of active, non-done tickets. */
+  open_total: number;
+  /** Total number of tickets without an assignee. */
+  unassigned: number;
+  /** Total number of open tickets assigned to the calling agent. */
+  mine_open: number;
+  /** Ticket count grouped by system state. */
+  by_state: {
+    [key: string]: number;
+  };
+  /** Open ticket count grouped by ticket type. */
+  by_type: {
+    [key: string]: number;
+  };
+  /** Breakdown of open tickets by priority. */
+  by_priority: QueueStatsPriorityItemRead[];
+  /** Breakdown of open tickets by team. */
+  by_team: QueueStatsTeamItemRead[];
+  /** Breakdown of open tickets by assignee (top 20). */
+  by_assignee: QueueStatsAssigneeItemRead[];
+  /** Current SLA breach and pause counters. */
+  sla: QueueStatsSla;
+  /** Total tickets created within the window. */
+  created: number;
+  /** Total tickets resolved within the window. */
+  resolved: number;
+  /** Total tickets reopened within the window. */
+  reopened: number;
+  /** Average first response time in minutes. */
+  avg_first_response_minutes: number | null;
+  /** Average resolution time in minutes. */
+  avg_resolution_minutes: number | null;
+  /** Average CSAT rating within the window (1.0 to 5.0). */
+  csat_average: number | null;
+  /** Number of CSAT ratings submitted within the window. */
+  csat_responses: number;
+};
 export type SupportQueueStatsSerializersQueueStatsDetailResponse = {
   data: QueueStats;
+};
+export type SupportQueueStatsSerializersQueueStatsDetailResponseRead = {
+  data: QueueStatsRead;
 };
 export type UserGroupListApiUserGroupPagination = {
   count: number;
@@ -16364,7 +16245,6 @@ export const {
   useLabsAnalyticsBenchGroupRetrieveQuery,
   useLabsAnalyticsBookedVsUsedRetrieveQuery,
   useLabsAnalyticsBookingRetrieveQuery,
-  useLabsAnalyticsDashboardSummaryRetrieveQuery,
   useLabsAnalyticsEquipmentAvailabilityRetrieveQuery,
   useLabsAnalyticsFinanceExpenseTypeBreakdownRetrieveQuery,
   useLabsAnalyticsFinanceMonthlyTrendsRetrieveQuery,
@@ -16372,7 +16252,6 @@ export const {
   useLabsAnalyticsLabCountRetrieveQuery,
   useLabsAnalyticsLabEfficiencyRetrieveQuery,
   useLabsAnalyticsLabEquipmentStatusRetrieveQuery,
-  useLabsAnalyticsLabGroupRetrieveQuery,
   useLabsAnalyticsLabUsageByTimeframeRetrieveQuery,
   useLabsAnalyticsLabVisitsRetrieveQuery,
   useLabsAnalyticsLabVisitsCreateMutation,
@@ -16424,8 +16303,10 @@ export const {
   useLabsBenchesActionsFavoriteDestroyByBenchIdMutation,
   useLabsBenchesActionsPlaceCreateByBenchIdMutation,
   useLabsBenchesActionsPlacePartialUpdateByBenchIdMutation,
-  useLabsBenchesActionsUnfavoriteCreateByBenchIdMutation,
   useLabsBenchesEquipmentRetrieveByBenchIdQuery,
+  useLabsBenchesImageRetrieveByBenchIdQuery,
+  useLabsBenchesImageUpdateByBenchIdMutation,
+  useLabsBenchesImageDestroyByBenchIdMutation,
   useLabsBenchesProfileRetrieveByIdQuery,
   useLabsBenchesWeeklyUsageRetrieveByIdQuery,
   useLabsBenchesMappingRetrieveByResourceIdQuery,
@@ -16487,9 +16368,6 @@ export const {
   useLabsEquipmentTypesRetrieveQuery,
   useLabsEquipmentTypesRetrieveByTypeIdQuery,
   useLabsEquipmentTypesOptionsRetrieveQuery,
-  useLabsEquipmentActionsAssignRetrieveByEquipmentIdQuery,
-  useLabsEquipmentActionsAssignCreateByEquipmentIdMutation,
-  useLabsEquipmentActionsAssignDestroyByEquipmentIdMutation,
   useLabsEquipmentActionsChangeConditionCreateByEquipmentIdMutation,
   useLabsEquipmentActionsChangeLifecycleCreateByEquipmentIdMutation,
   useLabsEquipmentActionsExtendLoanCreateByEquipmentIdMutation,
@@ -16497,8 +16375,11 @@ export const {
   useLabsEquipmentActionsReturnCreateByEquipmentIdMutation,
   useLabsEquipmentActivityRetrieveByEquipmentIdQuery,
   useLabsEquipmentAssignmentRetrieveByEquipmentIdQuery,
-  useLabsEquipmentAssignmentCreateByEquipmentIdMutation,
+  useLabsEquipmentAssignmentUpdateByEquipmentIdMutation,
   useLabsEquipmentAssignmentDestroyByEquipmentIdMutation,
+  useLabsEquipmentImageRetrieveByEquipmentIdQuery,
+  useLabsEquipmentImageUpdateByEquipmentIdMutation,
+  useLabsEquipmentImageDestroyByEquipmentIdMutation,
   useLabsEquipmentLoanRetrieveByEquipmentIdQuery,
   useLabsEquipmentPlacementRetrieveByEquipmentIdQuery,
   useLabsEquipmentPlacementUpdateByEquipmentIdMutation,
@@ -16572,15 +16453,10 @@ export const {
   useLabsExpensesPaymentsRetrieveByExpenseIdQuery,
   useLabsExpensesPaymentsCreateByExpenseIdMutation,
   useLabsExpensesReportRetrieveQuery,
-  useLabsFinancialReportRetrieveQuery,
   useLabsGroupsRetrieveQuery,
   useLabsGroupsRetrieveByGroupIdQuery,
   useLabsGroupsOptionsRetrieveQuery,
   useLabsLabDashboardRetrieveQuery,
-  useLabsLabDashboardSummaryRetrieveQuery,
-  useLabsLabMonitoringRetrieveQuery,
-  useLabsLabMonitoringCreateMutation,
-  useLabsLabMonitoringExportRetrieveQuery,
   useLabsLabProjectsRetrieveQuery,
   useLabsLabProjectsRetrieveByProjectIdQuery,
   useLabsLabProjectsOptionsRetrieveQuery,
@@ -16609,10 +16485,12 @@ export const {
   useLabsLicensesActionsAssignCreateByLicenseIdMutation,
   useLabsLicensesActionsAssignDestroyByLicenseIdMutation,
   useLabsLicensesActionsChangeStatusCreateByLicenseIdMutation,
-  useLabsLicensesActionsUnassignCreateByLicenseIdMutation,
   useLabsLicensesAgreementsRetrieveByLicenseIdQuery,
   useLabsLicensesAgreementsCreateByLicenseIdMutation,
   useLabsLicensesHistoryRetrieveByLicenseIdQuery,
+  useLabsLicensesImageRetrieveByLicenseIdQuery,
+  useLabsLicensesImageUpdateByLicenseIdMutation,
+  useLabsLicensesImageDestroyByLicenseIdMutation,
   useLabsLicensesCategoriesSummaryRetrieveQuery,
   useLabsLicensesFiltersRetrieveQuery,
   useLabsLicensesReferenceDataCategoriesRetrieveQuery,
@@ -16647,7 +16525,6 @@ export const {
   useLabsMonitoringEventsCreateMutation,
   useLabsMonitoringEventsRetrieveByIdQuery,
   useLabsMonitoringEventsExportRetrieveQuery,
-  useLabsProfileRetrieveByIdQuery,
   useLabsPurchaseItemsResourcesRetrieveByPurchaseItemIdQuery,
   useLabsPurchaseItemsResourcesCreateByPurchaseItemIdMutation,
   useLabsPurchasePrioritiesRetrieveQuery,
@@ -16686,6 +16563,9 @@ export const {
   useLabsRoomsExpensesCreateByRoomIdMutation,
   useLabsRoomsExpensesReportRetrieveByRoomIdQuery,
   useLabsRoomsHistoryRetrieveByRoomIdQuery,
+  useLabsRoomsImageRetrieveByRoomIdQuery,
+  useLabsRoomsImageUpdateByRoomIdMutation,
+  useLabsRoomsImageDestroyByRoomIdMutation,
   useLabsRoomsObservationsRetrieveByRoomIdQuery,
   useLabsRoomsObservationsCreateByRoomIdMutation,
   useLabsRoomsSlotsRetrieveByRoomIdQuery,
@@ -16710,6 +16590,9 @@ export const {
   useLabsStationsActionsPlaceCreateByStationIdMutation,
   useLabsStationsActionsPlacePartialUpdateByStationIdMutation,
   useLabsStationsHistoryRetrieveByStationIdQuery,
+  useLabsStationsImageRetrieveByStationIdQuery,
+  useLabsStationsImageUpdateByStationIdMutation,
+  useLabsStationsImageDestroyByStationIdMutation,
   useLabsStationsSlotsRetrieveByStationIdQuery,
   useLabsStationsSlotsCreateByStationIdMutation,
   useLabsStationsSlotsRetrieveByStationIdSlotIdQuery,
@@ -16720,9 +16603,6 @@ export const {
   useLabsStationsOptionsRetrieveQuery,
   useLabsStationsReferenceDataRetrieveQuery,
   useLabsStationsStatusSummaryRetrieveQuery,
-  useLabsUsersProfileRetrieveByIdQuery,
-  useLabsUsersWeeklyUsageRetrieveByIdQuery,
-  useLabsWeeklyUsageRetrieveByIdQuery,
   useLoginCreateMutation,
   useLogoutCreateMutation,
   useNotificationsListQuery,
@@ -16771,21 +16651,21 @@ export const {
   useSupportTicketsCreateMutation,
   useSupportTicketsRetrieveByKeyQuery,
   useSupportTicketsPartialUpdateByKeyMutation,
+  useSupportTicketsActionsAssignCreateByKeyMutation,
+  useSupportTicketsActionsSubmitCsatCreateByKeyMutation,
+  useSupportTicketsActionsTransitionCreateByKeyMutation,
   useSupportTicketsActivityRetrieveByKeyQuery,
-  useSupportTicketsAssignCreateByKeyMutation,
   useSupportTicketsAttachmentsCreateByKeyMutation,
   useSupportTicketsAttachmentsDestroyByKeyAttachmentIdMutation,
   useSupportTicketsCommentsRetrieveByKeyQuery,
   useSupportTicketsCommentsCreateByKeyMutation,
   useSupportTicketsCommentsPartialUpdateByKeyCommentIdMutation,
   useSupportTicketsCommentsDestroyByKeyCommentIdMutation,
-  useSupportTicketsCsatCreateByKeyMutation,
   useSupportTicketsLinksRetrieveByKeyQuery,
   useSupportTicketsLinksCreateByKeyMutation,
   useSupportTicketsLinksDestroyByKeyLinkIdMutation,
   useSupportTicketsResourcesCreateByKeyMutation,
   useSupportTicketsResourcesDestroyByKeyMutation,
-  useSupportTicketsTransitionsCreateByKeyMutation,
   useSupportTicketsWatchersCreateByKeyMutation,
   useSupportTicketsWatchersDestroyByKeyMutation,
   useSupportTicketsStatsRetrieveQuery,

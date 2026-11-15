@@ -12,16 +12,15 @@ import {
 test('mapExpense maps complete expense payload', () => {
   const backendExpense = {
     id: 10,
-    room: { id: 3, room_name: 'RF Lab Alpha' },
+    room: { id: 3, name: 'RF Lab Alpha' },
     name: 'Facility HVAC Maintenance',
-    expense_type: 'maintenance',
+    expense_type: { value: 'maintenance', label: 'Maintenance' },
     supplier: 'AirCool Solutions',
     reference: 'CON-HVAC-2026',
-    amount: '1200.00',
-    currency: 'EUR',
-    billing_period: 'monthly',
-    valid_from: '2026-01-01',
-    valid_until: '2026-12-31',
+    cost: { amount: '1200.00', currency: 'EUR' },
+    billing_period: { value: 'monthly', label: 'Monthly' },
+    start_date: '2026-01-01',
+    end_date: '2026-12-31',
     notes: 'Includes bi-weekly filter check',
     created_at: '2026-01-01T08:00:00Z',
     updated_at: '2026-01-02T09:00:00Z',
@@ -65,8 +64,8 @@ test('mapExpenseListResponse maps paginated response', () => {
       {
         id: 1,
         name: 'Fiber Internet Lease',
-        expense_type: 'utilities',
-        amount: '350.00',
+        expense_type: { value: 'utilities', label: 'Utilities' },
+        cost: { amount: '350.00', currency: 'EUR' },
       },
     ],
   };
@@ -83,9 +82,9 @@ test('mapExpensePayment maps payments and refunds', () => {
   const rawPayment = {
     id: 101,
     expense: { id: 10 },
-    transaction_type: 'payment',
-    amount: '1200.00',
-    paid_at: '2026-02-01',
+    transaction_type: { value: 'payment', label: 'Payment' },
+    total: { amount: '1200.00', currency: 'EUR' },
+    paid_date: '2026-02-01',
     reference: 'BANK-TRF-0988',
     notes: 'February payment',
     created_at: '2026-02-01T10:00:00Z',
@@ -101,9 +100,9 @@ test('mapExpensePayment maps payments and refunds', () => {
 
   const rawRefund = {
     id: 102,
-    transaction_type: 'refund',
-    amount: '100.00',
-    paid_at: '2026-02-05',
+    transaction_type: { value: 'refund', label: 'Refund' },
+    total: { amount: '100.00', currency: 'EUR' },
+    paid_date: '2026-02-05',
   };
   const refund = mapExpensePayment(rawRefund, 10);
   assert.equal(refund.id, 102);
@@ -114,7 +113,7 @@ test('mapExpensePayment maps payments and refunds', () => {
 test('mapExpensePaymentListResponse maps payment list envelope', () => {
   const payload = {
     meta: { pagination: { count: 1, page: 1, page_size: 10, next: null, previous: null } },
-    data: [{ id: 101, amount: '500.00', transaction_type: 'payment' }],
+    data: [{ id: 101, total: { amount: '500.00', currency: 'EUR' }, transaction_type: { value: 'payment', label: 'Payment' } }],
   };
   const result = mapExpensePaymentListResponse(payload, 5);
   assert.equal(result.data.length, 1);

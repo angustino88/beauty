@@ -27,7 +27,7 @@ export const mappingApi = baseApi.injectEndpoints({
         const queryParams = new URLSearchParams();
         if (params.page) queryParams.set("page", String(params.page));
         if (params.page_size) queryParams.set("page_size", String(params.page_size));
-        if (params.search) queryParams.set("search", params.search);
+        if (params.search) queryParams.set("q", params.search);
         if (params.ordering) queryParams.set("ordering", params.ordering);
         if (params.station_id) queryParams.set("setup_location_id", String(params.station_id));
         if (params.bench_id) queryParams.set("id", String(params.bench_id));
@@ -95,7 +95,7 @@ export const mappingApi = baseApi.injectEndpoints({
     assignEquipment: build.mutation<void, { equipmentId: number; body: EquipmentAssignmentPayload }>({
       query: ({ equipmentId, body }) => ({
         url: `/api/labs/equipment/${equipmentId}/assignment`,
-        method: "POST",
+        method: "PUT",
         body,
       }),
       invalidatesTags: (_res, _err, { body }) => [

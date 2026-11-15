@@ -1,15 +1,11 @@
 import type {
-  MonitoringEventRead,
-  LabsLabMonitoringRetrieveApiResponse,
-  LabsLabMonitoringExportRetrieveApiResponse,
+  LabsMonitoringEventsRetrieveApiResponse,
+  LabsMonitoringEventsExportRetrieveApiResponse,
 } from '@/shared/api/generated/api';
 import type { ILabMonitoringResponse } from './types';
 
-export type LabMonitoringItem = MonitoringEventRead;
-export type LabMonitoringListApiResponse = LabsLabMonitoringRetrieveApiResponse;
-
 export function mapLabMonitoringListResponse(
-  response: LabMonitoringListApiResponse,
+  response: LabsMonitoringEventsRetrieveApiResponse,
 ): ILabMonitoringResponse {
   return {
     value: response.data,
@@ -18,7 +14,7 @@ export function mapLabMonitoringListResponse(
 }
 
 export function mapLabMonitoringExportResponse(
-  response: LabsLabMonitoringExportRetrieveApiResponse,
+  response: LabsMonitoringEventsExportRetrieveApiResponse,
 ): ILabMonitoringResponse {
   return { value: response.data, total_count: undefined };
 }

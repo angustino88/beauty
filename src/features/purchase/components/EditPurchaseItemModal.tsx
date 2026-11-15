@@ -75,6 +75,7 @@ export const EditPurchaseItemModal: React.FC<EditPurchaseItemModalProps> = ({
   const handleFinish = async (values: FormValues) => {
     try {
       const payload: IUpdatePurchaseItemPayload = {
+        currency,
         description: values.description.trim(),
         quantity: values.quantity,
         unit: values.unit?.trim() || undefined,

@@ -8,6 +8,12 @@ import type {
   ILicenseVendor,
 } from './types';
 
+/** `{value, label}` choice (ENU-1) → its value; plain strings pass through. */
+function choiceOf(raw: unknown): string | undefined {
+  if (raw && typeof raw === 'object') return asString((raw as { value?: unknown }).value) || undefined;
+  return asString(raw) || undefined;
+}
+
 type RecordValue = Record<string, unknown>;
 
 const asRecord = (val: unknown): RecordValue =>
@@ -103,7 +109,7 @@ export function mapLicenseRead(rawItem: unknown): ILicense {
     license_ID: (item.license_ID as string) ?? (item.license_identifier as string) ?? null,
     log_label: asString(item.log_label),
     remark: asString(item.remark || item.description),
-    expiry_date: asString(item.expiry_date) || null,
+    expiry_date: asString(item.expires_at) || null,
     license_seats: (item.license_seats as number) ?? null,
     carrier_device: carrier
       ? {
@@ -113,7 +119,7 @@ export function mapLicenseRead(rawItem: unknown): ILicense {
         }
       : null,
     primary_owner: (item.primary_owner as ILicense['primary_owner']) ?? null,
-    status: asString(status?.status_type || item.status) || null,
+    status: asString(status?.status_type || choiceOf(item.status)) || null,
     current_status: status
       ? {
           id: asNumber(status.id),
@@ -130,7 +136,7 @@ export function mapLicenseRead(rawItem: unknown): ILicense {
           remarks: (audit.remarks as string) ?? null,
         }
       : null,
-    image: (item.image as string) ?? null,
+    image: ((item.image_url ?? item.image) as string | undefined) ?? null,
     creator: undefined,
     last_modified_by: undefined,
     modified: undefined,

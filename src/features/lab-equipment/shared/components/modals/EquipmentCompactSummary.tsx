@@ -79,11 +79,11 @@ function facetsOf(record: Record<string, unknown>): Facet[] {
     const loan = record.loan as Record<string, unknown>;
     facets.push({ label: 'Loan', value: loan.overdue ? 'Overdue' : 'Active loan', tone: loan.overdue ? 'danger' : 'reserved', icon: <Activity /> });
   }
-  if (record.calibration_required) {
+  if (record.is_calibration_required) {
     facets.push({
       label: 'Calibration',
-      value: record.calibration_overdue ? 'Overdue' : 'Up to date',
-      tone: record.calibration_overdue ? 'warning' : 'success',
+      value: record.is_calibration_overdue ? 'Overdue' : 'Up to date',
+      tone: record.is_calibration_overdue ? 'warning' : 'success',
     });
   }
   return facets;
@@ -98,7 +98,7 @@ export const EquipmentCompactSummary: React.FC<EquipmentCompactSummaryProps> = (
   const sku = refLabel(record.sku);
 
   const price = money(record.acquisition_price);
-  const warranty = warrantyStat(record.warranty_until);
+  const warranty = warrantyStat(record.warranty_end_date);
   const replacement = dateOnly(record.replacement_date);
   const lastCalibrated = dateOnly(record.last_calibrated_at);
 

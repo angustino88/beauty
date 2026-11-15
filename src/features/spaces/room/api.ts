@@ -26,6 +26,7 @@ import {
   mapRoomWritePayload,
 } from "./mapper";
 import { normalizeFilterFacets, type FilterFacets } from "@/features/lab-equipment/shared/facets/filterFacets";
+import { resourceImageFormData, resourceImageUrl } from "@/shared/lib/api/resourceImage";
 
 const ENDPOINTS = createResourceEndpoints("labs/rooms");
 const TAG = "Room";
@@ -42,7 +43,7 @@ generatedApi.enhanceEndpoints({
 export const roomRtkApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
     getRooms: build.query<IRoomListResponse, IRoomParams>({
-      query: (params) => ({ url: ENDPOINTS.LIST, params }),
+      query: ({ search, ...params }) => ({ url: ENDPOINTS.LIST, params: { ...params, q: search } }),
       transformResponse: (res: unknown) => mapRoomListApiResponse(res),
       providesTags: (result) => generateListTags(TAG, result),
     }),
@@ -96,14 +97,20 @@ export const roomRtkApi = baseApi.injectEndpoints({
         { type: "Bench", id: "LIST" },
       ],
     }),
-    updateRoomImage: build.mutation<IRoom, { id: number; image: File }>({
-      query: ({ id, image }) => {
-        const formData = new FormData();
-        formData.append("image", image);
-        return { url: ENDPOINTS.UPDATE(id), method: "PATCH", body: formData };
-      },
-      transformResponse: (res: unknown) => mapRoomDetailApiResponse(res),
+    updateRoomImage: build.mutation<void, { id: number; image: File }>({
+      query: ({ id, image }) => ({
+        url: resourceImageUrl("rooms", id),
+        method: "PUT",
+        body: resourceImageFormData(image),
+      }),
       invalidatesTags: (_r, _e, { id }) => [
+        ...generateItemTag(TAG, id),
+        ...invalidateList(TAG),
+      ],
+    }),
+    deleteRoomImage: build.mutation<void, number>({
+      query: (id) => ({ url: resourceImageUrl("rooms", id), method: "DELETE" }),
+      invalidatesTags: (_r, _e, id) => [
         ...generateItemTag(TAG, id),
         ...invalidateList(TAG),
       ],
@@ -236,6 +243,7 @@ export const {
   useDeleteRoomMutation,
   useChangeRoomLifecycleMutation,
   useUpdateRoomImageMutation,
+  useDeleteRoomImageMutation,
   useGetRoomByIdQuery,
   useGetRoomHistoryQuery,
   useGetRoomDropdownQuery,

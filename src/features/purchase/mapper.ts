@@ -8,6 +8,7 @@ import type {
   IPurchaseTransaction,
   TransactionType,
 } from './types';
+import { readWireMoney } from './wire.ts';
 
 function extractStatus(status: unknown): { code: string; label: string } {
   if (typeof status === 'string') {
@@ -98,9 +99,11 @@ export function mapPurchase(raw: unknown): IPurchase {
 
   const p = raw as Record<string, unknown>;
   const statusInfo = extractStatus(p.status);
-  const currency = typeof p.currency === 'string' && p.currency ? p.currency : 'EUR';
-  const totalAmount = typeof p.total_amount === 'string' ? p.total_amount : String(p.total_amount ?? '0.00');
-  const totalDisplay = extractAmountDisplay(p.total, totalAmount, currency);
+  // `total` is one money object ({amount, currency}); the UI reads it as decimal + currency.
+  const totalMoney = readWireMoney(p.total);
+  const currency = totalMoney.currency;
+  const totalAmount = totalMoney.amount;
+  const totalDisplay = `${currency} ${totalAmount}`;
   const version = typeof p.version === 'number' ? p.version : undefined;
   const etag = typeof p.etag === 'string' ? p.etag : undefined;
 
@@ -173,10 +176,7 @@ export function mapPurchaseItem(raw: unknown): IPurchaseItem {
 
   const it = raw as Record<string, unknown>;
   const quantity = typeof it.quantity === 'number' ? it.quantity : Number(it.quantity ?? 1);
-  const unitPrice =
-    typeof it.unit_price === 'string'
-      ? it.unit_price
-      : extractAmountDisplay(it.unit_price, '0.00');
+  const unitPrice = readWireMoney(it.unit_price).amount;
 
   let priorityId: number | undefined;
   let priorityCode: string | undefined;
@@ -292,14 +292,14 @@ export function mapPurchaseTransaction(raw: unknown): IPurchaseTransaction {
   }
 
   const tr = raw as Record<string, unknown>;
-  const rawType = String(tr.transaction_type ?? 'payment').toLowerCase();
+  const rawType = extractStatus(tr.transaction_type ?? 'payment').code.toLowerCase();
   const txType: TransactionType = rawType === 'refund' ? 'refund' : 'payment';
 
   return {
     id: typeof tr.id === 'number' ? tr.id : Number(tr.id ?? 0),
     purchase_id: extractIdFromObject(tr.purchase),
     transaction_type: txType,
-    amount: typeof tr.amount === 'string' ? tr.amount : String(tr.amount ?? '0.00'),
+    amount: readWireMoney(tr.total).amount,
     settled_at: typeof tr.settled_at === 'string' ? tr.settled_at : '',
     reference: typeof tr.reference === 'string' ? tr.reference : '',
     notes: typeof tr.notes === 'string' ? tr.notes : '',
@@ -359,7 +359,7 @@ export function mapPurchaseItemResource(raw: unknown): IPurchaseItemResource {
     resourceName = String(rObj.name ?? rObj.sku ?? rObj.title ?? '');
   }
 
-  const rawKind = res.resource_kind;
+  const rawKind = extractStatus(res.resource_kind).code;
   const resourceKind =
     rawKind === 'bench' || rawKind === 'equipment' || rawKind === 'license' || rawKind === 'station'
       ? rawKind
@@ -370,7 +370,7 @@ export function mapPurchaseItemResource(raw: unknown): IPurchaseItemResource {
     typeof rawPrice === 'string'
       ? rawPrice
       : rawPrice && typeof rawPrice === 'object'
-        ? extractAmountDisplay(rawPrice, '0.00')
+        ? readWireMoney(rawPrice).amount
         : undefined;
 
   return {

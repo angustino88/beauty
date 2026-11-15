@@ -1,17 +1,19 @@
 import type { ILabMonitoring } from '../types';
 
-const LabMonitoringColumnIndex: { title: string; dataIndex: keyof ILabMonitoring | 'details_str' }[] = [
-  { title: 'ID', dataIndex: 'id' },
-  { title: 'Timestamp', dataIndex: 'created' },
-  { title: 'Source', dataIndex: 'source' },
-  { title: 'Computer Name', dataIndex: 'computer_name' },
-  { title: 'Technical User', dataIndex: 'technical_user' },
-  { title: 'Remote User', dataIndex: 'remote_user' },
-  { title: 'Event Type', dataIndex: 'event_type' },
-  { title: 'Category', dataIndex: 'category' },
-  { title: 'Object Name', dataIndex: 'object_name' },
-  { title: 'Object ID', dataIndex: 'object_id' },
-  { title: 'Details', dataIndex: 'details_str' },
+type Cell = string | number;
+
+const LabMonitoringColumns: { title: string; value: (row: ILabMonitoring) => Cell }[] = [
+  { title: 'ID', value: (r) => r.id },
+  { title: 'Timestamp', value: (r) => r.occurred_at ?? '' },
+  { title: 'Source', value: (r) => r.agent_key ?? '' },
+  { title: 'Computer Name', value: (r) => r.computer?.name ?? '' },
+  { title: 'Technical User', value: (r) => r.technical_user ?? '' },
+  { title: 'Remote User', value: (r) => r.remote_user ?? '' },
+  { title: 'Event Type', value: (r) => r.action?.label ?? '' },
+  { title: 'Category', value: (r) => r.subject?.type ?? '' },
+  { title: 'Object Name', value: (r) => r.subject?.name ?? '' },
+  { title: 'Object ID', value: (r) => r.subject?.key ?? '' },
+  { title: 'Details', value: (r) => (r.payload == null ? '' : JSON.stringify(r.payload)) },
 ];
 
 export async function exportMonitoringExcel(rows: ILabMonitoring[], fileName: string): Promise<void> {
@@ -19,7 +21,7 @@ export async function exportMonitoringExcel(rows: ILabMonitoring[], fileName: st
   const workbook = new ExcelJS.Workbook();
   const ws = workbook.addWorksheet('Lab Monitoring');
 
-  ws.addRow(LabMonitoringColumnIndex.map((c) => c.title));
+  ws.addRow(LabMonitoringColumns.map((c) => c.title));
   ws.getRow(1).eachCell((cell) => {
     cell.font = { bold: true, color: { argb: 'FFFFFF' } };
     cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '4F81BD' } };
@@ -28,17 +30,7 @@ export async function exportMonitoringExcel(rows: ILabMonitoring[], fileName: st
   });
 
   for (const row of rows) {
-    ws.addRow(
-      LabMonitoringColumnIndex.map((col) => {
-        const val = row[col.dataIndex as keyof ILabMonitoring];
-        if (val == null) return '';
-        if (Array.isArray(val)) {
-          return val.map((entry) => Object.entries(entry).map(([k, v]) => `${k}: ${v}`).join(', ')).join(' | ');
-        }
-        if (typeof val === 'object') return JSON.stringify(val);
-        return String(val);
-      })
-    );
+    ws.addRow(LabMonitoringColumns.map((col) => col.value(row)));
   }
 
   ws.eachRow((row, idx) => {
@@ -49,7 +41,7 @@ export async function exportMonitoringExcel(rows: ILabMonitoring[], fileName: st
       });
     }
   });
-  LabMonitoringColumnIndex.forEach((_, i) => { ws.getColumn(i + 1).width = 22; });
+  LabMonitoringColumns.forEach((_, i) => { ws.getColumn(i + 1).width = 22; });
 
   const buffer = await workbook.xlsx.writeBuffer();
   const blob = new Blob([buffer], { type: 'application/octet-stream' });

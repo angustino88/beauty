@@ -2,28 +2,33 @@ import {
   useCreateStationMutation,
   useDeleteStationMutation,
   useUpdateStationMutation,
+  useUpdateStationImageMutation,
+  useDeleteStationImageMutation,
 } from "../api";
 import {
   notifyEquipmentCreated,
   notifyEquipmentError,
   useEquipmentCrudActions,
 } from "@/features/lab-equipment/shared";
-import type { IStation, IStationPayload } from "../types";
+import type { IStationPayload } from "../types";
 
 export function useStationForm() {
   const [createStation, { isLoading: creating }] = useCreateStationMutation();
   const [updateStation, { isLoading: updating }] = useUpdateStationMutation();
   const [deleteStation, { isLoading: deleting }] = useDeleteStationMutation();
+  const [updateStationImage] = useUpdateStationImageMutation();
+  const [deleteStationImage] = useDeleteStationImageMutation();
 
   const actions = useEquipmentCrudActions<IStationPayload>({
     updateMutation: updateStation,
     deleteMutation: deleteStation,
-    updateImageMutation: (async () => ({ data: undefined as unknown as IStation })) as unknown as Parameters<typeof useEquipmentCrudActions<IStationPayload>>[0]["updateImageMutation"],
+    updateImageMutation: updateStationImage,
+    deleteImageMutation: deleteStationImage,
     mapStatusBody: (values) => values as unknown as IStationPayload,
     labels: { entityName: "Station", entityNameLower: "station", errorPrefix: "station" },
   });
 
-  const createFromValues = async (values: Record<string, unknown>) => {
+  const createFromValues = async (values: Record<string, unknown>, imageFile?: File | null) => {
     const payload: IStationPayload = {
       sku: typeof values.sku === "string" ? values.sku : undefined,
       name: typeof values.name === "string" ? values.name : undefined,
@@ -41,6 +46,7 @@ export function useStationForm() {
 
     try {
       const created = await createStation(payload).unwrap();
+      if (imageFile) await updateStationImage({ id: created.id, image: imageFile }).unwrap();
       notifyEquipmentCreated("Station", created, { sku: payload.sku, name: payload.name });
     } catch (err) {
       notifyEquipmentError("create", "Station", err);

@@ -70,7 +70,7 @@ export function mapBenchApiItem(raw: unknown): IBench {
         }
       : null,
     remark: asNullableString(b.remark),
-    image: asNullableString(b.image),
+    image: asNullableString(b.image_url ?? b.image),
     location_name: asNullableString(b.location_name || b.location),
   };
 }

@@ -18,6 +18,7 @@ import type {
 import type { IChangeLog } from '../shared/types/equipment.types';
 import { normalizeFilterFacets, type FilterFacets } from '../shared/facets/filterFacets';
 import type { LicenseStatusSummaryDataSerializersLicenseStatusSummaryDetailResponse } from '@/shared/api/generated/api';
+import { resourceImageFormData, resourceImageUrl } from '@/shared/lib/api/resourceImage';
 
 type DropdownOption = { value: number; label: string };
 
@@ -28,7 +29,9 @@ export const licenseRtkApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
     getLicenses: build.query<ILicenseListResponse, ILicenseParams>({
       query: (params) => {
-        const query = buildSortableListQuery(params);
+        const { search, ...rest } = params;
+        const listParams = { ...rest, q: search };
+        const query = buildSortableListQuery(listParams);
         return { url: `${ENDPOINTS.LIST}${query ? `?${query}` : ''}` };
       },
       transformResponse: (res: unknown) => {
@@ -76,17 +79,18 @@ export const licenseRtkApi = baseApi.injectEndpoints({
       invalidatesTags: invalidateList(TAG),
     }),
 
-    updateLicenseImage: build.mutation<ILicense, { id: number; image: File }>({
-      query: ({ id, image }) => {
-        const formData = new FormData();
-        formData.append('image', image);
-        return { url: ENDPOINTS.UPDATE(id), method: 'PATCH', body: formData };
-      },
-      transformResponse: (res: { data?: Record<string, unknown> } | Record<string, unknown>) => {
-        const data = (res as { data?: Record<string, unknown> }).data ?? res;
-        return mapLicenseRead(data);
-      },
+    updateLicenseImage: build.mutation<void, { id: number; image: File }>({
+      query: ({ id, image }) => ({
+        url: resourceImageUrl('licenses', id),
+        method: 'PUT',
+        body: resourceImageFormData(image),
+      }),
       invalidatesTags: (_r, _e, { id }) => [...generateItemTag(TAG, id), ...invalidateList(TAG)],
+    }),
+
+    deleteLicenseImage: build.mutation<void, number>({
+      query: (id) => ({ url: resourceImageUrl('licenses', id), method: 'DELETE' }),
+      invalidatesTags: (_r, _e, id) => [...generateItemTag(TAG, id), ...invalidateList(TAG)],
     }),
 
     getLicenseHistory: build.query<IChangeLog[], number>({
@@ -164,6 +168,7 @@ export const {
   useUpdateLicenseMutation,
   useDeleteLicenseMutation,
   useUpdateLicenseImageMutation,
+  useDeleteLicenseImageMutation,
   useGetLicenseHistoryQuery,
   useGetLicenseFiltersQuery,
   useGetLicenseProductsQuery,

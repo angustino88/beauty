@@ -10,7 +10,8 @@ type NotificationWsMessage = {
   id?: number;
   message?: string;
   details?: string;
-  message_type?: string;
+  /** Choice on the wire (`{value, label}`); a bare string is accepted too. */
+  message_type?: string | { value: string; label?: string };
   created?: string;
 };
 
@@ -39,7 +40,7 @@ export function useNotificationsWebSocket(): void {
           type: message.type,
           message: message.message,
           details: message.details,
-          message_type: message.message_type,
+          message_type: typeof message.message_type === 'string' ? message.message_type : message.message_type?.value,
           created: message.created,
         }),
       );

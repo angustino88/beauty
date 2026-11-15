@@ -14,6 +14,8 @@ import {
   mapExpenseListResponse,
   mapExpensePayment,
   mapExpensePaymentListResponse,
+  toExpensePaymentWriteBody,
+  toExpenseWriteBody,
 } from './mapper';
 
 export interface IRoomOption {
@@ -117,7 +119,7 @@ export const expenseApi = baseApi.injectEndpoints({
       query: ({ roomId, body }) => ({
         url: `/api/labs/rooms/${roomId}/expenses`,
         method: 'POST',
-        body,
+        body: toExpenseWriteBody(body),
       }),
       transformResponse: (res: unknown, _meta, arg) => {
         const envelope = (res as { data?: unknown })?.data ?? res;
@@ -152,7 +154,7 @@ export const expenseApi = baseApi.injectEndpoints({
       query: ({ expenseId, body }) => ({
         url: `/api/labs/expenses/${expenseId}/payments`,
         method: 'POST',
-        body,
+        body: toExpensePaymentWriteBody(body),
       }),
       transformResponse: (res: unknown, _meta, arg) => {
         const envelope = (res as { data?: unknown })?.data ?? res;

@@ -52,6 +52,6 @@ export function buildEquipmentFacetParams(
     group_id: selected('group_id'),
     owner_id: selected('owner'),
     status: selected('status'),
-    ...(query ? { search: query } : {}),
+    ...(query ? { q: query } : {}),
   };
 }

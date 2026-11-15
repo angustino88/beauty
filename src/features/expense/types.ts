@@ -82,6 +82,8 @@ export interface ICreateExpensePayload {
 
 export interface ICreateExpensePaymentPayload {
   transaction_type?: 'payment' | 'refund';
+  /** Payment money uses the expense's currency (the API rejects another currency with 422). */
+  currency: string;
   amount: string;
   paid_at: string;
   reference?: string;

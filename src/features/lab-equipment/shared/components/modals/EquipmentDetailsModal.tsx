@@ -46,12 +46,12 @@ type SummaryGroup = { title: string; fields: string[] };
 
 const SUMMARY_GROUPS_BY_TYPE: Record<string, SummaryGroup[]> = {
   computer: [
-    { title: 'Computer configuration', fields: ['computer_class', 'computer_manufacturer', 'computer_model', 'serial_number', 'computer_ip', 'os_name', 'replacement_date', 'acquisition_price', 'warranty_until'] },
+    { title: 'Computer configuration', fields: ['computer_class', 'computer_manufacturer', 'computer_model', 'serial_number', 'computer_ip', 'os_name', 'replacement_date', 'acquisition_price', 'warranty_end_date'] },
     { title: 'Connected software and monitoring', fields: ['license_skus', 'license_names', 'disk_usage', 'sys_info', 'monitoring'] },
     { title: 'Record details', fields: ['log_label', 'remark', 'details'] },  
   ],
   monitor: [
-    { title: 'Display specifications', fields: ['monitor_type', 'monitor_manufacturer', 'monitor_model', 'monitor_size', 'serial_number', 'acquisition_price', 'replacement_date', 'warranty_until'] },
+    { title: 'Display specifications', fields: ['monitor_type', 'monitor_manufacturer', 'monitor_model', 'monitor_size', 'serial_number', 'acquisition_price', 'replacement_date', 'warranty_end_date'] },
     { title: 'License assignment', fields: ['license_skus', 'license_names'] },
     { title: 'Record details', fields: ['log_label', 'remark', 'details'] },  
   ],
@@ -61,17 +61,17 @@ const SUMMARY_GROUPS_BY_TYPE: Record<string, SummaryGroup[]> = {
     { title: 'Record details', fields: ['log_label', 'remark', 'details'] },  
   ],
   networkinterface: [
-    { title: 'Network interface configuration', fields: ['network_protocol', 'network_interface_manufacturer', 'network_interface_model', 'serial_number', 'acquisition_price', 'warranty_until'] },
+    { title: 'Network interface configuration', fields: ['network_protocol', 'network_interface_manufacturer', 'network_interface_model', 'serial_number', 'acquisition_price', 'warranty_end_date'] },
     { title: 'License assignment', fields: ['license_skus', 'license_names'] },
     { title: 'Record details', fields: ['log_label', 'remark', 'details'] },  
   ],
   powersupply: [
-    { title: 'Power supply specifications', fields: ['powersupply_type', 'powersupply_manufacturer', 'powersupply_model', 'serial_number', 'acquisition_price', 'warranty_until'] },
+    { title: 'Power supply specifications', fields: ['powersupply_type', 'powersupply_manufacturer', 'powersupply_model', 'serial_number', 'acquisition_price', 'warranty_end_date'] },
     { title: 'License assignment', fields: ['license_skus', 'license_names'] },
     { title: 'Record details', fields: ['log_label', 'remark', 'details'] },  
   ],
   debughardware: [
-    { title: 'Debug hardware specifications', fields: ['debug_hardware_type', 'debug_hardware_manufacturer', 'debug_hardware_model', 'serial_number', 'acquisition_price', 'warranty_until'] },
+    { title: 'Debug hardware specifications', fields: ['debug_hardware_type', 'debug_hardware_manufacturer', 'debug_hardware_model', 'serial_number', 'acquisition_price', 'warranty_end_date'] },
     { title: 'License assignment', fields: ['license_skus', 'license_names'] },
     { title: 'Record details', fields: ['log_label', 'remark', 'details'] },  
   ],
@@ -117,7 +117,7 @@ const SUMMARY_GROUPS_BY_TYPE: Record<string, SummaryGroup[]> = {
   };
 
   const DEFAULT_SUMMARY_GROUPS: SummaryGroup[] = [
-    { title: 'Asset details', fields: ['kind', 'type', 'manufacturer', 'product_model', 'serial_number', 'acquisition_price', 'replacement_date', 'warranty_until', 'log_label', 'storage_room', 'department', 'owner', 'details', 'remark'] },
+    { title: 'Asset details', fields: ['kind', 'type', 'manufacturer', 'product_model', 'serial_number', 'acquisition_price', 'replacement_date', 'warranty_end_date', 'log_label', 'storage_room', 'department', 'owner', 'details', 'remark'] },
     { title: 'License assignment', fields: ['license_skus', 'license_names'] },
   ];
 
@@ -202,7 +202,7 @@ const FIELD_LABELS: Record<string, string> = {
   communication_channel: 'Communication channel',
   sample_characteristic: 'Sample characteristic',
   replacement_date: 'Replacement date',
-  warranty_until: 'Warranty until',
+  warranty_end_date: 'Warranty until',
   acquisition_price: 'Acquisition price',
   price: 'Price',
   disk_usage: 'Disk usage',
@@ -291,9 +291,9 @@ const readSummaryValue = (record: EquipmentRecord, key: string): unknown => {
     const d = dayjs(String(record.replacement_date));
     return d.isValid() ? d.format('YYYY-[Q]Q') : String(record.replacement_date);
   }
-  if (key === 'warranty_until' && record.warranty_until) {
-    const d = dayjs(String(record.warranty_until));
-    return d.isValid() ? d.format('YYYY-MM-DD') : String(record.warranty_until);
+  if (key === 'warranty_end_date' && record.warranty_end_date) {
+    const d = dayjs(String(record.warranty_end_date));
+    return d.isValid() ? d.format('YYYY-MM-DD') : String(record.warranty_end_date);
   }
   if (key === 'lab_group') {
     const group = record.lab_group;
@@ -633,7 +633,7 @@ export default function EquipmentDetailsModal({
     const groups: SummaryGroup[] = [
       { title: 'Identification & classification', fields: ['sku', 'category', 'kind', 'type', 'manufacturer', 'product_model', 'serial_number', 'log_label'] },
       { title: 'Ownership & location', fields: ['owner', 'department', 'group', 'storage_room', 'technical_user'] },
-      { title: 'Lifecycle & acquisition', fields: ['status', 'acquisition_price', 'warranty_until', 'replacement_date'] },
+      { title: 'Lifecycle & acquisition', fields: ['status', 'acquisition_price', 'warranty_end_date', 'replacement_date'] },
       { title: 'Licenses & audit', fields: ['licenses', 'lab_audit'] },
       { title: 'Computing & telemetry', fields: ['hostname', 'ip_address', 'mac_address', 'os_name', 'rdp_file', 'disk_usage', 'system_info', 'sys_info', 'monitored_devices', 'monitoring', 'activity'] },
       { title: 'Notes & record history', fields: ['information', 'details', 'remark', 'created_at', 'updated_at'] },
@@ -645,7 +645,7 @@ export default function EquipmentDetailsModal({
     if (remainingKeys.length) groups.splice(groups.length - 1, 0, { title: 'Additional specifications', fields: remainingKeys });
     allGroups = groups.map((group) => ({ title: group.title, items: group.fields
       .filter((key) => key in record)
-      .map((key) => [FIELD_LABELS[key] ?? humanize(key), ['acquisition_price', 'replacement_date', 'warranty_until'].includes(key) ? readSummaryValue(record, key) : record[key]] as const)
+      .map((key) => [FIELD_LABELS[key] ?? humanize(key), ['acquisition_price', 'replacement_date', 'warranty_end_date'].includes(key) ? readSummaryValue(record, key) : record[key]] as const)
     })).filter((group) => group.items.length > 0);
   }
 

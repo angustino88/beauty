@@ -1,5 +1,6 @@
 import { baseApi } from '@/shared/lib/api';
 import { generatedApi } from '@/shared/api/generated/api';
+import { resourceImageFormData, resourceImageUrl } from '@/shared/lib/api/resourceImage';
 import type { EquipmentItemRead, EquipmentDetailRead, EquipmentChangeCondition, EquipmentChangeLifecycle, EquipmentStatusSummaryDataSerializersEquipmentStatusSummaryDetailResponse } from '@/shared/api/generated/api';
 import { equipmentWriteBody, mapEquipmentRead } from './equipmentAdapter';
 import type {
@@ -17,12 +18,24 @@ import { normalizeFilterFacets, type FilterFacets } from '../shared/facets/filte
 
 export const equipmentApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
+    updateEquipmentImage: build.mutation<void, { id: number; image: File }>({
+      query: ({ id, image }) => ({
+        url: resourceImageUrl('equipment', id),
+        method: 'PUT',
+        body: resourceImageFormData(image),
+      }),
+      invalidatesTags: ['Equipment'],
+    }),
+    deleteEquipmentImage: build.mutation<void, number>({
+      query: (id) => ({ url: resourceImageUrl('equipment', id), method: 'DELETE' }),
+      invalidatesTags: ['Equipment'],
+    }),
     // The collection filters by the numeric ID resolved from reference-data, not the route key.
     getEquipmentList: build.query<EquipmentListResponse, EquipmentListParams>({
       query: ({ category, ...params }) => {
         const searchParams = new URLSearchParams();
         searchParams.set('category', String(category));
-        if (params.search) searchParams.set('search', params.search);
+        if (params.search) searchParams.set('q', params.search);
         if (params.ordering) searchParams.set('ordering', params.ordering);
         if (params.kind != null) searchParams.set('kind', String(params.kind));
         if (params.type != null) searchParams.set('type', String(params.type));
@@ -266,4 +279,6 @@ export const {
   useDeleteEquipmentMutation,
   useChangeEquipmentConditionMutation,
   useChangeEquipmentLifecycleMutation,
+  useUpdateEquipmentImageMutation,
+  useDeleteEquipmentImageMutation,
 } = equipmentApi;

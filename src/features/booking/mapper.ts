@@ -205,7 +205,7 @@ export function buildBookingListQuery(params: IBenchBookingListParams): string {
 
   for (const [key, value] of Object.entries(rest)) {
     if (value == null) continue;
-    const resolvedKey = key === 'project' ? 'project_id' : key;
+    const resolvedKey = key === 'project' ? 'project_id' : key === 'search' ? 'q' : key;
     if (Array.isArray(value)) {
       if (value.length > 0) searchParams.append(resolvedKey, value.join(','));
     } else {

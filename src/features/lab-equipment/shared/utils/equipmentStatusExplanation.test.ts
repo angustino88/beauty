@@ -36,7 +36,7 @@ test('reference objects never leak as [object Object]', () => {
 });
 
 test('overdue calibration surfaces as a warning fact', () => {
-  const result = explainEquipmentStatus({ display_status: { value: 'maintenance', label: 'Maintenance' }, calibration_overdue: true }, now);
+  const result = explainEquipmentStatus({ display_status: { value: 'maintenance', label: 'Maintenance' }, is_calibration_overdue: true }, now);
   assert.equal(result.tone, 'warning');
   assert.equal(result.facts.find((fact) => fact.label === 'Calibration')?.tone, 'warning');
 });

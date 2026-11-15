@@ -20,6 +20,7 @@ import {
   mapStationWritePayload,
 } from "./mapper";
 import { normalizeFilterFacets, type FilterFacets } from "@/features/lab-equipment/shared/facets/filterFacets";
+import { resourceImageFormData, resourceImageUrl } from "@/shared/lib/api/resourceImage";
 
 const ENDPOINTS = createResourceEndpoints("labs/stations");
 const TAG = "Station";
@@ -35,12 +36,24 @@ generatedApi.enhanceEndpoints({
 
 export const stationApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
+    updateStationImage: build.mutation<void, { id: number; image: File }>({
+      query: ({ id, image }) => ({
+        url: resourceImageUrl("stations", id),
+        method: "PUT",
+        body: resourceImageFormData(image),
+      }),
+      invalidatesTags: (_r, _e, { id }) => [...generateItemTag(TAG, id), ...invalidateList(TAG)],
+    }),
+    deleteStationImage: build.mutation<void, number>({
+      query: (id) => ({ url: resourceImageUrl("stations", id), method: "DELETE" }),
+      invalidatesTags: (_r, _e, id) => [...generateItemTag(TAG, id), ...invalidateList(TAG)],
+    }),
     getStations: build.query<IStationListResponse, IStationParams>({
       query: (params) => {
         const queryParams = new URLSearchParams();
         if (params.page) queryParams.set("page", String(params.page));
         if (params.page_size) queryParams.set("page_size", String(params.page_size));
-        if (params.search) queryParams.set("search", params.search);
+        if (params.search) queryParams.set("q", params.search);
         if (params.ordering) queryParams.set("ordering", params.ordering);
         if (params.room_id) queryParams.set("room_id", String(params.room_id));
         if (params.owner_id) queryParams.set("owner_id", String(params.owner_id));
@@ -207,6 +220,8 @@ export const {
   usePlaceStationMutation,
   useChangeStationStatusMutation,
   useChangeStationLifecycleMutation,
+  useUpdateStationImageMutation,
+  useDeleteStationImageMutation,
   useGetStationHistoryQuery,
   useGetStationSlotsQuery,
   useGetStationDropdownQuery,
