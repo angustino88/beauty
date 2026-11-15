@@ -512,16 +512,22 @@
 /* Category colours: each kind of thing in the chain keeps one hue everywhere
    (icon tile, left rule, type label). These are categorical chart colours, not
    status colours. */
-.node[data-tone="lab"] { --node-accent: var(--lm-chart-1); }
-.node[data-tone="rack"] { --node-accent: var(--lm-chart-2); }
-.node[data-tone="computer"] { --node-accent: var(--lm-chart-5); }
-.node[data-tone="monitor"] { --node-accent: var(--lm-chart-3); }
-.node[data-tone="debug"] { --node-accent: var(--lm-chart-7); }
-.node[data-tone="network"] { --node-accent: var(--lm-reserved-solid); }
-.node[data-tone="power"] { --node-accent: var(--lm-chart-4); }
-.node[data-tone="sample"] { --node-accent: var(--lm-chart-6); }
-.node[data-tone="accessory"] { --node-accent: var(--lm-chart-8); }
-.node[data-tone="license"] { --node-accent: var(--lm-primary-fg); }
+.node[data-tone="lab"] { --node-accent: var(--lm-cat-room); }
+.node[data-tone="rack"] { --node-accent: var(--lm-cat-station); }
+.node[data-tone="bench"] { --node-accent: var(--lm-cat-bench); }
+.node[data-tone="computer"] { --node-accent: var(--lm-cat-computing); }
+.node[data-tone="monitor"] { --node-accent: var(--lm-cat-display); }
+.node[data-tone="debug"] { --node-accent: var(--lm-cat-debugging); }
+.node[data-tone="network"] { --node-accent: var(--lm-cat-networking); }
+.node[data-tone="power"] { --node-accent: var(--lm-cat-power); }
+.node[data-tone="sample"] { --node-accent: var(--lm-cat-sample); }
+.node[data-tone="accessory"] { --node-accent: var(--lm-cat-accessory); }
+.node[data-tone="furniture"] { --node-accent: var(--lm-cat-furniture); }
+.node[data-tone="instrument"] { --node-accent: var(--lm-cat-instrument); }
+.node[data-tone="laboratory"] { --node-accent: var(--lm-cat-laboratory); }
+.node[data-tone="mechanical"] { --node-accent: var(--lm-cat-mechanical); }
+.node[data-tone="other"] { --node-accent: var(--lm-cat-other); }
+.node[data-tone="license"] { --node-accent: var(--lm-cat-license); }
 
 .node.selectedNode {
   --node-accent: var(--lm-primary);

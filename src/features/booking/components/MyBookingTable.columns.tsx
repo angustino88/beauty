@@ -9,6 +9,7 @@ import { Space, Switch, Tag, Tooltip, Typography } from 'antd';
 import dayjs from 'dayjs';
 import type { ColumnsType } from 'antd/es/table';
 import React from 'react';
+import { Check, X } from 'lucide-react';
 import { TooltipButton } from '@/components/layout/TooltipButton';
 import type { BenchBookingItem, IProjectOption } from '../types';
 import styles from './MyBookingTable.module.css';
@@ -373,7 +374,7 @@ export function buildMyBookingColumns({
       key: 'action',
       title: 'Action',
       fixed: 'right',
-      align: 'center',
+      align: 'left',
       width: 160,
       render: (_: unknown, record: BenchBookingItem) => {
         const canApprove =
@@ -393,20 +394,26 @@ export function buildMyBookingColumns({
               }
               onClick={() => onEditBooking(record.id)}
             />
-            <TooltipButton
-              placement="top"
-              tooltip="Approve"
-              icon={<CheckCircleFilled style={{ color: canApprove ? 'var(--lm-success-solid)' : undefined, fontSize: 16 }} />}
-              disabled={!canApprove}
-              onClick={() => onApproveBooking(record.id)}
-            />
-            <TooltipButton
-              placement="top"
-              tooltip="Reject"
-              icon={<CloseCircleFilled style={{ color: canApprove ? 'var(--lm-danger-solid)' : undefined, fontSize: 16 }} />}
-              disabled={!canApprove}
-              onClick={() => onRejectBooking(record.id)}
-            />
+            {canApprove ? (
+              <span className={styles.decision} role="group" aria-label="Approval decision">
+                <TooltipButton
+                  placement="top"
+                  tooltip="Approve booking"
+                  aria-label="Approve booking"
+                  className={styles.approveButton}
+                  icon={<Check size={16} strokeWidth={2.5} />}
+                  onClick={() => onApproveBooking(record.id)}
+                />
+                <TooltipButton
+                  placement="top"
+                  tooltip="Reject booking"
+                  aria-label="Reject booking"
+                  className={styles.rejectButton}
+                  icon={<X size={16} strokeWidth={2.5} />}
+                  onClick={() => onRejectBooking(record.id)}
+                />
+              </span>
+            ) : null}
           </Space>
         );
       },

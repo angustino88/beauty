@@ -33,3 +33,53 @@
   display: inline-flex;
   cursor: help;
 }
+
+/* Approve / reject: a joined pair shown only when a decision is actually
+   pending for this user. Tinted at rest, solid on hover, so the row stays calm
+   until the pointer commits to one of them. */
+.decision {
+  display: inline-flex;
+}
+
+.approveButton:global(.ant-btn),
+.rejectButton:global(.ant-btn) {
+  width: 32px;
+  color: var(--decision-fg);
+  background: var(--decision-bg);
+  border-color: var(--decision-border);
+  box-shadow: none;
+  transition: color 140ms ease, background-color 140ms ease, border-color 140ms ease;
+}
+
+.approveButton:global(.ant-btn) {
+  --decision-fg: var(--lm-success-fg);
+  --decision-bg: var(--lm-success-bg);
+  --decision-border: var(--lm-success-border);
+  --decision-solid: var(--lm-success-solid);
+  border-radius: 8px 0 0 8px;
+}
+
+.rejectButton:global(.ant-btn) {
+  --decision-fg: var(--lm-danger-fg);
+  --decision-bg: var(--lm-danger-bg);
+  --decision-border: var(--lm-danger-border);
+  --decision-solid: var(--lm-danger-solid);
+  margin-left: -1px;
+  border-radius: 0 8px 8px 0;
+}
+
+.approveButton:global(.ant-btn):hover,
+.rejectButton:global(.ant-btn):hover,
+.approveButton:global(.ant-btn):focus-visible,
+.rejectButton:global(.ant-btn):focus-visible {
+  z-index: 1;
+  color: #ffffff !important;
+  background: var(--decision-solid) !important;
+  border-color: var(--decision-solid) !important;
+}
+
+.approveButton:global(.ant-btn):focus-visible,
+.rejectButton:global(.ant-btn):focus-visible {
+  outline: 2px solid var(--lm-primary);
+  outline-offset: 2px;
+}

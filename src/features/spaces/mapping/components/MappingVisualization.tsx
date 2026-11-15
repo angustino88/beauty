@@ -53,6 +53,12 @@ type AssetTone =
   | "monitor"
   | "accessory"
   | "license"
+  | "bench"
+  | "furniture"
+  | "instrument"
+  | "laboratory"
+  | "mechanical"
+  | "other"
   | "empty";
 
 const CATEGORY_TONE_MAP: Record<string, AssetTone> = {
@@ -63,11 +69,11 @@ const CATEGORY_TONE_MAP: Record<string, AssetTone> = {
   power: "power",
   accessory: "accessory",
   sample: "sample",
-  furniture: "accessory",
-  instrument: "debug",
-  laboratory: "lab",
-  mechanical: "power",
-  other: "accessory",
+  furniture: "furniture",
+  instrument: "instrument",
+  laboratory: "laboratory",
+  mechanical: "mechanical",
+  other: "other",
 };
 
 const CATEGORY_ICON_MAP: Record<string, ReactNode> = {
@@ -241,7 +247,7 @@ const MappingLane = ({
           name={row.bench.name}
           sku={row.bench.sku}
           path="/spaces/bench"
-          tone="computer"
+          tone="bench"
           compact={compact}
           selected={isSelected("bench", row.bench.id)}
           statusLabel={row.bench.status}

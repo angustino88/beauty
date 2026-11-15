@@ -111,6 +111,25 @@
   --lm-chart-8: #7f7a8f;
   --lm-chart-grid: #ebe8f1;
   --lm-chart-axis: #8a8698;
+
+  /* Category colours for spaces and equipment kinds (mapping diagrams, icon
+     tiles). Categorical only: they identify a kind of thing, never a status. */
+  --lm-cat-room: #7347dc;
+  --lm-cat-station: #0d9488;
+  --lm-cat-bench: #4c5fd7;
+  --lm-cat-computing: #2f7fd8;
+  --lm-cat-display: #e0446d;
+  --lm-cat-debugging: #ec7a2c;
+  --lm-cat-networking: #0e9ab8;
+  --lm-cat-power: #d99a08;
+  --lm-cat-sample: #5a9e2f;
+  --lm-cat-accessory: #8a8f1f;
+  --lm-cat-furniture: #9a6b3f;
+  --lm-cat-instrument: #b0399e;
+  --lm-cat-laboratory: #0f9960;
+  --lm-cat-mechanical: #5b7089;
+  --lm-cat-other: #7f7a8f;
+  --lm-cat-license: #5a2fc0;
 }
 
 html[data-theme='dark'] {
@@ -186,6 +205,23 @@ html[data-theme='dark'] {
   --lm-chart-8: #9d99ad;
   --lm-chart-grid: #252330;
   --lm-chart-axis: #8c889e;
+
+  --lm-cat-room: #9a7df5;
+  --lm-cat-station: #2bb3a3;
+  --lm-cat-bench: #8794f7;
+  --lm-cat-computing: #5fa4f2;
+  --lm-cat-display: #f2648b;
+  --lm-cat-debugging: #f59a5a;
+  --lm-cat-networking: #22a9c6;
+  --lm-cat-power: #f2bf3b;
+  --lm-cat-sample: #86c75a;
+  --lm-cat-accessory: #bfc552;
+  --lm-cat-furniture: #c79a6e;
+  --lm-cat-instrument: #d77fcb;
+  --lm-cat-laboratory: #3ecf8e;
+  --lm-cat-mechanical: #93a7bf;
+  --lm-cat-other: #9d99ad;
+  --lm-cat-license: #c9baff;
 }
 
 /* Season packs: only these five tokens change with the season. */
