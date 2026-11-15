@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   mapBookingItem,
   buildBookingListQuery,
+  toBookingInstant,
   mapProjectOptions,
   mapBenchOptions,
 } from './mapper.ts';
@@ -241,4 +242,15 @@ test('buildBookingListQuery never repeats a filter parameter', () => {
   const params = new URLSearchParams(qs);
   assert.deepEqual(params.getAll('status'), ['reserved']);
   assert.deepEqual(params.getAll('approval_status'), ['approved']);
+});
+
+test('calendar range dates are sent as absolute instants, not server-zone dates', () => {
+  const qs = new URLSearchParams(buildBookingListQuery({
+    starts_at_after: '2026-11-09',
+    starts_at_before: '2026-11-16T10:30:00',
+  } as Parameters<typeof buildBookingListQuery>[0]));
+
+  assert.equal(qs.get('starts_at_after'), new Date('2026-11-09T00:00:00').toISOString());
+  assert.equal(qs.get('starts_at_before'), new Date('2026-11-16T10:30:00').toISOString());
+  assert.equal(toBookingInstant('2026-11-16T03:00:00+07:00'), '2026-11-16T03:00:00+07:00');
 });

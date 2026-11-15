@@ -187,6 +187,16 @@ export const mapBookingCreateResponse = (response: unknown) =>
 export const mapBookingUpdateResponse = (response: unknown) =>
   unwrapBookingItem(response, 'updateBenchBooking');
 
+/**
+ * The API reads a date or a zone-less date-time in the server's time zone, which differs from the
+ * browser's, so a calendar week would lose bookings near its edges. Send an absolute instant instead.
+ */
+export function toBookingInstant(value: string): string {
+  if (/(?:Z|[+-]\d{2}:?\d{2})$/i.test(value.trim()) && value.includes('T')) return value;
+  const parsed = new Date(/^\d{4}-\d{2}-\d{2}$/.test(value) ? `${value}T00:00:00` : value);
+  return Number.isNaN(parsed.getTime()) ? value : parsed.toISOString();
+}
+
 export function buildBookingListQuery(params: IBenchBookingListParams): string {
   const {
     filterParams,
@@ -223,12 +233,12 @@ export function buildBookingListQuery(params: IBenchBookingListParams): string {
 
   const effectiveStartsAtAfter = starts_at_after ?? starts_at;
   if (effectiveStartsAtAfter) {
-    searchParams.append('starts_at_after', effectiveStartsAtAfter);
+    searchParams.append('starts_at_after', toBookingInstant(effectiveStartsAtAfter));
   }
 
   const effectiveStartsAtBefore = starts_at_before ?? ends_at;
   if (effectiveStartsAtBefore) {
-    searchParams.append('starts_at_before', effectiveStartsAtBefore);
+    searchParams.append('starts_at_before', toBookingInstant(effectiveStartsAtBefore));
   }
 
   if (sorts?.length) {
@@ -243,7 +253,11 @@ export function buildBookingListQuery(params: IBenchBookingListParams): string {
       if (resolvedKey === 'starts_at') resolvedKey = 'starts_at_after';
       if (resolvedKey === 'ends_at') resolvedKey = 'starts_at_before';
       // The API takes one value per filter and rejects repeated params, so only the first is sent.
-      if (values?.length) searchParams.append(resolvedKey, String(values[0]));
+      if (values?.length) {
+        const value = String(values[0]);
+        const isInstantFilter = resolvedKey === 'starts_at_after' || resolvedKey === 'starts_at_before';
+        searchParams.append(resolvedKey, isInstantFilter ? toBookingInstant(value) : value);
+      }
     }
   }
   if (bench_id?.length) searchParams.append('bench_id', String(bench_id[0]));

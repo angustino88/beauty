@@ -429,7 +429,7 @@ export default function EquipmentFormModal({
                 {hasImage && (
                     <Row>
                         <Col span={24}>
-                            <Form.Item label="Equipment image (optional)">
+                            <Form.Item label="Image (optional)">
                                 <Upload.Dragger
                                     beforeUpload={(file) => handleImageChange(file as RcFile)}
                                     multiple={false} maxCount={1}
