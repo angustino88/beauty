@@ -2,11 +2,20 @@ import { Select } from 'antd';
 import type { EquipmentOption } from '../hooks/useEquipmentSearchOptions';
 import type { IAssignedEquipment } from '../types';
 
-/** One item per line in both carrier columns, in the same order, so SKU and name stay on one row. */
-const stack = { display: 'flex', flexDirection: 'column', gap: 2 } as const;
+const stack = { display: 'flex', flexDirection: 'column', gap: 6 } as const;
 const muted = { color: 'var(--lm-text-tertiary)' } as const;
 
-interface SkuCellProps {
+/** SKU in bold with the name in grey beneath it. */
+function TwoLine({ sku, name }: { sku: string; name?: string }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.3 }}>
+      <strong>{sku}</strong>
+      {name ? <span style={{ ...muted, fontSize: 12 }}>{name}</span> : null}
+    </div>
+  );
+}
+
+interface CarrierCellProps {
   assigned: IAssignedEquipment[];
   editing: boolean;
   value: number[];
@@ -17,8 +26,8 @@ interface SkuCellProps {
   loading: boolean;
 }
 
-/** Carrier SKU: the equipment holding the license's seats; while editing, the searchable multi-select. */
-export function CarrierSkuCell({ assigned, editing, value, onChange, seats, options, onSearch, loading }: SkuCellProps) {
+/** License carrier: the equipment holding the license's seats; while editing, a searchable multi-select. */
+export function CarrierCell({ assigned, editing, value, onChange, seats, options, onSearch, loading }: CarrierCellProps) {
   if (editing) {
     return (
       <Select
@@ -32,7 +41,8 @@ export function CarrierSkuCell({ assigned, editing, value, onChange, seats, opti
         loading={loading}
         value={value}
         options={options}
-        // Options show the SKU only; hovering one (or a picked tag) reveals the name.
+        // Picked items show the SKU; the dropdown rows show SKU with the name beneath.
+        optionRender={(option) => <TwoLine sku={String(option.label)} name={(option.data as EquipmentOption).name} />}
         onSearch={onSearch}
         onChange={(ids: number[]) => onChange(ids)}
         maxCount={seats ?? undefined}
@@ -42,27 +52,7 @@ export function CarrierSkuCell({ assigned, editing, value, onChange, seats, opti
   if (assigned.length === 0) return <span style={muted}>Not assigned</span>;
   return (
     <div style={stack}>
-      {assigned.map((item) => <span key={item.id}>{item.sku || `#${item.id}`}</span>)}
-    </div>
-  );
-}
-
-interface NameCellProps {
-  assigned: IAssignedEquipment[];
-  editing: boolean;
-  value: number[];
-  options: EquipmentOption[];
-}
-
-/** Carrier Name: the names matching the SKUs next to it; while editing it follows the current selection. */
-export function CarrierNameCell({ assigned, editing, value, options }: NameCellProps) {
-  const names = editing
-    ? value.map((id) => options.find((option) => option.value === id)?.name ?? assigned.find((item) => item.id === id)?.name ?? '')
-    : assigned.map((item) => item.name);
-  if (names.length === 0) return <span style={muted}>—</span>;
-  return (
-    <div style={stack}>
-      {names.map((name, index) => <span key={index}>{name || '—'}</span>)}
+      {assigned.map((item) => <TwoLine key={item.id} sku={item.sku || `#${item.id}`} name={item.name} />)}
     </div>
   );
 }

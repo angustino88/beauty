@@ -1,4 +1,4 @@
-import { CarrierNameCell, CarrierSkuCell } from './CarrierCells';
+import { CarrierCell } from './CarrierCells';
 import type { EquipmentOption } from '../hooks/useEquipmentSearchOptions';
 import type { Key, ReactNode } from 'react';
 import { DatePicker, Input, Select } from 'antd';
@@ -197,11 +197,11 @@ export const buildLicenseColumns = ({
     ),
   },
   {
-    title: 'Carrier SKU',
-    key: 'carrier_sku',
-    width: 200,
+    title: 'License Carrier',
+    key: 'assigned_equipment',
+    width: 240,
     render: (_: unknown, record: ILicense) => (
-      <CarrierSkuCell
+      <CarrierCell
         key={record.id}
         assigned={record.assigned_equipment}
         editing={isEditing(record)}
@@ -211,19 +211,6 @@ export const buildLicenseColumns = ({
         options={carrierOptions}
         onSearch={onCarrierSearch}
         loading={carrierLoading}
-      />
-    ),
-  },
-  {
-    title: 'Carrier Name',
-    key: 'carrier_name',
-    width: 220,
-    render: (_: unknown, record: ILicense) => (
-      <CarrierNameCell
-        assigned={record.assigned_equipment}
-        editing={isEditing(record)}
-        value={editingDraft?.assigned_equipment_ids ?? []}
-        options={carrierOptions}
       />
     ),
   },
