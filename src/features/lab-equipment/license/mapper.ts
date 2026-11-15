@@ -69,7 +69,6 @@ export function mapLicenseWritePayload(payload: LicenseUiWritePayload): LicenseW
 
 export function mapLicenseRead(rawItem: unknown): ILicense {
   const item = asRecord(rawItem);
-  const carrier = item.carrier_device ? asRecord(item.carrier_device) : null;
   const owner = item.owner ? asRecord(item.owner) : null;
   const status = item.current_status ? asRecord(item.current_status) : null;
   const audit = item.lab_audit ? asRecord(item.lab_audit) : null;
@@ -90,13 +89,14 @@ export function mapLicenseRead(rawItem: unknown): ILicense {
     remark: asString(item.remark || item.description),
     expiry_date: asString(item.expires_at) || null,
     license_seats: ((item.seats ?? item.license_seats) as number | undefined) ?? null,
-    carrier_device: carrier
-      ? {
-          id: asNumber(carrier.id),
-          sku: asString(carrier.sku) || undefined,
-          carrier_device_name: asString(carrier.carrier_device_name || carrier.name) || undefined,
-        }
-      : null,
+    assigned_equipment: (Array.isArray(item.assigned_equipment) ? item.assigned_equipment : []).map((entry) => {
+      const equipment = asRecord(entry);
+      return {
+        id: asNumber(equipment.id),
+        name: asString(equipment.name) || asString(equipment.uid) || `#${asNumber(equipment.id)}`,
+        uid: asString(equipment.uid) || undefined,
+      };
+    }),
     primary_owner: owner
       ? ({ id: asNumber(owner.id), username: asString(owner.name), display_name: asString(owner.name) } as ILicense['primary_owner'])
       : ((item.primary_owner as ILicense['primary_owner']) ?? null),

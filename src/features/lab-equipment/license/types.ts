@@ -5,7 +5,8 @@ export interface ILicenseVendor { id: number; vendor_name: string; }
 export interface ILicenseType { id: number; type_name?: string; license_type_name?: string; }
 export interface ILicenseCategory { id: number; category_name: string; }
 export interface ILicenseRestriction { id: number; restriction_name?: string; license_restriction_name?: string; }
-export interface ICarrierDevice { id: number; sku?: string; carrier_device_name?: string; }
+/** Equipment that currently holds one of the license's seats. */
+export interface IAssignedEquipment { id: number; name: string; uid?: string; }
 export interface ILicenseStatusData {
   lab_name?: string;
   location?: string;
@@ -41,7 +42,7 @@ export interface ILicense {
   remark: string;
   expiry_date: string | null;
   license_seats: number | null;
-  carrier_device?: ICarrierDevice | null;
+  assigned_equipment: IAssignedEquipment[];
   primary_owner: IPrimaryOwner | null;
   status?: string | null;
   current_status?: ICurrentLicenseStatus | null;

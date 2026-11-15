@@ -1,3 +1,4 @@
+import AssignedEquipmentCell from './AssignedEquipmentCell';
 import type { Key, ReactNode } from 'react';
 import { DatePicker, Input, Select } from 'antd';
 import dayjs, { type Dayjs } from 'dayjs';
@@ -31,7 +32,7 @@ export interface LicenseInlineDraft {
   license_vendor: number | null;
   maximum_version: string;
   license_ID: string;
-  carrier_device: string | number | null;
+  assigned_equipment_ids: number[];
   license_category: number | null;
   license_type: number | null;
   license_restriction: number | null;
@@ -69,21 +70,13 @@ interface BuildColumnsArgs {
   onStatusChange?: (record: ILicense, values: { status_type: string; status_data: Record<string, unknown> }) => void;
 }
 
-const carrierDeviceDraftValue = (item: ILicense): string | number | null => {
-  const device = item.carrier_device;
-  if (!device || device.id == null) return null;
-  // Mirror old saga: combine carrier_device_name + id so the draft value
-  // matches the grouped option `${group}-${id}` and preselects on edit.
-  return device.carrier_device_name ? `${device.carrier_device_name}-${device.id}` : device.id;
-};
-
 export const toLicenseInlineDraft = (item: ILicense): LicenseInlineDraft => ({
   name: item.name ?? '',
   license_product: item.license_product?.id ?? item.product?.id ?? null,
   license_vendor: item.license_vendor?.id ?? item.vendor?.id ?? null,
   maximum_version: item.maximum_version == null ? '' : String(item.maximum_version),
   license_ID: item.license_ID ?? '',
-  carrier_device: carrierDeviceDraftValue(item),
+  assigned_equipment_ids: (item.assigned_equipment ?? []).map((equipment) => equipment.id),
   license_category: item.license_category?.id ?? item.category?.id ?? null,
   license_type: item.license_type?.id ?? null,
   license_restriction: item.license_restriction?.id ?? item.restriction?.id ?? null,
@@ -194,6 +187,21 @@ export const buildLicenseColumns = ({
           />
         )
         : (value ?? '')
+    ),
+  },
+  {
+    title: 'Assigned Equipment',
+    key: 'assigned_equipment',
+    width: 260,
+    render: (_: unknown, record: ILicense) => (
+      <AssignedEquipmentCell
+        key={record.id}
+        assigned={record.assigned_equipment}
+        editing={isEditing(record)}
+        value={editingDraft?.assigned_equipment_ids ?? []}
+        onChange={(ids) => updateDraftField('assigned_equipment_ids', ids)}
+        seats={record.license_seats}
+      />
     ),
   },
   {

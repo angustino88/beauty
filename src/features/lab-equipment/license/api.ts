@@ -89,6 +89,25 @@ export const licenseRtkApi = baseApi.injectEndpoints({
       invalidatesTags: (_r, _e, { id }) => [...generateItemTag(TAG, id), ...invalidateList(TAG), { type: 'ChangeLog', id }],
     }),
 
+    // Seats are held by equipment: assign and release are their own actions, not license fields.
+    assignLicense: build.mutation<void, { licenseId: number; equipmentId: number }>({
+      query: ({ licenseId, equipmentId }) => ({
+        url: `${ENDPOINTS.DETAIL(licenseId)}/actions/assign`,
+        method: 'POST',
+        body: { equipment_id: equipmentId },
+      }),
+      invalidatesTags: (_r, _e, { licenseId }) => [...generateItemTag(TAG, licenseId), ...invalidateList(TAG), 'Equipment', 'ResourceMapping'],
+    }),
+
+    releaseLicense: build.mutation<void, { licenseId: number; equipmentId: number }>({
+      query: ({ licenseId, equipmentId }) => ({
+        url: `${ENDPOINTS.DETAIL(licenseId)}/actions/assign`,
+        method: 'DELETE',
+        body: { equipment_id: equipmentId },
+      }),
+      invalidatesTags: (_r, _e, { licenseId }) => [...generateItemTag(TAG, licenseId), ...invalidateList(TAG), 'Equipment', 'ResourceMapping'],
+    }),
+
     deleteLicense: build.mutation<void, number>({
       query: (id) => ({ url: ENDPOINTS.DELETE(id), method: 'DELETE' }),
       invalidatesTags: invalidateList(TAG),
@@ -184,6 +203,8 @@ export const {
   useDeleteLicenseMutation,
   useUpdateLicenseImageMutation,
   useChangeLicenseStatusMutation,
+  useAssignLicenseMutation,
+  useReleaseLicenseMutation,
   useDeleteLicenseImageMutation,
   useGetLicenseHistoryQuery,
   useGetLicenseFiltersQuery,

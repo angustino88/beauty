@@ -28,27 +28,6 @@ import type {
 import { facetToAntdFilters, getFacetOptions } from '../../shared/facets/filterFacets';
 
 type SelectOption = { label: string; value: number };
-type CarrierLeafOption = { label: string; value: string; title?: string };
-export type CarrierDeviceOption = CarrierLeafOption;
-
-const toCarrierDeviceOptions = (rows: ILicense[]): CarrierDeviceOption[] => {
-  // Fallback for when sku-list is unavailable: derive from rows using the
-  // composite `${carrier_device_name}-${id}` shape that matches edit drafts.
-  const byKey = new Map<string, CarrierLeafOption>();
-  for (const row of rows) {
-    const device = row.carrier_device;
-    if (!device) continue;
-    const group = device.carrier_device_name ?? '';
-    const key = `${group}-${device.id}`;
-    if (byKey.has(key)) continue;
-    byKey.set(key, {
-      label: device.sku || device.carrier_device_name || String(device.id),
-      value: key,
-    });
-  }
-  return Array.from(byKey.values());
-};
-
 export function useLicenseTable() {
   const { search, setSearch, page, setPage, pageSize, setPageSize, filters, setFilters, debouncedSearch } = useEquipmentTableState();
 
@@ -114,11 +93,6 @@ export function useLicenseTable() {
     })),
     [usersQuery.data],
   );
-  const carrierDeviceOptions = useMemo<CarrierDeviceOption[]>(
-    () => toCarrierDeviceOptions(rows),
-    [rows],
-  );
-
   const productFilters = useMemo(
     () => facetToAntdFilters(getFacetOptions(facetsQuery.data, 'license_product', 'product'))?.map(({ text, value }) => ({ text, value: String(value) })) ?? toEntityFilters<ILicenseProduct>(productQuery.data, (item) => item.product_name),
     [facetsQuery.data, productQuery.data],
@@ -178,6 +152,5 @@ export function useLicenseTable() {
     categoryOptions,
     restrictionOptions,
     ownerOptions,
-    carrierDeviceOptions,
   };
 }

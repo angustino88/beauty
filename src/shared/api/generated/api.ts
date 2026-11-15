@@ -12859,6 +12859,7 @@ export type LicenseRead = {
   /** How many assets may use the license at the same time. */
   seats: number;
   seats_in_use: number;
+  assigned_equipment: LabsUidNamedReferenceRead[];
   max_version: string;
   expires_at: string | null;
   status: LabsChoiceReferenceRead | null;

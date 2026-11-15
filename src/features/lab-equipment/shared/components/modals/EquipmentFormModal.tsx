@@ -119,8 +119,10 @@ function FormFields({ fields, form, mode, professionalForm }: FormFieldsProps) {
                 />;
             case 'multi-select':
                 return <Select mode="multiple" showSearch allowClear placeholder={field.placeholder ?? `Select ${field.label}`}
-                    disabled={disabled} options={field.options}
-                    filterOption={(input, option) => String(option?.label ?? '').toLowerCase().includes(input.toLowerCase())}
+                    disabled={disabled} options={field.options} onSearch={field.onSearch}
+                    // With a search callback the options come from the server, so do not filter them again here.
+                    filterOption={field.onSearch ? false : (input, option) =>
+                        String(option?.label ?? '').toLowerCase().includes(input.toLowerCase())}
                 />;
             case 'date':
                 return <DatePicker style={{ width: '100%' }} disabled={disabled} />;

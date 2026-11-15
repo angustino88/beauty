@@ -1,3 +1,4 @@
+import { useEquipmentSearchOptions } from '../hooks/useEquipmentSearchOptions';
 import { useMemo, useState } from 'react';
 import { Alert } from 'antd';
 import { skipToken } from '@reduxjs/toolkit/query';
@@ -52,6 +53,8 @@ export default function LicensePage() {
     historyId ?? skipToken,
   );
 
+  const equipmentSearch = useEquipmentSearchOptions();
+
   const formFields = useMemo<FieldConfig[]>(
     () => [
       { name: 'sku', label: 'SKU', type: 'text', required: true, disabledInEdit: true },
@@ -71,6 +74,15 @@ export default function LicensePage() {
       { name: 'license_seats', label: 'Seats', type: 'number' },
       { name: 'expiry_date', label: 'Expiry Date', type: 'date' },
       { name: 'primary_owner', label: 'Primary Owner', type: 'select', options: table.ownerOptions },
+      {
+        name: 'assigned_equipment_ids',
+        label: 'Assign to equipment',
+        type: 'multi-select',
+        options: equipmentSearch.options,
+        onSearch: equipmentSearch.onSearch,
+        placeholder: 'Type to search equipment',
+        help: 'Optional. A license can be assigned to as many equipment items as it has seats.',
+      },
       { name: 'remark', label: 'Remark', type: 'textarea' },
       { name: 'image', label: 'Image', type: 'image' },
     ],
@@ -81,6 +93,8 @@ export default function LicensePage() {
       table.typeOptions,
       table.restrictionOptions,
       table.ownerOptions,
+      equipmentSearch.options,
+      equipmentSearch.onSearch,
     ],
   );
 
@@ -122,6 +136,8 @@ export default function LicensePage() {
 
     await form.updateInline(editingId, payload);
     if (pending_status_type) await form.changeStatus(editingId, pending_status_type, pending_status_data ?? {});
+    const current = (table.rows.find((row) => row.id === editingId)?.assigned_equipment ?? []).map((item) => item.id);
+    await form.syncAssignments(editingId, current, editingDraft.assigned_equipment_ids ?? []);
     if (inlineImageFile) {
       await form.updateImage?.(editingId, inlineImageFile);
       setInlineImageFile(null);

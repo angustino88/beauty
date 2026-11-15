@@ -5,7 +5,10 @@ import {
   useUpdateLicenseImageMutation,
   useUpdateLicenseMutation,
   useChangeLicenseStatusMutation,
+  useAssignLicenseMutation,
+  useReleaseLicenseMutation,
 } from '../api';
+import { diffAssignments } from '../assignments';
 import { notifyEquipmentCreated, notifyEquipmentError, toId, useEquipmentCrudActions } from '../../shared';
 import type { ILicensePayload } from '../types';
 
@@ -40,6 +43,8 @@ export function useLicenseForm() {
   const [deleteLicense, { isLoading: deleting }] = useDeleteLicenseMutation();
   const [updateImageMutation] = useUpdateLicenseImageMutation();
   const [changeStatusMutation] = useChangeLicenseStatusMutation();
+  const [assignMutation] = useAssignLicenseMutation();
+  const [releaseMutation] = useReleaseLicenseMutation();
   const actions = useEquipmentCrudActions<LicenseUpsertPayload>({
     updateMutation: updateLicense,
     updateImageMutation,
@@ -75,11 +80,36 @@ export function useLicenseForm() {
     try {
       const created = await createLicense(payload).unwrap();
       if (imageFile) await updateImageMutation({ id: created.id, image: imageFile }).unwrap();
+      const equipmentIds = Array.isArray(values.assigned_equipment_ids)
+        ? values.assigned_equipment_ids.map(Number).filter(Number.isFinite)
+        : [];
+      // The license already exists here; a failed assignment is reported and can be retried from the table.
+      if (equipmentIds.length > 0) await syncAssignments(created.id, [], equipmentIds);
       notifyEquipmentCreated('License', created, { sku: payload.sku, name: payload.name });
     } catch (err) {
       notifyEquipmentError('create', 'License', err);
       throw err;
     }
+  };
+
+  /**
+   * Bring the license's equipment from `current` to `desired`: release first (it frees seats), then assign.
+   * Each call is its own transaction; a failure is reported and the rest still run. Returns true when all succeeded.
+   */
+  const syncAssignments = async (licenseId: number, current: readonly number[], desired: readonly number[]) => {
+    const { release, assign } = diffAssignments(current, desired);
+    let ok = true;
+    for (const [mutate, ids] of [[releaseMutation, release], [assignMutation, assign]] as const) {
+      for (const equipmentId of ids) {
+        try {
+          await mutate({ licenseId, equipmentId }).unwrap();
+        } catch (err) {
+          ok = false;
+          notifyEquipmentError('update', 'license assignment', err);
+        }
+      }
+    }
+    return ok;
   };
 
   const changeStatus = async (id: number, status: string, details: Record<string, unknown> = {}) => {
@@ -93,6 +123,7 @@ export function useLicenseForm() {
   return {
     createFromValues,
     changeStatus,
+    syncAssignments,
     ...actions,
     creating,
     updating,
