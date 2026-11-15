@@ -4,7 +4,8 @@ import dayjs from "dayjs";
 import { exportRowsToExcel } from "@/features/lab-analytics/utils/export";
 import {
   useLazyGetMappingsQuery,
-  useExportMappingChangeLogMutation,
+  useLazyGetBenchAuditPageQuery,
+  type BenchAuditRow,
 } from "../api";
 import type { TableFilters } from "../types";
 import { matchesMappingSearch } from "./useMappingTable";
@@ -20,7 +21,7 @@ export function useMappingExport({ search, filters }: UseMappingExportParams) {
   const [exportChangeLogLoading, setExportChangeLogLoading] = useState(false);
 
   const [fetchAllMappings] = useLazyGetMappingsQuery();
-  const [exportChangeLogMut] = useExportMappingChangeLogMutation();
+  const [fetchAuditPage] = useLazyGetBenchAuditPageQuery();
 
   const filename = `Resource_Mapping_${dayjs().format("YYYY-MM-DD")}`;
 
@@ -65,15 +66,26 @@ export function useMappingExport({ search, filters }: UseMappingExportParams) {
   const handleExportChangeLog = async () => {
     setExportChangeLogLoading(true);
     try {
-      const blob = await exportChangeLogMut().unwrap();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `Mapping_ChangeLog_${dayjs().format("YYYY-MM-DD")}.xlsx`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      // Page through the bench audit history (100 per page, capped at 50 pages).
+      const rows: BenchAuditRow[] = [];
+      for (let page = 1; page <= 50; page += 1) {
+        const result = await fetchAuditPage(page).unwrap();
+        rows.push(...result.rows);
+        if (!result.hasNext) break;
+      }
+      await exportRowsToExcel<BenchAuditRow>(
+        rows,
+        [
+          { title: "Audit ID", dataIndex: "id" },
+          { title: "Bench", dataIndex: "bench" },
+          { title: "Result", dataIndex: "result" },
+          { title: "Auditor", dataIndex: "auditor" },
+          { title: "Audited at", dataIndex: "audited_at" },
+          { title: "Remarks", dataIndex: "remarks" },
+        ],
+        `Mapping_ChangeLog_${dayjs().format("YYYY-MM-DD")}`,
+        "Bench audits",
+      );
     } catch {
       void message.error("Failed to export change log");
     } finally {

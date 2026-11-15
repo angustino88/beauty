@@ -20,6 +20,15 @@ import {
 
 const TAG = "ResourceMapping";
 
+export interface BenchAuditRow {
+  id: number;
+  bench: string;
+  result: string;
+  auditor: string;
+  audited_at: string;
+  remarks: string;
+}
+
 export const mappingApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
     // There is no collection-level mapping endpoint: list the benches, then load each bench's
@@ -200,11 +209,27 @@ export const mappingApi = baseApi.injectEndpoints({
       },
     }),
 
-    exportMappingChangeLog: build.mutation<Blob, void>({
-      query: () => ({
-        url: "/api/labs/resources/bench/audits",
-        responseHandler: (response) => response.blob(),
+    // The change log is the bench audit history: one page of `/api/labs/audits` filtered to benches.
+    getBenchAuditPage: build.query<{ rows: BenchAuditRow[]; hasNext: boolean }, number>({
+      query: (page) => ({
+        url: "/api/labs/audits",
+        params: { resource_type: "bench", page, page_size: 100 },
       }),
+      transformResponse: (res: {
+        data?: Array<Record<string, unknown>>;
+        meta?: { pagination?: { next?: string | null } };
+      }) => ({
+        rows: (res.data ?? []).map((item) => ({
+          id: Number(item.id),
+          bench: String((item.resource as { name?: string } | undefined)?.name ?? ""),
+          result: String((item.result as { label?: string } | undefined)?.label ?? ""),
+          auditor: String((item.auditor as { name?: string } | undefined)?.name ?? ""),
+          audited_at: String(item.audited_at ?? ""),
+          remarks: String(item.remarks ?? ""),
+        })),
+        hasNext: Boolean(res.meta?.pagination?.next),
+      }),
+      keepUnusedDataFor: 0,
     }),
   }),
   overrideExisting: false,
@@ -224,5 +249,5 @@ export const {
   useGetMappingFilterOptionsQuery,
   useGetStationSlotsQuery,
   useGetRoomSlotsQuery,
-  useExportMappingChangeLogMutation,
+  useLazyGetBenchAuditPageQuery,
 } = mappingApi;

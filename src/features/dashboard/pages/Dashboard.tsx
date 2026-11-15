@@ -59,6 +59,26 @@ export default function Dashboard() {
     refetch,
   } = useGetDashboardPageQuery(state.queryParams);
 
+  // Sample and license filters have no server-side parameter: their options come from, and they
+  // narrow, the loaded page. Items sharing a label are grouped so one choice covers all of them.
+  const pageFilterOptions = useMemo(() => {
+    const collect = (pick: (row: DashboardBench) => Array<{ id: number; sku?: string; name?: string }> | undefined) => {
+      const byLabel = new Map<string, number[]>();
+      for (const row of pageData?.results ?? []) {
+        for (const item of pick(row) ?? []) {
+          const label = item.sku ? `${item.name ?? item.sku} (${item.sku})` : (item.name ?? String(item.id));
+          const ids = byLabel.get(label) ?? [];
+          if (!ids.includes(item.id)) ids.push(item.id);
+          byLabel.set(label, ids);
+        }
+      }
+      return Array.from(byLabel.entries())
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([text, ids]) => ({ text, value: ids.join('|') }));
+    };
+    return { samples: collect((row) => row.samples), licenses: collect((row) => row.licenses) };
+  }, [pageData?.results]);
+
   // Sample and license filters have no server-side parameter; they narrow the loaded page.
   const { sample_ids: sampleIds, license_ids: licenseIds } = state.columnFilters;
   const tableData = useMemo(() => {
@@ -116,6 +136,8 @@ export default function Dashboard() {
         state={state}
         handleFavoriteClick={handleFavoriteClick}
         openModal={openModal}
+        sampleFilters={pageFilterOptions.samples}
+        licenseFilters={pageFilterOptions.licenses}
       />
 
       <BenchDetailModal
