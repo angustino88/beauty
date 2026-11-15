@@ -497,7 +497,10 @@ const renderValue = (value: unknown) => {
     if (entries.length === 0) return <span className={styles.emptyValue}>Not specified</span>;
     // Reference objects such as category/kind often contain only an ID and name.
     // The outer field already provides context; avoid "Category → Name → Computing".
-    if (entries.length === 1 && ['name', 'display_name', 'label'].includes(entries[0][0])) {
+    // Some reference objects repeat their name under prefixed keys (product_name, license_type_name),
+    // so a record made only of name-like entries also shows its first name.
+    const isNameKey = (key: string) => ['name', 'display_name', 'label'].includes(key) || key.endsWith('_name');
+    if (entries.every(([key]) => isNameKey(key))) {
       return renderValue(entries[0][1]);
     }
     return <dl className={presentation.nestedValues}>{entries.map(([key, item]) => <div key={key}><dt>{humanize(key)}</dt><dd>{renderValue(item)}</dd></div>)}</dl>;

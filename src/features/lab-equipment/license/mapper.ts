@@ -63,8 +63,12 @@ export function mapLicenseWritePayload(payload: LicenseUiWritePayload): LicenseW
   if (typeof payload.license_ID === 'string' && payload.license_ID.trim()) {
     body.identifier = payload.license_ID.trim();
   }
-  // Drop keys the caller did not set; `null` stays, it clears an optional field.
-  return Object.fromEntries(Object.entries(body).filter(([, value]) => value !== undefined));
+  // Drop keys the caller did not set; `null` stays, it clears an optional field. The four required
+  // relations never accept null, so an empty one is left out and the API keeps the stored value.
+  const required = ['product_id', 'vendor_id', 'type_id', 'category_id'];
+  return Object.fromEntries(
+    Object.entries(body).filter(([key, value]) => value !== undefined && !(required.includes(key) && value === null)),
+  );
 }
 
 export function mapLicenseRead(rawItem: unknown): ILicense {

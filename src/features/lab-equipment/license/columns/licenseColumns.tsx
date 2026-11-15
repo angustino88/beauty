@@ -146,8 +146,7 @@ export const buildLicenseColumns = ({
       isEditing(record)
         ? (
           <Select
-            allowClear
-            showSearch
+                        showSearch
             style={{ width: '100%' }}
             value={editingDraft?.license_product ?? undefined}
             options={productOptions}
@@ -169,8 +168,7 @@ export const buildLicenseColumns = ({
       isEditing(record)
         ? (
           <Select
-            allowClear
-            showSearch
+                        showSearch
             style={{ width: '100%' }}
             value={editingDraft?.license_vendor ?? undefined}
             options={vendorOptions}
@@ -226,8 +224,7 @@ export const buildLicenseColumns = ({
       isEditing(record)
         ? (
           <Select
-            allowClear
-            showSearch
+                        showSearch
             style={{ width: '100%' }}
             value={editingDraft?.license_category ?? undefined}
             options={categoryOptions}
@@ -249,8 +246,7 @@ export const buildLicenseColumns = ({
       isEditing(record)
         ? (
           <Select
-            allowClear
-            showSearch
+                        showSearch
             style={{ width: '100%' }}
             value={editingDraft?.license_type ?? undefined}
             options={typeOptions}

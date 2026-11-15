@@ -140,7 +140,7 @@ export const licenseRtkApi = baseApi.injectEndpoints({
     }),
 
     getLicenseProducts: build.query<ILicenseProduct[], void>({
-      query: () => ({ url: '/api/labs/licenses/categories/summary' }),
+      query: () => ({ url: '/api/labs/license-products/options' }),
       transformResponse: (res: unknown) => {
         const list = normalizeRefList<Record<string, unknown>>(res);
         return list.map(mapLicenseProduct);
@@ -148,7 +148,7 @@ export const licenseRtkApi = baseApi.injectEndpoints({
     }),
 
     getLicenseVendors: build.query<ILicenseVendor[], void>({
-      query: () => ({ url: '/api/labs/licenses/filters' }),
+      query: () => ({ url: '/api/labs/license-vendors/options' }),
       transformResponse: (res: unknown) => {
         const list = normalizeRefList<Record<string, unknown>>(res);
         return list.map(mapLicenseVendor);
@@ -156,7 +156,7 @@ export const licenseRtkApi = baseApi.injectEndpoints({
     }),
 
     getLicenseTypes: build.query<ILicenseType[], void>({
-      query: () => ({ url: '/api/labs/licenses/filters' }),
+      query: () => ({ url: '/api/labs/license-types/options' }),
       transformResponse: (res: unknown) => {
         const list = normalizeRefList<Record<string, unknown>>(res);
         return list.map(mapLicenseType);
@@ -164,7 +164,7 @@ export const licenseRtkApi = baseApi.injectEndpoints({
     }),
 
     getLicenseCategories: build.query<ILicenseCategory[], void>({
-      query: () => ({ url: '/api/labs/licenses/categories/summary' }),
+      query: () => ({ url: '/api/labs/license-categories/options' }),
       transformResponse: (res: unknown) => {
         const list = normalizeRefList<Record<string, unknown>>(res);
         return list.map(mapLicenseCategory);
@@ -172,7 +172,7 @@ export const licenseRtkApi = baseApi.injectEndpoints({
     }),
 
     getLicenseRestrictions: build.query<ILicenseRestriction[], void>({
-      query: () => ({ url: '/api/labs/licenses/filters' }),
+      query: () => ({ url: '/api/labs/license-restrictions/options' }),
       transformResponse: (res: unknown) => {
         const list = normalizeRefList<Record<string, unknown>>(res);
         return list.map(mapLicenseRestriction);

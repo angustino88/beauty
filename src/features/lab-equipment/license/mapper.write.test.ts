@@ -54,3 +54,17 @@ test('fields the API no longer takes are not sent', () => {
 
   assert.deepEqual(Object.keys(body), ['name']);
 });
+
+test('required relations are never sent as null, optional ones may clear', () => {
+  const body = mapLicenseWritePayload({
+    name: 'x',
+    license_product: null,
+    license_vendor: null,
+    license_type: null,
+    license_category: null,
+    license_restriction: null,
+    primary_owner: null,
+  } as Parameters<typeof mapLicenseWritePayload>[0]);
+
+  assert.deepEqual(body, { name: 'x', restriction_id: null, owner_id: null });
+});

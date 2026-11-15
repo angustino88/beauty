@@ -60,12 +60,12 @@ export default function LicensePage() {
     () => [
       { name: 'sku', label: 'SKU', type: 'text', required: true, disabledInEdit: true },
       { name: 'name', label: 'Name', type: 'text', required: true },
-      { name: 'license_product', label: 'Product', type: 'select', options: table.productOptions },
-      { name: 'license_vendor', label: 'Vendor', type: 'select', options: table.vendorOptions },
+      { name: 'license_product', label: 'Product', type: 'select', required: true, options: table.productOptions },
+      { name: 'license_vendor', label: 'Vendor', type: 'select', required: true, options: table.vendorOptions },
       { name: 'maximum_version', label: 'Maximum Version', type: 'text' },
       { name: 'license_ID', label: 'License key (write-only)', type: 'text' },
-      { name: 'license_category', label: 'License Category', type: 'select', options: table.categoryOptions },
-      { name: 'license_type', label: 'License Type', type: 'select', options: table.typeOptions },
+      { name: 'license_category', label: 'License Category', type: 'select', required: true, options: table.categoryOptions },
+      { name: 'license_type', label: 'License Type', type: 'select', required: true, options: table.typeOptions },
       {
         name: 'license_restriction',
         label: 'License Restriction',
