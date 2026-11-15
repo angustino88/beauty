@@ -32,8 +32,7 @@ export function CarrierSkuCell({ assigned, editing, value, onChange, seats, opti
         loading={loading}
         value={value}
         options={options}
-        // The dropdown lists "SKU · Name"; a picked item shows just its SKU, the name has its own column.
-        optionLabelProp="sku"
+        // Options show the SKU only; hovering one (or a picked tag) reveals the name.
         onSearch={onSearch}
         onChange={(ids: number[]) => onChange(ids)}
         maxCount={seats ?? undefined}

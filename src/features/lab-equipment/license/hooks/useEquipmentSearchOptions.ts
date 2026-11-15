@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLabsEquipmentOptionsRetrieveQuery } from '@/shared/api/generated/api';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
-import { equipmentLabel } from '../equipmentLabel';
 
-/** One selectable equipment item: `label` for the dropdown, `sku` for the selected tag. */
-export type EquipmentOption = { value: number; label: string; sku: string; name: string };
+/** One selectable equipment item: the SKU is shown, the name appears as the hover title. */
+export type EquipmentOption = { value: number; label: string; title: string; name: string };
 
 type Known = { id: number; sku?: string; name: string };
 
@@ -37,7 +36,7 @@ export function useEquipmentSearchOptions(known: readonly Known[] = []) {
     );
     for (const item of known) items.set(item.id, { sku: item.sku ?? '', name: item.name });
     for (const item of data?.data ?? []) items.set(item.id, { sku: item.sku ?? '', name: item.name ?? '' });
-    return [...items].map(([value, item]) => ({ value, ...item, label: equipmentLabel({ id: value, ...item }) }));
+    return [...items].map(([value, item]) => ({ value, label: item.sku || `#${value}`, title: item.name, name: item.name }));
   }, [seen, known, data]);
 
   return { options, onSearch: setSearch, loading: isFetching };
