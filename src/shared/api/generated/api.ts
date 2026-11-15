@@ -12842,6 +12842,13 @@ export type LicenseListSerializersLicensePaginationMeta = {
   pagination: LicenseListSerializersLicensePagination;
 };
 export type License = {};
+export type AssignedEquipment = {};
+export type AssignedEquipmentRead = {
+  id: number;
+  uid: string;
+  sku: string;
+  name: string;
+};
 export type LicenseRead = {
   id: number;
   uid: string;
@@ -12859,7 +12866,7 @@ export type LicenseRead = {
   /** How many assets may use the license at the same time. */
   seats: number;
   seats_in_use: number;
-  assigned_equipment: LabsUidNamedReferenceRead[];
+  assigned_equipment: AssignedEquipmentRead[];
   max_version: string;
   expires_at: string | null;
   status: LabsChoiceReferenceRead | null;

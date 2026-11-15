@@ -6,7 +6,7 @@ export interface ILicenseType { id: number; type_name?: string; license_type_nam
 export interface ILicenseCategory { id: number; category_name: string; }
 export interface ILicenseRestriction { id: number; restriction_name?: string; license_restriction_name?: string; }
 /** Equipment that currently holds one of the license's seats. */
-export interface IAssignedEquipment { id: number; name: string; uid?: string; }
+export interface IAssignedEquipment { id: number; sku: string; name: string; uid?: string; }
 export interface ILicenseStatusData {
   lab_name?: string;
   location?: string;

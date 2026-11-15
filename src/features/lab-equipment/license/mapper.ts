@@ -93,7 +93,8 @@ export function mapLicenseRead(rawItem: unknown): ILicense {
       const equipment = asRecord(entry);
       return {
         id: asNumber(equipment.id),
-        name: asString(equipment.name) || asString(equipment.uid) || `#${asNumber(equipment.id)}`,
+        sku: asString(equipment.sku),
+        name: asString(equipment.name),
         uid: asString(equipment.uid) || undefined,
       };
     }),

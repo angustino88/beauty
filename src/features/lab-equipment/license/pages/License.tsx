@@ -76,7 +76,7 @@ export default function LicensePage() {
       { name: 'primary_owner', label: 'Primary Owner', type: 'select', options: table.ownerOptions },
       {
         name: 'assigned_equipment_ids',
-        label: 'Assign to equipment',
+        label: 'License Carrier',
         type: 'multi-select',
         options: equipmentSearch.options,
         onSearch: equipmentSearch.onSearch,

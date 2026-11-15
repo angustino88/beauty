@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLabsEquipmentOptionsRetrieveQuery } from '@/shared/api/generated/api';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
+import { equipmentLabel } from '../equipmentLabel';
 
 export type EquipmentOption = { value: number; label: string };
 
-type Known = { id: number; name: string };
+type Known = { id: number; sku?: string; name: string };
 
 /**
  * Search-as-you-type equipment options for a multi-select.
@@ -25,16 +26,14 @@ export function useEquipmentSearchOptions(known: readonly Known[] = []) {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setSeen((previous) => ({
       ...previous,
-      ...Object.fromEntries(data.data.map((item) => [item.id, item.sku ? `${item.name} (${item.sku})` : item.name])),
+      ...Object.fromEntries(data.data.map((item) => [item.id, equipmentLabel(item)])),
     }));
   }, [data]);
 
   const options = useMemo<EquipmentOption[]>(() => {
     const labels = new Map<number, string>(Object.entries(seen).map(([id, label]) => [Number(id), label]));
-    for (const item of known) labels.set(item.id, item.name);
-    for (const item of data?.data ?? []) {
-      labels.set(item.id, item.sku ? `${item.name} (${item.sku})` : item.name);
-    }
+    for (const item of known) labels.set(item.id, equipmentLabel(item));
+    for (const item of data?.data ?? []) labels.set(item.id, equipmentLabel(item));
     return [...labels].map(([value, label]) => ({ value, label }));
   }, [seen, known, data]);
 

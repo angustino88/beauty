@@ -18,8 +18,8 @@ const wire = {
   expires_at: '2027-01-31T12:00:00Z',
   status: { value: 'assigned', label: 'Assigned' },
   assigned_equipment: [
-    { id: 11, uid: 'u-11', name: 'Oscilloscope' },
-    { id: 12, uid: 'u-12', name: '' },
+    { id: 11, uid: 'u-11', sku: 'EQ-011', name: 'Oscilloscope' },
+    { id: 12, uid: 'u-12', sku: 'EQ-012', name: '' },
   ],
   image_url: null,
 };
@@ -28,8 +28,13 @@ test('license read keeps who holds the seats', () => {
   const license = mapLicenseRead(wire);
 
   assert.deepEqual(license.assigned_equipment.map((item) => item.id), [11, 12]);
-  assert.equal(license.assigned_equipment[0].name, 'Oscilloscope');
-  assert.equal(license.assigned_equipment[1].name, 'u-12', 'a nameless item falls back to its uid');
+  assert.deepEqual(
+    license.assigned_equipment[0],
+    { id: 11, uid: 'u-11', sku: 'EQ-011', name: 'Oscilloscope' },
+    'both the SKU and the name are kept',
+  );
+  assert.equal(license.assigned_equipment[1].sku, 'EQ-012');
+  assert.equal(license.assigned_equipment[1].name, '');
 });
 
 test('license read maps seats, version, owner, expiry and the status choice', () => {

@@ -190,7 +190,7 @@ export const buildLicenseColumns = ({
     ),
   },
   {
-    title: 'Assigned Equipment',
+    title: 'License Carrier',
     key: 'assigned_equipment',
     width: 260,
     render: (_: unknown, record: ILicense) => (

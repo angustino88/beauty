@@ -1,4 +1,5 @@
 import { Select, Tag, Tooltip } from 'antd';
+import { equipmentLabel } from '../equipmentLabel';
 import { useEquipmentSearchOptions } from '../hooks/useEquipmentSearchOptions';
 import type { IAssignedEquipment } from '../types';
 
@@ -42,9 +43,9 @@ export default function AssignedEquipmentCell({ assigned, editing, value, onChan
   const hidden = assigned.slice(VISIBLE_TAGS);
   return (
     <span style={{ display: 'inline-flex', flexWrap: 'wrap', gap: 4 }}>
-      {visible.map((item) => <Tag key={item.id} style={{ marginInlineEnd: 0 }}>{item.name}</Tag>)}
+      {visible.map((item) => <Tag key={item.id} style={{ marginInlineEnd: 0 }}>{equipmentLabel(item)}</Tag>)}
       {hidden.length > 0 && (
-        <Tooltip title={hidden.map((item) => item.name).join(', ')}>
+        <Tooltip title={hidden.map(equipmentLabel).join(', ')}>
           <Tag style={{ marginInlineEnd: 0 }}>+{hidden.length}</Tag>
         </Tooltip>
       )}
