@@ -96,7 +96,9 @@ export function EquipmentAssignmentModal({
 
   const rawEquipmentOptions = Array.isArray(optionsData?.data) ? optionsData.data : [];
   const equipmentOptions = rawEquipmentOptions.map((item) => ({
-    label: item.name ? `${item.name} (${item.sku || "No SKU"})` : String(item.sku || item.id),
+    // SKU only in the control; the name shows on hover. Search is server-side, so name still matches.
+    label: String(item.sku || item.name || item.id),
+    title: item.name ?? undefined,
     value: item.id,
   }));
 

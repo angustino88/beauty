@@ -100,10 +100,12 @@ export function BenchPlacementModal({
     value: Number(rm.value),
   }));
 
-  const stationOptions =
+  const stationOptions: { label: string; title?: string; value: number }[] =
     stationData && Array.isArray(stationData.data)
       ? stationData.data.map((st) => ({
-          label: st.sku ? `[${st.sku}] ${st.name}` : st.name,
+          // SKU is the identity shown in the control; the name appears on hover and is still searchable.
+          label: st.sku || st.name,
+          title: st.name,
           value: st.id,
         }))
       : (filterOptions?.stations ?? []).map((st) => ({
@@ -112,7 +114,8 @@ export function BenchPlacementModal({
         }));
 
   const slotOptions = (slots ?? []).map((s) => ({
-    label: s.label ? `${s.slot_code} (${s.label})` : s.slot_code,
+    label: s.slot_code,
+    title: s.label ?? undefined,
     value: s.id,
   }));
 
@@ -191,7 +194,7 @@ export function BenchPlacementModal({
               loading={loadingStations || loadingFilters}
               showSearch
               filterOption={(input, option) =>
-                (option?.label ?? "").toLowerCase().includes(input.toLowerCase())
+                `${option?.label ?? ""} ${option?.title ?? ""}`.toLowerCase().includes(input.toLowerCase())
               }
               allowClear
               onChange={() => {
