@@ -32,11 +32,15 @@ export default function MappingPage() {
   const [viewMode, setViewMode] = useState<MappingViewMode>("table");
   const [placementModalRow, setPlacementModalRow] = useState<ResourceMappingRow | null>(null);
   const [assignmentModalRow, setAssignmentModalRow] = useState<ResourceMappingRow | null>(null);
-  // The open modal holds the row it was opened with; read the refetched row so it shows changes made inside it.
-  const liveRow = (row: ResourceMappingRow | null) =>
-    row ? (table.rows.find((candidate) => candidate.id === row.id) ?? row) : null;
 
   const table = useMappingTable();
+  // An open modal holds the row it was opened with; read the refetched row so it shows changes made inside it.
+  const livePlacementRow = placementModalRow
+    ? (table.rows.find((candidate) => candidate.id === placementModalRow.id) ?? placementModalRow)
+    : null;
+  const liveAssignmentRow = assignmentModalRow
+    ? (table.rows.find((candidate) => candidate.id === assignmentModalRow.id) ?? assignmentModalRow)
+    : null;
   const export_ = useMappingExport({
     search: table.search,
     filters: table.filters,
@@ -319,14 +323,14 @@ export default function MappingPage() {
 
       <BenchPlacementModal
         open={Boolean(placementModalRow)}
-        row={liveRow(placementModalRow)}
+        row={livePlacementRow}
         onClose={() => setPlacementModalRow(null)}
         onSuccess={() => void table.refetch()}
       />
 
       <EquipmentAssignmentModal
         open={Boolean(assignmentModalRow)}
-        row={liveRow(assignmentModalRow)}
+        row={liveAssignmentRow}
         onClose={() => setAssignmentModalRow(null)}
         onSuccess={() => void table.refetch()}
       />
