@@ -56,8 +56,8 @@ export function mapStationApiItem(raw: unknown): IStation {
         }
       : null,
     room_id: asNullableNumber(st.room_id || room?.id),
-    slot_id: asNullableNumber(st.slot_id),
-    slot_code: asNullableString(st.slot_code),
+    slot_id: isRecord(st.slot) ? asNumber(st.slot.id) : asNullableNumber(st.slot_id),
+    slot_code: isRecord(st.slot) ? asNullableString(st.slot.name) : asNullableString(st.slot_code),
     power_reserved_w: asNullableString(st.power_reserved_w),
     width_mm: asNullableNumber(st.width_mm || st.width),
     depth_mm: asNullableNumber(st.depth_mm || st.depth),

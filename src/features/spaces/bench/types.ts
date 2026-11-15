@@ -20,6 +20,9 @@ export interface IBench extends ResourceState {
   primary_owner?: IPrimaryOwner | null;
   setup_location_id?: number | null;
   station_slot_id?: number | null;
+  station_slot_name?: string | null;
+  /** Parent-first physical path of the station, e.g. building / room / station. */
+  location_path?: string | null;
   station?: { id: number; sku: string; name: string } | null;
   room?: { id: number; sku: string; name: string } | null;
   equipment_count?: number;

@@ -102,6 +102,12 @@ export const buildBenchColumns = ({
               </Link>
             </Tooltip>
           ) : null}
+          {!record.room && record.location_path ? (
+            <Tooltip title={`Location: ${record.location_path}`}>
+              <Tag color="green">{record.location_path}</Tag>
+            </Tooltip>
+          ) : null}
+          {record.station_slot_name ? <Tag>{`Slot ${record.station_slot_name}`}</Tag> : null}
           {!record.station && !record.room && <span style={{ color: "var(--lm-text-tertiary)" }}>Unplaced</span>}
         </Space>
       ),

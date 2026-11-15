@@ -1,6 +1,7 @@
-import { useLabsStationsOptionsRetrieveQuery } from "@/shared/api/generated/api";
+import { useLabsStationsOptionsRetrieveQuery, useLabsStationsSlotsRetrieveByStationIdQuery } from "@/shared/api/generated/api";
 import { useCallback, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
+import { skipToken } from "@reduxjs/toolkit/query";
 import type { RootState } from "@/app/store";
 import {
   EquipmentPageLayout,
@@ -40,6 +41,21 @@ export default function BenchPage() {
     [stationOptionsData],
   );
 
+  // The slot list follows the station chosen in whichever form is open.
+  const [formStationId, setFormStationId] = useState<number | null>(null);
+  const { data: slotsData } = useLabsStationsSlotsRetrieveByStationIdQuery(
+    formStationId == null ? skipToken : { stationId: formStationId, pageSize: 200 },
+  );
+  const slotOptions = useMemo(
+    () => (slotsData?.data ?? [])
+      .filter((slot) => slot.is_active !== false)
+      .map((slot) => ({ label: slot.label || slot.slot_code, value: slot.id })),
+    [slotsData],
+  );
+  const handleFormValues = useCallback((values: Record<string, unknown>) => {
+    setFormStationId(values.setup_location_id == null || values.setup_location_id === '' ? null : Number(values.setup_location_id));
+  }, []);
+
   const groupOptions = useMemo(() => {
     return (benchGroups ?? []).map((g) => ({
       label: g.name,
@@ -65,10 +81,11 @@ export default function BenchPage() {
       { name: "name", label: "Name", type: "text", required: true },
       { name: "bench_group_id", label: "Bench Group", type: "select", options: groupOptions },
       { name: "setup_location_id", label: "Station", type: "select", options: stationOptions },
+      { name: "station_slot_id", label: "Station Slot", type: "select", dependsOn: ["setup_location_id"], options: slotOptions },
       { name: "remark", label: "Remark", type: "textarea" },
       { name: "image", label: "Image", type: "image" as const },
     ],
-    [groupOptions, stationOptions],
+    [groupOptions, stationOptions, slotOptions],
   );
 
   const actionsRenderer = createActionsRenderer<IBench>({
@@ -126,6 +143,7 @@ export default function BenchPage() {
         mode="create"
         title="New Bench"
         fields={formFields}
+        onValuesChange={handleFormValues}
         onSubmit={async (values, imageFile) => {
           await form.createFromValues(values, imageFile);
           setCreateModalOpen(false);
@@ -139,10 +157,12 @@ export default function BenchPage() {
         mode="edit"
         title="Edit Bench"
         fields={formFields}
+        onValuesChange={handleFormValues}
         initialValues={editingBench ? {
           ...editingBench,
           bench_group_id: editingBench.bench_group?.id,
           setup_location_id: editingBench.setup_location_id ?? editingBench.station?.id,
+          station_slot_id: editingBench.station_slot_id,
         } : undefined}
         onSubmit={async (values, imageFile) => {
           if (!editingBench) return;
@@ -154,10 +174,11 @@ export default function BenchPage() {
           };
           const nextStation = values.setup_location_id == null ? null : Number(values.setup_location_id);
           const currentStation = editingBench.setup_location_id ?? editingBench.station?.id ?? null;
-          if (nextStation !== currentStation) {
-            // The old slot belongs to the old station, so moving or clearing the station clears it.
+          const nextSlot = nextStation == null || values.station_slot_id == null ? null : Number(values.station_slot_id);
+          if (nextStation !== currentStation || nextSlot !== (editingBench.station_slot_id ?? null)) {
+            // Station and slot are written together: a slot always belongs to the station sent with it.
             payload.setup_location_id = nextStation;
-            payload.station_slot_id = null;
+            payload.station_slot_id = nextSlot;
           }
           await form.updateInline(editingBench.id, payload);
           if (imageFile) await form.updateImage(editingBench.id, imageFile);
