@@ -30,11 +30,14 @@ const asNullableString = (v: unknown): string | null =>
 
 export function mapBenchApiItem(raw: unknown): IBench {
   const b = isRecord(raw) ? raw : {};
-  const group = isRecord(b.group) ? b.group : isRecord(b.bench_group) ? b.bench_group : null;
+  // `bench_group` is the bench's own group; `group` is the department resource group.
+  const group = isRecord(b.bench_group) ? b.bench_group : null;
   const type = isRecord(b.type) ? b.type : isRecord(b.bench_type) ? b.bench_type : null;
   const dept = isRecord(b.department) ? b.department : null;
   const owner = isRecord(b.owner) ? b.owner : null;
-  const station = isRecord(b.station) ? b.station : null;
+  // The station a bench is set up on arrives as `setup_location` ({id, uid, name}); `station_slot` is its slot.
+  const station = isRecord(b.setup_location) ? b.setup_location : isRecord(b.station) ? b.station : null;
+  const stationSlot = isRecord(b.station_slot) ? b.station_slot : null;
   const room = isRecord(b.room) ? b.room : null;
   const currentStatus = isRecord(b.current_status) ? b.current_status : null;
   const status = isRecord(b.status) ? b.status : null;
@@ -49,8 +52,8 @@ export function mapBenchApiItem(raw: unknown): IBench {
     department: dept ? { id: asNumber(dept.id), name: asString(dept.name) } : null,
     owner: owner ? { id: asNumber(owner.id), name: asString(owner.name) } : null,
     primary_owner: owner ? { id: asNumber(owner.id), username: asString(owner.name), display_name: asString(owner.name) } : null,
-    setup_location_id: asNullableNumber(b.setup_location_id),
-    station_slot_id: asNullableNumber(b.station_slot_id),
+    setup_location_id: station ? asNumber(station.id) : asNullableNumber(b.setup_location_id),
+    station_slot_id: stationSlot ? asNumber(stationSlot.id) : asNullableNumber(b.station_slot_id),
     station: station ? { id: asNumber(station.id), sku: asString(station.sku), name: asString(station.name) } : null,
     room: room ? { id: asNumber(room.id), sku: asString(room.sku), name: asString(room.name) } : null,
     equipment_count: asNumber(b.equipment_count, 0),

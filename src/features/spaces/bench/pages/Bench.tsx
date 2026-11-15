@@ -1,3 +1,4 @@
+import { useLabsStationsOptionsRetrieveQuery } from "@/shared/api/generated/api";
 import { useCallback, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 import type { RootState } from "@/app/store";
@@ -33,6 +34,12 @@ export default function BenchPage() {
   const { data: benchGroups } = useGetBenchGroupsQuery();
   const { data: facets } = useGetBenchFiltersQuery();
 
+  const { data: stationOptionsData } = useLabsStationsOptionsRetrieveQuery({});
+  const stationOptions = useMemo(
+    () => (stationOptionsData?.data ?? []).map((s) => ({ label: s.name || s.sku, value: s.id })),
+    [stationOptionsData],
+  );
+
   const groupOptions = useMemo(() => {
     return (benchGroups ?? []).map((g) => ({
       label: g.name,
@@ -56,11 +63,12 @@ export default function BenchPage() {
     () => [
       { name: "sku", label: "SKU", type: "text", required: true },
       { name: "name", label: "Name", type: "text", required: true },
-      { name: "group_id", label: "Bench Group", type: "select", options: groupOptions },
+      { name: "bench_group_id", label: "Bench Group", type: "select", options: groupOptions },
+      { name: "setup_location_id", label: "Station", type: "select", options: stationOptions },
       { name: "remark", label: "Remark", type: "textarea" },
       { name: "image", label: "Image", type: "image" as const },
     ],
-    [groupOptions],
+    [groupOptions, stationOptions],
   );
 
   const actionsRenderer = createActionsRenderer<IBench>({
@@ -131,15 +139,26 @@ export default function BenchPage() {
         mode="edit"
         title="Edit Bench"
         fields={formFields}
-        initialValues={editingBench ? { ...editingBench, group_id: editingBench.bench_group?.id } : undefined}
+        initialValues={editingBench ? {
+          ...editingBench,
+          bench_group_id: editingBench.bench_group?.id,
+          setup_location_id: editingBench.setup_location_id ?? editingBench.station?.id,
+        } : undefined}
         onSubmit={async (values, imageFile) => {
           if (!editingBench) return;
           const payload: IBenchPayload = {
             sku: String(values.sku ?? ''),
             name: String(values.name ?? ''),
-            group_id: values.group_id == null ? null : Number(values.group_id),
+            bench_group_id: values.bench_group_id == null ? null : Number(values.bench_group_id),
             remark: values.remark == null ? (editingBench.remark ?? "") : String(values.remark),
           };
+          const nextStation = values.setup_location_id == null ? null : Number(values.setup_location_id);
+          const currentStation = editingBench.setup_location_id ?? editingBench.station?.id ?? null;
+          if (nextStation !== currentStation) {
+            // The old slot belongs to the old station, so moving or clearing the station clears it.
+            payload.setup_location_id = nextStation;
+            payload.station_slot_id = null;
+          }
           await form.updateInline(editingBench.id, payload);
           if (imageFile) await form.updateImage(editingBench.id, imageFile);
           else if (imageFile === null) await form.removeImage(editingBench.id);

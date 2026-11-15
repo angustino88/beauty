@@ -71,9 +71,12 @@ export interface IBenchPayload {
   sku?: string;
   name?: string;
   type_id?: number | null;
+  /** Bench group (`bench_group_id`); `group_id` is the department resource group. */
+  bench_group_id?: number | null;
   group_id?: number | null;
   department_id?: number | null;
   owner_id?: number | null;
+  /** Station the bench is set up on. */
   setup_location_id?: number | null;
   station_slot_id?: number | null;
   remark?: string | null;

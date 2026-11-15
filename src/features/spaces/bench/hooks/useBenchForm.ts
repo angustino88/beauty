@@ -32,7 +32,7 @@ export function useBenchForm() {
     const payload: IBenchPayload = {
       sku: typeof values.sku === "string" ? values.sku : undefined,
       name: typeof values.name === "string" ? values.name : undefined,
-      group_id: values.group_id ? Number(values.group_id) : null,
+      bench_group_id: values.bench_group_id ? Number(values.bench_group_id) : null,
       type_id: values.type_id ? Number(values.type_id) : null,
       setup_location_id: values.setup_location_id ? Number(values.setup_location_id) : null,
       station_slot_id: values.station_slot_id ? Number(values.station_slot_id) : null,
