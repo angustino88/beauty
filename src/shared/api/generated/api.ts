@@ -2875,12 +2875,41 @@ const injectedRtkApi = api.injectEndpoints({
         },
       }),
     }),
+    labsLicensesCreate: build.mutation<
+      LabsLicensesCreateApiResponse,
+      LabsLicensesCreateApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/licenses`,
+        method: "POST",
+        body: queryArg.licenseCreate,
+      }),
+    }),
     labsLicensesRetrieveByLicenseId: build.query<
       LabsLicensesRetrieveByLicenseIdApiResponse,
       LabsLicensesRetrieveByLicenseIdApiArg
     >({
       query: (queryArg) => ({
         url: `/api/labs/licenses/${queryArg.licenseId}`,
+      }),
+    }),
+    labsLicensesPartialUpdateByLicenseId: build.mutation<
+      LabsLicensesPartialUpdateByLicenseIdApiResponse,
+      LabsLicensesPartialUpdateByLicenseIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/licenses/${queryArg.licenseId}`,
+        method: "PATCH",
+        body: queryArg.patchedLicenseUpdate,
+      }),
+    }),
+    labsLicensesDestroyByLicenseId: build.mutation<
+      LabsLicensesDestroyByLicenseIdApiResponse,
+      LabsLicensesDestroyByLicenseIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/licenses/${queryArg.licenseId}`,
+        method: "DELETE",
       }),
     }),
     labsLicensesActionsAssignCreateByLicenseId: build.mutation<
@@ -6907,9 +6936,24 @@ export type LabsLicensesRetrieveApiArg = {
   /** Comma-separated values; OR within this filter. */
   status?: string;
 };
+export type LabsLicensesCreateApiResponse =
+  /** status 201  */ LicenseCreateSerializersLicenseDetailResponseRead;
+export type LabsLicensesCreateApiArg = {
+  licenseCreate: LicenseCreateWrite;
+};
 export type LabsLicensesRetrieveByLicenseIdApiResponse =
   /** status 200  */ LicenseDetailSerializersLicenseDetailResponseRead;
 export type LabsLicensesRetrieveByLicenseIdApiArg = {
+  licenseId: number;
+};
+export type LabsLicensesPartialUpdateByLicenseIdApiResponse =
+  /** status 200  */ LicenseUpdateSerializersLicenseDetailResponseRead;
+export type LabsLicensesPartialUpdateByLicenseIdApiArg = {
+  licenseId: number;
+  patchedLicenseUpdate: PatchedLicenseUpdateWrite;
+};
+export type LabsLicensesDestroyByLicenseIdApiResponse = unknown;
+export type LabsLicensesDestroyByLicenseIdApiArg = {
   licenseId: number;
 };
 export type LabsLicensesActionsAssignCreateByLicenseIdApiResponse =
@@ -12830,11 +12874,89 @@ export type LicenseListSerializersLicensePaginatedResponseRead = {
   meta: LicenseListSerializersLicensePaginationMeta;
   data: LicenseRead[];
 };
+export type LicenseCreateSerializersLicenseDetailResponse = {
+  data: License;
+};
+export type LicenseCreateSerializersLicenseDetailResponseRead = {
+  data: LicenseRead;
+};
+export type LicenseCreate = {
+  sku: string;
+  name?: string;
+  department_id?: number | null;
+  group_id?: number | null;
+  owner_id?: number | null;
+  remark?: string;
+  product_id: number;
+  vendor_id: number;
+  type_id: number;
+  category_id: number;
+  restriction_id?: number | null;
+  seats?: number;
+  max_version?: string;
+  expires_at?: string | null;
+};
+export type LicenseCreateWrite = {
+  sku: string;
+  name?: string;
+  department_id?: number | null;
+  group_id?: number | null;
+  owner_id?: number | null;
+  remark?: string;
+  product_id: number;
+  vendor_id: number;
+  type_id: number;
+  category_id: number;
+  restriction_id?: number | null;
+  seats?: number;
+  max_version?: string;
+  identifier?: string;
+  expires_at?: string | null;
+};
 export type LicenseDetailSerializersLicenseDetailResponse = {
   data: License;
 };
 export type LicenseDetailSerializersLicenseDetailResponseRead = {
   data: LicenseRead;
+};
+export type LicenseUpdateSerializersLicenseDetailResponse = {
+  data: License;
+};
+export type LicenseUpdateSerializersLicenseDetailResponseRead = {
+  data: LicenseRead;
+};
+export type PatchedLicenseUpdate = {
+  sku?: string;
+  name?: string;
+  department_id?: number | null;
+  group_id?: number | null;
+  owner_id?: number | null;
+  remark?: string;
+  product_id?: number;
+  vendor_id?: number;
+  type_id?: number;
+  category_id?: number;
+  restriction_id?: number | null;
+  seats?: number;
+  max_version?: string;
+  expires_at?: string | null;
+};
+export type PatchedLicenseUpdateWrite = {
+  sku?: string;
+  name?: string;
+  department_id?: number | null;
+  group_id?: number | null;
+  owner_id?: number | null;
+  remark?: string;
+  product_id?: number;
+  vendor_id?: number;
+  type_id?: number;
+  category_id?: number;
+  restriction_id?: number | null;
+  seats?: number;
+  max_version?: string;
+  identifier?: string;
+  expires_at?: string | null;
 };
 export type LicenseAssignmentResult = {};
 export type LicenseAssignmentResultRead = {
@@ -16481,7 +16603,10 @@ export const {
   useLabsLicenseVendorsRetrieveByVendorIdQuery,
   useLabsLicenseVendorsOptionsRetrieveQuery,
   useLabsLicensesRetrieveQuery,
+  useLabsLicensesCreateMutation,
   useLabsLicensesRetrieveByLicenseIdQuery,
+  useLabsLicensesPartialUpdateByLicenseIdMutation,
+  useLabsLicensesDestroyByLicenseIdMutation,
   useLabsLicensesActionsAssignCreateByLicenseIdMutation,
   useLabsLicensesActionsAssignDestroyByLicenseIdMutation,
   useLabsLicensesActionsChangeStatusCreateByLicenseIdMutation,

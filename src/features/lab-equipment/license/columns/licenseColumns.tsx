@@ -12,8 +12,6 @@ import LicenseStatus from '../../shared/components/status/LicenseStatus';
 import LicenseInformationCell from './LicenseInformationCell';
 import type { ILicense } from '../types';
 
-import type { CarrierDeviceOption } from '../hooks/useLicenseTable';
-
 type FilterItem = { text: string; value: string };
 type SelectOption = { label: string; value: number };
 
@@ -26,7 +24,6 @@ const readRestriction = (record: ILicense) =>
   ?? record.license_restriction?.license_restriction_name
   ?? record.restriction?.restriction_name
   ?? '';
-const readCarrier = (record: ILicense) => record.carrier_device?.sku ?? record.carrier_device?.carrier_device_name ?? '';
 
 export interface LicenseInlineDraft {
   name: string;
@@ -61,7 +58,6 @@ interface BuildColumnsArgs {
   typeOptions: SelectOption[];
   restrictionOptions: SelectOption[];
   ownerOptions: SelectOption[];
-  carrierDeviceOptions: CarrierDeviceOption[];
   isEditing: (record: ILicense) => boolean;
   editingDraft: LicenseInlineDraft | null;
   updateDraftField: <K extends keyof LicenseInlineDraft>(
@@ -112,7 +108,6 @@ export const buildLicenseColumns = ({
   typeOptions,
   restrictionOptions,
   ownerOptions,
-  carrierDeviceOptions,
   isEditing,
   editingDraft,
   updateDraftField,
@@ -202,44 +197,6 @@ export const buildLicenseColumns = ({
     ),
   },
   {
-    title: 'License ID',
-    dataIndex: 'license_ID',
-    key: 'license_ID',
-    width: 150,
-    render: (value: string | null | undefined, record: ILicense) => (
-      isEditing(record)
-        ? (
-          <Input
-            value={editingDraft?.license_ID ?? ''}
-            onChange={(event) => updateDraftField('license_ID', event.target.value)}
-          />
-        )
-        : (value ?? '')
-    ),
-  },
-  {
-    title: 'License Carrier',
-    key: 'carrier_device',
-    width: 200,
-    render: (_: unknown, record: ILicense) => (
-      isEditing(record)
-        ? (
-          <Select
-            allowClear
-            showSearch
-            style={{ width: '100%' }}
-            value={editingDraft?.carrier_device ?? undefined}
-            options={carrierDeviceOptions}
-            onChange={(value) => updateDraftField(
-              'carrier_device',
-              typeof value === 'string' || typeof value === 'number' ? value : null,
-            )}
-          />
-        )
-        : readCarrier(record)
-    ),
-  },
-  {
     title: 'License Category',
     key: 'license_category',
     width: 150,
@@ -306,22 +263,6 @@ export const buildLicenseColumns = ({
           />
         )
         : readRestriction(record)
-    ),
-  },
-  {
-    title: 'LOG Label',
-    dataIndex: 'log_label',
-    key: 'log_label',
-    width: 150,
-    render: (value: string, record: ILicense) => (
-      isEditing(record)
-        ? (
-          <Input
-            value={editingDraft?.log_label ?? ''}
-            onChange={(event) => updateDraftField('log_label', event.target.value)}
-          />
-        )
-        : (value ?? '')
     ),
   },
   {

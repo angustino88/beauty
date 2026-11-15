@@ -4,13 +4,12 @@ import { Button, Form, Input, Modal, Select } from 'antd';
 import { StatusBadge } from '@/shared/components/StatusBadge';
 import { licenseStatusLabel, licenseStatusTone, licenseStatusValue } from '../../../license/licenseStatus';
 
+// The states the API records (`POST /licenses/{id}/actions/change-status`).
 const LICENSE_STATUS_META: Record<string, { label: string; bgColor: string; textColor: string }> = {
-  active: { label: 'Active', bgColor: '#41765b', textColor: '#ffffff' },
-  deactivated: { label: 'Deactivated', bgColor: '#5d6666', textColor: '#ffffff' },
-  inactive: { label: 'Inactive', bgColor: '#5d6666', textColor: '#ffffff' },
-  revoked: { label: 'Revoked', bgColor: '#9d4148', textColor: '#ffffff' },
+  available: { label: 'Available', bgColor: '#41765b', textColor: '#ffffff' },
+  assigned: { label: 'Assigned', bgColor: '#176b87', textColor: '#ffffff' },
   expired: { label: 'Expired', bgColor: '#bd6b3d', textColor: '#ffffff' },
-  trial: { label: 'Trial', bgColor: '#176b87', textColor: '#ffffff' },
+  revoked: { label: 'Revoked', bgColor: '#9d4148', textColor: '#ffffff' },
   suspended: { label: 'Suspended', bgColor: '#b17a2c', textColor: '#ffffff' },
 };
 

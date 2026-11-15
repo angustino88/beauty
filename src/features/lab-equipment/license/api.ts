@@ -66,11 +66,26 @@ export const licenseRtkApi = baseApi.injectEndpoints({
     }),
 
     updateLicense: build.mutation<ILicense, { id: number; body: ILicensePayload }>({
-      query: ({ id, body }) => ({ url: ENDPOINTS.UPDATE(id), method: 'PATCH', body: mapLicenseWritePayload(body) }),
+      // The SKU is fixed at creation: the API answers 409 when a PATCH carries it.
+      query: ({ id, body }) => {
+        const changes = mapLicenseWritePayload(body);
+        delete changes.sku;
+        return { url: ENDPOINTS.UPDATE(id), method: 'PATCH', body: changes };
+      },
       transformResponse: (res: { data?: Record<string, unknown> } | Record<string, unknown>) => {
         const data = (res as { data?: Record<string, unknown> }).data ?? res;
         return mapLicenseRead(data);
       },
+      invalidatesTags: (_r, _e, { id }) => [...generateItemTag(TAG, id), ...invalidateList(TAG), { type: 'ChangeLog', id }],
+    }),
+
+    // Status is its own action, not a field of the license body.
+    changeLicenseStatus: build.mutation<void, { id: number; status: string; details?: Record<string, unknown> }>({
+      query: ({ id, status, details }) => ({
+        url: `${ENDPOINTS.DETAIL(id)}/actions/change-status`,
+        method: 'POST',
+        body: { status, details: details ?? {} },
+      }),
       invalidatesTags: (_r, _e, { id }) => [...generateItemTag(TAG, id), ...invalidateList(TAG), { type: 'ChangeLog', id }],
     }),
 
@@ -168,6 +183,7 @@ export const {
   useUpdateLicenseMutation,
   useDeleteLicenseMutation,
   useUpdateLicenseImageMutation,
+  useChangeLicenseStatusMutation,
   useDeleteLicenseImageMutation,
   useGetLicenseHistoryQuery,
   useGetLicenseFiltersQuery,
