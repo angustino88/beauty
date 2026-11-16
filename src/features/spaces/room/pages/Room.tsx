@@ -1,4 +1,5 @@
 ﻿import { useMemo, useState } from "react";
+import { WorkbookImportButton } from "@/features/data-import";
 import { skipToken } from "@reduxjs/toolkit/query";
 import { useSelector } from "react-redux";
 import type { RootState } from "@/app/store";
@@ -183,6 +184,7 @@ export default function RoomPage() {
   return (
     <>
       <EquipmentPageLayout<IRoom>
+        extraControls={<WorkbookImportButton />}
         professionalTable
         spaceKind="room"
         title="Rooms"

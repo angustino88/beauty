@@ -1,4 +1,5 @@
 import { useGetUsersQuery } from "@/features/lab-equipment/shared";
+import { WorkbookImportButton } from "@/features/data-import";
 import { useCallback, useMemo, useState } from "react";
 import { skipToken } from "@reduxjs/toolkit/query";
 import { useLabsRoomsSlotsRetrieveByRoomIdQuery } from "@/shared/api/generated/api";
@@ -133,6 +134,7 @@ export default function StationPage() {
   return (
     <>
       <EquipmentPageLayout<IStation>
+        extraControls={<WorkbookImportButton />}
         professionalTable
         spaceKind="station"
         title="Stations"

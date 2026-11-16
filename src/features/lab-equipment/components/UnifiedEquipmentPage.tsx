@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback, type Key } from 'react';
+import { WorkbookImportButton } from '@/features/data-import';
 import { Tag, Tooltip, message, Popover, Progress, Modal, Form, Select, Input, InputNumber, Button } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { DesktopOutlined, RadarChartOutlined, SwapOutlined } from '@ant-design/icons';
@@ -767,7 +768,10 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
         rows={rows}
         totalRecords={rows.length}
         clientPagination
-        extraControls={(listData?.meta?.pagination?.count ?? rows.length) > rows.length ? <Tag color="warning">Showing {rows.length} of {listData?.meta?.pagination?.count} records returned by this request. Additional pages are unavailable until the backend's paging parameters are confirmed.</Tag> : undefined}
+        extraControls={<>
+          <WorkbookImportButton />
+          {(listData?.meta?.pagination?.count ?? rows.length) > rows.length ? <Tag color="warning">Showing {rows.length} of {listData?.meta?.pagination?.count} records returned by this request. Additional pages are unavailable until the backend's paging parameters are confirmed.</Tag> : null}
+        </>}
         loading={isListLoading || isListFetching}
         onRefetch={refetchList}
         page={page}
