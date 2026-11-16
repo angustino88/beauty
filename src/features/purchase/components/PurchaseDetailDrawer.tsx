@@ -9,8 +9,6 @@ import {
   Typography,
   Popconfirm,
   Tooltip,
-  Dropdown,
-  Modal,
   message,
 } from 'antd';
 import {
@@ -19,21 +17,19 @@ import {
   LinkOutlined,
   EditOutlined,
   DeleteOutlined,
-  DownOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import styles from '@/features/finance/components/FinanceWorkspace.module.css';
 import detailStyles from './PurchaseDetail.module.css';
 import { formatMoney } from '@/features/finance/components/formatMoney';
 import type { IPurchase, IPurchaseItem, IPurchaseTransaction } from '../types';
-import { getPurchaseEtag, getItemEtag } from '../mapper';
+import { getItemEtag } from '../mapper';
 import {
   useDeletePurchaseItemMutation,
   useGetPurchaseByIdQuery,
   useGetPurchaseItemResourcesQuery,
   useGetPurchaseItemsQuery,
   useGetPurchaseTransactionsQuery,
-  useUpdatePurchaseDraftHeaderMutation,
 } from '../api';
 import { AddPurchaseItemModal } from './AddPurchaseItemModal';
 import { EditPurchaseItemModal } from './EditPurchaseItemModal';
@@ -148,7 +144,6 @@ export const PurchaseDetailDrawer: React.FC<PurchaseDetailDrawerProps> = ({
   const { data: freshPurchase } = useGetPurchaseByIdQuery(purchaseId, { skip: !purchaseId || !open });
   const order = freshPurchase?.id === purchaseId ? freshPurchase : purchase;
   const [deleteItem] = useDeletePurchaseItemMutation();
-  const [updateDraftHeader, { isLoading: updatingStatus }] = useUpdatePurchaseDraftHeaderMutation();
 
   const {
     data: itemsData,
@@ -172,27 +167,6 @@ export const PurchaseDetailDrawer: React.FC<PurchaseDetailDrawerProps> = ({
 
   const items = itemsData?.data ?? [];
   const transactions = transactionsData?.data ?? [];
-
-  const handleStatusChange = async (newStatus: string) => {
-    try {
-      await updateDraftHeader({
-        purchaseId,
-        body: { status: newStatus },
-        ifMatch: getPurchaseEtag(order),
-      }).unwrap();
-      void message.success(`Purchase order status updated to ${newStatus.toUpperCase()}`);
-      void refetchItems();
-      void refetchTransactions();
-    } catch (err: unknown) {
-      const errorData = (err as { data?: { error?: { message?: string } } })?.data;
-      const errorMsg =
-        errorData?.error?.message ||
-        (typeof errorData === 'string'
-          ? errorData
-          : 'Failed to update order status');
-      void message.error(errorMsg);
-    }
-  };
 
   const statusLower = (order.status || '').toLowerCase();
   const statusHint = statusLower === 'draft' ? 'In preparation'
@@ -407,31 +381,6 @@ export const PurchaseDetailDrawer: React.FC<PurchaseDetailDrawerProps> = ({
             <StatusBadge tone={purchaseStatusTone(order.status)} label={order.status_label || purchaseStatusLabel(order.status)} />
             <span className={detailStyles.statusHint}>{statusHint}</span>
           </div>
-          <Dropdown
-            menu={{
-              items: [
-                { key: 'draft', label: 'Mark as Draft', disabled: statusLower === 'draft' },
-                { key: 'ordered', label: 'Mark as Ordered (PO Issued)', disabled: statusLower === 'ordered' },
-                { key: 'received', label: 'Mark as Received (Delivered)', disabled: statusLower === 'received' },
-                { type: 'divider' },
-                { key: 'cancelled', label: 'Cancel Order', danger: true, disabled: statusLower === 'cancelled' },
-              ],
-              onClick: ({ key }) => {
-                if (key === 'cancelled') {
-                  Modal.confirm({
-                    title: 'Cancel this purchase order?',
-                    content: 'Existing items and payment records will remain available.',
-                    okText: 'Cancel order',
-                    cancelText: 'Keep order',
-                    okButtonProps: { danger: true },
-                    onOk: () => handleStatusChange(key),
-                  });
-                } else void handleStatusChange(key);
-              },
-            }}
-          >
-            <Button type="text" size="small" loading={updatingStatus}>Update status <DownOutlined /></Button>
-          </Dropdown>
         </div>
         <PurchaseLifecycle status={order.status || ''} />
         <section className={detailStyles.moneyGrid} aria-label="Order financial summary">

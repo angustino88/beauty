@@ -36,12 +36,14 @@ function activityLabel(activity: TicketActivityRead) {
   return activity.event_type.label;
 }
 
+const UNASSIGN = 0;
+
 export default function SupportTicketDetail() {
   const { key } = useParams<{ key: string }>();
   const { isCoordinator, permissionGroups } = useAuthState();
   const canManage = isCoordinator || Boolean(permissionGroups['support-agent'] || permissionGroups['support_agent']);
   const [comment, setComment] = useState('');
-  const [assigneeId, setAssigneeId] = useState<number | null>();
+  const [assigneeId, setAssigneeId] = useState<number | undefined>();  // 0 = unassign (antd select values cannot be null)
   const [statusId, setStatusId] = useState<number>();
   const [reason, setReason] = useState('');
   const ticketArg = { key: key ?? '' };
@@ -75,7 +77,7 @@ export default function SupportTicketDetail() {
   const submitAssignment = async () => {
     if (!key || !ticket || assigneeId === undefined) return;
     try {
-      await assign({ key, ticketAssignRequest: { assignee_id: assigneeId, version: ticket.version } }).unwrap();
+      await assign({ key, ticketAssignRequest: { assignee_id: assigneeId === UNASSIGN ? null : assigneeId, version: ticket.version } }).unwrap();
       setAssigneeId(undefined);
       await refresh();
       void message.success('Assignment updated');
@@ -127,14 +129,14 @@ export default function SupportTicketDetail() {
           <Card title="Manage ticket">
             <Space direction="vertical" size="middle" style={{ width: '100%' }}>
               <Space wrap>
-                <Select<number | null>
+                <Select<number>
                   aria-label="Assign ticket"
                   style={{ minWidth: 240 }}
                   placeholder="Assign to user"
                   value={assigneeId}
                   onChange={setAssigneeId}
                   options={[
-                    { value: null, label: 'Unassign' },
+                    { value: UNASSIGN, label: 'Unassign' },
                     ...(ticket.assignee && !users?.data.some((user) => user.id === ticket.assignee?.id)
                       ? [{ value: ticket.assignee.id, label: ticket.assignee.name }]
                       : []),
