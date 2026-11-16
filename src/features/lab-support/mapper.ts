@@ -37,22 +37,22 @@ export function mapSupportTicket(rawItem: unknown): SupportTicket {
 
   // Normalize requester / reporter
   const reqRec = asRecord(item.requester || item.reporter || fields.reporter);
-  const requester: SupportUserRef | null = reqRec.id != null || reqRec.username != null || reqRec.name != null
+  const requester: SupportUserRef | null = reqRec.id != null || reqRec.username != null
     ? {
         id: reqRec.id != null ? asNumber(reqRec.id) : undefined,
-        username: asString(reqRec.username || reqRec.name),
-        displayName: asString(reqRec.display_name || reqRec.displayName || reqRec.displayname || reqRec.username || reqRec.name),
+        username: asString(reqRec.username),
+        displayName: asString(reqRec.display_name || reqRec.displayName || reqRec.displayname || reqRec.username),
         email: asString(reqRec.email || reqRec.emailAddress),
       }
     : null;
 
   // Normalize assignee
   const assRec = asRecord(item.assignee || fields.assignee);
-  const assignee: SupportUserRef | null = assRec.id != null || assRec.username != null || assRec.name != null
+  const assignee: SupportUserRef | null = assRec.id != null || assRec.username != null
     ? {
         id: assRec.id != null ? asNumber(assRec.id) : undefined,
-        username: asString(assRec.username || assRec.name),
-        displayName: asString(assRec.display_name || assRec.displayName || assRec.displayname || assRec.username || assRec.name),
+        username: asString(assRec.username),
+        displayName: asString(assRec.display_name || assRec.displayName || assRec.displayname || assRec.username),
         email: asString(assRec.email || assRec.emailAddress),
       }
     : null;

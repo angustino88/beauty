@@ -8,7 +8,6 @@ import type { SupportTicket, SupportUserRef } from '../types';
 
 const DATETIME_FORMAT = 'YYYY-MM-DD HH:mm:ss';
 dayjs.extend(relativeTime);
-const TypographyText = Typography.Text;
 
 const isObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
@@ -56,7 +55,7 @@ export function buildLabSupportColumns(): ColumnsType<SupportTicket> {
       render: (_, record) => (
         <div style={{ minWidth: 220 }}>
           <div style={{ fontWeight: 600, color: 'var(--lm-text)' }}>{record.subject ?? record.summary ?? record.fields?.summary ?? 'Untitled ticket'}</div>
-          {record.key && <TypographyText type="secondary">{record.key}</TypographyText>}
+          {record.key && <Typography.Text type="secondary">{record.key}</Typography.Text>}
         </div>
       ),
     },
