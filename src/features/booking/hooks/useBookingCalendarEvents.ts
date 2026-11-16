@@ -104,6 +104,7 @@ export function useBookingCalendarEvents() {
                 classNames: ['lm-event', isMine ? 'lm-event-mine' : 'lm-event-other'],
                 allDay: diffHours >= 23,
                 stick: true,
+                booking,
               },
             ];
           });

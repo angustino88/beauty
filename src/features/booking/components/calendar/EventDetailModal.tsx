@@ -11,26 +11,34 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useLazyGetBenchBookingByIdQuery } from '../../api';
 import { useAuthState } from '@/features/auth/hooks/useAuthState';
 import { BenchBookingEdit } from '../BenchBookingEdit';
+import type { BenchBookingItem } from '../../types';
 
 interface EventDetailModalProps {
   eventId?: string | number;
   refetchBooking?: () => void;
+  /**
+   * The booking as the calendar list returned it. Other people's bookings are readable only through that list
+   * (the detail endpoint is creator-only), so it is shown without a second request.
+   */
+  listedBooking?: BenchBookingItem;
 }
 
 export const EventDetailModal: React.FC<EventDetailModalProps> = ({
   eventId,
   refetchBooking,
+  listedBooking,
 }) => {
   const { token } = theme.useToken();
   const { id: myUserId, username, permissionGroups } = useAuthState();
-  const [fetchBooking, { data: booking, isFetching }] = useLazyGetBenchBookingByIdQuery();
+  const [fetchBooking, { data: fetchedBooking, isFetching }] = useLazyGetBenchBookingByIdQuery();
+  const booking = listedBooking ?? fetchedBooking;
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
 
   useEffect(() => {
-    if (eventId) {
+    if (eventId && !listedBooking) {
       void fetchBooking(eventId);
     }
-  }, [eventId, fetchBooking]);
+  }, [eventId, listedBooking, fetchBooking]);
 
   const hasPermission = useMemo(
     () =>
@@ -87,7 +95,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
             </div>
             <Space direction="vertical" style={{ padding: '0px 10px 6px' }}>
               <Typography.Text italic style={{ color: 'var(--lm-text-secondary)', fontSize: '12px' }}>
-                <LockOutlined /> {hasPermission ? booking.booking_code : '••••••••••'}
+                <LockOutlined /> {hasPermission && booking.booking_code ? booking.booking_code : '••••••••••'}
               </Typography.Text>
               <Typography.Text style={{ color: 'var(--lm-text-secondary)', fontSize: '12px' }}>
                 <ClockCircleOutlined /> {formatBookingDuration()}

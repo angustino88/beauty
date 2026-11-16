@@ -10,6 +10,7 @@ import dayjs, { type Dayjs } from 'dayjs';
 import { Popover } from 'antd';
 import { EventDetailModal } from './EventDetailModal';
 import { DATE_FORMAT } from '@/shared/utils/booking';
+import type { BenchBookingItem } from '../../types';
 
 type CalendarEventContentProps = {
   arg: EventContentArg;
@@ -99,6 +100,7 @@ const CalendarEventContent = ({ arg, refetchBooking }: CalendarEventContentProps
         <EventDetailModal
           refetchBooking={refetchBooking}
           eventId={event.id}
+          listedBooking={event.extendedProps?.booking as BenchBookingItem | undefined}
         />
       )}
       placement="right"
