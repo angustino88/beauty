@@ -1,4 +1,5 @@
 import { useLabsBenchTypesOptionsRetrieveQuery, useLabsStationsOptionsRetrieveQuery, useLabsStationsSlotsRetrieveByStationIdQuery } from "@/shared/api/generated/api";
+import { WorkbookImportButton } from "@/features/data-import";
 import { useGetUsersQuery } from "@/features/lab-equipment/shared";
 import { useCallback, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
@@ -117,6 +118,7 @@ export default function BenchPage() {
   return (
     <>
       <EquipmentPageLayout<IBench>
+        extraControls={<WorkbookImportButton />}
         professionalTable
         spaceKind="bench"
         title="Benches"
