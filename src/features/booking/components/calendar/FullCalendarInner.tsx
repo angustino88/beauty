@@ -19,6 +19,9 @@ type CalendarEventContentProps = {
 const CalendarEventContent = ({ arg, refetchBooking }: CalendarEventContentProps) => {
   const { timeText, event, view } = arg;
   const creator = event.extendedProps?.creator as string | undefined;
+  // The event title is the bench; the project and reason stay one hover away.
+  const projectTitle = event.extendedProps?.projectTitle as string | undefined;
+  const hoverTitle = projectTitle ? `${event.title} · ${projectTitle}` : event.title;
   const isMonthView = view.type === 'dayGridMonth';
   const isListView = view.type.startsWith('list');
   const durationMinutes = event.start && event.end
@@ -44,14 +47,14 @@ const CalendarEventContent = ({ arg, refetchBooking }: CalendarEventContentProps
       )}
     </div>
   ) : isCompactEvent ? (
-    <div className={styles.compactTimeGridEvent} title={`${timeText} ${event.title}`}>
+    <div className={styles.compactTimeGridEvent} title={`${timeText} ${hoverTitle}`}>
       {compactTimeText && <span className={styles.compactEventTime}>{compactTimeText}</span>}
       <span className={styles.compactEventTitle}>{event.title}</span>
     </div>
   ) : (
     <div className={styles.timeGridEvent}>
       {timeText && <span className={styles.timeGridEventTime}>{timeText}</span>}
-      <span className={styles.timeGridEventTitle} title={event.title}>{event.title}</span>
+      <span className={styles.timeGridEventTitle} title={hoverTitle}>{event.title}</span>
       {creator && showCreator && (
         <span className={styles.timeGridEventCreator} title={creator}>
           <span aria-hidden="true">{creator.charAt(0).toUpperCase()}</span>

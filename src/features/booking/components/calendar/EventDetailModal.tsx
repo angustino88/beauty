@@ -51,8 +51,8 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
 
   const projectName = booking?.project?.name || 'Unknown project';
   const reason = booking?.reason || '';
-  const benchName = booking?.bench?.name || 'Unknown Bench';
-  const computerName = booking?.computer?.computer_name || booking?.bench?.uid;
+  const benchName = booking?.bench?.sku || booking?.bench?.name || 'Unknown Bench';
+  const computerName = booking?.computer?.computer_name;
 
   return (
     <>

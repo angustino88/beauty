@@ -63,7 +63,7 @@ export default function LicensePage() {
       { name: 'license_product', label: 'Product', type: 'select', required: true, options: table.productOptions },
       { name: 'license_vendor', label: 'Vendor', type: 'select', required: true, options: table.vendorOptions },
       { name: 'maximum_version', label: 'Maximum Version', type: 'text' },
-      { name: 'license_ID', label: 'License key (write-only)', type: 'text' },
+      { name: 'license_ID', label: 'License Key (write-only)', type: 'text', help: 'Write-only: stored securely and never shown again. Leave empty to keep the current key; type a new one to replace it.' },
       { name: 'license_category', label: 'License Category', type: 'select', required: true, options: table.categoryOptions },
       { name: 'license_type', label: 'License Type', type: 'select', required: true, options: table.typeOptions },
       {
@@ -81,7 +81,8 @@ export default function LicensePage() {
         type: 'multi-select',
         options: equipmentSearch.options,
         onSearch: equipmentSearch.onSearch,
-        placeholder: 'Type to search equipment',
+        placeholder: 'Type a SKU or name to search equipment',
+        searchHint: 'Type a SKU or name to find equipment (the catalog is too large to list).',
         help: 'Optional. A license can be assigned to as many equipment items as it has seats.',
       },
       { name: 'remark', label: 'Remark', type: 'textarea' },

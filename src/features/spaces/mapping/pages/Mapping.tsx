@@ -177,7 +177,7 @@ export default function MappingPage() {
               }}
             >
               <Button icon={<DownloadOutlined />} loading={exporter.exportMappingLoading || exporter.exportAuditLoading}>
-                Export
+                Export reports
               </Button>
             </Dropdown>
           </div>

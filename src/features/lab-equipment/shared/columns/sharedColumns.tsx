@@ -161,10 +161,13 @@ export function renderInfoCell(record: unknown) {
 }
 
 /** Renders primary owner with tooltip */
-export function renderOwnerCell(owner: IPrimaryOwner | null | undefined) {
+export function renderOwnerCell(owner: (Partial<IPrimaryOwner> & { name?: string | null }) | null | undefined) {
   if (!owner) return '—';
+  // The API names an owner `{ id, name }`; older payloads carry `username` / `display_name`.
+  const label = owner.username || owner.display_name || owner.name;
+  if (!label) return '—';
   return (
-    <Tooltip title={owner.display_name}>
+    <Tooltip title={owner.display_name || owner.name || owner.username}>
     <Tag
       style={{
         color: 'var(--lm-text-secondary)',
@@ -174,7 +177,7 @@ export function renderOwnerCell(owner: IPrimaryOwner | null | undefined) {
         fontWeight: 500,
       }}
     >
-      <PersonIcon />{owner.username}
+      <PersonIcon />{label}
     </Tag>
     </Tooltip>
   );

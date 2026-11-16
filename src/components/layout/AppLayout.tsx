@@ -1,6 +1,6 @@
 import { Layout } from "antd";
 import { createStyles } from "antd-style";
-import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Outlet } from "react-router-dom";
 import AppHeader from "./AppHeader";
 import AppSideNav from "./AppSideNav";
@@ -39,8 +39,17 @@ export function AppLayout() {
   const [createLabVisit] = useLabsAnalyticsLabVisitsCreateMutation();
   useNotificationsWebSocket();
 
+  // React StrictMode runs effects twice in development; the ref keeps it to one visit per login.
+  const visitLoggedRef = useRef(false);
+
   useEffect(() => {
-    if (isLoggedIn) void createLabVisit({ labVisitLogCreate: {} }).unwrap()
+    if (!isLoggedIn) {
+      visitLoggedRef.current = false;
+      return;
+    }
+    if (visitLoggedRef.current) return;
+    visitLoggedRef.current = true;
+    void createLabVisit({ labVisitLogCreate: {} }).unwrap()
       .then(() => dispatch(baseApi.util.invalidateTags(['Analytics'])))
       .catch(() => { /* Visit tracking is best-effort; leave analytics cache unchanged on failure. */ });
   }, [isLoggedIn, createLabVisit, dispatch]);

@@ -13,7 +13,7 @@ type BookingFilterProps = {
 
 export const BookingFilter: React.FC<BookingFilterProps> = ({ form, name = 'bench_ids', onFinish }) => {
   const { data: benchChoices, isFetching } = useGetBookingBenchChoicesQuery();
-  const benchOptions = useMemo(() => (benchChoices ?? []).map(toBenchChoiceOption), [benchChoices]);
+  const benchOptions = useMemo(() => (benchChoices ?? []).map((bench) => toBenchChoiceOption(bench)), [benchChoices]);
   const submitTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -44,7 +44,6 @@ export const BookingFilter: React.FC<BookingFilterProps> = ({ form, name = 'benc
           notFoundContent={isFetching ? <Spin size="small" /> : 'No benches found'}
           optionLabelProp="selectedLabel"
           filterOption={filterResourceOption}
-          listItemHeight={52}
           onChange={() => {
             if (submitTimeoutRef.current) clearTimeout(submitTimeoutRef.current);
             submitTimeoutRef.current = setTimeout(() => form.submit(), 300);
