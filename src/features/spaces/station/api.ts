@@ -191,7 +191,11 @@ export const stationApi = baseApi.injectEndpoints({
         return {
           data: {
             rooms: Array.isArray(list)
-              ? list.map((item) => ({ id: (item.id as number) ?? 0, name: String(item.name || item.sku || item.id) }))
+              ? list.map((item) => ({
+                  id: (item.id as number) ?? 0,
+                  sku: item.sku == null ? null : String(item.sku),
+                  name: String(item.name || item.sku || item.id),
+                }))
               : [],
             departments: [],
             groups: [],

@@ -1,7 +1,9 @@
 import { SearchOutlined } from '@ant-design/icons';
 import { Form, type FormInstance, Select, Spin } from 'antd';
-import { useEffect, useRef } from 'react';
-import { useGetBenchOptionsQuery } from '../api';
+import { useEffect, useMemo, useRef } from 'react';
+import { filterResourceOption } from '@/components/inputs/ResourceOption';
+import { useGetBookingBenchChoicesQuery } from '../api';
+import { toBenchChoiceOption } from '../utils/benchChoiceOption';
 
 type BookingFilterProps = {
   form: FormInstance;
@@ -10,7 +12,8 @@ type BookingFilterProps = {
 };
 
 export const BookingFilter: React.FC<BookingFilterProps> = ({ form, name = 'bench_ids', onFinish }) => {
-  const { data: benchOptions = [], isFetching } = useGetBenchOptionsQuery();
+  const { data: benchChoices, isFetching } = useGetBookingBenchChoicesQuery();
+  const benchOptions = useMemo(() => (benchChoices ?? []).map(toBenchChoiceOption), [benchChoices]);
   const submitTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -34,12 +37,14 @@ export const BookingFilter: React.FC<BookingFilterProps> = ({ form, name = 'benc
           showSearch
           allowClear
           maxTagCount="responsive"
-          placeholder="Search and select one or more benches"
+          placeholder="Search benches by SKU, name or computer"
           prefix={<SearchOutlined style={{ color: 'var(--lm-text-tertiary)', marginRight: 4 }} />}
           options={benchOptions}
           maxTagPlaceholder={(omitted) => `+${omitted.length} benches`}
           notFoundContent={isFetching ? <Spin size="small" /> : 'No benches found'}
-          optionFilterProp="label"
+          optionLabelProp="selectedLabel"
+          filterOption={filterResourceOption}
+          listItemHeight={52}
           onChange={() => {
             if (submitTimeoutRef.current) clearTimeout(submitTimeoutRef.current);
             submitTimeoutRef.current = setTimeout(() => form.submit(), 300);

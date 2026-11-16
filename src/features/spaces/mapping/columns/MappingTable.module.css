@@ -1,32 +1,189 @@
-.asset {
-  --asset-accent: var(--lm-border-strong);
-  --asset-soft: var(--lm-surface-subtle);
+.page {
   display: flex;
-  align-items: center;
-  width: 100%;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pageIntro {
+  margin: -8px 0 0;
+  color: var(--lm-text-secondary);
+  font-size: 13px;
+}
+
+/* ─── Summary: totals of the filtered set; the state cards filter the table ─── */
+.kpis {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.3fr) repeat(3, minmax(170px, 1fr));
+  gap: 12px;
+}
+
+@media (max-width: 1100px) {
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 560px) {
+  .kpis { grid-template-columns: minmax(0, 1fr); }
+}
+
+.kpiTotal,
+.kpiCard {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   min-width: 0;
-  min-height: 42px;
-  padding: 6px 8px;
+  padding: 14px 16px;
   border: 1px solid var(--lm-border);
-  border-left: 3px solid var(--asset-accent);
-  border-radius: 5px;
-  color: inherit;
+  border-radius: 10px;
   background: var(--lm-surface);
-  text-decoration: none;
-  transition: border-color 140ms ease, background-color 140ms ease;
+  text-align: left;
 }
 
-.asset:hover {
-  border-color: var(--lm-primary-border);
-  background: var(--asset-soft);
+.kpiTotal strong,
+.kpiCard strong {
+  color: var(--lm-text);
+  font-size: 26px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
 }
 
-.asset:focus-visible {
+.kpiLabel {
+  color: var(--lm-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.kpiHint {
+  overflow: hidden;
+  color: var(--lm-text-tertiary);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kpiBar {
+  height: 4px;
+  margin-top: 4px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--lm-surface-muted);
+}
+
+.kpiBar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--lm-success-solid);
+  transition: width 200ms ease;
+}
+
+.kpiCard {
+  cursor: pointer;
+  font: inherit;
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.kpiCard:hover {
+  border-color: var(--lm-border-strong);
+}
+
+.kpiCard:focus-visible {
   outline: 2px solid var(--lm-primary);
   outline-offset: 2px;
 }
 
-/* Entity type is conveyed by the icon; colour is reserved for status. */
+.kpiCard[aria-pressed="true"] {
+  border-color: var(--state-color);
+  box-shadow: inset 0 0 0 1px var(--state-color);
+}
+
+.kpiCard[data-state="fully_mapped"] { --state-color: var(--lm-success-solid); }
+.kpiCard[data-state="needs_equipment"] { --state-color: var(--lm-warning-solid); }
+.kpiCard[data-state="needs_placement"] { --state-color: var(--lm-danger-solid); }
+
+/* ─── State tag: one colour per mapping state ─── */
+.stateTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  padding: 1px 8px;
+  border: 1px solid var(--state-border);
+  border-radius: 999px;
+  color: var(--state-fg);
+  background: var(--state-bg);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.stateTag[data-state="fully_mapped"] {
+  --state-fg: var(--lm-success-fg);
+  --state-bg: var(--lm-success-bg);
+  --state-border: var(--lm-success-border);
+}
+
+.stateTag[data-state="needs_equipment"] {
+  --state-fg: var(--lm-warning-fg);
+  --state-bg: var(--lm-warning-bg);
+  --state-border: var(--lm-warning-border);
+}
+
+.stateTag[data-state="needs_placement"] {
+  --state-fg: var(--lm-danger-fg);
+  --state-bg: var(--lm-danger-bg);
+  --state-border: var(--lm-danger-border);
+}
+
+/* ─── Toolbar ─── */
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-bottom: 12px;
+}
+
+.search {
+  flex: 1 1 320px;
+  min-width: 240px;
+  max-width: 520px;
+}
+
+.toolbarActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.error {
+  margin-bottom: 12px;
+}
+
+/* ─── Cells ─── */
+.asset {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  max-width: 100%;
+  padding: 2px 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+.asset:hover .assetSku {
+  color: var(--lm-primary-fg);
+  text-decoration: underline;
+}
+
+.asset:focus-visible {
+  border-radius: 4px;
+  outline: 2px solid var(--lm-primary);
+  outline-offset: 2px;
+}
 
 .assetIcon {
   display: inline-flex;
@@ -35,7 +192,6 @@
   justify-content: center;
   width: 26px;
   height: 26px;
-  margin-right: 8px;
   border-radius: 6px;
   color: var(--lm-text-secondary);
   background: var(--lm-surface-muted);
@@ -46,239 +202,93 @@
   display: flex;
   min-width: 0;
   flex-direction: column;
-  line-height: 1.25;
+  line-height: 1.3;
 }
 
-.assetText strong,
-.assetText span {
+.assetText > * {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.assetText strong {
+.assetSku {
   color: var(--lm-text);
-  font-size: 12px;
+  font-family: var(--lm-font-mono);
+  font-size: 12.5px;
   font-weight: 600;
 }
 
-.assetText span {
-  margin-top: 2px;
+.assetText > span {
   color: var(--lm-text-secondary);
-  font-size: 11px;
+  font-size: 12px;
 }
 
-.assetList {
-  width: 100%;
-}
-
-.assetList :global(.ant-space-item) {
-  width: 100%;
+.assetText > .assetMeta {
+  color: var(--lm-text-tertiary);
+  font-size: 11.5px;
 }
 
 .emptyMapping {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
   color: var(--lm-text-tertiary);
   font-size: 12px;
 }
 
-.emptyMapping::before {
-  width: 6px;
-  height: 6px;
-  border: 1px solid var(--lm-border-strong);
-  border-radius: 50%;
-  content: "";
-}
-
-.mappingSummary {
-  margin: 8px 0 14px;
-  border: 1px solid var(--lm-border);
-  border-radius: 12px;
-  background: linear-gradient(135deg, var(--lm-surface) 0%, var(--lm-surface-subtle) 100%);
-  box-shadow: 0 4px 16px rgba(25, 51, 42, 0.06);
-}
-
-.mappingSummary :global(.ant-card-body) {
-  padding: 18px 20px 16px;
-}
-
-.summaryHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.summaryEyebrow {
-  color: var(--lm-text-tertiary);
-  font-size: 11px;
-  font-weight: 750;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-}
-
-.summaryTitle {
-  margin: 2px 0 0 !important;
-  color: var(--lm-text) !important;
-  font-size: 19px !important;
-}
-
-.summaryTotal {
-  display: flex;
-  min-width: 112px;
-  flex-direction: column;
-  align-items: flex-end;
-}
-
-.summaryTotal strong {
-  color: var(--lm-text);
-  font-size: 26px;
-  font-variant-numeric: tabular-nums;
-  line-height: 1;
-}
-
-.summaryTotal span {
-  margin-top: 4px;
-  color: var(--lm-text-secondary);
-  font-size: 11px;
-}
-
-.summaryProgress {
-  margin: 14px 0 13px;
-}
-
-.summaryProgress :global(.ant-progress-inner),
-.summaryProgress :global(.ant-progress-bg) {
-  height: 7px !important;
-  border-radius: 999px;
-}
-
-.summaryMetrics {
-  margin-top: 0 !important;
-}
-
-.summaryMetric {
-  position: relative;
-  display: grid;
-  min-height: 82px;
-  grid-template-columns: 30px minmax(0, 1fr);
-  align-content: center;
-  align-items: center;
-  column-gap: 9px;
-  padding: 12px;
-  border: 1px solid var(--lm-border);
-  border-left: 3px solid var(--metric-color);
-  border-radius: 9px;
-  background: var(--lm-surface);
-}
-
-.metricComplete { --metric-color: var(--lm-success-solid); }
-.metricPartial { --metric-color: var(--lm-warning-solid); }
-.metricUnplaced { --metric-color: var(--lm-danger-solid); }
-.metricAssets { --metric-color: var(--lm-neutral-solid); }
-
-.metricIcon {
-  display: grid;
-  width: 28px;
-  height: 28px;
-  place-items: center;
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--metric-color) 14%, var(--lm-surface));
-  color: var(--metric-color);
-  font-size: 14px;
-}
-
-.metricText {
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-}
-
-.metricText strong {
-  color: var(--lm-text);
-  font-size: 21px;
-  font-variant-numeric: tabular-nums;
-  line-height: 1.05;
-}
-
-.metricText small {
-  margin-top: 3px;
-  color: var(--lm-text);
-  font-size: 11px;
-  font-weight: 700;
-}
-
-.metricHint {
-  grid-column: 1 / -1;
-  margin-top: 8px;
-  overflow: hidden;
-  color: var(--lm-text-tertiary);
-  font-size: 10px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-@media (max-width: 575px) {
-  .mappingSummary :global(.ant-card-body) {
-    padding: 14px;
-  }
-
-  .summaryTitle {
-    font-size: 17px !important;
-  }
-
-  .summaryMetric {
-    min-height: 76px;
-    padding: 9px;
-  }
-}
-
 .mappingStatus {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  color: var(--lm-success-fg);
-}
-
-.mappingStatus > span {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  line-height: 1.1;
-}
-
-.mappingStatus strong {
-  color: var(--lm-text);
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.mappingStatus small {
-  color: var(--lm-text-secondary);
-  font-size: 10px;
-}
-
-.mappingStatusDetails {
-  display: flex;
-  min-width: 125px;
-  flex-direction: column;
-  align-items: flex-start;
   gap: 4px;
 }
 
-.mappingSupplemental {
-  display: block;
-  max-width: 190px;
-  overflow: hidden;
-  color: var(--lm-text-secondary);
-  font-size: 10px;
-  line-height: 1.35;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.mappingStatus small {
+  color: var(--lm-text-tertiary);
+  font-size: 11.5px;
 }
 
+.categoryChips {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  cursor: default;
+}
+
+.categoryChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 6px;
+  border: 1px solid var(--lm-border);
+  border-radius: 6px;
+  color: var(--lm-text-secondary);
+  background: var(--lm-surface-subtle);
+  font-size: 12px;
+}
+
+.categoryChip strong {
+  color: var(--lm-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.chipIcon {
+  display: inline-flex;
+  font-size: 12px;
+}
+
+.licenseTag {
+  margin-inline-end: 0;
+  font-family: var(--lm-font-mono);
+  font-size: 11.5px;
+}
+
+.popoverList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 360px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+/* ─── Table ─── */
 .mappingTable :global(.ant-table-container) {
   border: 1px solid var(--lm-border-strong);
   border-radius: 6px;

@@ -20,6 +20,27 @@ test('maps the import report from the wire shape', () => {
   assert.equal(report.summary.errorCount, 1);
   assert.deepEqual(report.sheets[0].ignoredColumns, ['X']);
   assert.equal(report.problems[1].severity, 'warning');
+  // A server without the update mode: create mode, nothing updated.
+  assert.equal(report.mode, 'create');
+  assert.equal(report.summary.updated, 0);
+  assert.equal(report.sheets[0].updated, 0);
+});
+
+test('maps the update mode and updated counts', () => {
+  const report = mapImportReport({
+    is_dry_run: true,
+    is_valid: true,
+    template_version: '2.0',
+    mode: { value: 'upsert', label: 'Update existing' },
+    summary: { created: 1, updated: 2, existing: 3, error_count: 0, warning_count: 0 },
+    sheets: [{ key: 'rooms', name: 'Rooms', rows: 6, created: 1, updated: 2, existing: 3, failed: 0, ignored_columns: [] }],
+    problems: [],
+    unknown_sheets: [],
+  });
+
+  assert.equal(report.mode, 'upsert');
+  assert.equal(report.summary.updated, 2);
+  assert.equal(report.sheets[0].updated, 2);
 });
 
 test('parses the 422 detail field path Sheet[row].Column', () => {

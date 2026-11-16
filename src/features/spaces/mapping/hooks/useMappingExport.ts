@@ -7,64 +7,44 @@ import {
   useLazyGetBenchAuditPageQuery,
   type BenchAuditRow,
 } from "../api";
-import type { TableFilters } from "../types";
-import { matchesMappingSearch } from "./useMappingTable";
+import type { ResourceMappingParams, ResourceMappingRow } from "../types";
 import { mappingExportColumns } from "../utils/mappingExportConfig";
 
-interface UseMappingExportParams {
-  search: string;
-  filters: TableFilters;
-}
+const EXPORT_PAGE_SIZE = 100;
+const MAX_EXPORT_PAGES = 100;
 
-export function useMappingExport({ search, filters }: UseMappingExportParams) {
+/** Exports what the table shows (same search and filters), every page, not only the visible one. */
+export function useMappingExport(params: ResourceMappingParams) {
   const [exportMappingLoading, setExportMappingLoading] = useState(false);
-  const [exportChangeLogLoading, setExportChangeLogLoading] = useState(false);
+  const [exportAuditLoading, setExportAuditLoading] = useState(false);
 
-  const [fetchAllMappings] = useLazyGetMappingsQuery();
+  const [fetchMappings] = useLazyGetMappingsQuery();
   const [fetchAuditPage] = useLazyGetBenchAuditPageQuery();
-
-  const filename = `Resource_Mapping_${dayjs().format("YYYY-MM-DD")}`;
 
   const handleExportMapping = async () => {
     setExportMappingLoading(true);
     try {
-      const normalizedSearch = search.trim().toLowerCase();
-      const result = await fetchAllMappings({
-        station_id: filters.station?.[0] ? String(filters.station[0]) : undefined,
-        bench_id: filters.bench?.[0] ? String(filters.bench[0]) : undefined,
-      }).unwrap();
-
-      let rows = result.data ?? [];
-      if (filters.room?.[0]) {
-        const roomId = Number(filters.room[0]);
-        rows = rows.filter((r) => r.room?.id === roomId);
+      const rows: ResourceMappingRow[] = [];
+      for (let page = 1; page <= MAX_EXPORT_PAGES; page += 1) {
+        const result = await fetchMappings({ ...params, page, page_size: EXPORT_PAGE_SIZE }).unwrap();
+        rows.push(...result.data);
+        if (rows.length >= result.total_count || result.data.length === 0) break;
       }
-      if (filters.category?.[0]) {
-        const cat = String(filters.category[0]).toLowerCase();
-        rows = rows.filter((r) =>
-          r.equipment.some((eq) => eq.category.name.toLowerCase().includes(cat)),
-        );
-      }
-
-      if (normalizedSearch) {
-        rows = rows.filter((row) => matchesMappingSearch(row, normalizedSearch));
-      }
-
       await exportRowsToExcel(
         rows,
         mappingExportColumns,
-        filename,
+        `Resource_Mapping_${dayjs().format("YYYY-MM-DD")}`,
         "Resource Mapping",
       );
     } catch {
-      void message.error("Failed to export mapping");
+      void message.error("Failed to export the mapping");
     } finally {
       setExportMappingLoading(false);
     }
   };
 
-  const handleExportChangeLog = async () => {
-    setExportChangeLogLoading(true);
+  const handleExportAudits = async () => {
+    setExportAuditLoading(true);
     try {
       // Page through the bench audit history (100 per page, capped at 50 pages).
       const rows: BenchAuditRow[] = [];
@@ -83,20 +63,20 @@ export function useMappingExport({ search, filters }: UseMappingExportParams) {
           { title: "Audited at", dataIndex: "audited_at" },
           { title: "Remarks", dataIndex: "remarks" },
         ],
-        `Mapping_ChangeLog_${dayjs().format("YYYY-MM-DD")}`,
+        `Bench_Audits_${dayjs().format("YYYY-MM-DD")}`,
         "Bench audits",
       );
     } catch {
-      void message.error("Failed to export change log");
+      void message.error("Failed to export the bench audits");
     } finally {
-      setExportChangeLogLoading(false);
+      setExportAuditLoading(false);
     }
   };
 
   return {
     exportMappingLoading,
-    exportChangeLogLoading,
+    exportAuditLoading,
     handleExportMapping,
-    handleExportChangeLog,
+    handleExportAudits,
   };
 }

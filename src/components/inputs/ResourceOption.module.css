@@ -1,0 +1,38 @@
+.option {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 2px 0;
+  line-height: 1.3;
+}
+
+.primaryLine {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.primary {
+  font-family: var(--lm-font-mono);
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.secondary,
+.detail {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.secondary {
+  color: var(--lm-text-secondary);
+  font-size: 12.5px;
+}
+
+.detail {
+  color: var(--lm-text-tertiary);
+  font-size: 12px;
+}

@@ -1,10 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {
-  mapResourceMappingDataToRows,
-  mapBenchToMappingRow,
-  mapResourceMappingListResponse,
-} from "./mapper.ts";
+import { mapBenchMappingList, mapResourceMappingDataToRows } from "./mapper.ts";
 
 test("mapResourceMappingDataToRows maps OpenAPI ResourceMappingData graph into ResourceMappingRow hierarchy", () => {
   const backendData = {
@@ -129,11 +125,6 @@ test("mapResourceMappingDataToRows maps OpenAPI ResourceMappingData graph into R
   assert.ok(b101);
   assert.equal(b101.bench.sku, "BN-001");
   assert.equal(b101.bench.name, "Bench #1");
-  assert.equal(b101.bench.status, "Active");
-  assert.equal(b101.bench.remark, "Active test bench");
-  assert.equal(b101.bench.criticality, "high");
-  assert.equal(b101.bench.requested_power_w, 850);
-  assert.deepEqual(b101.bench.required_utilities, ["power", "network"]);
 
   // Station & Slot
   assert.ok(b101.station);
@@ -162,6 +153,7 @@ test("mapResourceMappingDataToRows maps OpenAPI ResourceMappingData graph into R
   assert.equal(b101.licenses[0].equipment_id, 201);
 
   // Status
+  assert.equal(b101.status.state, "fully_mapped");
   assert.equal(b101.status.is_fully_mapped, true);
   assert.equal(b101.status.has_station, true);
   assert.equal(b101.status.has_room, true);
@@ -176,99 +168,62 @@ test("mapResourceMappingDataToRows maps OpenAPI ResourceMappingData graph into R
   assert.equal(b102.room, null);
   assert.equal(b102.room_slot, null);
   assert.equal(b102.equipment.length, 0);
+  assert.equal(b102.status.state, "needs_placement");
   assert.equal(b102.status.is_fully_mapped, false);
 });
 
-test("mapBenchToMappingRow maps a single bench record with nested station and equipment", () => {
-  const benchPayload = {
-    id: 88,
-    sku: "BN-088",
-    name: "Oscilloscope Station Bench",
-    setup_location_id: 12,
-    station: {
-      id: 12,
-      sku: "ST-012",
-      name: "RF Station",
-      room_id: 3,
+test("mapResourceMappingDataToRows keeps the server bench order and orders units by position", () => {
+  const rows = mapResourceMappingDataToRows({
+    data: {
+      benches: [
+        { id: 9, sku: "BN-B", name: "B" },
+        { id: 3, sku: "BN-A", name: "A" },
+      ],
+      equipment: [
+        { id: 2, sku: "Z", name: "z", category: { id: 1, name: "Display" }, bench_id: 9, bench_assignment: { position: 2 } },
+        { id: 1, sku: "Y", name: "y", category: null, bench_id: 9, bench_assignment: { position: 1 } },
+      ],
     },
-    station_slot: {
-      id: 55,
-      slot_code: "SLOT-B",
-    },
-    room: {
-      id: 3,
-      sku: "RM-003",
-      name: "Anechoic Chamber",
-      location: "Basement Lab",
-    },
-    equipment: [
-      {
-        id: 901,
-        sku: "OSC-01",
-        name: "Keysight DSO",
-        category: { id: 7, name: "Instrument" },
-        role: "analyzer",
-        display_status: { value: "maintenance", label: "Maintenance" },
-      },
-    ],
-    licenses: [
-      {
-        id: 401,
-        sku: "LIC-KEYSIGHT",
-        name: "Infiniium App",
-        equipment_id: 901,
-      },
-    ],
-  };
+  });
 
-  const row = mapBenchToMappingRow(benchPayload);
-  assert.equal(row.id, 88);
-  assert.equal(row.bench.name, "Oscilloscope Station Bench");
-  assert.equal(row.station?.sku, "ST-012");
-  assert.equal(row.station_slot?.slot_code, "SLOT-B");
-  assert.equal(row.room?.sku, "RM-003");
-  assert.equal(row.equipment.length, 1);
-  assert.equal(row.equipment[0].role, "analyzer");
-  assert.deepEqual(row.equipment[0].display_status, { value: "maintenance", label: "Maintenance" });
-  assert.equal(row.licenses.length, 1);
-  assert.equal(row.status.is_fully_mapped, true);
+  assert.deepEqual(rows.map((row) => row.bench.sku), ["BN-B", "BN-A"]);
+  assert.deepEqual(rows[0].equipment.map((item) => item.sku), ["Y", "Z"]);
+  assert.equal(rows[0].equipment[0].category.name, "Uncategorized");
+  // A bench with units but no room still needs placement.
+  assert.equal(rows[0].status.state, "needs_placement");
 });
 
-test("mapResourceMappingListResponse handles pagination meta count", () => {
-  const payload = {
+test("mapBenchMappingList reads the page rows, the filtered count and the summary", () => {
+  const response = mapBenchMappingList({
     data: {
-      benches: [{ id: 5, sku: "BN-5", name: "Bench 5" }],
-      rooms: [],
-      room_slots: [],
-      stations: [],
-      station_slots: [],
+      rooms: [{ id: 1, sku: "RM-1", name: "Room" }],
+      stations: [{ id: 2, sku: "ST-1", name: "Station", room_id: 1 }],
+      benches: [{ id: 3, sku: "BN-1", name: "Bench", setup_location_id: 2 }],
       equipment: [],
       licenses: [],
       license_assignments: [],
     },
     meta: {
-      pagination: {
-        count: 42,
-        page: 1,
-        page_size: 10,
-      },
+      pagination: { count: 42, page: 2, page_size: 1, next: null, previous: null },
+      summary: { benches: 50, fully_mapped: 30, needs_equipment: 12, needs_placement: 8, equipment: 77 },
     },
-  };
+  });
 
-  const response = mapResourceMappingListResponse(payload);
   assert.equal(response.total_count, 42);
   assert.equal(response.data.length, 1);
-  assert.equal(response.data[0].bench.sku, "BN-5");
+  assert.equal(response.data[0].status.state, "needs_equipment");
+  assert.deepEqual(response.summary, {
+    benches: 50,
+    fully_mapped: 30,
+    needs_equipment: 12,
+    needs_placement: 8,
+    equipment: 77,
+  });
 });
 
-test("mapBenchToMappingRow renders utility and criticality references as text, never [object Object]", () => {
-  const row = mapBenchToMappingRow({
-    id: 1,
-    sku: "BENCH-01",
-    name: "BENCH-01",
-    criticality: { id: 2, name: "High" },
-    required_utilities: [{ id: 1, name: "Compressed air" }, "230 V"],
-  });
-  assert.equal(row.bench.criticality, "High");
-  assert.deepEqual(row.bench.required_utilities, ["Compressed air", "230 V"]);
+test("mapBenchMappingList tolerates a missing summary", () => {
+  const response = mapBenchMappingList({ data: { benches: [] }, meta: {} });
+
+  assert.equal(response.total_count, 0);
+  assert.equal(response.summary.benches, 0);
 });

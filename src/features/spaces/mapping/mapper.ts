@@ -1,31 +1,25 @@
-import { refLabel } from "../../../shared/utils/refLabel.ts";
 import type {
   MappingBenchRef,
-  MappingEquipmentCategory,
   MappingEquipmentItem,
   MappingLicenseItem,
   MappingRoomRef,
   MappingRoomSlotRef,
+  MappingState,
   MappingStationRef,
   MappingStationSlotRef,
+  MappingSummary,
   ResourceMappingListResponse,
   ResourceMappingRow,
-  ResourceMappingStatus,
 } from "./types";
 
 interface RawRecord {
   [key: string]: unknown;
 }
 
-
-/** Utilities arrive as strings or reference objects ({ id, name }); never stringify an object. */
-const mapUtilities = (raw: unknown): string[] | string | null => {
-  if (Array.isArray(raw)) return raw.map(refLabel).filter(Boolean);
-  return refLabel(raw) || null;
-};
-
 const asRecord = (v: unknown): RawRecord =>
   v && typeof v === "object" && !Array.isArray(v) ? (v as RawRecord) : {};
+
+const asList = (v: unknown): RawRecord[] => (Array.isArray(v) ? v.map(asRecord) : []);
 
 const asNumber = (v: unknown, fallback = 0): number => {
   const n = Number(v);
@@ -41,410 +35,166 @@ const asNullableNumber = (v: unknown): number | null => {
 const asString = (v: unknown, fallback = ""): string =>
   typeof v === "string" ? v : v != null ? String(v) : fallback;
 
-const asNullableString = (v: unknown): string | null =>
-  v != null && v !== "" ? String(v) : null;
+const asOptionalString = (v: unknown): string | undefined =>
+  v != null && v !== "" ? String(v) : undefined;
 
+const byId = <T extends { id: number }>(items: T[]) => new Map(items.map((item) => [item.id, item]));
+
+/** Mapping completeness, the same rule as the server's `mapping_state`. */
+export const mappingState = (hasRoom: boolean, equipmentCount: number): MappingState =>
+  !hasRoom ? "needs_placement" : equipmentCount === 0 ? "needs_equipment" : "fully_mapped";
+
+/**
+ * Join the flat collections of a mapping read (`data.rooms`, `data.stations`, `data.benches`, …) into one row per
+ * bench, in the order of `data.benches`. Used by the bench mapping list and the per-resource mapping reads.
+ */
 export function mapResourceMappingDataToRows(rawData: unknown): ResourceMappingRow[] {
   const envelope = asRecord(rawData);
   const data = asRecord(envelope.data ?? envelope);
 
-  const rawRooms = Array.isArray(data.rooms) ? data.rooms : [];
-  const rawRoomSlots = Array.isArray(data.room_slots) ? data.room_slots : [];
-  const rawStations = Array.isArray(data.stations) ? data.stations : [];
-  const rawStationSlots = Array.isArray(data.station_slots) ? data.station_slots : [];
-  const rawBenches = Array.isArray(data.benches) ? data.benches : [];
-  const rawEquipment = Array.isArray(data.equipment) ? data.equipment : [];
-  const rawLicenses = Array.isArray(data.licenses) ? data.licenses : [];
-  const rawLicenseAssignments = Array.isArray(data.license_assignments)
-    ? data.license_assignments
-    : [];
-
-  const roomsById = new Map<number, MappingRoomRef>();
-  for (const item of rawRooms) {
-    const r = asRecord(item);
-    const id = asNumber(r.id);
-    if (!id) continue;
-    roomsById.set(id, {
-      id,
-      uid: asNullableString(r.uid) ?? undefined,
-      sku: asString(r.sku),
-      name: asString(r.name),
-      layout_rows: asNullableNumber(r.layout_rows),
-      layout_columns: asNullableNumber(r.layout_columns),
-      location: asNullableString(r.location),
-      status: asNullableString(asRecord(r.status).label ?? r.status),
-    });
-  }
-
-  const roomSlotsById = new Map<number, MappingRoomSlotRef>();
-  for (const item of rawRoomSlots) {
-    const s = asRecord(item);
-    const id = asNumber(s.id);
-    if (!id) continue;
-    roomSlotsById.set(id, {
-      id,
-      room_id: asNumber(s.room_id),
-      row_index: asNumber(s.row_index),
-      col_index: asNumber(s.col_index),
-      slot_code: asString(s.slot_code),
-      x_mm: asNullableNumber(s.x_mm),
-      y_mm: asNullableNumber(s.y_mm),
-      width_mm: asNullableNumber(s.width_mm),
-      depth_mm: asNullableNumber(s.depth_mm),
-      orientation_degrees: asNullableNumber(s.orientation_degrees) ?? undefined,
-    });
-  }
-
-  const stationsById = new Map<number, MappingStationRef>();
-  for (const item of rawStations) {
-    const st = asRecord(item);
-    const id = asNumber(st.id);
-    if (!id) continue;
-    stationsById.set(id, {
-      id,
-      uid: asNullableString(st.uid) ?? undefined,
-      sku: asString(st.sku),
-      name: asString(st.name),
-      room_id: asNullableNumber(st.room_id),
-      slot_id: asNullableNumber(st.slot_id),
-      status: asNullableString(asRecord(st.status).label ?? st.status),
-    });
-  }
-
-  const stationSlotsById = new Map<number, MappingStationSlotRef>();
-  for (const item of rawStationSlots) {
-    const ss = asRecord(item);
-    const id = asNumber(ss.id);
-    if (!id) continue;
-    stationSlotsById.set(id, {
-      id,
-      station_id: asNumber(ss.station_id),
-      position_index: asNumber(ss.position_index),
-      slot_code: asString(ss.slot_code),
-      label: asNullableString(ss.label) ?? undefined,
-    });
-  }
-
-  const licensesById = new Map<number, { id: number; uid?: string; sku: string; name: string; category?: { id: number; name: string | null } }>();
-  for (const item of rawLicenses) {
-    const lic = asRecord(item);
-    const id = asNumber(lic.id);
-    if (!id) continue;
-    const cat = asRecord(lic.category);
-    licensesById.set(id, {
-      id,
-      uid: asNullableString(lic.uid) ?? undefined,
-      sku: asString(lic.sku),
-      name: asString(lic.name),
-      category: cat.id != null ? { id: asNumber(cat.id), name: asNullableString(cat.name) } : undefined,
-    });
-  }
-
-  const licensesByEquipmentId = new Map<number, MappingLicenseItem[]>();
-  for (const item of rawLicenseAssignments) {
-    const assign = asRecord(item);
-    const eqId = asNumber(assign.equipment_id);
-    const licId = asNumber(assign.license_id);
-    if (!eqId || !licId) continue;
-    const lic = licensesById.get(licId);
-    if (!lic) continue;
-    const licItem: MappingLicenseItem = {
-      id: lic.id,
-      uid: lic.uid,
-      sku: lic.sku,
-      name: lic.name,
-      category: lic.category,
-      equipment_id: eqId,
-      assigned_at: asNullableString(assign.assigned_at) ?? undefined,
+  const rooms = byId(asList(data.rooms).filter((r) => asNumber(r.id)).map((r): MappingRoomRef => ({
+    id: asNumber(r.id),
+    uid: asOptionalString(r.uid),
+    sku: asString(r.sku),
+    name: asString(r.name),
+    layout_rows: asNullableNumber(r.layout_rows),
+    layout_columns: asNullableNumber(r.layout_columns),
+  })));
+  const roomSlots = byId(asList(data.room_slots).filter((s) => asNumber(s.id)).map((s): MappingRoomSlotRef => ({
+    id: asNumber(s.id),
+    room_id: asNumber(s.room_id),
+    row_index: asNumber(s.row_index),
+    col_index: asNumber(s.col_index),
+    slot_code: asString(s.slot_code),
+    x_mm: asNullableNumber(s.x_mm),
+    y_mm: asNullableNumber(s.y_mm),
+    width_mm: asNullableNumber(s.width_mm),
+    depth_mm: asNullableNumber(s.depth_mm),
+    orientation_degrees: asNullableNumber(s.orientation_degrees) ?? undefined,
+  })));
+  const stations = byId(asList(data.stations).filter((s) => asNumber(s.id)).map((s): MappingStationRef => ({
+    id: asNumber(s.id),
+    uid: asOptionalString(s.uid),
+    sku: asString(s.sku),
+    name: asString(s.name),
+    room_id: asNullableNumber(s.room_id),
+    slot_id: asNullableNumber(s.slot_id),
+  })));
+  const stationSlots = byId(asList(data.station_slots).filter((s) => asNumber(s.id)).map((s): MappingStationSlotRef => ({
+    id: asNumber(s.id),
+    station_id: asNumber(s.station_id),
+    position_index: asNumber(s.position_index),
+    slot_code: asString(s.slot_code),
+    label: asOptionalString(s.label),
+  })));
+  const licenses = byId(asList(data.licenses).filter((l) => asNumber(l.id)).map((l) => {
+    const category = asRecord(l.category);
+    return {
+      id: asNumber(l.id),
+      uid: asOptionalString(l.uid),
+      sku: asString(l.sku),
+      name: asString(l.name),
+      category: category.id != null ? { id: asNumber(category.id), name: asOptionalString(category.name) ?? null } : null,
     };
-    const list = licensesByEquipmentId.get(eqId) ?? [];
-    list.push(licItem);
-    licensesByEquipmentId.set(eqId, list);
+  }));
+
+  const licensesByEquipment = new Map<number, MappingLicenseItem[]>();
+  for (const assignment of asList(data.license_assignments)) {
+    const equipmentId = asNumber(assignment.equipment_id);
+    const license = licenses.get(asNumber(assignment.license_id));
+    if (!equipmentId || !license) continue;
+    const list = licensesByEquipment.get(equipmentId) ?? [];
+    list.push({ ...license, equipment_id: equipmentId, assigned_at: asOptionalString(assignment.assigned_at) });
+    licensesByEquipment.set(equipmentId, list);
   }
 
-  const equipmentByBenchId = new Map<number, MappingEquipmentItem[]>();
-  for (const item of rawEquipment) {
-    const eq = asRecord(item);
+  const equipmentByBench = new Map<number, MappingEquipmentItem[]>();
+  for (const eq of asList(data.equipment)) {
     const id = asNumber(eq.id);
     const benchId = asNullableNumber(eq.bench_id);
-    if (!id) continue;
-    const cat = asRecord(eq.category);
+    if (!id || benchId == null) continue;
+    const category = asRecord(eq.category);
     const assignment = asRecord(eq.bench_assignment);
-    const category: MappingEquipmentCategory = {
-      id: asNumber(cat.id, 0),
-      name: asString(cat.name, "Uncategorized"),
-    };
-    const eqItem: MappingEquipmentItem = {
+    const list = equipmentByBench.get(benchId) ?? [];
+    list.push({
       id,
-      uid: asNullableString(eq.uid) ?? undefined,
+      uid: asOptionalString(eq.uid),
       sku: asString(eq.sku),
       name: asString(eq.name),
-      category,
+      category: { id: asNumber(category.id), name: asString(category.name, "Uncategorized") || "Uncategorized" },
       bench_id: benchId,
-      role: asNullableString(assignment.role) ?? undefined,
+      role: asOptionalString(assignment.role),
       position: asNullableNumber(assignment.position) ?? undefined,
       is_monitored: typeof assignment.is_monitored === "boolean" ? assignment.is_monitored : undefined,
-      assigned_at: asNullableString(assignment.assigned_at) ?? undefined,
-      display_status: eq.display_status && typeof eq.display_status === "object"
-        ? {
-            value: asNullableString(asRecord(eq.display_status).value) ?? undefined,
-            label: asNullableString(asRecord(eq.display_status).label) ?? undefined,
-          }
-        : asNullableString(eq.display_status),
-      remark: asNullableString(eq.remark),
-    };
-
-    if (benchId != null) {
-      const list = equipmentByBenchId.get(benchId) ?? [];
-      list.push(eqItem);
-      equipmentByBenchId.set(benchId, list);
-    }
-  }
-
-  const rows: ResourceMappingRow[] = [];
-
-  for (const item of rawBenches) {
-    const b = asRecord(item);
-    const id = asNumber(b.id);
-    if (!id) continue;
-
-    const benchRef: MappingBenchRef = {
-      id,
-      uid: asNullableString(b.uid) ?? undefined,
-      sku: asString(b.sku),
-      name: asString(b.name),
-      setup_location_id: asNullableNumber(b.setup_location_id),
-      station_slot_id: asNullableNumber(b.station_slot_id),
-      status: asNullableString(asRecord(b.status).label ?? b.status),
-      remark: asNullableString(b.remark),
-      criticality: refLabel(b.criticality) || null,
-      requested_power_w: asNullableNumber(b.requested_power_w),
-      requested_load_kg: asNullableNumber(b.requested_load_kg),
-      requested_cooling_w: asNullableNumber(b.requested_cooling_w),
-      required_utilities: mapUtilities(b.required_utilities),
-    };
-
-    const stationSlot = benchRef.station_slot_id
-      ? stationSlotsById.get(benchRef.station_slot_id) ?? null
-      : null;
-
-    const stationId = stationSlot?.station_id ?? benchRef.setup_location_id ?? null;
-    const station = stationId ? stationsById.get(stationId) ?? null : null;
-
-    const roomSlot = station?.slot_id ? roomSlotsById.get(station.slot_id) ?? null : null;
-    const roomId = station?.room_id ?? roomSlot?.room_id ?? null;
-    const room = roomId ? roomsById.get(roomId) ?? null : null;
-
-    const equipmentList = equipmentByBenchId.get(id) ?? [];
-    const licenseList: MappingLicenseItem[] = [];
-    for (const eq of equipmentList) {
-      const eqLicenses = licensesByEquipmentId.get(eq.id) ?? [];
-      licenseList.push(...eqLicenses);
-    }
-
-    const hasStation = Boolean(station);
-    const hasRoom = Boolean(room);
-    const isFullyMapped = hasStation && hasRoom && equipmentList.length > 0;
-
-    const status: ResourceMappingStatus = {
-      is_fully_mapped: isFullyMapped,
-      has_station: hasStation,
-      has_room: hasRoom,
-      equipment_count: equipmentList.length,
-      license_count: licenseList.length,
-    };
-
-    rows.push({
-      id,
-      bench: benchRef,
-      station,
-      station_slot: stationSlot,
-      room,
-      room_slot: roomSlot,
-      equipment: equipmentList,
-      licenses: licenseList,
-      status,
-      remark: asNullableString(b.remark),
+      assigned_at: asOptionalString(assignment.assigned_at),
     });
+    equipmentByBench.set(benchId, list);
+  }
+  for (const list of equipmentByBench.values()) {
+    list.sort((a, b) => (a.position ?? 0) - (b.position ?? 0) || a.sku.localeCompare(b.sku));
   }
 
-  return rows;
+  return asList(data.benches)
+    .filter((b) => asNumber(b.id))
+    .map((b): ResourceMappingRow => {
+      const bench: MappingBenchRef = {
+        id: asNumber(b.id),
+        uid: asOptionalString(b.uid),
+        sku: asString(b.sku),
+        name: asString(b.name),
+        setup_location_id: asNullableNumber(b.setup_location_id),
+        station_slot_id: asNullableNumber(b.station_slot_id),
+      };
+      const stationSlot = bench.station_slot_id ? stationSlots.get(bench.station_slot_id) ?? null : null;
+      const stationId = stationSlot?.station_id ?? bench.setup_location_id ?? null;
+      const station = stationId ? stations.get(stationId) ?? null : null;
+      const roomSlot = station?.slot_id ? roomSlots.get(station.slot_id) ?? null : null;
+      const roomId = station?.room_id ?? roomSlot?.room_id ?? null;
+      const room = roomId ? rooms.get(roomId) ?? null : null;
+      const equipment = equipmentByBench.get(bench.id) ?? [];
+      const benchLicenses = equipment.flatMap((item) => licensesByEquipment.get(item.id) ?? []);
+      const state = mappingState(Boolean(room), equipment.length);
+      return {
+        id: bench.id,
+        bench,
+        station,
+        station_slot: stationSlot,
+        room,
+        room_slot: roomSlot,
+        equipment,
+        licenses: benchLicenses,
+        status: {
+          state,
+          is_fully_mapped: state === "fully_mapped",
+          has_station: Boolean(station),
+          has_room: Boolean(room),
+          equipment_count: equipment.length,
+          license_count: benchLicenses.length,
+        },
+      };
+    });
 }
 
-export function mapBenchToMappingRow(benchRaw: unknown): ResourceMappingRow {
-  const b = asRecord(benchRaw);
-  const id = asNumber(b.id);
+const EMPTY_SUMMARY: MappingSummary = {
+  benches: 0,
+  fully_mapped: 0,
+  needs_equipment: 0,
+  needs_placement: 0,
+  equipment: 0,
+};
 
-  const benchRef: MappingBenchRef = {
-    id,
-    uid: asNullableString(b.uid) ?? undefined,
-    sku: asString(b.sku),
-    name: asString(b.name),
-    setup_location_id: asNullableNumber(b.setup_location_id),
-    station_slot_id: asNullableNumber(b.station_slot_id),
-    status: asNullableString(asRecord(b.status).label ?? b.status),
-    remark: asNullableString(b.remark),
-    criticality: refLabel(b.criticality) || null,
-    requested_power_w: asNullableNumber(b.requested_power_w),
-    requested_load_kg: asNullableNumber(b.requested_load_kg),
-    requested_cooling_w: asNullableNumber(b.requested_cooling_w),
-    required_utilities: mapUtilities(b.required_utilities),
-  };
-
-  // A bench list item names its station as `setup_location`; the graph uses `station`.
-  const rawStation = asRecord(b.station ?? b.setup_location);
-  const stationId = asNullableNumber(rawStation.id) ?? benchRef.setup_location_id;
-  const station: MappingStationRef | null = stationId
-    ? {
-        id: stationId,
-        uid: asNullableString(rawStation.uid) ?? undefined,
-        sku: asString(rawStation.sku),
-        name: asString(rawStation.name || rawStation.station_name),
-        room_id: asNullableNumber(rawStation.room_id),
-        slot_id: asNullableNumber(rawStation.slot_id),
-        status: asNullableString(asRecord(rawStation.status).label ?? rawStation.status),
-      }
-    : null;
-
-  const rawStationSlot = asRecord(b.station_slot);
-  const stationSlotId = asNullableNumber(rawStationSlot.id) ?? benchRef.station_slot_id;
-  const stationSlot: MappingStationSlotRef | null = stationSlotId
-    ? {
-        id: stationSlotId,
-        station_id: asNumber(rawStationSlot.station_id || station?.id),
-        position_index: asNumber(rawStationSlot.position_index),
-        slot_code: asString(rawStationSlot.slot_code || rawStationSlot.name),
-        label: asNullableString(rawStationSlot.label) ?? undefined,
-      }
-    : null;
-
-  const rawRoom = asRecord(b.room);
-  const roomId = asNullableNumber(rawRoom.id) ?? station?.room_id;
-  const room: MappingRoomRef | null = roomId
-    ? {
-        id: roomId,
-        uid: asNullableString(rawRoom.uid) ?? undefined,
-        sku: asString(rawRoom.sku),
-        name: asString(rawRoom.name || rawRoom.room_name),
-        location: asNullableString(rawRoom.location),
-        status: asNullableString(asRecord(rawRoom.status).label ?? rawRoom.status),
-      }
-    : null;
-
-  const rawRoomSlot = asRecord(b.room_slot);
-  const roomSlotId = asNullableNumber(rawRoomSlot.id) ?? station?.slot_id;
-  const roomSlot: MappingRoomSlotRef | null = roomSlotId
-    ? {
-        id: roomSlotId,
-        room_id: asNumber(rawRoomSlot.room_id || room?.id),
-        row_index: asNumber(rawRoomSlot.row_index),
-        col_index: asNumber(rawRoomSlot.col_index),
-        slot_code: asString(rawRoomSlot.slot_code),
-      }
-    : null;
-
-  const rawEquipment = Array.isArray(b.equipment)
-    ? b.equipment
-    : Array.isArray(b.equipment_list)
-      ? b.equipment_list
-      : [];
-
-  const equipment: MappingEquipmentItem[] = rawEquipment.map((item) => {
-    const eq = asRecord(item);
-    const cat = asRecord(eq.category);
-    return {
-      id: asNumber(eq.id),
-      uid: asNullableString(eq.uid) ?? undefined,
-      sku: asString(eq.sku),
-      name: asString(eq.name),
-      category: {
-        id: asNumber(cat.id, 0),
-        name: asString(cat.name, "Uncategorized"),
-      },
-      bench_id: id,
-      role: asNullableString(eq.role) ?? undefined,
-      position: asNullableNumber(eq.position) ?? undefined,
-      is_monitored: typeof eq.is_monitored === "boolean" ? eq.is_monitored : undefined,
-      assigned_at: asNullableString(eq.assigned_at) ?? undefined,
-      display_status: eq.display_status && typeof eq.display_status === "object"
-        ? {
-            value: asNullableString(asRecord(eq.display_status).value) ?? undefined,
-            label: asNullableString(asRecord(eq.display_status).label) ?? undefined,
-          }
-        : asNullableString(eq.display_status),
-      remark: asNullableString(eq.remark),
-    };
-  });
-
-  const rawLicenses = Array.isArray(b.licenses)
-    ? b.licenses
-    : Array.isArray(b.license_list)
-      ? b.license_list
-      : [];
-
-  const licenses: MappingLicenseItem[] = rawLicenses.map((item) => {
-    const lic = asRecord(item);
-    const cat = asRecord(lic.category);
-    return {
-      id: asNumber(lic.id),
-      uid: asNullableString(lic.uid) ?? undefined,
-      sku: asString(lic.sku),
-      name: asString(lic.name),
-      category: cat.id != null ? { id: asNumber(cat.id), name: asNullableString(cat.name) } : undefined,
-      equipment_id: asNumber(lic.equipment_id),
-      assigned_at: asNullableString(lic.assigned_at) ?? undefined,
-    };
-  });
-
-  const equipmentCount = asNullableNumber(b.equipment_count) ?? equipment.length;
-  const hasStation = Boolean(station);
-  const hasRoom = Boolean(room);
-  const isFullyMapped = hasStation && hasRoom && equipmentCount > 0;
-
-  const status: ResourceMappingStatus = {
-    is_fully_mapped: isFullyMapped,
-    has_station: hasStation,
-    has_room: hasRoom,
-    equipment_count: equipmentCount,
-    license_count: licenses.length,
-  };
-
-  return {
-    id,
-    bench: benchRef,
-    station,
-    station_slot: stationSlot,
-    room,
-    room_slot: roomSlot,
-    equipment,
-    licenses,
-    status,
-    remark: asNullableString(b.remark),
-  };
-}
-
-export function mapResourceMappingListResponse(raw: unknown): ResourceMappingListResponse {
+/** GET /api/labs/resource-mappings → rows of the page, the filtered total and the summary. */
+export function mapBenchMappingList(raw: unknown): ResourceMappingListResponse {
   const envelope = asRecord(raw);
-  const data = envelope.data ?? envelope;
-
-  if (data && typeof data === "object" && "benches" in (data as RawRecord)) {
-    const rows = mapResourceMappingDataToRows(data);
-    const meta = asRecord(envelope.meta);
-    const pagination = asRecord(meta.pagination);
-    const totalCount = asNumber(pagination.count, rows.length);
-    return { total_count: totalCount, data: rows };
-  }
-
-  const items = Array.isArray(data)
-    ? data
-    : Array.isArray((data as RawRecord).results)
-      ? ((data as RawRecord).results as unknown[])
-      : [];
-
-  const rows = items.map(mapBenchToMappingRow);
   const meta = asRecord(envelope.meta);
   const pagination = asRecord(meta.pagination);
-  const totalCount = asNumber(pagination.count, asNumber(envelope.total_count, rows.length));
-
-  return { total_count: totalCount, data: rows };
+  const summary = asRecord(meta.summary);
+  const rows = mapResourceMappingDataToRows(envelope);
+  return {
+    total_count: asNumber(pagination.count, rows.length),
+    data: rows,
+    summary: Object.fromEntries(
+      Object.keys(EMPTY_SUMMARY).map((key) => [key, asNumber(summary[key])]),
+    ) as unknown as MappingSummary,
+  };
 }

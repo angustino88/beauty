@@ -44,6 +44,22 @@ export interface IBenchOption {
   sku?: string | null;
 }
 
+export interface IBenchComputer {
+  id: number;
+  sku: string;
+  name: string;
+  /** Empty until the agent reports it. */
+  hostname: string;
+}
+
+/** A bench to book, with the computers on it (GET /api/labs/benches/booking-choices). */
+export interface IBookingBenchChoice {
+  id: number;
+  sku: string;
+  name: string;
+  computers: IBenchComputer[];
+}
+
 export interface IProjectOption {
   label: string;
   value: number;

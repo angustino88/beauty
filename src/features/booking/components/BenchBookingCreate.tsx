@@ -11,7 +11,7 @@ import {
 import type { IBenchBookingFormValues } from '../types';
 import type { BenchBookingCreateRequest } from '../mapper';
 import { BookingForm } from './BookingForm';
-import { useCreateBenchBookingMutation, useGetBenchOptionsQuery } from '../api';
+import { useCreateBenchBookingMutation, useGetBookingBenchChoicesQuery } from '../api';
 import styles from './BookingModal.module.css';
 
 export type CustomModalProps = {
@@ -35,7 +35,8 @@ export const BenchBookingCreate: React.FC<CustomModalProps> = ({
   const [messageApi, contextHolder] = message.useMessage();
   const [loading, setLoading] = useState(false);
 
-  const { data: benchOptions } = useGetBenchOptionsQuery();
+  // Same query (and cache entry) as the form's bench select.
+  const { data: benchChoices } = useGetBookingBenchChoicesQuery({ includeId: null });
   const [createBooking] = useCreateBenchBookingMutation();
 
   useEffect(() => {
@@ -55,13 +56,10 @@ export const BenchBookingCreate: React.FC<CustomModalProps> = ({
     const rawIds = searchParams.get('bench_ids');
     const res = rawIds?.split(',') || [];
     const targetId = parseInt(res[0], 10);
-    if (!Number.isNaN(targetId) && benchOptions) {
-      const preselected = benchOptions.find((b) => b.value === targetId);
-      if (preselected) {
-        formInstance.setFieldValue('bench_id', preselected.value);
-      }
+    if (!Number.isNaN(targetId) && benchChoices?.some((bench) => bench.id === targetId)) {
+      formInstance.setFieldValue('bench_id', targetId);
     }
-  }, [benchOptions, searchParams, formInstance]);
+  }, [benchChoices, searchParams, formInstance]);
 
   const handleOnFinish = async (values: IBenchBookingFormValues) => {
     try {

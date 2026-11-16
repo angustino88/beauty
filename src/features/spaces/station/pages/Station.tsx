@@ -1,5 +1,6 @@
 import { useGetUsersQuery } from "@/features/lab-equipment/shared";
 import { WorkbookImportButton } from "@/features/data-import";
+import { toResourceOption } from "@/components/inputs/ResourceOption";
 import { useCallback, useMemo, useState } from "react";
 import { skipToken } from "@reduxjs/toolkit/query";
 import { useLabsRoomsSlotsRetrieveByRoomIdQuery } from "@/shared/api/generated/api";
@@ -44,10 +45,7 @@ export default function StationPage() {
   const { data: facets } = useGetStationFiltersQuery();
 
   const roomOptions = useMemo(() => {
-    return (dropdownData?.rooms ?? []).map((r) => ({
-      label: r.name,
-      value: r.id,
-    }));
+    return (dropdownData?.rooms ?? []).map((room) => toResourceOption(room));
   }, [dropdownData?.rooms]);
 
   // The slot list follows the room chosen in whichever form is open; occupied slots are hidden
@@ -92,7 +90,8 @@ export default function StationPage() {
 
   const formFields: FieldConfig[] = useMemo(
     () => [
-      { name: "sku", label: "SKU", type: "text", required: true },
+      // The SKU identifies the station and cannot change after creation (the API refuses a changed SKU).
+      { name: "sku", label: "SKU", type: "text", required: true, disabledInEdit: true },
       { name: "name", label: "Name", type: "text", required: true },
       { name: "room_id", label: "Target Room", type: "select", options: roomOptions },
       { name: "slot_id", label: "Room Slot", type: "select", dependsOn: ["room_id"], options: slotOptions },
@@ -202,7 +201,6 @@ export default function StationPage() {
         onSubmit={async (values, imageFile) => {
           if (!editingStation) return;
           const payload: IStationPayload = {
-            sku: String(values.sku ?? ''),
             name: String(values.name ?? ''),
             room_id: values.room_id == null ? null : Number(values.room_id),
             slot_id: values.room_id == null || values.slot_id == null ? null : Number(values.slot_id),

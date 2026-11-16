@@ -1,23 +1,7 @@
-import { EditOutlined } from '@ant-design/icons';
-import { Button, Select, Space, Tag, Tooltip } from 'antd';
-import { renderOwnerCell } from '@/features/lab-equipment/shared';
+import { Space, Tag, Tooltip } from 'antd';
 import { SpecDetailsPopover } from '@/features/lab-equipment/shared/components/status/SpecDetailsPopover';
 import type { IRoom, IRoomRackItem } from '../types';
-import type { RoomInlineDraft } from './roomConfig';
 import { ROOM_SPECS_FIELDS } from './roomConfig';
-import type { SelectOption } from './InlineCell';
-
-interface RoomColumnSharedContext {
-    isEditing:        (record: IRoom) => boolean;
-    editingDraft:     RoomInlineDraft | null;
-    optionsMap:       Record<string, SelectOption[]>;
-    updateDraftField: <K extends keyof RoomInlineDraft>(key: K, value: RoomInlineDraft[K]) => void;
-}
-
-interface RoomSpecsRendererContext {
-    isEditing:    (record: IRoom) => boolean;
-    onSpecsEdit?: (record: IRoom) => void;
-}
 
 export const readRoomRacks = (room: IRoom): IRoomRackItem[] => {
     if (!Array.isArray(room.rack_list)) return [];
@@ -27,7 +11,7 @@ export const readRoomRacks = (room: IRoom): IRoomRackItem[] => {
     );
 };
 
-// Bug 6: show locationText as display, use url as hyperlink
+// Show the location text, linked to the map URL when there is one.
 export const renderRoomLocationCell = (room: IRoom) => {
     const url          = room.location;
     const locationText = room.location_info?.location_string;
@@ -46,19 +30,7 @@ export const renderRoomLocationCell = (room: IRoom) => {
     );
 };
 
-export const renderRoomRacksCell = (room: IRoom, context: RoomColumnSharedContext) => {
-    if (context.isEditing(room)) {
-        return (
-            <Select
-                mode="multiple" allowClear showSearch
-                style={{ width: '100%' }}
-                value={context.editingDraft?.rack_list ?? []}
-                options={context.optionsMap.rack_list}
-                optionFilterProp="label"
-                onChange={(value: number[]) => context.updateDraftField('rack_list', value)}
-            />
-        );
-    }
+export const renderRoomRacksCell = (room: IRoom) => {
     const racks = readRoomRacks(room);
     if (!racks.length) return '';
     return (
@@ -72,33 +44,9 @@ export const renderRoomRacksCell = (room: IRoom, context: RoomColumnSharedContex
     );
 };
 
-export const renderRoomSpecsCell = (room: IRoom, context: RoomSpecsRendererContext) => {
-    if (context.isEditing(room)) {
-        return (
-            <Tooltip title="Edit Specs">
-                <Button type="text" icon={<EditOutlined />} onClick={() => context.onSpecsEdit?.(room)} />
-            </Tooltip>
-        );
-    }
-
+export const renderRoomSpecsCell = (room: IRoom) => {
     const specs = ROOM_SPECS_FIELDS
-        .map((f) => ({ key: f.label, value: f.reader(room) }))
-        .filter((s) => s.value);
-
-    return <SpecDetailsPopover items={specs.map((spec) => ({ label: spec.key, value: spec.value }))} />;
-};
-
-export const renderRoomPrimaryOwnerCell = (room: IRoom, context: RoomColumnSharedContext) => {
-    if (!context.isEditing(room)) return renderOwnerCell(room.primary_owner);
-    return (
-        <Select
-            allowClear showSearch
-            style={{ width: '100%' }}
-            value={context.editingDraft?.primary_owner ?? undefined}
-            options={context.optionsMap.primary_owner}
-            onChange={(value) =>
-                context.updateDraftField('primary_owner', typeof value === 'number' ? value : null)
-            }
-        />
-    );
+        .map((field) => ({ label: field.label, value: field.reader(room) }))
+        .filter((spec) => spec.value);
+    return <SpecDetailsPopover items={specs} />;
 };

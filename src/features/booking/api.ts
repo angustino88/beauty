@@ -3,6 +3,7 @@ import type {
   BenchBookingItem,
   IBenchBookingListParams,
   IBenchOption,
+  IBookingBenchChoice,
   IProjectOption,
 } from './types';
 import {
@@ -12,6 +13,7 @@ import {
   mapBookingListResponse,
   mapBookingUpdateResponse,
   mapBenchOptions,
+  mapBookingBenchChoices,
   mapProjectOptions,
   type BenchBookingCreateRequest,
   type BenchBookingUpdateRequest,
@@ -154,6 +156,17 @@ export const bookingApi = baseApi.injectEndpoints({
       providesTags: [{ type: 'LabInfo', id: 'LIST' }],
     }),
 
+    // GET /api/labs/benches/booking-choices — in-service benches with the computers on each, so people pick a bench
+    // by the computer name they know. `includeId` keeps the bench of an existing booking selectable.
+    getBookingBenchChoices: build.query<IBookingBenchChoice[], { includeId?: number | null } | void>({
+      query: (arg) => ({
+        url: '/api/labs/benches/booking-choices',
+        params: arg && arg.includeId ? { include_ids: String(arg.includeId) } : undefined,
+      }),
+      transformResponse: (res: unknown): IBookingBenchChoice[] => mapBookingBenchChoices(res),
+      providesTags: [{ type: 'LabInfo', id: 'LIST' }],
+    }),
+
     // GET /api/labs/lab-projects/options — selector options for lab projects
     getProjectOptions: build.query<IProjectOption[], void>({
       query: () => ({ url: '/api/labs/lab-projects/options' }),
@@ -176,5 +189,6 @@ export const {
   useCancelBenchBookingMutation,
   useCompleteBenchBookingMutation,
   useGetBenchOptionsQuery,
+  useGetBookingBenchChoicesQuery,
   useGetProjectOptionsQuery,
 } = bookingApi;

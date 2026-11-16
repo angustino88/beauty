@@ -8,15 +8,12 @@ import type {
   BenchPlacementPayload,
   EquipmentAssignmentPayload,
   MappingFilterOptions,
+  MappingOptionItem,
   ResourceMappingListResponse,
   ResourceMappingParams,
   ResourceMappingRow,
-  StationPlacementPayload,
 } from "./types";
-import {
-  mapResourceMappingDataToRows,
-  mapResourceMappingListResponse,
-} from "./mapper";
+import { mapBenchMappingList, mapResourceMappingDataToRows } from "./mapper";
 
 const TAG = "ResourceMapping";
 
@@ -29,35 +26,25 @@ export interface BenchAuditRow {
   remarks: string;
 }
 
+/** `{data: [{id, sku, name}]}` of an options endpoint → items; a failed request gives an empty list. */
+const optionItems = (res: { data?: unknown } | undefined): MappingOptionItem[] => {
+  const list = (res?.data as { data?: unknown } | undefined)?.data;
+  return (Array.isArray(list) ? list : []).map((item: Record<string, unknown>) => ({
+    id: Number(item.id),
+    sku: item.sku == null ? null : String(item.sku),
+    name: String(item.name ?? item.sku ?? item.id),
+  }));
+};
+
 export const mappingApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
-    // There is no collection-level mapping endpoint: list the benches, then load each bench's
-        // mapping graph (station, room, equipment, licenses) and merge it into its row.
+    // One request per page: the server filters, searches, paginates and counts (meta.summary).
     getMappings: build.query<ResourceMappingListResponse, ResourceMappingParams>({
-      async queryFn(params, _api, _extra, fetchWithBQ) {
-        const queryParams = new URLSearchParams();
-        if (params.page) queryParams.set("page", String(params.page));
-        if (params.page_size) queryParams.set("page_size", String(params.page_size));
-        if (params.search) queryParams.set("q", params.search);
-        if (params.ordering) queryParams.set("ordering", params.ordering);
-        if (params.station_id) queryParams.set("setup_location_id", String(params.station_id));
-        if (params.bench_id) queryParams.set("id", String(params.bench_id));
-        if (params.status) queryParams.set("status", params.status);
-
-        const qs = queryParams.toString();
-        const listRes = await fetchWithBQ(`/api/labs/benches${qs ? `?${qs}` : ""}`);
-        if (listRes.error) return { error: listRes.error };
-
-        const list = mapResourceMappingListResponse(listRes.data);
-        const rows = await Promise.all(
-          list.data.map(async (row) => {
-            const graphRes = await fetchWithBQ(`/api/labs/benches/${row.id}/mapping`);
-            if (graphRes.error) return row;
-            return mapResourceMappingDataToRows(graphRes.data)[0] ?? row;
-          }),
-        );
-        return { data: { total_count: list.total_count, data: rows } };
-      },
+      query: (params) => ({
+        url: "/api/labs/resource-mappings",
+        params: Object.fromEntries(Object.entries(params).filter(([, value]) => value != null && value !== "")),
+      }),
+      transformResponse: (res: unknown) => mapBenchMappingList(res),
       providesTags: (result) => generateListTags(TAG, result),
     }),
 
@@ -76,18 +63,6 @@ export const mappingApi = baseApi.injectEndpoints({
       providesTags: (_res, _err, id) => generateItemTag(TAG, id),
     }),
 
-    getRoomMapping: build.query<ResourceMappingRow[], number>({
-      query: (roomId) => ({ url: `/api/labs/rooms/${roomId}/mapping` }),
-      transformResponse: (res: unknown) => mapResourceMappingDataToRows(res),
-      providesTags: (_res, _err, id) => [{ type: "Room", id: `mapping-${id}` }],
-    }),
-
-    getStationMapping: build.query<ResourceMappingRow[], number>({
-      query: (stationId) => ({ url: `/api/labs/stations/${stationId}/mapping` }),
-      transformResponse: (res: unknown) => mapResourceMappingDataToRows(res),
-      providesTags: (_res, _err, id) => [{ type: "Station", id: `mapping-${id}` }],
-    }),
-
     placeBench: build.mutation<void, { benchId: number; body: BenchPlacementPayload }>({
       query: ({ benchId, body }) => ({
         url: `/api/labs/benches/${benchId}/actions/place`,
@@ -98,18 +73,6 @@ export const mappingApi = baseApi.injectEndpoints({
         ...generateItemTag(TAG, benchId),
         ...invalidateList(TAG),
         { type: "Bench", id: benchId },
-      ],
-    }),
-
-    placeStation: build.mutation<void, { stationId: number; body: StationPlacementPayload }>({
-      query: ({ stationId, body }) => ({
-        url: `/api/labs/stations/${stationId}/actions/place`,
-        method: "POST",
-        body,
-      }),
-      invalidatesTags: (_res, _err, { stationId }) => [
-        ...invalidateList(TAG),
-        { type: "Station", id: stationId },
       ],
     }),
 
@@ -138,78 +101,28 @@ export const mappingApi = baseApi.injectEndpoints({
       ],
     }),
 
+    // Column filter choices: rooms, stations, benches and the equipment categories the system has.
     getMappingFilterOptions: build.query<MappingFilterOptions, void>({
       async queryFn(_arg, _queryApi, _extraOptions, fetchWithBQ) {
-        const [roomsRes, stationsRes, benchesRes] = await Promise.all([
+        const [rooms, stations, benches, categories] = await Promise.all([
           fetchWithBQ("/api/labs/rooms/options"),
           fetchWithBQ("/api/labs/stations/options"),
           fetchWithBQ("/api/labs/benches/options"),
+          fetchWithBQ("/api/labs/equipment-categories/options"),
         ]);
-
-        const extractOptions = (res: unknown) => {
-          const envelope = (res as Record<string, unknown>) ?? {};
-          const list = Array.isArray(envelope.data) ? envelope.data : [];
-          return list.map((item: Record<string, unknown>) => ({
-            text: String(item.name || item.sku || item.id),
-            value: item.id as number,
-          }));
-        };
-
-        const categories = [
-          { text: "Computing", value: "computing" },
-          { text: "Display", value: "display" },
-          { text: "Debugging", value: "debugging" },
-          { text: "Networking", value: "networking" },
-          { text: "Power", value: "power" },
-          { text: "Accessories", value: "accessory" },
-          { text: "Samples", value: "sample" },
-          { text: "Furniture", value: "furniture" },
-          { text: "Instruments", value: "instrument" },
-          { text: "Laboratory", value: "laboratory" },
-          { text: "Mechanical", value: "mechanical" },
-          { text: "Other", value: "other" },
-        ];
-
         return {
           data: {
-            rooms: extractOptions(roomsRes.data),
-            stations: extractOptions(stationsRes.data),
-            benches: extractOptions(benchesRes.data),
-            categories,
+            rooms: optionItems(rooms),
+            stations: optionItems(stations),
+            benches: optionItems(benches),
+            categories: optionItems(categories),
           },
         };
       },
       providesTags: [{ type: "ResourceMapping", id: "FILTERS" }],
     }),
 
-    getStationSlots: build.query<Array<{ id: number; slot_code: string; label?: string }>, number>({
-      query: (stationId) => ({ url: `/api/labs/stations/${stationId}/slots` }),
-      transformResponse: (res: unknown) => {
-        const envelope = (res as Record<string, unknown>) ?? {};
-        const list = Array.isArray(envelope.data) ? envelope.data : [];
-        return list.map((s: Record<string, unknown>) => ({
-          id: s.id as number,
-          slot_code: (s.slot_code as string) ?? "",
-          label: (s.label as string) ?? undefined,
-        }));
-      },
-    }),
-
-    getRoomSlots: build.query<Array<{ id: number; slot_code: string; row_index: number; col_index: number }>, number>({
-      query: (roomId) => ({ url: `/api/labs/rooms/${roomId}/slots` }),
-      transformResponse: (res: unknown) => {
-        const envelope = (res as Record<string, unknown>) ?? {};
-        const list = Array.isArray(envelope.data) ? envelope.data : [];
-        return list.map((s: Record<string, unknown>) => ({
-          id: s.id as number,
-          slot_code: (s.slot_code as string) ?? "",
-          row_index: (s.row_index as number) ?? 0,
-          col_index: (s.col_index as number) ?? 0,
-        }));
-      },
-    }),
-
-    // The change log is the bench audit history: one page of `/api/labs/audits` filtered to benches.
+    // The bench audit history: one page of `/api/labs/audits` filtered to benches.
     getBenchAuditPage: build.query<{ rows: BenchAuditRow[]; hasNext: boolean }, number>({
       query: (page) => ({
         url: "/api/labs/audits",
@@ -240,14 +153,9 @@ export const {
   useGetEquipmentMappingQuery,
   useLazyGetMappingsQuery,
   useGetBenchMappingQuery,
-  useGetRoomMappingQuery,
-  useGetStationMappingQuery,
   usePlaceBenchMutation,
-  usePlaceStationMutation,
   useAssignEquipmentMutation,
   useUnassignEquipmentMutation,
   useGetMappingFilterOptionsQuery,
-  useGetStationSlotsQuery,
-  useGetRoomSlotsQuery,
   useLazyGetBenchAuditPageQuery,
 } = mappingApi;
