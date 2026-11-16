@@ -24,7 +24,7 @@ test('room mapper maps lifecycle_status, access_policy, condition, availability,
     length_m: '8.50',
     width_m: '4.00',
     area_m2: '34.00',
-    owner: { id: 3, name: 'Ada Lovelace' },
+    owner: { id: 3, username: 'ada', display_name: 'Ada Lovelace' },
     country: { id: 1, name: 'Germany' },
     city: { id: 2, name: 'Berlin' },
     building: { id: 4, name: 'B1' },
@@ -45,7 +45,8 @@ test('room mapper maps lifecycle_status, access_policy, condition, availability,
   assert.equal(result.rows, 2);
   assert.equal(result.cols, 5);
   assert.equal(result.length, 8.5);
-  assert.equal(result.primary_owner?.username, 'Ada Lovelace');
+  assert.equal(result.primary_owner?.username, 'ada');
+  assert.equal(result.primary_owner?.display_name, 'Ada Lovelace');
   assert.equal(result.location_info?.location_string, 'Germany / Berlin / B1 / Room 12');
   assert.equal(result.location_info?.city?.id, 2);
   assert.equal(result.floor, '2');

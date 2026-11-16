@@ -912,6 +912,18 @@ const injectedRtkApi = api.injectEndpoints({
         },
       }),
     }),
+    labsBenchesBookingChoicesRetrieve: build.query<
+      LabsBenchesBookingChoicesRetrieveApiResponse,
+      LabsBenchesBookingChoicesRetrieveApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/benches/booking-choices`,
+        params: {
+          include_ids: queryArg.includeIds,
+          q: queryArg.q,
+        },
+      }),
+    }),
     labsBenchesFiltersRetrieve: build.query<
       LabsBenchesFiltersRetrieveApiResponse,
       LabsBenchesFiltersRetrieveApiArg
@@ -3553,6 +3565,24 @@ const injectedRtkApi = api.injectEndpoints({
         body: queryArg.purchaseTransactionWrite,
       }),
     }),
+    labsResourceMappingsRetrieve: build.query<
+      LabsResourceMappingsRetrieveApiResponse,
+      LabsResourceMappingsRetrieveApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/resource-mappings`,
+        params: {
+          bench_id: queryArg.benchId,
+          equipment_category_id: queryArg.equipmentCategoryId,
+          page: queryArg.page,
+          page_size: queryArg.pageSize,
+          q: queryArg.q,
+          room_id: queryArg.roomId,
+          state: queryArg.state,
+          station_id: queryArg.stationId,
+        },
+      }),
+    }),
     labsResourcesAuditsRetrieveByResourceTypeResourceId: build.query<
       LabsResourcesAuditsRetrieveByResourceTypeResourceIdApiResponse,
       LabsResourcesAuditsRetrieveByResourceTypeResourceIdApiArg
@@ -4236,6 +4266,38 @@ const injectedRtkApi = api.injectEndpoints({
       LabsStationsStatusSummaryRetrieveApiArg
     >({
       query: () => ({ url: `/api/labs/stations/status-summary` }),
+    }),
+    labsWorkbookImportsActionsApplyCreate: build.mutation<
+      LabsWorkbookImportsActionsApplyCreateApiResponse,
+      LabsWorkbookImportsActionsApplyCreateApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/workbook-imports/actions/apply`,
+        method: "POST",
+        body: queryArg.workbookUpload,
+      }),
+    }),
+    labsWorkbookImportsActionsCheckCreate: build.mutation<
+      LabsWorkbookImportsActionsCheckCreateApiResponse,
+      LabsWorkbookImportsActionsCheckCreateApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/workbook-imports/actions/check`,
+        method: "POST",
+        body: queryArg.workbookUpload,
+      }),
+    }),
+    labsWorkbookImportsExportRetrieve: build.query<
+      LabsWorkbookImportsExportRetrieveApiResponse,
+      LabsWorkbookImportsExportRetrieveApiArg
+    >({
+      query: () => ({ url: `/api/labs/workbook-imports/export` }),
+    }),
+    labsWorkbookImportsTemplateRetrieve: build.query<
+      LabsWorkbookImportsTemplateRetrieveApiResponse,
+      LabsWorkbookImportsTemplateRetrieveApiArg
+    >({
+      query: () => ({ url: `/api/labs/workbook-imports/template` }),
     }),
     loginCreate: build.mutation<LoginCreateApiResponse, LoginCreateApiArg>({
       query: (queryArg) => ({
@@ -5587,6 +5649,14 @@ export type LabsBenchesMappingRetrieveByResourceIdApiArg = {
   roomsCursor?: string;
   stationSlotsCursor?: string;
   stationsCursor?: string;
+};
+export type LabsBenchesBookingChoicesRetrieveApiResponse =
+  /** status 200  */ BookingBenchChoicesRead;
+export type LabsBenchesBookingChoicesRetrieveApiArg = {
+  /** Comma-separated positive integers (at most 50) of retired rows to include. */
+  includeIds?: number[];
+  /** Search text (1 to 100 characters). */
+  q?: string;
 };
 export type LabsBenchesFiltersRetrieveApiResponse =
   /** status 200  */ BenchFiltersFilteringFilterMetadataDetailResponse;
@@ -7334,6 +7404,25 @@ export type LabsPurchasesTransactionsCreateByPurchaseIdApiArg = {
   purchaseId: number;
   purchaseTransactionWrite: PurchaseTransactionWrite;
 };
+export type LabsResourceMappingsRetrieveApiResponse =
+  /** status 200  */ BenchMappingListResponse;
+export type LabsResourceMappingsRetrieveApiArg = {
+  benchId?: number;
+  /** Benches with at least one unit of this equipment category. */
+  equipmentCategoryId?: number;
+  page?: number;
+  pageSize?: number;
+  /** Matches the SKU or name of the bench, its station, its room or a unit placed on it. */
+  q?: string;
+  roomId?: number;
+  /** needs_placement: no station in a room. needs_equipment: placed, no units. fully_mapped: both.
+    
+    * `fully_mapped` - Fully mapped
+    * `needs_equipment` - Needs equipment
+    * `needs_placement` - Needs placement */
+  state?: "fully_mapped" | "needs_equipment" | "needs_placement";
+  stationId?: number;
+};
 export type LabsResourcesAuditsRetrieveByResourceTypeResourceIdApiResponse =
   /** status 200  */ TypedResourceAuditListSerializersResourceAuditItemPaginatedResponseRead;
 export type LabsResourcesAuditsRetrieveByResourceTypeResourceIdApiArg = {
@@ -7775,6 +7864,22 @@ export type LabsStationsReferenceDataRetrieveApiArg = void;
 export type LabsStationsStatusSummaryRetrieveApiResponse =
   /** status 200  */ StationStatusSummaryDataSerializersStationStatusSummaryDetailResponse;
 export type LabsStationsStatusSummaryRetrieveApiArg = void;
+export type LabsWorkbookImportsActionsApplyCreateApiResponse =
+  /** status 200  */ WorkbookImportApplySerializersImportReportDetailResponseRead;
+export type LabsWorkbookImportsActionsApplyCreateApiArg = {
+  workbookUpload: WorkbookUpload;
+};
+export type LabsWorkbookImportsActionsCheckCreateApiResponse =
+  /** status 200  */ WorkbookImportCheckSerializersImportReportDetailResponseRead;
+export type LabsWorkbookImportsActionsCheckCreateApiArg = {
+  workbookUpload: WorkbookUpload;
+};
+export type LabsWorkbookImportsExportRetrieveApiResponse =
+  /** status 200  */ Blob;
+export type LabsWorkbookImportsExportRetrieveApiArg = void;
+export type LabsWorkbookImportsTemplateRetrieveApiResponse =
+  /** status 200  */ Blob;
+export type LabsWorkbookImportsTemplateRetrieveApiArg = void;
 export type LoginCreateApiResponse =
   /** status 200  */ LoginSerializerLoginResponseDetailResponse;
 export type LoginCreateApiArg = {
@@ -9025,7 +9130,8 @@ export type AuditedResourceRead = {
 export type UserReference = {};
 export type UserReferenceRead = {
   id: number;
-  name: string;
+  username: string;
+  display_name: string;
 };
 export type ResourceAuditItemRead = {
   id: number;
@@ -9399,7 +9505,7 @@ export type BenchRead = {
   name: string;
   group: LabsNamedReferenceRead | null;
   department: LabsNamedReferenceRead | null;
-  owner: LabsNamedReferenceRead | null;
+  owner: UserReferenceRead | null;
   remark: string;
   image_url: string | null;
   type: LabsNamedReferenceRead | null;
@@ -9475,7 +9581,7 @@ export type BenchResourceDetailRead = {
   name: string;
   group: LabsNamedReferenceRead | null;
   department: LabsNamedReferenceRead | null;
-  owner: LabsNamedReferenceRead | null;
+  owner: UserReferenceRead | null;
   remark: string;
   image_url: string | null;
   type: LabsNamedReferenceRead | null;
@@ -9789,6 +9895,26 @@ export type ResourceMappingResponse = {
   data: ResourceMappingData;
   meta: ResourceMappingMeta;
 };
+export type BookingBenchChoices = {};
+export type BookingBenchChoice = {};
+export type BenchComputer = {};
+export type BenchComputerRead = {
+  id: number;
+  sku: string;
+  name: string;
+  /** Empty when not reported yet. */
+  hostname: string;
+};
+export type BookingBenchChoiceRead = {
+  id: number;
+  sku: string;
+  name: string;
+  /** Computers on the bench now. */
+  computers: BenchComputerRead[];
+};
+export type BookingBenchChoicesRead = {
+  data: BookingBenchChoiceRead[];
+};
 export type FilterMetadata = {
   filters: {
     [key: string]: any;
@@ -10081,7 +10207,8 @@ export type DashboardLocationRead = {
 };
 export type DashboardUser = {
   id: number;
-  name: string;
+  username: string;
+  display_name: string;
 };
 export type DashboardBooking = {
   id: number;
@@ -10509,7 +10636,7 @@ export type EquipmentItemRead = {
   serial_number: string;
   /** Label that already existed on the asset before it was registered. */
   log_label: string;
-  owner: LabsNamedReferenceRead | null;
+  owner: UserReferenceRead | null;
   department: LabsNamedReferenceRead | null;
   group: LabsNamedReferenceRead | null;
   placement: EquipmentPlacementRead | null;
@@ -10588,7 +10715,7 @@ export type EquipmentDetailRead = {
   serial_number: string;
   /** Label that already existed on the asset before it was registered. */
   log_label: string;
-  owner: LabsNamedReferenceRead | null;
+  owner: UserReferenceRead | null;
   department: LabsNamedReferenceRead | null;
   group: LabsNamedReferenceRead | null;
   placement: EquipmentPlacementRead | null;
@@ -12854,7 +12981,7 @@ export type LicenseRead = {
   uid: string;
   sku: string;
   name: string;
-  owner: LabsNamedReferenceRead | null;
+  owner: UserReferenceRead | null;
   department: LabsNamedReferenceRead | null;
   remark: string;
   image_url: string | null;
@@ -13964,6 +14091,30 @@ export type PurchaseTransactionWrite = {
   reference?: string;
   notes?: string;
 };
+export type BenchMappingPage = {
+  count: number;
+  page: number;
+  page_size: number;
+  next: string | null;
+  previous: string | null;
+};
+export type BenchMappingSummary = {
+  /** Benches matching the filters (state not applied). */
+  benches: number;
+  fully_mapped: number;
+  needs_equipment: number;
+  needs_placement: number;
+  /** Units placed on those benches. */
+  equipment: number;
+};
+export type BenchMappingListMeta = {
+  pagination: BenchMappingPage;
+  summary: BenchMappingSummary;
+};
+export type BenchMappingListResponse = {
+  data: ResourceMappingData;
+  meta: BenchMappingListMeta;
+};
 export type TypedResourceAuditListSerializersResourceAuditItemPagination = {
   count: number;
   page: number;
@@ -14097,7 +14248,7 @@ export type RoomRead = {
   label: string | null;
   department: LabsNamedReferenceRead | null;
   group: LabsNamedReferenceRead | null;
-  owner: LabsNamedReferenceRead | null;
+  owner: UserReferenceRead | null;
   remark: string;
   image_url: string | null;
   map_url: string;
@@ -14575,7 +14726,7 @@ export type StationRead = {
   name: string;
   department: LabsNamedReferenceRead | null;
   group: LabsNamedReferenceRead | null;
-  owner: LabsNamedReferenceRead | null;
+  owner: UserReferenceRead | null;
   remark: string;
   /** Position within the parent location, e.g. R1C1 or U12. */
   label: string | null;
@@ -15015,6 +15166,96 @@ export type StationStatusSummaryDataSerializersStationStatusSummaryDetailRespons
   {
     data: StationStatusSummary;
   };
+export type SheetOutcome = {
+  key: string;
+  name: string;
+  /** Non-empty data rows read. */
+  rows: number;
+  /** Rows that create a record (or would, for a check). */
+  created: number;
+  /** Rows that change an existing record (upsert mode only). */
+  updated: number;
+  /** Rows that match an existing record and change nothing (reference rows; unchanged rows in upsert). */
+  existing: number;
+  failed: number;
+  ignored_columns: string[];
+};
+export type ImportProblem = {
+  /** Sheet name as in the workbook. */
+  sheet: string;
+  /** Excel row number; null for a sheet-level problem. */
+  row: number | null;
+  /** Column name as in the template; null when general. */
+  column: string | null;
+  /** Stable snake_case problem code. */
+  code: string;
+  message: string;
+};
+export type ImportProblemRead = {
+  /** Sheet name as in the workbook. */
+  sheet: string;
+  /** Excel row number; null for a sheet-level problem. */
+  row: number | null;
+  /** Column name as in the template; null when general. */
+  column: string | null;
+  severity: ChoiceRead;
+  /** Stable snake_case problem code. */
+  code: string;
+  message: string;
+};
+export type ImportReport = {
+  /** True for a check: nothing was saved. */
+  is_dry_run: boolean;
+  /** True when the workbook has no errors and can be applied. */
+  is_valid: boolean;
+  template_version: string | null;
+  sheets: SheetOutcome[];
+  problems: ImportProblem[];
+  /** Sheets that were not read. */
+  unknown_sheets: string[];
+};
+export type ImportSummary = {
+  created: number;
+  updated: number;
+  existing: number;
+  error_count: number;
+  warning_count: number;
+};
+export type ImportReportRead = {
+  /** True for a check: nothing was saved. */
+  is_dry_run: boolean;
+  /** True when the workbook has no errors and can be applied. */
+  is_valid: boolean;
+  template_version: string | null;
+  mode: ChoiceRead;
+  summary: ImportSummary;
+  sheets: SheetOutcome[];
+  problems: ImportProblemRead[];
+  /** Sheets that were not read. */
+  unknown_sheets: string[];
+};
+export type WorkbookImportApplySerializersImportReportDetailResponse = {
+  data: ImportReport;
+};
+export type WorkbookImportApplySerializersImportReportDetailResponseRead = {
+  data: ImportReportRead;
+};
+export type WorkbookImportModeEnum = "create" | "upsert";
+export type WorkbookUpload = {
+  /** The data workbook (.xlsx), at most 10 MB and 5,000 rows per sheet. */
+  file: Blob;
+  /** create (default): an existing asset tag is an error. upsert: an existing asset tag updates that record; blank cells keep stored values; the asset tag never changes.
+    
+    * `create` - Create new
+    * `upsert` - Update existing */
+  mode?: WorkbookImportModeEnum;
+};
+export type WorkbookImportCheckSerializersImportReportDetailResponse = {
+  data: ImportReport;
+};
+export type WorkbookImportCheckSerializersImportReportDetailResponseRead = {
+  data: ImportReportRead;
+};
 export type LoginResponse = {
   username: string;
   access: string;
@@ -16046,7 +16287,7 @@ export type QueueStatsAssigneeItem = {
 };
 export type QueueStatsAssigneeItemRead = {
   /** The assigned user (REL-14). */
-  assignee: RelationRead;
+  assignee: UserReferenceRead;
   /** Number of open tickets assigned to this user. */
   count: number;
 };
@@ -16440,6 +16681,7 @@ export const {
   useLabsBenchesProfileRetrieveByIdQuery,
   useLabsBenchesWeeklyUsageRetrieveByIdQuery,
   useLabsBenchesMappingRetrieveByResourceIdQuery,
+  useLabsBenchesBookingChoicesRetrieveQuery,
   useLabsBenchesFiltersRetrieveQuery,
   useLabsBenchesOptionsRetrieveQuery,
   useLabsBenchesReferenceDataRetrieveQuery,
@@ -16674,6 +16916,7 @@ export const {
   useLabsPurchasesItemsDraftCreateByPurchaseIdMutation,
   useLabsPurchasesTransactionsRetrieveByPurchaseIdQuery,
   useLabsPurchasesTransactionsCreateByPurchaseIdMutation,
+  useLabsResourceMappingsRetrieveQuery,
   useLabsResourcesAuditsRetrieveByResourceTypeResourceIdQuery,
   useLabsResourcesAuditsCreateByResourceTypeResourceIdMutation,
   useLabsResourcesIdAuditsRetrieveByResourceIdQuery,
@@ -16736,6 +16979,10 @@ export const {
   useLabsStationsOptionsRetrieveQuery,
   useLabsStationsReferenceDataRetrieveQuery,
   useLabsStationsStatusSummaryRetrieveQuery,
+  useLabsWorkbookImportsActionsApplyCreateMutation,
+  useLabsWorkbookImportsActionsCheckCreateMutation,
+  useLabsWorkbookImportsExportRetrieveQuery,
+  useLabsWorkbookImportsTemplateRetrieveQuery,
   useLoginCreateMutation,
   useLogoutCreateMutation,
   useNotificationsListQuery,

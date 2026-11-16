@@ -274,7 +274,7 @@ export default function EquipmentPageLayout<T extends { id: number | string }>({
           </div>
           <Badge>{loading ? 'Loading…' : `${totalRecords.toLocaleString()} records`}</Badge>
         </div>}
-        {professionalTable && <div className="tw:flex tw:flex-wrap tw:items-center tw:gap-3 tw:border-0 tw:border-b tw:border-solid tw:border-border tw:px-5 tw:pb-4">
+        {professionalTable && <div className="tw:flex tw:flex-wrap tw:items-center tw:gap-3 tw:border-0 tw:border-b tw:border-solid tw:border-border tw:px-5 tw:pb-4 tw:pt-3">
           <div className="tw:min-w-0 tw:flex-[1_1_320px] tw:max-w-xl">
             <InventorySearch value={search} placeholder={searchPlaceholder} onSearch={(value) => {
               onSearchChange(value);

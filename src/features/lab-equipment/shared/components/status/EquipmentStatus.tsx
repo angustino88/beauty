@@ -20,6 +20,7 @@ import type {
   EquipmentReturn,
 } from '@/shared/api/generated/api';
 import type { EquipmentItem } from '../../../types/equipment';
+import { userLabel } from '@/shared/utils/userRef';
 
 export default function EquipmentStatus({ status }: { status: unknown }) {
   return <StatusBadge tone={equipmentStatusTone(status)} label={equipmentStatusLabel(status)} className={styles.badge} />;
@@ -138,7 +139,7 @@ export function UpdateEquipmentStatusModal({
   const currentAvailableStep = getAvailableStatusStep(statusFacts);
   const location = record.placement?.bench?.name ?? record.placement?.station?.name
     ?? record.placement?.room?.name ?? record.placement?.location_note ?? 'Location unknown';
-  const borrower = record.loan?.borrower_name ?? record.loan?.borrower?.name ?? 'Borrower';
+  const borrower = record.loan?.borrower_name || userLabel(record.loan?.borrower) || 'Borrower';
   const availableButtonText = life === 'lost' ? 'Mark as found'
     : availableReason === 'Return the loan' ? 'Return loan'
     : availableReason === 'Move off the bench' ? 'Move equipment'

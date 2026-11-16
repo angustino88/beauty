@@ -5,6 +5,7 @@ import dayjs from 'dayjs';
 import type { EquipmentStatusChangeRead } from '@/shared/api/generated/api';
 import EquipmentStatus from '../status/EquipmentStatus';
 import styles from './EquipmentStatusHistoryModal.module.css';
+import { userLabel } from '@/shared/utils/userRef';
 
 interface Props {
   open: boolean;
@@ -33,7 +34,7 @@ const formatValue = (value: unknown): string => {
 };
 
 const actorName = (item: EquipmentStatusChangeRead): string =>
-  item.actor?.name?.trim() || 'Unknown actor';
+  userLabel(item.actor) || 'Unknown actor';
 
 function StatusTransition({ item }: { item: EquipmentStatusChangeRead }) {
   return (

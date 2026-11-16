@@ -48,6 +48,8 @@ export interface FieldConfig {
     essential?:      boolean;
     maxLength?:      number;
     options?:        SelectFieldOption[];
+    /** Shown in an empty server-searched select, e.g. "Type to search". */
+    searchHint?:     React.ReactNode;
     onSearch?:       (query: string) => void;
     placeholder?:    string;
     disabled?:       boolean;
@@ -129,6 +131,7 @@ function FormFields({ fields, form, mode, professionalForm }: FormFieldsProps) {
             case 'multi-select':
                 return <Select mode="multiple" showSearch allowClear placeholder={field.placeholder ?? `Select ${field.label}`}
                     disabled={disabled} options={field.options} onSearch={field.onSearch}
+                    notFoundContent={field.searchHint}
                     {...resourceSelectProps(field.options)}
                     // With a search callback the options come from the server, so do not filter them again here.
                     filterOption={field.onSearch ? false : filterResourceOption}

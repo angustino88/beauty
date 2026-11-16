@@ -7,6 +7,7 @@ import {
   type DowntimeState,
   type ResourceType,
 } from './resourceStatus.ts';
+import { toUserRef } from '../../../shared/utils/userRef.ts';
 
 export interface DowntimeListResponse {
   data: Downtime[];
@@ -38,13 +39,7 @@ export function mapDowntimeItem(raw: unknown): Downtime {
     ends_at: typeof d.ends_at === 'string' && d.ends_at.trim() ? d.ends_at : null,
     cancelled_at: typeof d.cancelled_at === 'string' && d.cancelled_at.trim() ? d.cancelled_at : null,
     notes: String(d.notes || ''),
-    actor: actor
-      ? {
-          id: Number(actor.id) || 0,
-          username: String(actor.name || ''),
-          display_name: String(actor.name || ''),
-        }
-      : null,
+    actor: toUserRef(actor),
     ended_by: endedBy
       ? {
           id: Number(endedBy.id) || 0,

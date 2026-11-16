@@ -1,14 +1,23 @@
 import dayjs from 'dayjs';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { EventInput } from '@fullcalendar/core';
 import { useLazyGetBenchBookingsQuery } from '../api';
 import { useLazyGetDowntimesQuery } from '@/features/spaces/shared/downtimeApi';
 import { useAuthState } from '@/features/auth/hooks/useAuthState';
+import { useGetBookingBenchChoicesQuery } from '../api';
+import { formatBenchLabel } from '../utils/benchChoiceOption';
 
 const CALENDAR_DATETIME_FORMAT = 'YYYY-MM-DDTHH:mm:ss';
 
 export function useBookingCalendarEvents() {
-  const { id: myUserId, permissionGroups } = useAuthState();
+  const { id: myUserId } = useAuthState();
+  // Same cached request the bench filter makes; gives each bench its computers for the event title.
+  const { data: benchChoicesData } = useGetBookingBenchChoicesQuery();
+  // A ref, so the choices arriving later do not change `fetchEvents` and trigger another bookings request.
+  const benchChoicesRef = useRef(benchChoicesData);
+  useEffect(() => {
+    benchChoicesRef.current = benchChoicesData;
+  }, [benchChoicesData]);
   const [bookingEvents, setBookingEvents] = useState<EventInput[]>([]);
   const [fetchBookings, { isFetching: isFetchingBookings }] = useLazyGetBenchBookingsQuery();
   const [fetchDowntimes, { isFetching: isFetchingDowntimes }] = useLazyGetDowntimesQuery();
@@ -64,9 +73,16 @@ export function useBookingCalendarEvents() {
             const endStr = booking.ends_at;
             if (!startStr || !endStr) return [];
 
-            const access =
-              !!permissionGroups['lab-coordinator'] ||
-              (myUserId !== null && booking.creator?.id === myUserId);
+            // Colour only says whose booking it is; a coordinator's edit rights do not make others' bookings "mine".
+            const isMine = myUserId !== null && booking.creator?.id === myUserId;
+            const choice = benchChoicesRef.current?.find((bench) => bench.id === booking.bench?.id);
+            const benchLabel = formatBenchLabel(
+              booking.bench?.sku || choice?.sku,
+              booking.bench?.name || choice?.name,
+              booking.computer?.computer_name
+                ? [booking.computer.computer_name]
+                : (choice?.computers ?? []).map((computer) => computer.name || computer.sku),
+            ) || 'Unknown Bench';
 
             const diffHours = dayjs(endStr).diff(dayjs(startStr), 'hours');
             const projectName = booking.project?.name || 'Unknown Project';
@@ -76,17 +92,19 @@ export function useBookingCalendarEvents() {
               {
                 id: booking.id.toString(),
                 creator: booking.creator?.display_name || booking.creator?.username || 'Unknown',
-                title: `${projectName} - ${reason}`,
+                title: benchLabel,
+                projectTitle: `${projectName}${reason ? ` - ${reason}` : ''}`,
                 start: startStr,
                 end:
                   diffHours >= 23
                     ? dayjs(endStr).add(1, 'day').format(CALENDAR_DATETIME_FORMAT)
                     : endStr,
                 // Colours come from the theme (App.css .lm-event-*): own bookings in
-                // the brand accent, other people's in neutral.
-                classNames: ['lm-event', access ? 'lm-event-mine' : 'lm-event-other'],
+                // green, other people's in neutral.
+                classNames: ['lm-event', isMine ? 'lm-event-mine' : 'lm-event-other'],
                 allDay: diffHours >= 23,
                 stick: true,
+                booking,
               },
             ];
           });
@@ -137,7 +155,7 @@ export function useBookingCalendarEvents() {
         },
       );
     },
-    [fetchBookings, fetchDowntimes, myUserId, permissionGroups],
+    [fetchBookings, fetchDowntimes, myUserId],
   );
 
   return {

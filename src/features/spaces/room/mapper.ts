@@ -8,6 +8,7 @@ import {
   type Condition,
   type LifecycleStatus,
 } from '../shared/resourceStatus.ts';
+import { toUserRef } from '../../../shared/utils/userRef.ts';
 
 export type RoomWriteApiPayload = Record<string, unknown>;
 
@@ -31,7 +32,6 @@ export function mapRoomApiItem(raw: unknown): IRoom {
   const country = relation(room.country);
   const city = relation(room.city);
   const building = relation(room.building);
-  const owner = relation(room.owner);
   const floor = room.floor != null && room.floor !== '' ? String(room.floor) : null;
 
   return {
@@ -63,9 +63,7 @@ export function mapRoomApiItem(raw: unknown): IRoom {
     max_power: (room.power_capacity_w as number) ?? 0,
     power_usage: 0,
     label: (room.label as string) ?? '',
-    primary_owner: owner
-      ? ({ id: owner.id, username: owner.name, display_name: owner.name } as IRoom['primary_owner'])
-      : null,
+    primary_owner: toUserRef(room.owner),
     lifecycle_status: mapChoice<LifecycleStatus>(room.lifecycle_status, 'in_service', 'In service'),
     access_policy: mapChoice<AccessPolicy>(room.access_policy, 'open', 'Open'),
     condition: mapChoice<Condition>(room.condition, 'operational', 'Operational'),

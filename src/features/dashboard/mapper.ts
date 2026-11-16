@@ -13,6 +13,7 @@ import type {
   DashboardSummaryResponse,
   LabEquipmentDetail,
 } from './types';
+import { toUserRef } from '../../shared/utils/userRef.ts';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -551,16 +552,7 @@ export function mapBenchDetailResponse(
           };
         })()
       : null,
-    primary_owner: source.primary_owner
-      ? (() => {
-          const o = asRecord(source.primary_owner);
-          return {
-            id: asNumber(o.id),
-            username: asString(o.name),
-            display_name: asString(o.name),
-          };
-        })()
-      : null,
+    primary_owner: toUserRef(source.primary_owner),
     computer: computing
       ? {
           id: asNumber(computing.id),
