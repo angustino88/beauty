@@ -16,7 +16,6 @@ export interface IBench extends ResourceState {
   bench_group?: { id: number; name: string } | null;
   bench_type?: { id: number; name: string } | null;
   department?: { id: number; name: string } | null;
-  owner?: { id: number; name: string } | null;
   primary_owner?: IPrimaryOwner | null;
   setup_location_id?: number | null;
   station_slot_id?: number | null;

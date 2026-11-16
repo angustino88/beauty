@@ -6,7 +6,7 @@ const wire = {
   id: 7,
   sku: 'LIC-7',
   name: 'CAD Suite',
-  owner: { id: 3, name: 'Ada Lovelace' },
+  owner: { id: 3, username: 'ada', display_name: 'Ada Lovelace' },
   product: { id: 1, name: 'CAD' },
   vendor: { id: 2, name: 'Acme' },
   type: { id: 4, name: 'Floating' },
@@ -42,7 +42,8 @@ test('license read maps seats, version, owner, expiry and the status choice', ()
 
   assert.equal(license.license_seats, 3);
   assert.equal(license.maximum_version, '2026.1');
-  assert.equal(license.primary_owner?.username, 'Ada Lovelace');
+  assert.equal(license.primary_owner?.username, 'ada');
+  assert.equal(license.primary_owner?.display_name, 'Ada Lovelace');
   assert.equal(license.expiry_date, '2027-01-31T12:00:00Z');
   assert.equal(license.status, 'assigned');
 });

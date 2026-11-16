@@ -148,9 +148,7 @@ export const buildBenchColumns = ({
       filterSearch: true,
       filteredValue: activeFilters.owner ?? null,
       render: (_, record) =>
-        renderOwnerCell(
-          record.primary_owner ?? (record.owner ? { id: record.owner.id, username: record.owner.name, display_name: record.owner.name } : null),
-        ),
+        renderOwnerCell(record.primary_owner),
     },
     {
       title: "Information",

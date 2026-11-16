@@ -7,6 +7,7 @@ import {
   type Condition,
   type LifecycleStatus,
 } from "../shared/resourceStatus.ts";
+import { toUserRef } from '../../../shared/utils/userRef.ts';
 
 const isRecord = (v: unknown): v is Record<string, unknown> =>
   typeof v === "object" && v !== null && !Array.isArray(v);
@@ -50,8 +51,7 @@ export function mapBenchApiItem(raw: unknown): IBench {
     bench_group: group ? { id: asNumber(group.id), name: asString(group.name || group.lab_group_name) } : null,
     bench_type: type ? { id: asNumber(type.id), name: asString(type.name) } : null,
     department: dept ? { id: asNumber(dept.id), name: asString(dept.name) } : null,
-    owner: owner ? { id: asNumber(owner.id), name: asString(owner.name) } : null,
-    primary_owner: owner ? { id: asNumber(owner.id), username: asString(owner.name), display_name: asString(owner.name) } : null,
+    primary_owner: toUserRef(owner),
     setup_location_id: station ? asNumber(station.id) : asNullableNumber(b.setup_location_id),
     station_slot_id: stationSlot ? asNumber(stationSlot.id) : asNullableNumber(b.station_slot_id),
     station_slot_name: stationSlot ? asNullableString(stationSlot.name) : null,

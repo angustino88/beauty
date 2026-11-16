@@ -8,6 +8,7 @@ import {
   type Condition,
   type LifecycleStatus,
 } from "../shared/resourceStatus.ts";
+import { toUserRef } from '../../../shared/utils/userRef.ts';
 
 const isRecord = (v: unknown): v is Record<string, unknown> =>
   typeof v === "object" && v !== null && !Array.isArray(v);
@@ -68,8 +69,7 @@ export function mapStationApiItem(raw: unknown): IStation {
     network_port_capacity: asNullableNumber(st.network_port_capacity),
     department: dept ? { id: asNumber(dept.id), name: asString(dept.name) } : null,
     group: grp ? { id: asNumber(grp.id), name: asString(grp.name) } : null,
-    owner: owner ? { id: asNumber(owner.id), name: asString(owner.name) } : null,
-    primary_owner: owner ? { id: asNumber(owner.id), username: asString(owner.name), display_name: asString(owner.name) } : null,
+    primary_owner: toUserRef(owner),
     lifecycle_status: mapChoice<LifecycleStatus>(st.lifecycle_status, 'in_service', 'In service'),
     access_policy: mapChoice<AccessPolicy>(st.access_policy, 'open', 'Open'),
     condition: mapChoice<Condition>(st.condition, 'operational', 'Operational'),

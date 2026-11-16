@@ -14,6 +14,7 @@ import {
   useUsersRetrieveQuery,
   type TicketActivityRead,
 } from '@/shared/api/generated/api';
+import { userLabel } from '@/shared/utils/userRef';
 
 const formatDate = (value?: string | null) => value ? new Date(value).toLocaleString() : '–';
 
@@ -118,8 +119,8 @@ export default function SupportTicketDetail() {
             <Descriptions.Item label="Status"><StatusBadge status={ticket.status?.name} label={ticket.status?.name ?? '–'} /></Descriptions.Item>
             <Descriptions.Item label="Priority">{ticket.priority?.name ?? '–'}</Descriptions.Item>
             <Descriptions.Item label="Category">{ticket.category?.name ?? '–'}</Descriptions.Item>
-            <Descriptions.Item label="Requester">{ticket.requester?.name || '–'}</Descriptions.Item>
-            <Descriptions.Item label="Assignee">{ticket.assignee?.name || 'Unassigned'}</Descriptions.Item>
+            <Descriptions.Item label="Requester">{userLabel(ticket.requester) || '–'}</Descriptions.Item>
+            <Descriptions.Item label="Assignee">{userLabel(ticket.assignee) || 'Unassigned'}</Descriptions.Item>
             <Descriptions.Item label="Updated">{formatDate(ticket.updated_at)}</Descriptions.Item>
           </Descriptions>
           <Typography.Paragraph style={{ whiteSpace: 'pre-wrap', marginTop: 16 }}>{ticket.description}</Typography.Paragraph>
@@ -138,7 +139,7 @@ export default function SupportTicketDetail() {
                   options={[
                     { value: UNASSIGN, label: 'Unassign' },
                     ...(ticket.assignee && !users?.data.some((user) => user.id === ticket.assignee?.id)
-                      ? [{ value: ticket.assignee.id, label: ticket.assignee.name }]
+                      ? [{ value: ticket.assignee.id, label: userLabel(ticket.assignee) }]
                       : []),
                     ...(users?.data ?? []).map((user) => ({ value: user.id, label: user.display_name || user.username })),
                   ]}
@@ -167,7 +168,7 @@ export default function SupportTicketDetail() {
           {commentsError && <Alert type="error" showIcon message="Comments could not be loaded" action={<Button onClick={() => refetchComments()}>Retry</Button>} />}
           {!commentsError && (comments?.data.length ? comments.data.map((entry) => (
             <Card size="small" key={entry.id} style={{ marginBottom: 12 }}>
-              <Space><strong>{entry.author?.name || 'User'}</strong><Typography.Text type="secondary">{formatDate(entry.created_at)}</Typography.Text></Space>
+              <Space><strong>{userLabel(entry.author) || 'User'}</strong><Typography.Text type="secondary">{formatDate(entry.created_at)}</Typography.Text></Space>
               <Typography.Paragraph style={{ whiteSpace: 'pre-wrap', margin: '8px 0 0' }}>{entry.body}</Typography.Paragraph>
             </Card>
           )) : <Empty description="No replies yet" />)}

@@ -9132,8 +9132,6 @@ export type UserReferenceRead = {
   id: number;
   username: string;
   display_name: string;
-  /** Deprecated: same value as `display_name`. */
-  name: string;
 };
 export type ResourceAuditItemRead = {
   id: number;
@@ -10211,8 +10209,6 @@ export type DashboardUser = {
   id: number;
   username: string;
   display_name: string;
-  /** Deprecated: same value as `display_name`. */
-  name: string;
 };
 export type DashboardBooking = {
   id: number;

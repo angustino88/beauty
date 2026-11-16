@@ -7,6 +7,7 @@ import type {
   ILicenseType,
   ILicenseVendor,
 } from './types';
+import { toUserRef } from '../../../shared/utils/userRef.ts';
 
 /** `{value, label}` choice (ENU-1) → its value; plain strings pass through. */
 function choiceOf(raw: unknown): string | undefined {
@@ -102,9 +103,7 @@ export function mapLicenseRead(rawItem: unknown): ILicense {
         uid: asString(equipment.uid) || undefined,
       };
     }),
-    primary_owner: owner
-      ? ({ id: asNumber(owner.id), username: asString(owner.name), display_name: asString(owner.name) } as ILicense['primary_owner'])
-      : ((item.primary_owner as ILicense['primary_owner']) ?? null),
+    primary_owner: toUserRef(owner),
     status: asString(status?.status_type || choiceOf(item.status)) || null,
     current_status: status
       ? {

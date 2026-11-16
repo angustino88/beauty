@@ -13,7 +13,7 @@ test('mapDowntimeItem normalizes API downtime record', () => {
     starts_at: '2026-11-20T08:00:00Z',
     ends_at: '2026-11-20T17:00:00Z',
     notes: 'Scheduled server maintenance',
-    actor: { id: 7, name: 'Technician One' },
+    actor: { id: 7, username: 'tech1', display_name: 'Technician One' },
   };
 
   const item = mapDowntimeItem(raw);

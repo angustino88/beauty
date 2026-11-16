@@ -55,6 +55,7 @@ import { printDeviceLabel } from '../shared/utils/printLabel';
 import { buildEquipmentFormFields, equipmentFormInitialValues } from '../shared/utils/formFields';
 import { notifyEquipmentCreated, notifyEquipmentDeleted, notifyEquipmentUpdated } from '../shared/utils/equipmentNotifications';
 import { equipmentStatusTone } from '../shared/utils/equipmentStatus';
+import { userLabel } from '@/shared/utils/userRef';
 
 export interface UnifiedEquipmentPageProps {
   config: EquipmentCategoryConfig;
@@ -700,7 +701,7 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
         title: 'Owner',
         key: 'owner',
         width: 160,
-        ...equipmentStaticColumnFilter(facetToAntdFilters(getFacetOptions(facets, 'owner', 'owner_id')) ?? refData?.owners?.map((o) => ({ text: o.name, value: o.id }))),
+        ...equipmentStaticColumnFilter(facetToAntdFilters(getFacetOptions(facets, 'owner', 'owner_id')) ?? refData?.owners?.map((o) => ({ text: userLabel(o), value: o.id }))),
         filteredValue: filters.owner ?? null,
         render: (_: unknown, record: EquipmentItem) =>
           renderOwnerCell(record.owner as unknown as IPrimaryOwner),

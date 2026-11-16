@@ -43,7 +43,6 @@ export interface IStation extends LocationState {
   rack_model?: { model_name?: string | null } | null;
   department?: { id: number; name: string } | null;
   group?: { id: number; name: string } | null;
-  owner?: { id: number; name: string } | null;
   primary_owner?: IPrimaryOwner | null;
   lifecycle_status: Choice<LifecycleStatus>;
   access_policy: Choice<AccessPolicy>;

@@ -32,7 +32,7 @@ function readUser(value: unknown): string {
   if (typeof value === 'string') return value;
   if (typeof value === 'object') {
     const user = value as SupportUserRef;
-    return user.displayName ?? user.display_name ?? user.username ?? user.name ?? '';
+    return user.displayName ?? user.display_name ?? user.username ?? '';
   }
   return '';
 }
