@@ -14,75 +14,68 @@ export type RoomWriteApiPayload = Record<string, unknown>;
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
-const nullableText = (value: unknown): string | null => {
-  if (typeof value === 'string') return value;
-  if (typeof value === 'number') return String(value);
-  return null;
+/** `{id, name}` relation (or null). */
+const relation = (value: unknown): { id: number; name: string } | null =>
+  isRecord(value) ? { id: Number(value.id) || 0, name: String(value.name ?? '') } : null;
+
+const toNumber = (value: unknown): number | null => {
+  if (value == null || value === '') return null;
+  const n = Number(value);
+  return Number.isNaN(n) ? null : n;
 };
 
-const mapLabAudit = (audit: unknown): IRoom['lab_audit'] => {
-  if (!isRecord(audit)) return null;
-  return {
-    audit_id: nullableText(audit.audit_id),
-    auditor: nullableText(audit.auditor),
-    audited_at: nullableText(audit.audited_at),
-    audit_status: nullableText(audit.audit_status),
-    remarks: nullableText(audit.remarks),
-  };
-};
-
+// The API sends relations (`country`, `city`, `building`, `owner`), `layout_rows` / `layout_columns`,
+// `length_m` / `width_m` / `area_m2` and `power_capacity_w`; the table reads the UI's own names.
 export function mapRoomApiItem(raw: unknown): IRoom {
   const room = isRecord(raw) ? raw : {};
-  const locationInfo = isRecord(room.location_info) ? room.location_info : {};
-  const currentStatus = isRecord(room.current_status) ? room.current_status : null;
-  const racks = Array.isArray(room.rack_list) ? room.rack_list : [];
+  const country = relation(room.country);
+  const city = relation(room.city);
+  const building = relation(room.building);
+  const owner = relation(room.owner);
+  const floor = room.floor != null && room.floor !== '' ? String(room.floor) : null;
 
   return {
     id: (room.id as number) ?? 0,
     sku: (room.sku as string) ?? '',
     name: (room.name as string) ?? '',
-    location: (room.location as string) ?? (locationInfo.location_string as string) ?? null,
-    country: (locationInfo.country as { name?: string })?.name ?? null,
-    location_info: locationInfo as unknown as IRoom['location_info'],
-    rack_list: racks.map((rack) => {
-      const r = isRecord(rack) ? rack : {};
-      return {
-        id: (r.id as number) ?? 0,
-        sku: (r.sku as string) ?? '',
-        name: (r.rack_name || r.name || '') as string,
-      };
-    }),
-    setup_capacity: (room.setup_capacity as number) ?? 0,
-    rows: (room.rows as number) ?? null,
-    cols: (room.cols as number) ?? null,
-    slot_summary: room.slot_summary as IRoom['slot_summary'],
-    length: (room.length as number) ?? null,
-    width: (room.width as number) ?? null,
-    floor: room.floor != null ? String(room.floor) : locationInfo.floor != null ? String(locationInfo.floor) : null,
-    size: room.size === null ? null : String(room.size ?? ''),
-    temperature: (room.temperature as number) ?? 0,
-    humidity: (room.humidity as number) ?? 0,
-    max_power: (room.max_power as number) ?? 0,
-    power_usage: (room.power_usage as number) ?? 0,
+    location: (room.map_url as string) || null,
+    country: country?.name ?? null,
+    location_info: {
+      location_string: (room.location_path as string) || null,
+      floor,
+      label: (room.label as string) || null,
+      country,
+      city,
+      building,
+    } as unknown as IRoom['location_info'],
+    // Stations are not part of the room payload; the room's own capacity is.
+    rack_list: [],
+    setup_capacity: (room.slot_capacity as number) ?? 0,
+    rows: (room.layout_rows as number) ?? null,
+    cols: (room.layout_columns as number) ?? null,
+    slot_summary: undefined,
+    length: toNumber(room.length_m),
+    width: toNumber(room.width_m),
+    floor,
+    size: room.area_m2 == null ? null : String(room.area_m2),
+    temperature: 0,
+    humidity: 0,
+    max_power: (room.power_capacity_w as number) ?? 0,
+    power_usage: 0,
     label: (room.label as string) ?? '',
-    primary_owner: room.primary_owner as IRoom['primary_owner'],
+    primary_owner: owner
+      ? ({ id: owner.id, username: owner.name, display_name: owner.name } as IRoom['primary_owner'])
+      : null,
     lifecycle_status: mapChoice<LifecycleStatus>(room.lifecycle_status, 'in_service', 'In service'),
     access_policy: mapChoice<AccessPolicy>(room.access_policy, 'open', 'Open'),
     condition: mapChoice<Condition>(room.condition, 'operational', 'Operational'),
     availability: mapAvailability(room.availability),
     activity_status: mapChoice<ActivityStatus>(room.activity_status, 'idle', 'Idle'),
-    current_status: currentStatus
-      ? {
-          id: (currentStatus.id as number) ?? 0,
-          status_type: (currentStatus.status_type as string) ?? undefined,
-          status_data: isRecord(currentStatus.status_data) ? currentStatus.status_data : undefined,
-          created: (currentStatus.created as string) ?? new Date().toISOString(),
-        }
-      : null,
-    status: normalizeSpaceStatus(room.status) || normalizeSpaceStatus(currentStatus?.status_type) || normalizeSpaceStatus(currentStatus?.status) || null,
-    lab_audit: mapLabAudit(room.lab_audit),
+    current_status: null,
+    status: normalizeSpaceStatus(room.status) || null,
+    lab_audit: null,
     remark: (room.remark as string) ?? null,
-    image: (room.image as string) ?? null,
+    image: (room.image_url ?? room.image ?? null) as string | null,
   };
 }
 
@@ -137,6 +130,11 @@ export function mapRoomWritePayload(payload: IRoomPayload): RoomWriteApiPayload 
         : value;
     }
   }
+
+  // Inline edit also sends the table's own names for capacity and owner.
+  const draft = payload as Record<string, unknown>;
+  if (draft.max_power !== undefined) body.power_capacity_w = draft.max_power;
+  if (draft.primary_owner !== undefined) body.owner_id = draft.primary_owner;
 
   return body;
 }

@@ -1,10 +1,10 @@
 import type {
   LabsLeaderboardLabRetrieveApiResponse,
   LabsLeaderboardPersonaRetrieveApiResponse,
-  LabsProfileRetrieveByIdApiResponse,
-  LabsUsersProfileRetrieveByIdApiResponse,
-  LabsUsersWeeklyUsageRetrieveByIdApiResponse,
-  LabsWeeklyUsageRetrieveByIdApiResponse,
+  LabsBenchesProfileRetrieveByIdApiResponse,
+  LabsLeaderboardUsersProfileRetrieveByIdApiResponse,
+  LabsLeaderboardUsersWeeklyUsageRetrieveByIdApiResponse,
+  LabsBenchesWeeklyUsageRetrieveByIdApiResponse,
 } from '@/shared/api/generated/api';
 import type {
   LabItem,
@@ -53,7 +53,7 @@ export function mapPersonaResponse(response: LabsLeaderboardPersonaRetrieveApiRe
       total_usage_minutes: (row.total_usage_minutes as number) ?? 0,
       avg_session_minutes: (row.avg_session_minutes as number) ?? 0,
       longest_session_minutes: (row.longest_session_minutes as number) ?? 0,
-      last_remote: (row.last_remote as string) ?? null,
+      last_remote: (row.last_remote_at as string) ?? null,
       top_projects: mapTopProjects(row.top_projects as unknown[]),
     };
   });
@@ -75,7 +75,7 @@ export function mapLabResponse(response: LabsLeaderboardLabRetrieveApiResponse):
       utilization_rate: (row.utilization_rate as number) ?? 0,
       booking_compliance: (row.booking_compliance as number) ?? 0,
       availability: (row.availability as number) ?? 0,
-      last_remote: (row.last_remote as string) ?? null,
+      last_remote: (row.last_remote_at as string) ?? null,
       total_sessions: (row.total_sessions as number) ?? 0,
       total_usage_minutes: (row.total_usage_minutes as number) ?? downtimeMinutes,
       downtime_hours: downtimeHours,
@@ -84,10 +84,10 @@ export function mapLabResponse(response: LabsLeaderboardLabRetrieveApiResponse):
   });
 }
 
-export function mapUserProfileResponse(response: LabsUsersProfileRetrieveByIdApiResponse): UserProfile {
+export function mapUserProfileResponse(response: LabsLeaderboardUsersProfileRetrieveByIdApiResponse): UserProfile {
   const profile = (response.data as RecordValue) ?? {};
   return {
-    last_remote: (profile.last_remote as string) ?? null,
+    last_remote: (profile.last_remote_at as string) ?? null,
     wfo_rate: (profile.wfo_rate as number) ?? 0,
     wfh_rate: (profile.wfh_rate as number) ?? 0,
     late_rate: (profile.late_rate as number) ?? 0,
@@ -103,10 +103,10 @@ export function mapUserProfileResponse(response: LabsUsersProfileRetrieveByIdApi
   };
 }
 
-export function mapLabProfileResponse(response: LabsProfileRetrieveByIdApiResponse): LabProfile {
+export function mapLabProfileResponse(response: LabsBenchesProfileRetrieveByIdApiResponse): LabProfile {
   const profile = (response.data as RecordValue) ?? {};
   return {
-    last_remote: (profile.last_remote as string) ?? null,
+    last_remote: (profile.last_remote_at as string) ?? null,
     total_sessions: (profile.total_sessions as number) ?? 0,
     active_users: (profile.active_users as number) ?? 0,
     utilization_rate: (profile.utilization_rate as number) ?? 0,
@@ -164,10 +164,10 @@ const mapWeeklyUsage = (items: RawUsageItem[]): WeeklyUsageItem[] => {
   return result;
 };
 
-export function mapUserWeeklyUsageResponse(response: LabsUsersWeeklyUsageRetrieveByIdApiResponse): WeeklyUsageItem[] {
+export function mapUserWeeklyUsageResponse(response: LabsLeaderboardUsersWeeklyUsageRetrieveByIdApiResponse): WeeklyUsageItem[] {
   return mapWeeklyUsage(response.data as RawUsageItem[]);
 }
 
-export function mapLabWeeklyUsageResponse(response: LabsWeeklyUsageRetrieveByIdApiResponse): WeeklyUsageItem[] {
+export function mapLabWeeklyUsageResponse(response: LabsBenchesWeeklyUsageRetrieveByIdApiResponse): WeeklyUsageItem[] {
   return mapWeeklyUsage(response.data as RawUsageItem[]);
 }

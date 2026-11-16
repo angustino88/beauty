@@ -14,6 +14,7 @@ import type { RcFile } from 'antd/es/upload/interface';
 import dayjs from 'dayjs';
 import { parseFormApiError } from '../../utils/formApiError';
 import { buildRequiredFieldRules } from '../../utils/formValidation';
+import { RESOURCE_IMAGE_ACCEPT, validateResourceImage } from '@/shared/lib/api/resourceImage';
 import styles from './EquipmentFormModal.module.css';
 
 /* ─── Types ──────────────────────────────────────────────────── */
@@ -118,8 +119,10 @@ function FormFields({ fields, form, mode, professionalForm }: FormFieldsProps) {
                 />;
             case 'multi-select':
                 return <Select mode="multiple" showSearch allowClear placeholder={field.placeholder ?? `Select ${field.label}`}
-                    disabled={disabled} options={field.options}
-                    filterOption={(input, option) => String(option?.label ?? '').toLowerCase().includes(input.toLowerCase())}
+                    disabled={disabled} options={field.options} onSearch={field.onSearch}
+                    // With a search callback the options come from the server, so do not filter them again here.
+                    filterOption={field.onSearch ? false : (input, option) =>
+                        String(option?.label ?? '').toLowerCase().includes(input.toLowerCase())}
                 />;
             case 'date':
                 return <DatePicker style={{ width: '100%' }} disabled={disabled} />;
@@ -195,6 +198,8 @@ export default function EquipmentFormModal({
     const [form]         = Form.useForm();
     const [imageFile,     setImageFile]     = useState<File | null>(null);
     const [imagePreview,  setImagePreview]  = useState<string | null>(null);
+    const [imageRemoved,  setImageRemoved]  = useState(false);
+    const hadImageRef = useRef(false);
     const [submitting,    setSubmitting]    = useState(false);
     const [detailsOpen,   setDetailsOpen]   = useState(false);
     const initialized = useRef<{ mode: string; recordId: unknown } | null>(null);
@@ -220,6 +225,8 @@ export default function EquipmentFormModal({
         if (open) {
             form.resetFields();
             setImageFile(null);
+            setImageRemoved(false);
+            hadImageRef.current = mode === 'edit' && Boolean((initialValues as { image?: unknown } | undefined)?.image);
             setDetailsOpen(mode === 'edit');
             if (mode === 'edit' && initialValues) {
                 const record = initialValues as Record<string, unknown>;
@@ -261,9 +268,11 @@ export default function EquipmentFormModal({
                     );
                 }
             }
-            await onSubmit(values, imageFile);
+            // File = upload, null = remove the existing image, undefined = unchanged.
+            await onSubmit(values, imageFile ?? (imageRemoved ? null : undefined));
             form.resetFields();
             setImageFile(null);
+            setImageRemoved(false);
             setImagePreview(null);
         } catch (err) {
             if (submittedValues) {
@@ -342,17 +351,15 @@ export default function EquipmentFormModal({
     };
 
     const handleImageChange = (file: RcFile) => {
-        if (!['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(file.type)) {
-            message.error('Choose a JPG, PNG, GIF or WEBP image.');
-            return Upload.LIST_IGNORE;
-        }
-        if (file.size > 10 * 1024 * 1024) {
-            message.error('Image must be smaller than 10 MB.');
+        const problem = validateResourceImage(file);
+        if (problem) {
+            message.error(problem);
             return Upload.LIST_IGNORE;
         }
         if (previewUrl.current) URL.revokeObjectURL(previewUrl.current);
         previewUrl.current = URL.createObjectURL(file);
         setImageFile(file);
+        setImageRemoved(false);
         setImagePreview(previewUrl.current);
         return false;
     };
@@ -422,7 +429,7 @@ export default function EquipmentFormModal({
                 {hasImage && (
                     <Row>
                         <Col span={24}>
-                            <Form.Item label="Equipment image (optional)">
+                            <Form.Item label="Image (optional)">
                                 <Upload.Dragger
                                     beforeUpload={(file) => handleImageChange(file as RcFile)}
                                     multiple={false} maxCount={1}
@@ -430,12 +437,12 @@ export default function EquipmentFormModal({
                                         ? [{ uid: '-1', name: 'image', status: 'done' as const, url: imagePreview }]
                                         : undefined
                                     }
-                                    onRemove={() => { setImageFile(null); setImagePreview(null); }}
-                                    accept="image/*"
+                                    onRemove={() => { setImageFile(null); setImagePreview(null); setImageRemoved(hadImageRef.current); }}
+                                    accept={RESOURCE_IMAGE_ACCEPT}
                                 >
                                     <p className="ant-upload-drag-icon"><InboxOutlined /></p>
                                     <p className="ant-upload-text">Choose or drop an image</p>
-                                    <p className="ant-upload-hint">JPG, PNG, GIF or WEBP · Up to 10 MB</p>
+                                    <p className="ant-upload-hint">JPG, PNG, GIF or WEBP · Up to 5 MB</p>
                                 </Upload.Dragger>
                             </Form.Item>
                         </Col>

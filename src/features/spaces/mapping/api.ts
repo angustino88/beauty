@@ -20,23 +20,44 @@ import {
 
 const TAG = "ResourceMapping";
 
+export interface BenchAuditRow {
+  id: number;
+  bench: string;
+  result: string;
+  auditor: string;
+  audited_at: string;
+  remarks: string;
+}
+
 export const mappingApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
+    // There is no collection-level mapping endpoint: list the benches, then load each bench's
+        // mapping graph (station, room, equipment, licenses) and merge it into its row.
     getMappings: build.query<ResourceMappingListResponse, ResourceMappingParams>({
-      query: (params) => {
+      async queryFn(params, _api, _extra, fetchWithBQ) {
         const queryParams = new URLSearchParams();
         if (params.page) queryParams.set("page", String(params.page));
         if (params.page_size) queryParams.set("page_size", String(params.page_size));
-        if (params.search) queryParams.set("search", params.search);
+        if (params.search) queryParams.set("q", params.search);
         if (params.ordering) queryParams.set("ordering", params.ordering);
         if (params.station_id) queryParams.set("setup_location_id", String(params.station_id));
         if (params.bench_id) queryParams.set("id", String(params.bench_id));
         if (params.status) queryParams.set("status", params.status);
 
         const qs = queryParams.toString();
-        return { url: `/api/labs/benches${qs ? `?${qs}` : ""}` };
+        const listRes = await fetchWithBQ(`/api/labs/benches${qs ? `?${qs}` : ""}`);
+        if (listRes.error) return { error: listRes.error };
+
+        const list = mapResourceMappingListResponse(listRes.data);
+        const rows = await Promise.all(
+          list.data.map(async (row) => {
+            const graphRes = await fetchWithBQ(`/api/labs/benches/${row.id}/mapping`);
+            if (graphRes.error) return row;
+            return mapResourceMappingDataToRows(graphRes.data)[0] ?? row;
+          }),
+        );
+        return { data: { total_count: list.total_count, data: rows } };
       },
-      transformResponse: (res: unknown) => mapResourceMappingListResponse(res),
       providesTags: (result) => generateListTags(TAG, result),
     }),
 
@@ -95,7 +116,7 @@ export const mappingApi = baseApi.injectEndpoints({
     assignEquipment: build.mutation<void, { equipmentId: number; body: EquipmentAssignmentPayload }>({
       query: ({ equipmentId, body }) => ({
         url: `/api/labs/equipment/${equipmentId}/assignment`,
-        method: "POST",
+        method: "PUT",
         body,
       }),
       invalidatesTags: (_res, _err, { body }) => [
@@ -188,11 +209,27 @@ export const mappingApi = baseApi.injectEndpoints({
       },
     }),
 
-    exportMappingChangeLog: build.mutation<Blob, void>({
-      query: () => ({
-        url: "/api/labs/resources/bench/audits",
-        responseHandler: (response) => response.blob(),
+    // The change log is the bench audit history: one page of `/api/labs/audits` filtered to benches.
+    getBenchAuditPage: build.query<{ rows: BenchAuditRow[]; hasNext: boolean }, number>({
+      query: (page) => ({
+        url: "/api/labs/audits",
+        params: { resource_type: "bench", page, page_size: 100 },
       }),
+      transformResponse: (res: {
+        data?: Array<Record<string, unknown>>;
+        meta?: { pagination?: { next?: string | null } };
+      }) => ({
+        rows: (res.data ?? []).map((item) => ({
+          id: Number(item.id),
+          bench: String((item.resource as { name?: string } | undefined)?.name ?? ""),
+          result: String((item.result as { label?: string } | undefined)?.label ?? ""),
+          auditor: String((item.auditor as { name?: string } | undefined)?.name ?? ""),
+          audited_at: String(item.audited_at ?? ""),
+          remarks: String(item.remarks ?? ""),
+        })),
+        hasNext: Boolean(res.meta?.pagination?.next),
+      }),
+      keepUnusedDataFor: 0,
     }),
   }),
   overrideExisting: false,
@@ -212,5 +249,5 @@ export const {
   useGetMappingFilterOptionsQuery,
   useGetStationSlotsQuery,
   useGetRoomSlotsQuery,
-  useExportMappingChangeLogMutation,
+  useLazyGetBenchAuditPageQuery,
 } = mappingApi;

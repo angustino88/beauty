@@ -107,7 +107,7 @@ export function UpdateEquipmentStatusModal({
   const life = record.lifecycle_state?.value;
   const condition = record.condition?.value;
   const statusValue = equipmentStatusValue(record.display_status ?? record.status);
-  const onBench = record.placement?.target_type === 'bench';
+  const onBench = record.placement?.target_type?.value === 'bench';
   const onLoan = Boolean(record.loan);
   const statusFacts = useMemo(() => ({
     lifecycle: life,
@@ -115,8 +115,8 @@ export function UpdateEquipmentStatusModal({
     status: statusValue,
     onBench,
     onLoan,
-    calibrationOverdue: Boolean(record.calibration_overdue),
-  }), [life, condition, statusValue, onBench, onLoan, record.calibration_overdue]);
+    calibrationOverdue: Boolean(record.is_calibration_overdue),
+  }), [life, condition, statusValue, onBench, onLoan, record.is_calibration_overdue]);
   const lifecycleTargetBlocked = isLifecycleTargetBlocked(action, statusFacts);
   const borrowBlocker = firstBorrowBlocker(statusFacts, capabilities);
 
@@ -126,9 +126,9 @@ export function UpdateEquipmentStatusModal({
     if (condition !== 'operational') return 'Restore operational condition';
     if (onLoan) return 'Return the loan';
     if (onBench) return 'Move off the bench';
-    if (record.calibration_overdue) return 'Calibration is overdue; record a calibration first.';
+    if (record.is_calibration_overdue) return 'Calibration is overdue; record a calibration first.';
     return undefined;
-  }, [condition, life, onBench, onLoan, record.calibration_overdue]);
+  }, [condition, life, onBench, onLoan, record.is_calibration_overdue]);
 
   const availableActionable = life !== 'retired' && (life === 'planned' || life === 'lost' || life === 'transferred_out'
     || condition !== 'operational' || onLoan || onBench);
@@ -138,8 +138,7 @@ export function UpdateEquipmentStatusModal({
   const currentAvailableStep = getAvailableStatusStep(statusFacts);
   const location = record.placement?.bench?.name ?? record.placement?.station?.name
     ?? record.placement?.room?.name ?? record.placement?.location_note ?? 'Location unknown';
-  const borrower = record.loan?.borrower_name ?? record.loan?.borrower?.display_name
-    ?? record.loan?.borrower?.username ?? 'Borrower';
+  const borrower = record.loan?.borrower_name ?? record.loan?.borrower?.name ?? 'Borrower';
   const availableButtonText = life === 'lost' ? 'Mark as found'
     : availableReason === 'Return the loan' ? 'Return loan'
     : availableReason === 'Move off the bench' ? 'Move equipment'
@@ -196,7 +195,7 @@ export function UpdateEquipmentStatusModal({
           break;
       }
       if (!payload) {
-        if (record.calibration_overdue) message.info('Record a calibration to clear the overdue status.');
+        if (record.is_calibration_overdue) message.info('Record a calibration to clear the overdue status.');
         return;
       }
       if (values.action === 'available' && currentAvailableStep !== 'none') {
@@ -280,10 +279,10 @@ export function UpdateEquipmentStatusModal({
         <span className={styles.statusConnector}>is currently</span>
         <EquipmentStatus status={record.display_status ?? record.status} />
       </div>
-      {(record.loan || record.placement || record.calibration_overdue) && <div className={styles.summaryDetails}>
-        {record.loan && <span>With {borrower} · Due {dayjs(record.loan.due_at).format('D MMM YYYY, HH:mm')}{record.loan.overdue ? ' · Overdue' : ''}</span>}
+      {(record.loan || record.placement || record.is_calibration_overdue) && <div className={styles.summaryDetails}>
+        {record.loan && <span>With {borrower} · Due {dayjs(record.loan.due_at).format('D MMM YYYY, HH:mm')}{record.loan.is_overdue ? ' · Overdue' : ''}</span>}
         {record.placement && <span>{location}</span>}
-        {record.calibration_overdue && <span className={styles.overdue}>Calibration overdue</span>}
+        {record.is_calibration_overdue && <span className={styles.overdue}>Calibration overdue</span>}
       </div>}
     </div>
     <Form form={form} layout="vertical" className={styles.form}>
@@ -291,7 +290,7 @@ export function UpdateEquipmentStatusModal({
         <Select placeholder="Choose a status" options={actionOptions} onChange={() => form.setFieldsValue({ return_target: undefined, return_target_id: undefined, location_note: undefined })} optionRender={(option) => <span title={option.value === 'borrowed' ? borrowBlocker : undefined}>{option.label}</span>} />
       </Form.Item>
       {action && <div className={styles.actionFields}>
-        {action === 'available' && availableReason && (availableActionable || record.calibration_overdue) && <p className={styles.helpText} role="status">{availableActionable ? `${availableReason}. ${currentAvailableStep === 'return' ? 'The loan will be closed; check the refreshed status afterward.' : 'Check the refreshed status afterward for any remaining steps.'}` : 'Record a calibration to clear the overdue status.'}</p>}
+        {action === 'available' && availableReason && (availableActionable || record.is_calibration_overdue) && <p className={styles.helpText} role="status">{availableActionable ? `${availableReason}. ${currentAvailableStep === 'return' ? 'The loan will be closed; check the refreshed status afterward.' : 'Check the refreshed status afterward for any remaining steps.'}` : 'Record a calibration to clear the overdue status.'}</p>}
         {action === 'available' && life === 'lost' && <Alert type="info" showIcon message="Found equipment returns in Maintenance. Record where it was found, then restore its condition to operational separately." />}
         {(action === 'lost' || action === 'transferred' || action === 'retired') && onBench && <Alert type="warning" showIcon message="This action will move the unit off its bench to the selected room, station, or location note first." />}
         {(action === 'transferred' || action === 'retired') && onLoan && <Alert type="warning" showIcon message="The open loan will be returned before this status change." />}

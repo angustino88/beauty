@@ -8,6 +8,12 @@ import type {
   ILicenseVendor,
 } from './types';
 
+/** `{value, label}` choice (ENU-1) → its value; plain strings pass through. */
+function choiceOf(raw: unknown): string | undefined {
+  if (raw && typeof raw === 'object') return asString((raw as { value?: unknown }).value) || undefined;
+  return asString(raw) || undefined;
+}
+
 type RecordValue = Record<string, unknown>;
 
 const asRecord = (val: unknown): RecordValue =>
@@ -22,70 +28,52 @@ const asNumber = (val: unknown, fallback = 0): number =>
 type LicenseUiWritePayload = ILicensePayload & {
   maximum_version?: string | number | null;
   license_ID?: string | null;
-  carrier_device?: string | number | null;
 };
 
 export type LicenseWritePayload = Record<string, unknown>;
 
+/** Noon UTC keeps the calendar date stable in every time zone; the API stores a date-time. */
+const toExpiresAt = (value: string | null | undefined): string | null | undefined => {
+  if (value === undefined) return undefined;
+  if (!value) return null;
+  return /^\d{4}-\d{2}-\d{2}$/.test(value) ? `${value}T12:00:00Z` : value;
+};
+
+/**
+ * UI draft -> `POST/PATCH /api/labs/licenses` body. Relations are written as `<name>_id`; `identifier`
+ * (the license key) is write-only and sent only when the user typed one, so an empty field never wipes it.
+ * Status is not part of this body: it changes through `actions/change-status`.
+ */
 export function mapLicenseWritePayload(payload: LicenseUiWritePayload): LicenseWritePayload {
   const maximumVersion = payload.maximum_version;
-  const numericMaximumVersion =
-    maximumVersion == null || maximumVersion === '' ? null : Number(maximumVersion);
-
-  const carrierFkFields: Record<
-    'computer' | 'accessory' | 'monitor' | 'powersupply' | 'sample' | 'debug_hardware' | 'network_interface',
-    number | null
-  > = {
-    computer: null,
-    accessory: null,
-    monitor: null,
-    powersupply: null,
-    sample: null,
-    debug_hardware: null,
-    network_interface: null,
-  };
-  if (typeof payload.carrier_device === 'string') {
-    const separator = payload.carrier_device.lastIndexOf('-');
-    const group = separator > 0 ? payload.carrier_device.slice(0, separator).toLowerCase() : '';
-    const id = Number(payload.carrier_device.slice(separator + 1));
-    const carrierField: Record<string, keyof typeof carrierFkFields> = {
-      labcomputer: 'computer', computer: 'computer', accessory: 'accessory', monitor: 'monitor',
-      powersupply: 'powersupply', sample: 'sample', debughardware: 'debug_hardware',
-      debug_hardware: 'debug_hardware', networkinterface: 'network_interface', network_interface: 'network_interface',
-    };
-    const field = carrierField[group];
-    if (field && Number.isFinite(id)) carrierFkFields[field] = id;
-  }
-
-  return {
+  const body: LicenseWritePayload = {
     sku: payload.sku,
     name: payload.name,
-    serial_number: payload.serial_number,
-    product: payload.license_product,
-    vendor: payload.license_vendor,
-    license_type: payload.license_type,
-    category: payload.license_category,
-    restriction: payload.license_restriction,
-    license_identifier: payload.license_ID,
-    maximum_version: numericMaximumVersion !== null && Number.isFinite(numericMaximumVersion)
-      ? numericMaximumVersion
-      : null,
-    log_label: payload.log_label,
-    expiry_date: payload.expiry_date,
     remark: payload.remark,
-    primary_owner: payload.primary_owner,
-    status: payload.status,
-    status_type: payload.status_type,
-    status_data: payload.status_data,
-    current_status: payload.current_status,
-    license_seats: payload.license_seats,
-    ...carrierFkFields,
+    product_id: payload.license_product,
+    vendor_id: payload.license_vendor,
+    type_id: payload.license_type,
+    category_id: payload.license_category,
+    restriction_id: payload.license_restriction,
+    owner_id: payload.primary_owner,
+    seats: payload.license_seats ?? undefined,
+    max_version: maximumVersion == null ? undefined : String(maximumVersion),
+    expires_at: toExpiresAt(payload.expiry_date),
   };
+  if (typeof payload.license_ID === 'string' && payload.license_ID.trim()) {
+    body.identifier = payload.license_ID.trim();
+  }
+  // Drop keys the caller did not set; `null` stays, it clears an optional field. The four required
+  // relations never accept null, so an empty one is left out and the API keeps the stored value.
+  const required = ['product_id', 'vendor_id', 'type_id', 'category_id'];
+  return Object.fromEntries(
+    Object.entries(body).filter(([key, value]) => value !== undefined && !(required.includes(key) && value === null)),
+  );
 }
 
 export function mapLicenseRead(rawItem: unknown): ILicense {
   const item = asRecord(rawItem);
-  const carrier = item.carrier_device ? asRecord(item.carrier_device) : null;
+  const owner = item.owner ? asRecord(item.owner) : null;
   const status = item.current_status ? asRecord(item.current_status) : null;
   const audit = item.lab_audit ? asRecord(item.lab_audit) : null;
   const product = item.product ? asRecord(item.product) : null;
@@ -99,21 +87,25 @@ export function mapLicenseRead(rawItem: unknown): ILicense {
     sku: asString(item.sku),
     name: asString(item.name),
     serial_number: asString(item.serial_number),
-    maximum_version: (item.maximum_version as number) ?? null,
+    maximum_version: ((item.max_version ?? item.maximum_version) as ILicense['maximum_version']) ?? null,
     license_ID: (item.license_ID as string) ?? (item.license_identifier as string) ?? null,
     log_label: asString(item.log_label),
     remark: asString(item.remark || item.description),
-    expiry_date: asString(item.expiry_date) || null,
-    license_seats: (item.license_seats as number) ?? null,
-    carrier_device: carrier
-      ? {
-          id: asNumber(carrier.id),
-          sku: asString(carrier.sku) || undefined,
-          carrier_device_name: asString(carrier.carrier_device_name || carrier.name) || undefined,
-        }
-      : null,
-    primary_owner: (item.primary_owner as ILicense['primary_owner']) ?? null,
-    status: asString(status?.status_type || item.status) || null,
+    expiry_date: asString(item.expires_at) || null,
+    license_seats: ((item.seats ?? item.license_seats) as number | undefined) ?? null,
+    assigned_equipment: (Array.isArray(item.assigned_equipment) ? item.assigned_equipment : []).map((entry) => {
+      const equipment = asRecord(entry);
+      return {
+        id: asNumber(equipment.id),
+        sku: asString(equipment.sku),
+        name: asString(equipment.name),
+        uid: asString(equipment.uid) || undefined,
+      };
+    }),
+    primary_owner: owner
+      ? ({ id: asNumber(owner.id), username: asString(owner.name), display_name: asString(owner.name) } as ILicense['primary_owner'])
+      : ((item.primary_owner as ILicense['primary_owner']) ?? null),
+    status: asString(status?.status_type || choiceOf(item.status)) || null,
     current_status: status
       ? {
           id: asNumber(status.id),
@@ -130,7 +122,7 @@ export function mapLicenseRead(rawItem: unknown): ILicense {
           remarks: (audit.remarks as string) ?? null,
         }
       : null,
-    image: (item.image as string) ?? null,
+    image: ((item.image_url ?? item.image) as string | undefined) ?? null,
     creator: undefined,
     last_modified_by: undefined,
     modified: undefined,

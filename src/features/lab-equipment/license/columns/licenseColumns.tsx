@@ -1,18 +1,18 @@
+import { CarrierCell } from './CarrierCells';
+import type { EquipmentOption } from '../hooks/useEquipmentSearchOptions';
 import type { Key, ReactNode } from 'react';
 import { DatePicker, Input, Select } from 'antd';
 import dayjs, { type Dayjs } from 'dayjs';
 import {
   InlineImageUpload,
   readStatusFromRecord,
-  renderAuditCell,
+  LastAuditCell,
   renderImageCell,
   renderOwnerCell,
 } from '../../shared';
 import LicenseStatus from '../../shared/components/status/LicenseStatus';
 import LicenseInformationCell from './LicenseInformationCell';
 import type { ILicense } from '../types';
-
-import type { CarrierDeviceOption } from '../hooks/useLicenseTable';
 
 type FilterItem = { text: string; value: string };
 type SelectOption = { label: string; value: number };
@@ -26,7 +26,6 @@ const readRestriction = (record: ILicense) =>
   ?? record.license_restriction?.license_restriction_name
   ?? record.restriction?.restriction_name
   ?? '';
-const readCarrier = (record: ILicense) => record.carrier_device?.sku ?? record.carrier_device?.carrier_device_name ?? '';
 
 export interface LicenseInlineDraft {
   name: string;
@@ -34,7 +33,7 @@ export interface LicenseInlineDraft {
   license_vendor: number | null;
   maximum_version: string;
   license_ID: string;
-  carrier_device: string | number | null;
+  assigned_equipment_ids: number[];
   license_category: number | null;
   license_type: number | null;
   license_restriction: number | null;
@@ -61,7 +60,9 @@ interface BuildColumnsArgs {
   typeOptions: SelectOption[];
   restrictionOptions: SelectOption[];
   ownerOptions: SelectOption[];
-  carrierDeviceOptions: CarrierDeviceOption[];
+  carrierOptions: EquipmentOption[];
+  onCarrierSearch: (query: string) => void;
+  carrierLoading: boolean;
   isEditing: (record: ILicense) => boolean;
   editingDraft: LicenseInlineDraft | null;
   updateDraftField: <K extends keyof LicenseInlineDraft>(
@@ -69,17 +70,9 @@ interface BuildColumnsArgs {
     value: LicenseInlineDraft[K],
   ) => void;
   actionsRenderer: (_: unknown, record: ILicense) => ReactNode;
-  onImageChange?: (file: File) => void;
+  onImageChange?: (file: File, record: ILicense) => void;
   onStatusChange?: (record: ILicense, values: { status_type: string; status_data: Record<string, unknown> }) => void;
 }
-
-const carrierDeviceDraftValue = (item: ILicense): string | number | null => {
-  const device = item.carrier_device;
-  if (!device || device.id == null) return null;
-  // Mirror old saga: combine carrier_device_name + id so the draft value
-  // matches the grouped option `${group}-${id}` and preselects on edit.
-  return device.carrier_device_name ? `${device.carrier_device_name}-${device.id}` : device.id;
-};
 
 export const toLicenseInlineDraft = (item: ILicense): LicenseInlineDraft => ({
   name: item.name ?? '',
@@ -87,7 +80,7 @@ export const toLicenseInlineDraft = (item: ILicense): LicenseInlineDraft => ({
   license_vendor: item.license_vendor?.id ?? item.vendor?.id ?? null,
   maximum_version: item.maximum_version == null ? '' : String(item.maximum_version),
   license_ID: item.license_ID ?? '',
-  carrier_device: carrierDeviceDraftValue(item),
+  assigned_equipment_ids: (item.assigned_equipment ?? []).map((equipment) => equipment.id),
   license_category: item.license_category?.id ?? item.category?.id ?? null,
   license_type: item.license_type?.id ?? null,
   license_restriction: item.license_restriction?.id ?? item.restriction?.id ?? null,
@@ -112,7 +105,9 @@ export const buildLicenseColumns = ({
   typeOptions,
   restrictionOptions,
   ownerOptions,
-  carrierDeviceOptions,
+  carrierOptions,
+  onCarrierSearch,
+  carrierLoading,
   isEditing,
   editingDraft,
   updateDraftField,
@@ -151,8 +146,7 @@ export const buildLicenseColumns = ({
       isEditing(record)
         ? (
           <Select
-            allowClear
-            showSearch
+                        showSearch
             style={{ width: '100%' }}
             value={editingDraft?.license_product ?? undefined}
             options={productOptions}
@@ -174,8 +168,7 @@ export const buildLicenseColumns = ({
       isEditing(record)
         ? (
           <Select
-            allowClear
-            showSearch
+                        showSearch
             style={{ width: '100%' }}
             value={editingDraft?.license_vendor ?? undefined}
             options={vendorOptions}
@@ -202,41 +195,21 @@ export const buildLicenseColumns = ({
     ),
   },
   {
-    title: 'License ID',
-    dataIndex: 'license_ID',
-    key: 'license_ID',
-    width: 150,
-    render: (value: string | null | undefined, record: ILicense) => (
-      isEditing(record)
-        ? (
-          <Input
-            value={editingDraft?.license_ID ?? ''}
-            onChange={(event) => updateDraftField('license_ID', event.target.value)}
-          />
-        )
-        : (value ?? '')
-    ),
-  },
-  {
     title: 'License Carrier',
-    key: 'carrier_device',
-    width: 200,
+    key: 'assigned_equipment',
+    width: 240,
     render: (_: unknown, record: ILicense) => (
-      isEditing(record)
-        ? (
-          <Select
-            allowClear
-            showSearch
-            style={{ width: '100%' }}
-            value={editingDraft?.carrier_device ?? undefined}
-            options={carrierDeviceOptions}
-            onChange={(value) => updateDraftField(
-              'carrier_device',
-              typeof value === 'string' || typeof value === 'number' ? value : null,
-            )}
-          />
-        )
-        : readCarrier(record)
+      <CarrierCell
+        key={record.id}
+        assigned={record.assigned_equipment}
+        editing={isEditing(record)}
+        value={editingDraft?.assigned_equipment_ids ?? []}
+        onChange={(ids) => updateDraftField('assigned_equipment_ids', ids)}
+        seats={record.license_seats}
+        options={carrierOptions}
+        onSearch={onCarrierSearch}
+        loading={carrierLoading}
+      />
     ),
   },
   {
@@ -251,8 +224,7 @@ export const buildLicenseColumns = ({
       isEditing(record)
         ? (
           <Select
-            allowClear
-            showSearch
+                        showSearch
             style={{ width: '100%' }}
             value={editingDraft?.license_category ?? undefined}
             options={categoryOptions}
@@ -274,8 +246,7 @@ export const buildLicenseColumns = ({
       isEditing(record)
         ? (
           <Select
-            allowClear
-            showSearch
+                        showSearch
             style={{ width: '100%' }}
             value={editingDraft?.license_type ?? undefined}
             options={typeOptions}
@@ -306,22 +277,6 @@ export const buildLicenseColumns = ({
           />
         )
         : readRestriction(record)
-    ),
-  },
-  {
-    title: 'LOG Label',
-    dataIndex: 'log_label',
-    key: 'log_label',
-    width: 150,
-    render: (value: string, record: ILicense) => (
-      isEditing(record)
-        ? (
-          <Input
-            value={editingDraft?.log_label ?? ''}
-            onChange={(event) => updateDraftField('log_label', event.target.value)}
-          />
-        )
-        : (value ?? '')
     ),
   },
   {
@@ -370,7 +325,7 @@ export const buildLicenseColumns = ({
     key: 'lab_audit',
     width: 180,
     align: 'center' as const,
-    render: (_: unknown, record: ILicense) => renderAuditCell(record.lab_audit),
+    render: (_: unknown, record: ILicense) => <LastAuditCell resourceType="license" resourceId={record.id} />,
   },
   {
     title: 'Image',
@@ -379,8 +334,8 @@ export const buildLicenseColumns = ({
     width: 150,
     align: 'center' as const,
     render: (_: unknown, record: ILicense) => (
-      isEditing(record) && onImageChange
-        ? <InlineImageUpload currentImage={record.image} onImageChange={onImageChange} />
+      onImageChange
+        ? <InlineImageUpload key={record.id} currentImage={record.image} onImageChange={(file) => onImageChange(file, record)} />
         : renderImageCell(record.image)
     ),
   },

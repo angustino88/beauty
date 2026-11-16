@@ -111,8 +111,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({ form, formProps }) => 
   const serverReasons =
     bookingHistory?.data
       ?.filter(
-        (booking) =>
-          booking.creator?.username?.trim().toLowerCase() === myUsername.trim().toLowerCase(),
+        (booking) => myUserId != null && booking.creator?.id === myUserId,
       )
       .map((booking) => booking.reason)
       .filter((reason): reason is string => typeof reason === 'string' && reason.trim().length > 0) ??

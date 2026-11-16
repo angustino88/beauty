@@ -22,6 +22,8 @@ import {
   useDeleteEquipmentMutation,
   useChangeEquipmentConditionMutation,
   useChangeEquipmentLifecycleMutation,
+  useUpdateEquipmentImageMutation,
+  useDeleteEquipmentImageMutation,
 } from '../api/equipmentApi';
 import { useLabsDepartmentsOptionsRetrieveQuery, useLabsGroupsOptionsRetrieveQuery, useLabsRoomsOptionsRetrieveQuery, useLabsStationsOptionsRetrieveQuery, useLabsBenchesOptionsRetrieveQuery, useUsersRetrieveQuery, useLabsEquipmentReferenceDataRetrieveQuery, useLabsEquipmentCategoriesRetrieveByCategoryIdQuery, useLabsEquipmentPlacementUpdateByEquipmentIdMutation, useLabsEquipmentPlacementDestroyByEquipmentIdMutation, useLabsEquipmentActionsHandOverCreateByEquipmentIdMutation, useLabsEquipmentActionsReturnCreateByEquipmentIdMutation } from '@/shared/api/generated/api';
 import { useLabsEquipmentStatusChangesRetrieveByEquipmentIdQuery } from '@/shared/api/generated/api';
@@ -106,7 +108,7 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
     ? [editingItem.group.id]
     : undefined;
   const { data: groupOptions } = useLabsGroupsOptionsRetrieveQuery({ departmentId, q: groupSearch || undefined, includeIds: groupIncludeIds }, { skip: !formOpen || !departmentId });
-  const placementIncludeIds = placementItem?.placement && placementItem.placement.target_type === placementTarget
+  const placementIncludeIds = placementItem?.placement && placementItem.placement.target_type.value === placementTarget
     ? [placementTarget === 'bench' ? placementItem.placement.bench?.id
       : placementTarget === 'station' ? placementItem.placement.station?.id
         : placementTarget === 'room' ? placementItem.placement.room?.id : undefined]
@@ -204,6 +206,8 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
 
   // Mutations
   const [createEquipment, { isLoading: isCreating }] = useCreateEquipmentMutation();
+  const [updateEquipmentImage] = useUpdateEquipmentImageMutation();
+  const [deleteEquipmentImage] = useDeleteEquipmentImageMutation();
   const [updateEquipment, { isLoading: isUpdating }] = useUpdateEquipmentMutation();
   const [deleteEquipment, { isLoading: isDeleting }] = useDeleteEquipmentMutation();
   const [changeCondition] = useChangeEquipmentConditionMutation();
@@ -293,7 +297,7 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
   );
 
   const handleFormSubmit = useCallback(
-    async (values: Record<string, unknown>) => {
+    async (values: Record<string, unknown>, imageFile?: File | null) => {
         const payload: Record<string, unknown> = { ...values };
 
         if (typeof payload.dimensions === 'string' && payload.dimensions.trim()) {
@@ -322,6 +326,7 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
             category: config.key,
             body: payload as unknown as EquipmentWritePayload,
           }).unwrap();
+          if (imageFile && created?.id) await updateEquipmentImage({ id: created.id, image: imageFile }).unwrap();
           notifyEquipmentCreated(config.singular, created ?? {}, payload);
         } else if (editingItem) {
           const updated = await updateEquipment({
@@ -329,6 +334,8 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
             id: editingItem.id,
             body: payload as unknown as Partial<EquipmentWritePayload>,
           }).unwrap();
+          if (imageFile) await updateEquipmentImage({ id: editingItem.id, image: imageFile }).unwrap();
+          else if (imageFile === null) await deleteEquipmentImage(editingItem.id).unwrap();
           notifyEquipmentUpdated(config.singular, updated ?? {}, {
             ...editingItem,
             ...payload,
@@ -338,7 +345,7 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
         setFormOpen(false);
         setEditingItem(null);
     },
-    [createEquipment, updateEquipment, config, formMode, editingItem],
+    [createEquipment, updateEquipment, updateEquipmentImage, deleteEquipmentImage, config, formMode, editingItem],
   );
 
   // History modal title
@@ -383,7 +390,7 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
             setPlacementItem(record);
             const placement = record.placement;
             placementForm.setFieldsValue({
-              target: placement?.target_type ?? 'note',
+              target: (placement?.target_type?.value ?? 'note') as 'note' | 'room' | 'station' | 'bench',
               target_id: placement?.bench?.id ?? placement?.station?.id ?? placement?.room?.id,
               location_note: placement?.location_note ?? '',
               role: placement?.role ?? '',
@@ -654,8 +661,8 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
       },
       {
         title: 'Warranty Expiry',
-        dataIndex: 'warranty_until',
-        key: 'warranty_until',
+        dataIndex: 'warranty_end_date',
+        key: 'warranty_end_date',
         width: 140,
         align: 'center' as const,
         render: (val: string | null | undefined) => {
@@ -692,7 +699,7 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
         title: 'Owner',
         key: 'owner',
         width: 160,
-        ...equipmentStaticColumnFilter(facetToAntdFilters(getFacetOptions(facets, 'owner', 'owner_id')) ?? refData?.owners?.map((o) => ({ text: o.username, value: o.id }))),
+        ...equipmentStaticColumnFilter(facetToAntdFilters(getFacetOptions(facets, 'owner', 'owner_id')) ?? refData?.owners?.map((o) => ({ text: o.name, value: o.id }))),
         filteredValue: filters.owner ?? null,
         render: (_: unknown, record: EquipmentItem) =>
           renderOwnerCell(record.owner as unknown as IPrimaryOwner),
@@ -871,7 +878,7 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
             ...(freshStatusRecord ?? {}),
           }}
           key={statusItem.id}
-          capabilities={categoryDetail?.data.capabilities ?? []}
+          capabilities={categoryDetail?.data.capabilities?.map((capability) => capability.value) ?? []}
           benchOptions={benchOptions?.data ?? []}
           borrowerOptions={borrowerData?.data.map((user) => ({ id: user.id, name: user.display_name || user.username })) ?? []}
           roomOptions={statusRoomOptions?.data ?? []}

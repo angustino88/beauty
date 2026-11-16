@@ -1,5 +1,8 @@
+import { useLabsBenchTypesOptionsRetrieveQuery, useLabsStationsOptionsRetrieveQuery, useLabsStationsSlotsRetrieveByStationIdQuery } from "@/shared/api/generated/api";
+import { useGetUsersQuery } from "@/features/lab-equipment/shared";
 import { useCallback, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
+import { skipToken } from "@reduxjs/toolkit/query";
 import type { RootState } from "@/app/store";
 import {
   EquipmentPageLayout,
@@ -33,6 +36,27 @@ export default function BenchPage() {
   const { data: benchGroups } = useGetBenchGroupsQuery();
   const { data: facets } = useGetBenchFiltersQuery();
 
+  const { data: stationOptionsData } = useLabsStationsOptionsRetrieveQuery({});
+  const stationOptions = useMemo(
+    () => (stationOptionsData?.data ?? []).map((s) => ({ label: s.name || s.sku, value: s.id })),
+    [stationOptionsData],
+  );
+
+  // The slot list follows the station chosen in whichever form is open.
+  const [formStationId, setFormStationId] = useState<number | null>(null);
+  const { data: slotsData } = useLabsStationsSlotsRetrieveByStationIdQuery(
+    formStationId == null ? skipToken : { stationId: formStationId, pageSize: 100 },
+  );
+  const slotOptions = useMemo(
+    () => (slotsData?.data ?? [])
+      .filter((slot) => slot.is_active !== false)
+      .map((slot) => ({ label: slot.label || slot.slot_code, value: slot.id })),
+    [slotsData],
+  );
+  const handleFormValues = useCallback((values: Record<string, unknown>) => {
+    setFormStationId(values.setup_location_id == null || values.setup_location_id === '' ? null : Number(values.setup_location_id));
+  }, []);
+
   const groupOptions = useMemo(() => {
     return (benchGroups ?? []).map((g) => ({
       label: g.name,
@@ -47,19 +71,28 @@ export default function BenchPage() {
     })) ?? fallback ?? [], [facets]);
   const groupFallback = useMemo(() => (benchGroups ?? []).map((group) => ({ text: group.name, value: String(group.id) })), [benchGroups]);
   const groupFilters = useMemo(() => facetFilters(['bench_group', 'bench_group_id', 'group'], groupFallback), [facetFilters, groupFallback]);
-  const typeFilters = useMemo(() => facetFilters(['type', 'type_id', 'bench_type']), [facetFilters]);
-  const locationFilters = useMemo(() => facetFilters(['setup_location', 'setup_location_id', 'location', 'room']), [facetFilters]);
-  const ownerFilters = useMemo(() => facetFilters(['owner', 'owner_id', 'primary_owner']), [facetFilters]);
+  // ID-valued filters ship no choices in `/filters` (only an options_key), so list them from the selectors.
+  const { data: benchTypeOptions } = useLabsBenchTypesOptionsRetrieveQuery({});
+  const { data: users } = useGetUsersQuery();
+  const typeFallback = useMemo(() => (benchTypeOptions?.data ?? []).map((t) => ({ text: String(t.name || t.sku || t.id), value: String(t.id) })), [benchTypeOptions]);
+  const stationFallback = useMemo(() => stationOptions.map((s) => ({ text: String(s.label), value: String(s.value) })), [stationOptions]);
+  const ownerFallback = useMemo(() => (users ?? []).map((u) => ({ text: u.display_name || u.username || String(u.id), value: String(u.id) })), [users]);
+  const typeFilters = useMemo(() => facetFilters(['type', 'type_id', 'bench_type'], typeFallback), [facetFilters, typeFallback]);
+  const locationFilters = useMemo(() => facetFilters(['setup_location', 'setup_location_id', 'location', 'room'], stationFallback), [facetFilters, stationFallback]);
+  const ownerFilters = useMemo(() => facetFilters(['owner', 'owner_id', 'primary_owner'], ownerFallback), [facetFilters, ownerFallback]);
   const statusFilters = useMemo(() => facetFilters(['status', 'status_type']), [facetFilters]);
 
   const formFields: FieldConfig[] = useMemo(
     () => [
       { name: "sku", label: "SKU", type: "text", required: true },
       { name: "name", label: "Name", type: "text", required: true },
-      { name: "group_id", label: "Bench Group", type: "select", options: groupOptions },
+      { name: "bench_group_id", label: "Bench Group", type: "select", options: groupOptions },
+      { name: "setup_location_id", label: "Station", type: "select", options: stationOptions },
+      { name: "station_slot_id", label: "Station Slot", type: "select", dependsOn: ["setup_location_id"], options: slotOptions },
       { name: "remark", label: "Remark", type: "textarea" },
+      { name: "image", label: "Image", type: "image" as const },
     ],
-    [groupOptions],
+    [groupOptions, stationOptions, slotOptions],
   );
 
   const actionsRenderer = createActionsRenderer<IBench>({
@@ -117,8 +150,9 @@ export default function BenchPage() {
         mode="create"
         title="New Bench"
         fields={formFields}
-        onSubmit={async (values) => {
-          await form.createFromValues(values);
+        onValuesChange={handleFormValues}
+        onSubmit={async (values, imageFile) => {
+          await form.createFromValues(values, imageFile);
           setCreateModalOpen(false);
           void table.refetch();
         }}
@@ -130,16 +164,32 @@ export default function BenchPage() {
         mode="edit"
         title="Edit Bench"
         fields={formFields}
-        initialValues={editingBench ? { ...editingBench, group_id: editingBench.bench_group?.id } : undefined}
-        onSubmit={async (values) => {
+        onValuesChange={handleFormValues}
+        initialValues={editingBench ? {
+          ...editingBench,
+          bench_group_id: editingBench.bench_group?.id,
+          setup_location_id: editingBench.setup_location_id ?? editingBench.station?.id,
+          station_slot_id: editingBench.station_slot_id,
+        } : undefined}
+        onSubmit={async (values, imageFile) => {
           if (!editingBench) return;
           const payload: IBenchPayload = {
             sku: String(values.sku ?? ''),
             name: String(values.name ?? ''),
-            group_id: values.group_id == null ? null : Number(values.group_id),
+            bench_group_id: values.bench_group_id == null ? null : Number(values.bench_group_id),
             remark: values.remark == null ? (editingBench.remark ?? "") : String(values.remark),
           };
+          const nextStation = values.setup_location_id == null ? null : Number(values.setup_location_id);
+          const currentStation = editingBench.setup_location_id ?? editingBench.station?.id ?? null;
+          const nextSlot = nextStation == null || values.station_slot_id == null ? null : Number(values.station_slot_id);
+          if (nextStation !== currentStation || nextSlot !== (editingBench.station_slot_id ?? null)) {
+            // Station and slot are written together: a slot always belongs to the station sent with it.
+            payload.setup_location_id = nextStation;
+            payload.station_slot_id = nextSlot;
+          }
           await form.updateInline(editingBench.id, payload);
+          if (imageFile) await form.updateImage(editingBench.id, imageFile);
+          else if (imageFile === null) await form.removeImage(editingBench.id);
           setEditingBench(null);
           void table.refetch();
         }}

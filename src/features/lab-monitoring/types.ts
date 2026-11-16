@@ -1,6 +1,5 @@
-import type { MonitoringBenchMinimalRead, MonitoringEventRead } from '@/shared/api/generated/api';
+import type { MonitoringEventRead } from '@/shared/api/generated/api';
 
-export type ILabMinimal = MonitoringBenchMinimalRead;
 export type ILabMonitoring = MonitoringEventRead;
 
 export interface ILabMonitoringParams {

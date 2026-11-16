@@ -93,8 +93,8 @@ export interface EquipmentItem {
   lifecycle_state?: EquipmentChoiceRef | null;
   placement?: EquipmentPlacementRead | null;
   loan?: EquipmentLoanRead | null;
-  calibration_required?: boolean;
-  calibration_overdue?: boolean;
+  is_calibration_required?: boolean;
+  is_calibration_overdue?: boolean;
   details?: string | null;
   remark?: string | null;
   image?: string | null;
@@ -104,7 +104,7 @@ export interface EquipmentItem {
   // Commercial, audit and lifecycle fields
   acquisition_price?: { amount?: number | string; currency?: string } | number | string | null;
   replacement_date?: string | null;
-  warranty_until?: string | null;
+  warranty_end_date?: string | null;
   lab_audit?: ILabAudit | null;
   licenses?: Array<{ id: number; sku?: string | null; name?: string | null; license_name?: string | null }> | null;
   information?: string | null;
@@ -178,7 +178,7 @@ export interface EquipmentWritePayload {
   serial_number?: string | null;
   acquisition_price?: number | string | null;
   replacement_date?: string | null;
-  warranty_until?: string | null;
+  warranty_end_date?: string | null;
   log_label?: string | null;
   owner_id?: number | null;
   department_id?: number | null;

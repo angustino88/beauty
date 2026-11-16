@@ -179,7 +179,6 @@ export default function LabMonitoring() {
             emptyText: "No monitoring data found — try adjusting the filters",
           }}
           onChange={handleTableChange}
-          sticky={{ offsetHeader: 60 }}
           pagination={{
             total: data?.total_count ?? rows.length,
             pageSizeOptions: [5, 10, 25, 50],

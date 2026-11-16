@@ -8,7 +8,7 @@ import { useAuthState } from '@/features/auth/hooks/useAuthState';
 const CALENDAR_DATETIME_FORMAT = 'YYYY-MM-DDTHH:mm:ss';
 
 export function useBookingCalendarEvents() {
-  const { id: myUserId, username: myUsername, permissionGroups } = useAuthState();
+  const { id: myUserId, permissionGroups } = useAuthState();
   const [bookingEvents, setBookingEvents] = useState<EventInput[]>([]);
   const [fetchBookings, { isFetching: isFetchingBookings }] = useLazyGetBenchBookingsQuery();
   const [fetchDowntimes, { isFetching: isFetchingDowntimes }] = useLazyGetDowntimesQuery();
@@ -33,15 +33,20 @@ export function useBookingCalendarEvents() {
       const startsAtAfter = dateRange?.starts_at_after ?? dateRange?.start;
       const startsAtBefore = dateRange?.starts_at_before ?? dateRange?.end;
 
-      const bookingsPromise = fetchBookings(
-        {
-          view_side: 'booking_calendar',
-          bench_id: benchIds,
-          starts_at_after: startsAtAfter,
-          starts_at_before: startsAtBefore,
-        },
-        true,
-      ).unwrap();
+      // The list filters on one bench per request, so each visible bench is fetched separately.
+      const bookingsPromise = Promise.all(
+        benchIds.map((benchId) =>
+          fetchBookings(
+            {
+              view_side: 'booking_calendar',
+              bench_id: [benchId],
+              starts_at_after: startsAtAfter,
+              starts_at_before: startsAtBefore,
+            },
+            true,
+          ).unwrap(),
+        ),
+      ).then((pages) => ({ data: pages.flatMap((page) => page.data) }));
 
       const downtimesPromise = fetchDowntimes({ page_size: 100 }, true).unwrap();
 
@@ -61,9 +66,7 @@ export function useBookingCalendarEvents() {
 
             const access =
               !!permissionGroups['lab-coordinator'] ||
-              (myUserId !== null && booking.creator?.id === myUserId) ||
-              (booking.creator?.username != null &&
-                booking.creator.username.trim().toLowerCase() === myUsername.trim().toLowerCase());
+              (myUserId !== null && booking.creator?.id === myUserId);
 
             const diffHours = dayjs(endStr).diff(dayjs(startStr), 'hours');
             const projectName = booking.project?.name || 'Unknown Project';
@@ -134,7 +137,7 @@ export function useBookingCalendarEvents() {
         },
       );
     },
-    [fetchBookings, fetchDowntimes, myUserId, myUsername, permissionGroups],
+    [fetchBookings, fetchDowntimes, myUserId, permissionGroups],
   );
 
   return {

@@ -107,10 +107,10 @@ export function explainEquipmentStatus(record: Record<string, unknown>, now: Dat
   } else if (owner) {
     facts.push({ label: 'Owner', value: owner });
   }
-  if (record.calibration_overdue) {
+  if (record.is_calibration_overdue) {
     const dueAt = record.next_calibration_due_at ? ` since ${formatDate(String(record.next_calibration_due_at))}` : '';
     facts.push({ label: 'Calibration', value: `Overdue${dueAt}`, tone: 'warning' });
-  } else if (record.calibration_required && record.next_calibration_due_at) {
+  } else if (record.is_calibration_required && record.next_calibration_due_at) {
     facts.push({ label: 'Next calibration', value: formatDate(String(record.next_calibration_due_at)) });
   }
 

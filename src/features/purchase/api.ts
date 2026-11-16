@@ -1,4 +1,5 @@
 import { baseApi } from '@/shared/lib/api';
+import { toPurchaseAllocationWire, toPurchaseLineWire, toPurchaseTransactionWire, toPurchaseWire } from './wire.ts';
 import type {
   ICreatePurchaseItemPayload,
   ICreatePurchasePayload,
@@ -68,7 +69,7 @@ export const purchaseApi = baseApi.injectEndpoints({
       query: (body) => ({
         url: '/api/labs/purchases',
         method: 'POST',
-        body,
+        body: toPurchaseWire(body),
       }),
       transformResponse: (res: unknown) => {
         const envelope = (res as { data?: unknown })?.data ?? res;
@@ -90,7 +91,7 @@ export const purchaseApi = baseApi.injectEndpoints({
         headers: {
           'If-Match': ifMatch || '*',
         },
-        body,
+        body: toPurchaseWire(body),
       }),
       transformResponse: (res: unknown) => {
         const envelope = (res as { data?: unknown })?.data ?? res;
@@ -123,7 +124,7 @@ export const purchaseApi = baseApi.injectEndpoints({
       query: ({ purchaseId, body }) => ({
         url: `/api/labs/purchases/${purchaseId}/items`,
         method: 'POST',
-        body,
+        body: toPurchaseLineWire(body),
       }),
       transformResponse: (res: unknown) => {
         const envelope = (res as { data?: unknown })?.data ?? res;
@@ -146,7 +147,7 @@ export const purchaseApi = baseApi.injectEndpoints({
         headers: {
           'If-Match': ifMatch || '*',
         },
-        body,
+        body: toPurchaseLineWire(body),
       }),
       transformResponse: (res: unknown) => {
         const envelope = (res as { data?: unknown })?.data ?? res;
@@ -198,7 +199,7 @@ export const purchaseApi = baseApi.injectEndpoints({
       query: ({ purchaseId, body }) => ({
         url: `/api/labs/purchases/${purchaseId}/transactions`,
         method: 'POST',
-        body,
+        body: toPurchaseTransactionWire(body),
       }),
       transformResponse: (res: unknown) => {
         const envelope = (res as { data?: unknown })?.data ?? res;
@@ -233,7 +234,7 @@ export const purchaseApi = baseApi.injectEndpoints({
       query: ({ purchaseItemId, body }) => ({
         url: `/api/labs/purchase-items/${purchaseItemId}/resources`,
         method: 'POST',
-        body,
+        body: toPurchaseAllocationWire(body),
       }),
       transformResponse: (res: unknown) => {
         const envelope = (res as { data?: unknown })?.data ?? res;

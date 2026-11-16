@@ -36,8 +36,8 @@ const getLicenseStatusInfo = (record: ILicense): string => {
 };
 
 export default function LicenseInformationCell({ record }: { record: ILicense }) {
-  const carrier = record.carrier_device;
-  const carrierId = Number(carrier?.id);
+  // The license can sit on several equipment items; the location shown is that of the first.
+  const carrierId = Number(record.assigned_equipment[0]?.id);
   const mappingQuery = useGetEquipmentMappingQuery(carrierId, {
     skip: !Number.isFinite(carrierId) || carrierId <= 0,
   });

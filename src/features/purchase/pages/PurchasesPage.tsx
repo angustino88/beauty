@@ -6,7 +6,6 @@ import {
   Typography,
   Segmented,
   Dropdown,
-  message,
 } from 'antd';
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
 import {
@@ -26,10 +25,8 @@ import styles from '@/features/finance/components/FinanceWorkspace.module.css';
 import { FullTextSearch } from '@/components/inputs/FullTextSearch';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 import type { IPurchase } from '../types';
-import { getPurchaseEtag } from '../mapper';
 import {
   useGetPurchasesQuery,
-  useUpdatePurchaseDraftHeaderMutation,
 } from '../api';
 import { CreatePurchaseModal } from '../components/CreatePurchaseModal';
 import { EditPurchaseDraftModal } from '../components/EditPurchaseDraftModal';
@@ -94,28 +91,6 @@ export const PurchasesPage: React.FC = () => {
     setPageSize(pagination.pageSize ?? 10);
   };
 
-  const [updateDraftHeader] = useUpdatePurchaseDraftHeaderMutation();
-
-  const handleStatusChange = async (record: IPurchase, newStatus: string) => {
-    try {
-      await updateDraftHeader({
-        purchaseId: record.id,
-        body: { status: newStatus },
-        ifMatch: getPurchaseEtag(record),
-      }).unwrap();
-      void message.success(`Order #${record.id} status updated to ${newStatus.toUpperCase()}`);
-      void refetch();
-    } catch (err: unknown) {
-      const errorData = (err as { data?: { error?: { message?: string } } })?.data;
-      const errorMsg =
-        errorData?.error?.message ||
-        (typeof errorData === 'string'
-          ? errorData
-          : 'Failed to update order status');
-      void message.error(errorMsg);
-    }
-  };
-
   const columns: ColumnsType<IPurchase> = [
     {
       title: 'PO #',
@@ -172,7 +147,6 @@ export const PurchasesPage: React.FC = () => {
       align: 'center',
       width: 142,
       render: (_: unknown, record: IPurchase) => {
-        const s = (record.status || '').toLowerCase();
         return (
           <Space size={6}>
             <Button size="small" icon={<EyeOutlined />} onClick={() => setSelectedPurchase(record)}>
@@ -184,18 +158,11 @@ export const PurchasesPage: React.FC = () => {
                   { key: 'edit', label: 'Edit order', icon: <EditOutlined /> },
                   { key: 'item', label: 'Add line item', icon: <PlusOutlined /> },
                   { key: 'payment', label: 'Record payment / refund', icon: <DollarOutlined /> },
-                  { type: 'divider' },
-                  { key: 'draft', label: 'Mark as Draft', disabled: s === 'draft' },
-                  { key: 'ordered', label: 'Mark as Ordered', disabled: s === 'ordered' },
-                  { key: 'received', label: 'Mark as Received', disabled: s === 'received' },
-                  { type: 'divider' },
-                  { key: 'cancelled', label: 'Cancel Order', danger: true, disabled: s === 'cancelled' },
                 ],
                 onClick: ({ key }) => {
                   if (key === 'edit') setEditingPurchase(record);
                   else if (key === 'item') setQuickItemPurchase(record);
                   else if (key === 'payment') setQuickTransactionPurchase(record);
-                  else void handleStatusChange(record, key);
                 },
               }}
             >

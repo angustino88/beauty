@@ -49,6 +49,20 @@ function mapTotals(raw: unknown): IFinanceTotals {
   };
 }
 
+/** `{value, label}` choice (ENU-1) → its value; plain strings pass through. */
+function choiceValue(raw: unknown, fallback: string): string {
+  if (raw && typeof raw === 'object') return String((raw as { value?: unknown }).value ?? fallback);
+  return typeof raw === 'string' && raw ? raw : fallback;
+}
+
+function roomOf(raw: unknown): { room_id: number; room_name: string } {
+  const room = (raw && typeof raw === 'object' ? raw : {}) as { id?: unknown; name?: unknown };
+  const room_id = Math.round(parseNumber(room.id));
+  return { room_id, room_name: String(room.name ?? `Room #${room_id}`) };
+}
+
+// The report is read into the UI's internal names: money objects → numbers, choices → values,
+// `room: {id, name}` → room_id / room_name, `start_date` / `end_date` → valid_from / valid_until.
 export function mapFinancialReport(raw: unknown): IFinancialReport {
   if (!raw || typeof raw !== 'object') {
     return {
@@ -77,82 +91,75 @@ export function mapFinancialReport(raw: unknown): IFinancialReport {
 
   const currency = typeof data.currency === 'string' && data.currency ? data.currency : 'EUR';
 
-  // Summary
   const rawSummary = (data.summary ?? {}) as Record<string, unknown>;
   const summary: IFinancialReportSummary = {
-    total_budgeted: parseNumber(rawSummary.total_budgeted),
-    total_paid: parseNumber(rawSummary.total_paid),
-    total_pending: parseNumber(rawSummary.total_pending),
-    total_refunded: parseNumber(rawSummary.total_refunded),
+    total_budgeted: parseMoney(rawSummary.budgeted),
+    total_paid: parseMoney(rawSummary.paid),
+    total_pending: parseMoney(rawSummary.pending),
+    total_refunded: parseMoney(rawSummary.refunded),
     expense_count: Math.round(parseNumber(rawSummary.expense_count)),
     payment_count: Math.round(parseNumber(rawSummary.payment_count)),
   };
 
-  // By Expense Type
   const rawTypes = Array.isArray(data.by_expense_type) ? data.by_expense_type : [];
   const by_expense_type: IFinancialReportTypeBreakdown[] = rawTypes.map((item: Record<string, unknown>) => {
-    const expense_type = String(item.expense_type ?? 'other');
+    const expense_type = choiceValue(item.expense_type, 'other');
     return {
       expense_type,
       expense_type_label: getExpenseTypeLabel(expense_type),
       count: Math.round(parseNumber(item.count)),
-      amount: parseNumber(item.amount),
-      paid_amount: parseNumber(item.paid_amount),
-      pending_amount: parseNumber(item.pending_amount),
+      amount: parseMoney(item.cost),
+      paid_amount: parseMoney(item.paid),
+      pending_amount: parseMoney(item.pending),
     };
   });
 
-  // By Room
   const rawRooms = Array.isArray(data.by_room) ? data.by_room : [];
   const by_room: IFinancialReportRoomBreakdown[] = rawRooms.map((item: Record<string, unknown>) => ({
-    room_id: Math.round(parseNumber(item.room_id)),
-    room_name: String(item.room_name ?? `Room #${item.room_id}`),
+    ...roomOf(item.room),
     count: Math.round(parseNumber(item.count)),
-    amount: parseNumber(item.amount),
-    paid_amount: parseNumber(item.paid_amount),
-    pending_amount: parseNumber(item.pending_amount),
+    amount: parseMoney(item.cost),
+    paid_amount: parseMoney(item.paid),
+    pending_amount: parseMoney(item.pending),
   }));
 
-  // By Status
   const rawStatus = Array.isArray(data.by_status) ? data.by_status : [];
   const by_status: IFinancialReportStatusBreakdown[] = rawStatus.map((item: Record<string, unknown>) => ({
-    status: String(item.status ?? 'pending'),
+    status: choiceValue(item.status, 'pending'),
     count: Math.round(parseNumber(item.count)),
-    amount: parseNumber(item.amount),
+    amount: parseMoney(item.cost),
   }));
 
-  // By Billing Period
   const rawPeriods = Array.isArray(data.by_billing_period) ? data.by_billing_period : [];
   const by_billing_period: IFinancialReportPeriodBreakdown[] = rawPeriods.map(
     (item: Record<string, unknown>) => ({
-      billing_period: String(item.billing_period ?? 'monthly'),
+      billing_period: choiceValue(item.billing_period, 'monthly'),
       count: Math.round(parseNumber(item.count)),
-      amount: parseNumber(item.amount),
-      paid_amount: parseNumber(item.paid_amount),
+      amount: parseMoney(item.cost),
+      paid_amount: parseMoney(item.paid),
     }),
   );
 
-  // Items
   const rawItems = Array.isArray(data.items) ? data.items : [];
   const items: IFinancialReportItem[] = rawItems.map((item: Record<string, unknown>) => {
-    const expenseType = String(item.expense_type ?? 'other');
+    const expenseType = choiceValue(item.expense_type, 'other');
+    const cost = item.cost as { currency?: unknown } | undefined;
     return {
       id: Math.round(parseNumber(item.id)),
       name: String(item.name ?? ''),
       expense_type: expenseType,
       expense_type_label: getExpenseTypeLabel(expenseType),
-      amount: parseNumber(item.amount),
-      paid_amount: parseNumber(item.paid_amount),
-      pending_amount: parseNumber(item.pending_amount),
-      payment_status: String(item.payment_status ?? 'pending'),
-      currency: String(item.currency ?? currency),
-      billing_period: String(item.billing_period ?? 'monthly'),
+      amount: parseMoney(item.cost),
+      paid_amount: parseMoney(item.paid),
+      pending_amount: parseMoney(item.pending),
+      payment_status: choiceValue(item.payment_status, 'pending'),
+      currency: typeof cost?.currency === 'string' ? cost.currency : currency,
+      billing_period: choiceValue(item.billing_period, 'monthly'),
       supplier: typeof item.supplier === 'string' ? item.supplier : undefined,
       reference: typeof item.reference === 'string' ? item.reference : undefined,
-      valid_from: String(item.valid_from ?? ''),
-      valid_until: typeof item.valid_until === 'string' ? item.valid_until : null,
-      room_id: Math.round(parseNumber(item.room_id)),
-      room_name: String(item.room_name ?? `Room #${item.room_id}`),
+      valid_from: String(item.start_date ?? ''),
+      valid_until: typeof item.end_date === 'string' ? item.end_date : null,
+      ...roomOf(item.room),
     };
   });
 
@@ -248,7 +255,7 @@ export function mapFinanceExpenseTypeBreakdown(raw: unknown): IFinanceExpenseTyp
     return {
       expense_type: expenseType,
       expense_type_label: getExpenseTypeLabel(expenseType),
-      source: String(item.source ?? 'expense'),
+      source: choiceValue(item.source, 'expense'),
       payments: parseMoney(item.payments),
       refunds: parseMoney(item.refunds),
       net: parseMoney(item.net),

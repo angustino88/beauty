@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Statistics } from "../components/Statistics";
-import { LabSessionLogTable } from "../components/LabSessionLogTable";
 import { OperationalAnalyticsCards } from "../components/cards/OperationalAnalyticsCards";
 import {
   LabGroupCard,
@@ -59,13 +58,6 @@ export function LabAnalytics() {
           <h2 id="analytics-operations" className={styles.sectionTitle}>Operations</h2>
         </div>
         <OperationalAnalyticsCards />
-      </section>
-
-      <section className={styles.section} aria-labelledby="analytics-session-log">
-        <div className={styles.sectionHeader}>
-          <h2 id="analytics-session-log" className={styles.sectionTitle}>Session activity</h2>
-        </div>
-        <div className={styles.sessionLog}><LabSessionLogTable /></div>
       </section>
     </div>
   );

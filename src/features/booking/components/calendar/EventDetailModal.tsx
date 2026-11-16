@@ -22,7 +22,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
   refetchBooking,
 }) => {
   const { token } = theme.useToken();
-  const { username, permissionGroups } = useAuthState();
+  const { id: myUserId, username, permissionGroups } = useAuthState();
   const [fetchBooking, { data: booking, isFetching }] = useLazyGetBenchBookingByIdQuery();
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
 
@@ -36,9 +36,9 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
     () =>
       !!booking &&
       (username === 'adminlab' ||
-        username === booking.creator?.username ||
+        (myUserId != null && booking.creator?.id === myUserId) ||
         !!permissionGroups['lab-coordinator']),
-    [booking, username, permissionGroups],
+    [booking, myUserId, username, permissionGroups],
   );
 
   const formatBookingDuration = () => {

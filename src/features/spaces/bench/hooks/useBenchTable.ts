@@ -16,11 +16,11 @@ export function useBenchTable() {
       page_size: pageSize,
       search: debouncedSearch || undefined,
       ordering: "id",
-      bench_group_id: filters.group?.[0] != null ? String(filters.group[0]) : undefined,
-      type_id: filters.type?.[0] != null ? String(filters.type[0]) : undefined,
-      setup_location_id: filters.location?.[0] != null ? String(filters.location[0]) : undefined,
-      owner_id: filters.owner?.[0] != null ? String(filters.owner[0]) : undefined,
-      status: filters.status?.[0] != null ? String(filters.status[0]) : undefined,
+      bench_group_id: filters.group?.length ? filters.group.join(',') : undefined,
+      type_id: filters.type?.length ? filters.type.join(',') : undefined,
+      setup_location_id: filters.location?.length ? filters.location.join(',') : undefined,
+      owner_id: filters.owner?.length ? filters.owner.join(',') : undefined,
+      status: filters.status?.length ? filters.status.join(',') : undefined,
     };
   }, [page, pageSize, debouncedSearch, filters]);
 

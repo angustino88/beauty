@@ -20,10 +20,8 @@ test('mapPurchase handles complete backend payload', () => {
     supplier: 'Acme Test Corp',
     purchase_order_number: 'PO-2026-001',
     purchase_date: '2026-11-01',
-    currency: 'USD',
-    status: { code: 'approved', label: 'Approved' },
-    total_amount: '1540.50',
-    total: { display: '$1,540.50' },
+    status: { value: 'approved', label: 'Approved' },
+    total: { amount: '1540.50', currency: 'USD' },
     item_count: 3,
     notes: 'Urgent equipment procurement',
     version: 4,
@@ -40,7 +38,7 @@ test('mapPurchase handles complete backend payload', () => {
   assert.equal(result.status, 'approved');
   assert.equal(result.status_label, 'Approved');
   assert.equal(result.total_amount, '1540.50');
-  assert.equal(result.total_display, '$1,540.50');
+  assert.equal(result.total_display, 'USD 1540.50');
   assert.equal(result.item_count, 3);
   assert.equal(result.notes, 'Urgent equipment procurement');
   assert.equal(result.version, 4);
@@ -71,7 +69,7 @@ test('mapPurchaseListResponse extracts pagination and items correctly', () => {
         id: 1,
         supplier: 'Keysight',
         purchase_date: '2026-10-15',
-        total_amount: '500.00',
+        total: { amount: '500.00', currency: 'EUR' },
         item_count: 1,
       },
     ],
@@ -147,8 +145,8 @@ test('mapPurchaseTransaction maps payments and refunds', () => {
   const rawPayment = {
     id: 7,
     purchase: { id: 12 },
-    transaction_type: 'payment',
-    amount: '500.00',
+    transaction_type: { value: 'payment', label: 'Payment' },
+    total: { amount: '500.00', currency: 'USD' },
     settled_at: '2026-11-02T14:30:00Z',
     reference: 'INV-99881',
     notes: 'Wire transfer',
@@ -163,8 +161,8 @@ test('mapPurchaseTransaction maps payments and refunds', () => {
   const rawRefund = {
     id: 8,
     purchase: { id: 12 },
-    transaction_type: 'refund',
-    amount: '50.00',
+    transaction_type: { value: 'refund', label: 'Refund' },
+    total: { amount: '50.00', currency: 'USD' },
     settled_at: '2026-11-03T09:00:00Z',
   };
 
@@ -207,7 +205,7 @@ test('mapPurchaseItemListResponse maps paginated item lines', () => {
 test('mapPurchaseTransactionListResponse maps paginated transaction entries', () => {
   const payload = {
     meta: { pagination: { count: 1, page: 1, page_size: 10, next: null, previous: null } },
-    data: [{ id: 1, transaction_type: 'payment', amount: '100.00' }],
+    data: [{ id: 1, transaction_type: { value: 'payment', label: 'Payment' }, total: { amount: '100.00', currency: 'USD' } }],
   };
   const res = mapPurchaseTransactionListResponse(payload);
   assert.equal(res.data.length, 1);

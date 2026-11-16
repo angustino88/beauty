@@ -20,6 +20,9 @@ export interface IBench extends ResourceState {
   primary_owner?: IPrimaryOwner | null;
   setup_location_id?: number | null;
   station_slot_id?: number | null;
+  station_slot_name?: string | null;
+  /** Parent-first physical path of the station, e.g. building / room / station. */
+  location_path?: string | null;
   station?: { id: number; sku: string; name: string } | null;
   room?: { id: number; sku: string; name: string } | null;
   equipment_count?: number;
@@ -71,9 +74,12 @@ export interface IBenchPayload {
   sku?: string;
   name?: string;
   type_id?: number | null;
+  /** Bench group (`bench_group_id`); `group_id` is the department resource group. */
+  bench_group_id?: number | null;
   group_id?: number | null;
   department_id?: number | null;
   owner_id?: number | null;
+  /** Station the bench is set up on. */
   setup_location_id?: number | null;
   station_slot_id?: number | null;
   remark?: string | null;

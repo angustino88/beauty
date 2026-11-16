@@ -26,11 +26,9 @@ test('mapDashboardBench maps backend bench data correctly with compatibility fie
       name: 'Hardware-in-the-Loop',
     },
     location: {
-      station_id: 101,
-      station_name: 'Station A',
-      room_id: 5,
-      room_name: 'Room 302',
-      building_name: 'B1',
+      station: { id: 101, name: 'Station A' },
+      room: { id: 5, name: 'Room 302' },
+      building: { id: 9, name: 'B1' },
       slot_label: 'Slot 4',
     },
     is_favorite: true,
@@ -42,8 +40,7 @@ test('mapDashboardBench maps backend bench data correctly with compatibility fie
       status: 'in-progress',
       user: {
         id: 7,
-        username: 'jdoe',
-        display_name: 'John Doe',
+        name: 'John Doe',
       },
     },
     computing: {

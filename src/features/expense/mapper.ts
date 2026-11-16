@@ -1,6 +1,8 @@
 import type {
   BillingPeriodEnum,
   ExpenseTypeEnum,
+  ICreateExpensePaymentPayload,
+  ICreateExpensePayload,
   IExpense,
   IExpenseListPagination,
   IExpenseListResponse,
@@ -69,15 +71,44 @@ function extractRoomInfo(room: unknown, fallbackRoomId?: number): { id: number; 
   return { id: fallbackRoomId ?? 0 };
 }
 
-function extractAmountDisplay(val: unknown, fallbackAmount: string, fallbackCurrency: string): string {
-  if (typeof val === 'string') return val;
-  if (val && typeof val === 'object') {
-    const v = val as Record<string, unknown>;
-    if (v.display) return String(v.display);
-    if (v.formatted) return String(v.formatted);
-    if (v.amount && v.currency) return `${v.currency} ${v.amount}`;
+type MoneyRead = { amount: string; currency: string };
+
+/** `{value, label}` choice (ENU-1) → its value; plain strings pass through. */
+function choiceValue(raw: unknown): string {
+  if (raw && typeof raw === 'object') return String((raw as { value?: unknown }).value ?? '');
+  return String(raw ?? '');
+}
+
+function readMoney(raw: unknown, fallbackCurrency = 'EUR'): { amount: string; currency: string } {
+  if (raw && typeof raw === 'object') {
+    const m = raw as Partial<MoneyRead>;
+    return {
+      amount: typeof m.amount === 'string' ? m.amount : String(m.amount ?? '0.00'),
+      currency: typeof m.currency === 'string' && m.currency ? m.currency : fallbackCurrency,
+    };
   }
-  return `${fallbackCurrency} ${fallbackAmount}`;
+  return { amount: typeof raw === 'string' ? raw : '0.00', currency: fallbackCurrency };
+}
+
+/** Write body for an expense (`cost` money object, `start_date` / `end_date`). */
+export function toExpenseWriteBody(body: ICreateExpensePayload) {
+  const { amount, currency = 'EUR', valid_from, valid_until, ...rest } = body;
+  return {
+    ...rest,
+    cost: { amount, currency },
+    start_date: valid_from,
+    end_date: valid_until ?? null,
+  };
+}
+
+/** Write body for a payment (`total` money object, `paid_date`). */
+export function toExpensePaymentWriteBody(body: ICreateExpensePaymentPayload) {
+  const { amount, currency, paid_at, ...rest } = body;
+  return {
+    ...rest,
+    total: { amount, currency },
+    paid_date: paid_at,
+  };
 }
 
 export function mapExpense(raw: unknown, defaultRoomId?: number): IExpense {
@@ -99,13 +130,13 @@ export function mapExpense(raw: unknown, defaultRoomId?: number): IExpense {
     };
   }
 
+  // Wire shape: `expense_type` / `billing_period` are {value, label}; `cost` is {amount, currency};
+  // dates are `start_date` / `end_date`. The UI keeps its own names (`amount`, `valid_from`, ...).
   const ex = raw as Record<string, unknown>;
   const roomInfo = extractRoomInfo(ex.room, defaultRoomId);
-  const expenseType = normalizeExpenseType(ex.expense_type);
-  const billingPeriod = normalizeBillingPeriod(ex.billing_period);
-  const currency = typeof ex.currency === 'string' && ex.currency ? ex.currency : 'EUR';
-  const amount = typeof ex.amount === 'string' ? ex.amount : String(ex.amount ?? '0.00');
-  const amountDisplay = extractAmountDisplay(ex.amount_display, amount, currency);
+  const expenseType = normalizeExpenseType(choiceValue(ex.expense_type));
+  const billingPeriod = normalizeBillingPeriod(choiceValue(ex.billing_period));
+  const cost = readMoney(ex.cost);
 
   return {
     id: typeof ex.id === 'number' ? ex.id : Number(ex.id ?? 0),
@@ -116,13 +147,13 @@ export function mapExpense(raw: unknown, defaultRoomId?: number): IExpense {
     expense_type_label: EXPENSE_TYPE_LABELS[expenseType],
     supplier: typeof ex.supplier === 'string' ? ex.supplier : undefined,
     reference: typeof ex.reference === 'string' ? ex.reference : undefined,
-    amount,
-    currency,
-    amount_display: amountDisplay,
+    amount: cost.amount,
+    currency: cost.currency,
+    amount_display: `${cost.currency} ${cost.amount}`,
     billing_period: billingPeriod,
     billing_period_label: BILLING_PERIOD_LABELS[billingPeriod],
-    valid_from: typeof ex.valid_from === 'string' ? ex.valid_from : '',
-    valid_until: typeof ex.valid_until === 'string' ? ex.valid_until : null,
+    valid_from: typeof ex.start_date === 'string' ? ex.start_date : '',
+    valid_until: typeof ex.end_date === 'string' ? ex.end_date : null,
     notes: typeof ex.notes === 'string' ? ex.notes : undefined,
     created_at: typeof ex.created_at === 'string' ? ex.created_at : '',
     updated_at: typeof ex.updated_at === 'string' ? ex.updated_at : '',
@@ -176,7 +207,7 @@ export function mapExpensePayment(raw: unknown, defaultExpenseId?: number): IExp
   }
 
   const p = raw as Record<string, unknown>;
-  const rawType = String(p.transaction_type ?? 'payment').toLowerCase();
+  const rawType = choiceValue(p.transaction_type ?? 'payment').toLowerCase();
   const txType: 'payment' | 'refund' = rawType === 'refund' ? 'refund' : 'payment';
 
   let expenseId = defaultExpenseId;
@@ -186,12 +217,14 @@ export function mapExpensePayment(raw: unknown, defaultExpenseId?: number): IExp
     if (typeof expObj.id === 'number') expenseId = expObj.id;
   }
 
+  const total = readMoney(p.total);
+
   return {
     id: typeof p.id === 'number' ? p.id : Number(p.id ?? 0),
     expense_id: expenseId,
     transaction_type: txType,
-    amount: typeof p.amount === 'string' ? p.amount : String(p.amount ?? '0.00'),
-    paid_at: typeof p.paid_at === 'string' ? p.paid_at : '',
+    amount: total.amount,
+    paid_at: typeof p.paid_date === 'string' ? p.paid_date : '',
     reference: typeof p.reference === 'string' ? p.reference : undefined,
     notes: typeof p.notes === 'string' ? p.notes : undefined,
     created_at: typeof p.created_at === 'string' ? p.created_at : '',

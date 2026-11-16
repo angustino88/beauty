@@ -20,6 +20,7 @@ import {
   mapStationWritePayload,
 } from "./mapper";
 import { normalizeFilterFacets, type FilterFacets } from "@/features/lab-equipment/shared/facets/filterFacets";
+import { resourceImageFormData, resourceImageUrl } from "@/shared/lib/api/resourceImage";
 
 const ENDPOINTS = createResourceEndpoints("labs/stations");
 const TAG = "Station";
@@ -35,12 +36,24 @@ generatedApi.enhanceEndpoints({
 
 export const stationApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
+    updateStationImage: build.mutation<void, { id: number; image: File }>({
+      query: ({ id, image }) => ({
+        url: resourceImageUrl("stations", id),
+        method: "PUT",
+        body: resourceImageFormData(image),
+      }),
+      invalidatesTags: (_r, _e, { id }) => [...generateItemTag(TAG, id), ...invalidateList(TAG)],
+    }),
+    deleteStationImage: build.mutation<void, number>({
+      query: (id) => ({ url: resourceImageUrl("stations", id), method: "DELETE" }),
+      invalidatesTags: (_r, _e, id) => [...generateItemTag(TAG, id), ...invalidateList(TAG)],
+    }),
     getStations: build.query<IStationListResponse, IStationParams>({
       query: (params) => {
         const queryParams = new URLSearchParams();
         if (params.page) queryParams.set("page", String(params.page));
         if (params.page_size) queryParams.set("page_size", String(params.page_size));
-        if (params.search) queryParams.set("search", params.search);
+        if (params.search) queryParams.set("q", params.search);
         if (params.ordering) queryParams.set("ordering", params.ordering);
         if (params.room_id) queryParams.set("room_id", String(params.room_id));
         if (params.owner_id) queryParams.set("owner_id", String(params.owner_id));
@@ -169,25 +182,23 @@ export const stationApi = baseApi.injectEndpoints({
       },
     }),
 
+    // Reference lists come from the selector endpoints; `/stations/filters` only describes filters.
     getStationDropdown: build.query<IStationDropdownOptions, void>({
-      query: () => ({ url: "/api/labs/stations/filters" }),
-      providesTags: [...invalidateList(TAG), ...invalidateList('Room')],
-      transformResponse: (res: unknown): IStationDropdownOptions => {
-        const envelope = (res as Record<string, unknown>) ?? {};
-        const data = (envelope.data as Record<string, unknown>) ?? envelope;
-        const extract = (arr: unknown) =>
-          Array.isArray(arr)
-            ? arr.map((item: Record<string, unknown>) => ({
-                id: (item.id as number) ?? 0,
-                name: String(item.name || item.sku || item.id),
-              }))
-            : [];
+      async queryFn(_arg, _api, _extra, fetchWithBQ) {
+        const roomsRes = await fetchWithBQ("/api/labs/rooms/options");
+        if (roomsRes.error) return { error: roomsRes.error };
+        const list = ((roomsRes.data as { data?: unknown })?.data ?? []) as Array<Record<string, unknown>>;
         return {
-          rooms: extract(data.rooms),
-          departments: extract(data.departments),
-          groups: extract(data.groups),
+          data: {
+            rooms: Array.isArray(list)
+              ? list.map((item) => ({ id: (item.id as number) ?? 0, name: String(item.name || item.sku || item.id) }))
+              : [],
+            departments: [],
+            groups: [],
+          },
         };
       },
+      providesTags: [...invalidateList(TAG), ...invalidateList('Room')],
     }),
     getStationFilters: build.query<FilterFacets, void>({
       query: () => ({ url: "/api/labs/stations/filters" }),
@@ -207,6 +218,8 @@ export const {
   usePlaceStationMutation,
   useChangeStationStatusMutation,
   useChangeStationLifecycleMutation,
+  useUpdateStationImageMutation,
+  useDeleteStationImageMutation,
   useGetStationHistoryQuery,
   useGetStationSlotsQuery,
   useGetStationDropdownQuery,

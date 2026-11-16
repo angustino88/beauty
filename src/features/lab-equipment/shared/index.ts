@@ -91,6 +91,7 @@ export {
 export {
   DEFAULT_IMAGE,
   renderAuditCell,
+  LastAuditCell,
   renderImageCell,
   InlineImageUpload,
   renderStatusCell,

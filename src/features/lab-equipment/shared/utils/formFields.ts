@@ -9,7 +9,7 @@ export function buildEquipmentFormFields({
   config: EquipmentCategoryConfig;
   formMode: 'create' | 'edit';
   refData?: {
-    owners?: Array<{ id: number; username: string }>;
+    owners?: Array<{ id: number; name: string }>;
   } & Record<string, unknown>;
   departmentOptions?: Array<{ id: number; name: string }>;
   groupOptions?: Array<{ id: number; name: string }>;
@@ -29,11 +29,12 @@ export function buildEquipmentFormFields({
     { name: 'product_model_id', label: 'Product Model', type: 'select', dependsOn: ['type_id', 'manufacturer_id'], options: modelFormOptions },
     { name: 'serial_number', label: 'Serial Number', type: 'text', placeholder: 'Manufacturer serial number' },
     { name: 'log_label', label: 'LOG Label', type: 'text', placeholder: 'Legacy asset or log label' },
-    { name: 'owner_id', label: 'Primary Owner', type: 'select', options: refData?.owners?.map((o) => ({ label: o.username, value: o.id })) ?? [] },
+    { name: 'owner_id', label: 'Primary Owner', type: 'select', options: refData?.owners?.map((o) => ({ label: o.name, value: o.id })) ?? [] },
     { name: 'department_id', label: 'Department', type: 'select', options: departmentOptions?.map((d) => ({ label: d.name, value: d.id })) ?? [], onSearch: onDepartmentSearch },
     { name: 'group_id', label: 'Group', type: 'select', dependsOn: ['department_id'], options: groupOptions?.map((group) => ({ label: group.name, value: group.id })) ?? [], onSearch: onGroupSearch },
-    { name: 'warranty_until', label: 'Warranty Until', type: 'date', placeholder: 'Select warranty expiration date' },
+    { name: 'warranty_end_date', label: 'Warranty Until', type: 'date', placeholder: 'Select warranty expiration date' },
     { name: 'replacement_date', label: 'Replacement Date', type: 'date', placeholder: 'Select replacement date' },
+    { name: 'image', label: 'Image', type: 'image' },
   ];
 
   for (const extra of config.extraFields ?? []) {
@@ -55,7 +56,8 @@ export function buildEquipmentFormFields({
     sku: 'Identification', name: 'Identification', serial_number: 'Identification', log_label: 'Identification',
     kind_id: 'Classification', type_id: 'Classification', manufacturer_id: 'Classification', product_model_id: 'Classification',
     owner_id: 'Ownership & location', department_id: 'Ownership & location', group_id: 'Ownership & location',
-    warranty_until: 'Lifecycle', replacement_date: 'Lifecycle', details: 'Notes',
+    image: 'Identification',
+    warranty_end_date: 'Lifecycle', replacement_date: 'Lifecycle', details: 'Notes',
   };
   return fields.map((field) => ({ ...field,
     section: sectionByField[field.name] ?? 'Specifications',
@@ -94,7 +96,7 @@ export function equipmentFormInitialValues(editingItem: EquipmentItem | null, co
     serial_number: editingItem.serial_number, log_label: editingItem.log_label,
     owner_id: editingItem.owner?.id, department_id: editingItem.department?.id,
     group_id: editingItem.group?.id,
-    warranty_until: editingItem.warranty_until, replacement_date: editingItem.replacement_date,
+    warranty_until: editingItem.warranty_end_date, replacement_date: editingItem.replacement_date,
     details: editingItem.details, ...extraValues,
   };
 }

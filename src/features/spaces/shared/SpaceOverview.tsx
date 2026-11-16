@@ -49,18 +49,31 @@ export default function SpaceOverview({ kind }: { kind: SpaceKind }) {
     return spaceStatusLabel(val);
   };
 
-  const filteredStatuses = data?.statuses
-    ?.filter(({ status }) => (kind === 'room' || kind === 'station' ? normalizeSpaceStatus(status.value) !== 'reserved' : true))
-    .map(({ status, resource_count }) => ({
-      status: {
-        value: normalizeSpaceStatus(status.value),
-        label:
-          (kind === 'room' || kind === 'station') && normalizeSpaceStatus(status.value) === 'available'
-            ? 'Operational'
-            : status.label,
-      },
-      count: resource_count,
-    }));
+  // A booked room or station is still operational, so its count belongs to "Operational" instead of vanishing
+  // from the tiles (which would leave the tiles adding up to less than the total).
+  const statuses = (() => {
+    const source = data?.statuses ?? [];
+    if (kind !== 'room' && kind !== 'station') return source;
+    const reserved = source
+      .filter(({ status }) => normalizeSpaceStatus(status.value) === 'reserved')
+      .reduce((sum, { resource_count }) => sum + resource_count, 0);
+    return source
+      .filter(({ status }) => normalizeSpaceStatus(status.value) !== 'reserved')
+      .map((entry) => normalizeSpaceStatus(entry.status.value) === 'available'
+        ? { ...entry, resource_count: entry.resource_count + reserved }
+        : entry);
+  })();
+
+  const filteredStatuses = statuses.map(({ status, resource_count }) => ({
+    status: {
+      value: normalizeSpaceStatus(status.value),
+      label:
+        (kind === 'room' || kind === 'station') && normalizeSpaceStatus(status.value) === 'available'
+          ? 'Operational'
+          : status.label,
+    },
+    count: resource_count,
+  }));
 
   return (
     <>
@@ -89,7 +102,7 @@ export default function SpaceOverview({ kind }: { kind: SpaceKind }) {
         loading={isLoading}
         resourceLabel={nouns[kind]}
         scopeLabel="Across all spaces, not just this page"
-        featuredStatuses={spaceOverviewStatuses(data?.statuses ?? [], kind)}
+        featuredStatuses={spaceOverviewStatuses(statuses, kind)}
         showAllOtherStatuses={kind === 'bench'}
         showOtherStatuses={kind === 'bench'}
         fillWidth

@@ -1,7 +1,8 @@
 import { toneForStatus, type StatusTone } from '../../../shared/status/statusTone.ts';
 const labels: Record<string, string> = {
-  active: 'Active', inactive: 'Inactive', deactivated: 'Deactivated',
-  revoked: 'Revoked', expired: 'Expired', trial: 'Trial', suspended: 'Suspended',
+  available: 'Available', assigned: 'Assigned', revoked: 'Revoked', expired: 'Expired', suspended: 'Suspended',
+  // Older labels still appear in historical summaries.
+  active: 'Active', inactive: 'Inactive', deactivated: 'Deactivated', trial: 'Trial',
 };
 
 export const licenseStatusValue = (status: unknown): string =>

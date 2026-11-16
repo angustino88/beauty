@@ -1,3 +1,4 @@
+import { useEquipmentSearchOptions } from '../hooks/useEquipmentSearchOptions';
 import { useMemo, useState } from 'react';
 import { Alert } from 'antd';
 import { skipToken } from '@reduxjs/toolkit/query';
@@ -27,18 +28,6 @@ import {
 const isAdminGroupMap = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
-const toNullableInteger = (value: unknown): number | null => {
-  if (typeof value === 'number') {
-    return Number.isFinite(value) ? value : null;
-  }
-  if (typeof value !== 'string') {
-    return null;
-  }
-  const trimmed = value.trim();
-  if (!trimmed) return null;
-  return /^\d+$/.test(trimmed) ? Number(trimmed) : null;
-};
-
 export default function LicensePage() {
   const permissionGroups = useSelector((state: RootState) => state.me.permissionGroups);
   const isAdmin = isAdminGroupMap(permissionGroups) && ('admin' in permissionGroups || 'lab-coordinator' in permissionGroups);
@@ -64,37 +53,49 @@ export default function LicensePage() {
     historyId ?? skipToken,
   );
 
+  const editingAssigned = table.rows.find((row) => row.id === editingId)?.assigned_equipment;
+  const equipmentSearch = useEquipmentSearchOptions(editingAssigned);
+
   const formFields = useMemo<FieldConfig[]>(
     () => [
       { name: 'sku', label: 'SKU', type: 'text', required: true, disabledInEdit: true },
       { name: 'name', label: 'Name', type: 'text', required: true },
-      { name: 'license_product', label: 'Product', type: 'select', options: table.productOptions },
-      { name: 'license_vendor', label: 'Vendor', type: 'select', options: table.vendorOptions },
+      { name: 'license_product', label: 'Product', type: 'select', required: true, options: table.productOptions },
+      { name: 'license_vendor', label: 'Vendor', type: 'select', required: true, options: table.vendorOptions },
       { name: 'maximum_version', label: 'Maximum Version', type: 'text' },
-      { name: 'license_ID', label: 'License ID', type: 'text' },
-      { name: 'carrier_device', label: 'License Carrier', type: 'select', options: table.carrierDeviceOptions },
-      { name: 'license_category', label: 'License Category', type: 'select', options: table.categoryOptions },
-      { name: 'license_type', label: 'License Type', type: 'select', options: table.typeOptions },
+      { name: 'license_ID', label: 'License key (write-only)', type: 'text' },
+      { name: 'license_category', label: 'License Category', type: 'select', required: true, options: table.categoryOptions },
+      { name: 'license_type', label: 'License Type', type: 'select', required: true, options: table.typeOptions },
       {
         name: 'license_restriction',
         label: 'License Restriction',
         type: 'select',
         options: table.restrictionOptions,
       },
-      { name: 'log_label', label: 'LOG Label', type: 'text' },
-      { name: 'expiry_date', label: 'Expiry Date', type: 'date', required: true },
+      { name: 'license_seats', label: 'Seats', type: 'number' },
+      { name: 'expiry_date', label: 'Expiry Date', type: 'date' },
       { name: 'primary_owner', label: 'Primary Owner', type: 'select', options: table.ownerOptions },
+      {
+        name: 'assigned_equipment_ids',
+        label: 'License Carrier',
+        type: 'multi-select',
+        options: equipmentSearch.options,
+        onSearch: equipmentSearch.onSearch,
+        placeholder: 'Type to search equipment',
+        help: 'Optional. A license can be assigned to as many equipment items as it has seats.',
+      },
       { name: 'remark', label: 'Remark', type: 'textarea' },
       { name: 'image', label: 'Image', type: 'image' },
     ],
     [
       table.productOptions,
       table.vendorOptions,
-      table.carrierDeviceOptions,
       table.categoryOptions,
       table.typeOptions,
       table.restrictionOptions,
       table.ownerOptions,
+      equipmentSearch.options,
+      equipmentSearch.onSearch,
     ],
   );
 
@@ -118,26 +119,26 @@ export default function LicensePage() {
 
   const handleInlineSave = async () => {
     if (editingId === null || !editingDraft) return;
-    const { pending_status_type, pending_status_data, ...restDraft } = editingDraft;
-    const payload = {
-      ...restDraft,
+    const { pending_status_type, pending_status_data } = editingDraft;
+    // Only the fields a license accepts; status changes through its own action below.
+    const payload: LicenseUpsertPayload = {
       name: editingDraft.name,
       license_product: editingDraft.license_product,
       license_vendor: editingDraft.license_vendor,
-      maximum_version: toNullableInteger(editingDraft.maximum_version),
+      maximum_version: editingDraft.maximum_version ?? '',
       license_ID: editingDraft.license_ID || null,
-      carrier_device: editingDraft.carrier_device,
       license_category: editingDraft.license_category,
       license_type: editingDraft.license_type,
       license_restriction: editingDraft.license_restriction,
-      log_label: editingDraft.log_label,
       expiry_date: editingDraft.expiry_date ? editingDraft.expiry_date.format('YYYY-MM-DD') : null,
       primary_owner: editingDraft.primary_owner,
       remark: editingDraft.remark,
-      ...(pending_status_type ? { current_status: { status_type: pending_status_type, status_data: pending_status_data ?? {} } } : {}),
-    } as LicenseUpsertPayload;
+    };
 
     await form.updateInline(editingId, payload);
+    if (pending_status_type) await form.changeStatus(editingId, pending_status_type, pending_status_data ?? {});
+    const current = (table.rows.find((row) => row.id === editingId)?.assigned_equipment ?? []).map((item) => item.id);
+    await form.syncAssignments(editingId, current, editingDraft.assigned_equipment_ids ?? []);
     if (inlineImageFile) {
       await form.updateImage?.(editingId, inlineImageFile);
       setInlineImageFile(null);
@@ -145,8 +146,9 @@ export default function LicensePage() {
     cancelEdit();
   };
 
-  const handleImageChange = (file: File) => {
-    setInlineImageFile(file);
+  // The image uploads as soon as a file is picked; it has its own endpoint.
+  const handleImageChange = (file: File, record: ILicense) => {
+    void form.updateImage?.(record.id, file);
   };
 
   const handleStatusChange = (_record: ILicense, values: { status_type: string; status_data: Record<string, unknown> }) => {
@@ -191,12 +193,14 @@ export default function LicensePage() {
     typeOptions: table.typeOptions,
     restrictionOptions: table.restrictionOptions,
     ownerOptions: table.ownerOptions,
-    carrierDeviceOptions: table.carrierDeviceOptions,
+    carrierOptions: equipmentSearch.options,
+    onCarrierSearch: equipmentSearch.onSearch,
+    carrierLoading: equipmentSearch.loading,
     isEditing,
     editingDraft,
     updateDraftField,
     actionsRenderer,
-    onImageChange: handleImageChange,
+    onImageChange: isAdmin ? handleImageChange : undefined,
     onStatusChange: handleStatusChange,
   });
 
@@ -236,10 +240,10 @@ export default function LicensePage() {
             statusLabel={licenseStatusLabel}
             showAllOtherStatuses
             featuredStatuses={[
-              { key: 'active', label: 'Active', description: 'Valid licenses', tone: 'success' },
-              { key: 'inactive', label: 'Inactive', description: 'Not currently active', tone: 'neutral' },
+              { key: 'available', label: 'Available', description: 'Free to assign', tone: 'success' },
+              { key: 'assigned', label: 'Assigned', description: 'In use on equipment', tone: 'info' },
               { key: 'expired', label: 'Expired', description: 'Past expiry date', tone: 'danger' },
-              { key: 'trial', label: 'Trial', description: 'Evaluation licenses', tone: 'info' },
+              { key: 'suspended', label: 'Suspended', description: 'Temporarily withdrawn', tone: 'warning' },
             ]}
           />
         </>}

@@ -33,7 +33,7 @@ const formatValue = (value: unknown): string => {
 };
 
 const actorName = (item: EquipmentStatusChangeRead): string =>
-  item.actor?.display_name?.trim() || item.actor?.username || 'Unknown actor';
+  item.actor?.name?.trim() || 'Unknown actor';
 
 function StatusTransition({ item }: { item: EquipmentStatusChangeRead }) {
   return (

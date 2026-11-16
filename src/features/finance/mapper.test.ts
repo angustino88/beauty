@@ -8,57 +8,59 @@ import {
 } from './mapper.ts';
 
 test('mapFinancialReport normalizes summary, breakdowns, and ledger items', () => {
+  const eur = (amount: string) => ({ amount, currency: 'EUR' });
   const payload = {
-    currency: 'EUR',
-    summary: {
-      total_budgeted: '25000.00',
-      total_paid: '18500.00',
-      total_pending: '6500.00',
-      total_refunded: '200.00',
-      expense_count: 14,
-      payment_count: 22,
+    data: {
+      currency: 'EUR',
+      summary: {
+        budgeted: eur('25000.00'),
+        paid: eur('18500.00'),
+        pending: eur('6500.00'),
+        refunded: eur('200.00'),
+        expense_count: 14,
+        payment_count: 22,
+      },
+      by_expense_type: [
+        {
+          expense_type: { value: 'rent', label: 'Rent' },
+          count: 2,
+          cost: eur('12000.00'),
+          paid: eur('10000.00'),
+          pending: eur('2000.00'),
+        },
+      ],
+      by_room: [
+        {
+          room: { id: 1, name: 'Cleanroom 101' },
+          count: 5,
+          cost: eur('15000.00'),
+          paid: eur('12000.00'),
+          pending: eur('3000.00'),
+        },
+      ],
+      by_status: [
+        { status: { value: 'paid', label: 'Paid' }, count: 10, cost: eur('18500.00') },
+        { status: { value: 'pending', label: 'Pending' }, count: 4, cost: eur('6500.00') },
+      ],
+      by_billing_period: [
+        { billing_period: { value: 'monthly', label: 'Monthly' }, count: 8, cost: eur('20000.00'), paid: eur('15000.00') },
+      ],
+      items: [
+        {
+          id: 10,
+          name: 'Cleanroom Rent',
+          expense_type: { value: 'rent', label: 'Rent' },
+          cost: eur('6000.00'),
+          paid: eur('5000.00'),
+          pending: eur('1000.00'),
+          payment_status: { value: 'partial', label: 'Partial' },
+          billing_period: { value: 'monthly', label: 'Monthly' },
+          start_date: '2026-01-01',
+          end_date: null,
+          room: { id: 1, name: 'Cleanroom 101' },
+        },
+      ],
     },
-    by_expense_type: [
-      {
-        expense_type: 'rent',
-        count: 2,
-        amount: '12000.00',
-        paid_amount: '10000.00',
-        pending_amount: '2000.00',
-      },
-    ],
-    by_room: [
-      {
-        room_id: 1,
-        room_name: 'Cleanroom 101',
-        count: 5,
-        amount: '15000.00',
-        paid_amount: '12000.00',
-        pending_amount: '3000.00',
-      },
-    ],
-    by_status: [
-      { status: 'paid', count: 10, amount: '18500.00' },
-      { status: 'pending', count: 4, amount: '6500.00' },
-    ],
-    by_billing_period: [
-      { billing_period: 'monthly', count: 8, amount: '20000.00', paid_amount: '15000.00' },
-    ],
-    items: [
-      {
-        id: 10,
-        name: 'Cleanroom Rent',
-        expense_type: 'rent',
-        amount: '6000.00',
-        paid_amount: '5000.00',
-        pending_amount: '1000.00',
-        payment_status: 'partial',
-        currency: 'EUR',
-        billing_period: 'monthly',
-        room_id: 1,
-        room_name: 'Cleanroom 101',
-      },
-    ],
   };
 
   const report = mapFinancialReport(payload);

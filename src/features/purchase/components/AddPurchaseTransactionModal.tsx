@@ -42,6 +42,7 @@ export const AddPurchaseTransactionModal: React.FC<AddPurchaseTransactionModalPr
   const handleFinish = async (values: FormValues) => {
     try {
       const payload: ICreatePurchaseTransactionPayload = {
+        currency,
         transaction_type: values.transaction_type,
         amount: Number(values.amount).toFixed(2),
         settled_at: values.settled_at.toISOString(),

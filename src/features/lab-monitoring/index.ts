@@ -1,2 +1,2 @@
-export type { ILabMonitoring, ILabMinimal, ILabMonitoringParams, ILabMonitoringResponse } from './types';
+export type { ILabMonitoring, ILabMonitoringParams, ILabMonitoringResponse } from './types';
 export { useGetLabMonitoringListQuery } from './api';

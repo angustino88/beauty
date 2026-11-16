@@ -7,22 +7,26 @@ import type { ILabMonitoring } from '../types';
 const DATETIME_FORMAT = 'YYYY-MM-DD HH:mm:ss';
 const { Text } = Typography;
 
-function renderText(value?: string) {
+function renderText(value?: string | null) {
   return value?.trim() || '—';
 }
 
-function renderDetails(details: Record<string, string>[] = []) {
-  const entries = details.flatMap((entry) => Object.entries(entry));
+/** Payload is an arbitrary JSON object; show its first entry and the count of the rest. */
+function renderPayload(payload: unknown) {
+  const entries = payload && typeof payload === 'object' && !Array.isArray(payload)
+    ? Object.entries(payload as Record<string, unknown>)
+    : [];
   if (entries.length === 0) return '—';
 
-  const summary = entries.map(([key, value]) => `${key}: ${value}`).join('\n');
+  const summary = entries.map(([key, value]) => `${key}: ${typeof value === 'object' ? JSON.stringify(value) : String(value)}`).join('\n');
   const [firstKey, firstValue] = entries[0];
 
   return (
     <Tooltip title={<span style={{ whiteSpace: 'pre-line' }}>{summary}</span>} placement="left">
       <span>
         <Text ellipsis style={{ maxWidth: 210 }}>
-          <span style={{ color: 'var(--lm-text-secondary)' }}>{firstKey}:</span> {firstValue}
+          <span style={{ color: 'var(--lm-text-secondary)' }}>{firstKey}:</span>{' '}
+          {typeof firstValue === 'object' ? JSON.stringify(firstValue) : String(firstValue)}
         </Text>
         {entries.length > 1 && <span style={{ color: 'var(--lm-text-secondary)' }}> +{entries.length - 1}</span>}
       </span>
@@ -42,8 +46,8 @@ export const labMonitoringColumns: ColumnsType<ILabMonitoring> = [
   },
   {
     title: 'Timestamp',
-    dataIndex: 'created',
-    key: 'created',
+    dataIndex: 'occurred_at',
+    key: 'occurred_at',
     align: 'left',
     width: 164,
     fixed: 'left',
@@ -51,21 +55,20 @@ export const labMonitoringColumns: ColumnsType<ILabMonitoring> = [
   },
   {
     title: 'Source',
-    dataIndex: 'source',
-    key: 'source',
+    dataIndex: 'agent_key',
+    key: 'agent_key',
     align: 'left',
     width: 120,
     render: renderText,
   },
   {
     title: 'Computer Name',
-    dataIndex: 'computer_name',
-    key: 'computer_name',
+    key: 'computer',
     align: 'left',
     width: 150,
     ellipsis: { showTitle: false },
-    render: (value: string) => (
-      <Tooltip title={value}><span>{renderText(value)}</span></Tooltip>
+    render: (_: unknown, record: ILabMonitoring) => (
+      <Tooltip title={record.computer?.name}><span>{renderText(record.computer?.name)}</span></Tooltip>
     ),
   },
   {
@@ -83,53 +86,50 @@ export const labMonitoringColumns: ColumnsType<ILabMonitoring> = [
     align: 'left',
     width: 140,
     render: (_: unknown, record: ILabMonitoring) => (
-      <TagCell item={record} displayKey="remote_user" tooltipKey="remote_user_displayname" />
+      <TagCell item={record} displayKey="remote_user" tooltipKey="remote_user_display_name" />
     ),
   },
   {
     title: 'Event Type',
-    dataIndex: 'event_type',
-    key: 'event_type',
+    key: 'action',
     align: 'left',
     width: 130,
-    render: (value: string) => value ? <Tag color="blue">{value}</Tag> : '—',
+    render: (_: unknown, record: ILabMonitoring) =>
+      record.action?.label ? <Tag color="blue">{record.action.label}</Tag> : '—',
   },
   {
     title: 'Category',
-    dataIndex: 'category',
-    key: 'category',
+    key: 'subject_type',
     align: 'left',
     width: 120,
-    render: (value: string) => value ? <Tag>{value}</Tag> : '—',
+    render: (_: unknown, record: ILabMonitoring) =>
+      record.subject?.type ? <Tag>{record.subject.type}</Tag> : '—',
   },
   {
     title: 'Object Name',
-    dataIndex: 'object_name',
-    key: 'object_name',
+    key: 'subject_name',
     align: 'left',
     width: 150,
     ellipsis: { showTitle: false },
-    render: (value: string) => (
-      <Tooltip title={value}><span>{renderText(value)}</span></Tooltip>
+    render: (_: unknown, record: ILabMonitoring) => (
+      <Tooltip title={record.subject?.name}><span>{renderText(record.subject?.name)}</span></Tooltip>
     ),
   },
   {
     title: 'Object ID',
-    dataIndex: 'object_id',
-    key: 'object_id',
+    key: 'subject_key',
     align: 'left',
     width: 130,
     ellipsis: { showTitle: false },
-    render: (value: string) => (
-      <Tooltip title={value}><Text code>{renderText(value)}</Text></Tooltip>
+    render: (_: unknown, record: ILabMonitoring) => (
+      <Tooltip title={record.subject?.key}><Text code>{renderText(record.subject?.key)}</Text></Tooltip>
     ),
   },
   {
     title: 'Details',
-    dataIndex: 'details',
-    key: 'details',
+    key: 'payload',
     align: 'left',
     width: 260,
-    render: renderDetails,
+    render: (_: unknown, record: ILabMonitoring) => renderPayload(record.payload),
   },
 ];

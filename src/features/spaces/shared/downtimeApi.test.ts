@@ -13,7 +13,7 @@ test('mapDowntimeItem normalizes API downtime record', () => {
     starts_at: '2026-11-20T08:00:00Z',
     ends_at: '2026-11-20T17:00:00Z',
     notes: 'Scheduled server maintenance',
-    actor: { id: 7, username: 'tech1', display_name: 'Technician One' },
+    actor: { id: 7, name: 'Technician One' },
   };
 
   const item = mapDowntimeItem(raw);
@@ -25,7 +25,7 @@ test('mapDowntimeItem normalizes API downtime record', () => {
   assert.equal(item.state, 'scheduled');
   assert.equal(item.starts_at, '2026-11-20T08:00:00Z');
   assert.equal(item.ends_at, '2026-11-20T17:00:00Z');
-  assert.equal(item.actor?.username, 'tech1');
+  assert.equal(item.actor?.display_name, 'Technician One');
 });
 
 test('mapDowntimeListResponse handles data array and paged envelopes', () => {

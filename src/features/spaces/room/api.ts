@@ -26,6 +26,7 @@ import {
   mapRoomWritePayload,
 } from "./mapper";
 import { normalizeFilterFacets, type FilterFacets } from "@/features/lab-equipment/shared/facets/filterFacets";
+import { resourceImageFormData, resourceImageUrl } from "@/shared/lib/api/resourceImage";
 
 const ENDPOINTS = createResourceEndpoints("labs/rooms");
 const TAG = "Room";
@@ -42,7 +43,7 @@ generatedApi.enhanceEndpoints({
 export const roomRtkApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
     getRooms: build.query<IRoomListResponse, IRoomParams>({
-      query: (params) => ({ url: ENDPOINTS.LIST, params }),
+      query: ({ search, ...params }) => ({ url: ENDPOINTS.LIST, params: { ...params, q: search } }),
       transformResponse: (res: unknown) => mapRoomListApiResponse(res),
       providesTags: (result) => generateListTags(TAG, result),
     }),
@@ -96,14 +97,20 @@ export const roomRtkApi = baseApi.injectEndpoints({
         { type: "Bench", id: "LIST" },
       ],
     }),
-    updateRoomImage: build.mutation<IRoom, { id: number; image: File }>({
-      query: ({ id, image }) => {
-        const formData = new FormData();
-        formData.append("image", image);
-        return { url: ENDPOINTS.UPDATE(id), method: "PATCH", body: formData };
-      },
-      transformResponse: (res: unknown) => mapRoomDetailApiResponse(res),
+    updateRoomImage: build.mutation<void, { id: number; image: File }>({
+      query: ({ id, image }) => ({
+        url: resourceImageUrl("rooms", id),
+        method: "PUT",
+        body: resourceImageFormData(image),
+      }),
       invalidatesTags: (_r, _e, { id }) => [
+        ...generateItemTag(TAG, id),
+        ...invalidateList(TAG),
+      ],
+    }),
+    deleteRoomImage: build.mutation<void, number>({
+      query: (id) => ({ url: resourceImageUrl("rooms", id), method: "DELETE" }),
+      invalidatesTags: (_r, _e, id) => [
         ...generateItemTag(TAG, id),
         ...invalidateList(TAG),
       ],
@@ -127,26 +134,35 @@ export const roomRtkApi = baseApi.injectEndpoints({
       }),
       providesTags: (_result, _error, { id }) => [{ type: "ChangeLog", id }],
     }),
+    // Reference lists come from the selector endpoints; `/rooms/filters` only describes filters.
     getRoomDropdown: build.query<IRoomDropdownOptions, void>({
-      query: () => ({ url: "/api/labs/rooms/filters" }),
-      providesTags: invalidateList(TAG),
-      transformResponse: (res: unknown): IRoomDropdownOptions => {
-        const envelope = (res as Record<string, unknown>) ?? {};
-        const data = (envelope.data as Record<string, unknown>) ?? envelope;
-        const extract = (arr: unknown) =>
-          Array.isArray(arr)
-            ? arr.map((item: Record<string, unknown>) => ({
+      async queryFn(_arg, _api, _extra, fetchWithBQ) {
+        const [countries, cities, buildings] = await Promise.all([
+          fetchWithBQ("/api/labs/countries/options"),
+          fetchWithBQ("/api/labs/cities/options"),
+          fetchWithBQ("/api/labs/buildings/options"),
+        ]);
+        const failed = countries.error ?? cities.error ?? buildings.error;
+        if (failed) return { error: failed };
+        const extract = (res: { data?: unknown }) => {
+          const list = (res.data as { data?: unknown })?.data;
+          return Array.isArray(list)
+            ? (list as Array<Record<string, unknown>>).map((item) => ({
                 id: (item.id as number) ?? 0,
-                name: (item.name as string) ?? (item.room_name as string) ?? "",
+                name: String(item.name || item.sku || item.id),
               }))
             : [];
+        };
         return {
-          countries: extract(data.countries),
-          cities: extract(data.cities),
-          buildings: extract(data.buildings),
-          floors: extract(data.floors),
+          data: {
+            countries: extract(countries),
+            cities: extract(cities),
+            buildings: extract(buildings),
+            floors: [],
+          },
         };
       },
+      providesTags: invalidateList(TAG),
     }),
     getRoomFilters: build.query<FilterFacets, void>({
       query: () => ({ url: "/api/labs/rooms/filters" }),
@@ -236,6 +252,7 @@ export const {
   useDeleteRoomMutation,
   useChangeRoomLifecycleMutation,
   useUpdateRoomImageMutation,
+  useDeleteRoomImageMutation,
   useGetRoomByIdQuery,
   useGetRoomHistoryQuery,
   useGetRoomDropdownQuery,

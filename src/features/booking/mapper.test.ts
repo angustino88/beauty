@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   mapBookingItem,
   buildBookingListQuery,
+  toBookingInstant,
   mapProjectOptions,
   mapBenchOptions,
 } from './mapper.ts';
@@ -77,8 +78,8 @@ test('buildBookingListQuery generates query params with bench_id and creator sup
 
   assert.match(qs, /view_side=my_booking/);
   assert.match(qs, /status=reserved/);
-  assert.match(qs, /bench_id=1/);
-  assert.match(qs, /bench_id=2/);
+  // The API takes one bench per request and rejects repeated params.
+  assert.deepEqual(new URLSearchParams(qs).getAll('bench_id'), ['1']);
   assert.match(qs, /project_id=1/);
   assert.equal(qs.includes('project='), false);
   // Ensure creator appears only once in query string
@@ -234,4 +235,22 @@ test('extractBookingErrorMessage extracts nested conflict and validation error m
 
   const fallbackResult = extractBookingErrorMessage({}, 'Default fallback');
   assert.equal(fallbackResult, 'Default fallback');
+});
+
+test('buildBookingListQuery never repeats a filter parameter', () => {
+  const qs = buildBookingListQuery({ filterParams: { status: ['reserved', 'in_progress'], approval_status: ['approved'] } });
+  const params = new URLSearchParams(qs);
+  assert.deepEqual(params.getAll('status'), ['reserved']);
+  assert.deepEqual(params.getAll('approval_status'), ['approved']);
+});
+
+test('calendar range dates are sent as absolute instants, not server-zone dates', () => {
+  const qs = new URLSearchParams(buildBookingListQuery({
+    starts_at_after: '2026-11-09',
+    starts_at_before: '2026-11-16T10:30:00',
+  } as Parameters<typeof buildBookingListQuery>[0]));
+
+  assert.equal(qs.get('starts_at_after'), new Date('2026-11-09T00:00:00').toISOString());
+  assert.equal(qs.get('starts_at_before'), new Date('2026-11-16T10:30:00').toISOString());
+  assert.equal(toBookingInstant('2026-11-16T03:00:00+07:00'), '2026-11-16T03:00:00+07:00');
 });

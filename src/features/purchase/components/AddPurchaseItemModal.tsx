@@ -83,7 +83,7 @@ export const AddPurchaseItemModal: React.FC<AddPurchaseItemModalProps> = ({
   // Dynamic catalog queries
   const { data: equipmentData, isFetching: loadingEquipment } =
     useLabsEquipmentRetrieveQuery(
-      { search: search || undefined },
+      { q: search || undefined },
       { skip: !open || mode !== 'catalog' || selectedKind !== 'equipment' },
     );
 
@@ -166,6 +166,7 @@ export const AddPurchaseItemModal: React.FC<AddPurchaseItemModalProps> = ({
     try {
       setSubmitting(true);
       const itemPayload: ICreatePurchaseItemPayload = {
+        currency,
         description: values.description.trim(),
         quantity: values.quantity,
         unit: values.unit?.trim() || undefined,
@@ -184,6 +185,7 @@ export const AddPurchaseItemModal: React.FC<AddPurchaseItemModalProps> = ({
           await allocateResource({
             purchaseItemId: createdItem.id,
             body: {
+              currency,
               resource_kind: values.resource_kind,
               resource_id: Number(values.resource_id),
               acquisition_price: Number(values.unit_price).toFixed(2),

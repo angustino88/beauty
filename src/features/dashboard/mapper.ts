@@ -66,8 +66,8 @@ export function mapDashboardBench(
   });
 
   const name = asString(item.name || item.lab_name);
-  const roomName = location ? asString(location.room_name) : '';
-  const stationName = location ? asString(location.station_name) : '';
+  const roomName = location ? asString(asRecord(location.room).name) : '';
+  const stationName = location ? asString(asRecord(location.station).name) : '';
   const locationName = [roomName, stationName].filter(Boolean).join(' - ');
 
   return {
@@ -90,11 +90,7 @@ export function mapDashboardBench(
       : null,
     location: location
       ? {
-          station_id: location.station_id != null ? asNumber(location.station_id) : null,
-          station_name: asNullableString(location.station_name),
-          room_id: location.room_id != null ? asNumber(location.room_id) : null,
-          room_name: asNullableString(location.room_name),
-          building_name: asNullableString(location.building_name),
+          ...locationRelations(location),
           slot_label: asNullableString(location.slot_label),
         }
       : null,
@@ -109,8 +105,8 @@ export function mapDashboardBench(
           user: bookingUser
             ? {
                 id: asNumber(bookingUser.id),
-                username: asString(bookingUser.username),
-                display_name: asString(bookingUser.display_name),
+                username: asString(bookingUser.name),
+                display_name: asString(bookingUser.name),
               }
             : null,
         }
@@ -174,7 +170,7 @@ export function mapDashboardBench(
             status: asString(booking.status),
             creator: {
               id: bookingUser ? asNumber(bookingUser.id) : 0,
-              username: bookingUser ? asString(bookingUser.username) : '',
+              username: bookingUser ? asString(bookingUser.name) : '',
             },
           }
         : null,
@@ -320,6 +316,20 @@ export const mapDashboardLabGroups = (dto: unknown) => {
 
 // ─── Map Bench Detail ─────────────────────────────────────────────────────────
 
+/** Location relations (`station`, `room`, `building`, each `{id, name}`) read into the flat view fields. */
+function locationRelations(location: Record<string, unknown>) {
+  const station = asRecord(location.station);
+  const room = asRecord(location.room);
+  const building = asRecord(location.building);
+  return {
+    station_id: station.id != null ? asNumber(station.id) : null,
+    station_name: asNullableString(station.name),
+    room_id: room.id != null ? asNumber(room.id) : null,
+    room_name: asNullableString(room.name),
+    building_name: asNullableString(building.name),
+  };
+}
+
 function extractEquipmentDetail(categories: unknown[]): LabEquipmentDetail | null {
   const categoryGroups = asArray(categories);
   if (categoryGroups.length === 0) return null;
@@ -399,8 +409,8 @@ export function mapBenchDetailResponse(
   const upcomingBookings = asArray(source.upcoming_bookings);
 
   const name = asString(source.name || source.lab_name);
-  const roomName = location ? asString(location.room_name) : '';
-  const stationName = location ? asString(location.station_name) : '';
+  const roomName = location ? asString(asRecord(location.room).name) : '';
+  const stationName = location ? asString(asRecord(location.station).name) : '';
   const locationName = [roomName, stationName].filter(Boolean).join(' - ');
 
   const labEquipment =
@@ -432,11 +442,7 @@ export function mapBenchDetailResponse(
       : null,
     location: location
       ? {
-          station_id: location.station_id != null ? asNumber(location.station_id) : null,
-          station_name: asNullableString(location.station_name),
-          room_id: location.room_id != null ? asNumber(location.room_id) : null,
-          room_name: asNullableString(location.room_name),
-          building_name: asNullableString(location.building_name),
+          ...locationRelations(location),
           slot_label: asNullableString(location.slot_label),
         }
       : null,
@@ -550,8 +556,8 @@ export function mapBenchDetailResponse(
           const o = asRecord(source.primary_owner);
           return {
             id: asNumber(o.id),
-            username: asString(o.username),
-            display_name: asString(o.display_name),
+            username: asString(o.name),
+            display_name: asString(o.name),
           };
         })()
       : null,

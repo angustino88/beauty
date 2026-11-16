@@ -4,14 +4,17 @@ import {
   useDeleteLicenseMutation,
   useUpdateLicenseImageMutation,
   useUpdateLicenseMutation,
+  useChangeLicenseStatusMutation,
+  useAssignLicenseMutation,
+  useReleaseLicenseMutation,
 } from '../api';
+import { diffAssignments } from '../assignments';
 import { notifyEquipmentCreated, notifyEquipmentError, toId, useEquipmentCrudActions } from '../../shared';
 import type { ILicensePayload } from '../types';
 
 export type LicenseUpsertPayload = Omit<ILicensePayload, 'carrier_device'> & {
-  maximum_version?: number | null;
+  maximum_version?: string | null;
   license_ID?: string | null;
-  carrier_device?: string | number | null;
 };
 
 const toNullableId = (value: unknown): number | null => {
@@ -21,15 +24,6 @@ const toNullableId = (value: unknown): number | null => {
   return Number.isNaN(numericId) ? null : numericId;
 };
 
-const toCarrierDeviceValue = (value: unknown): string | number | null => {
-  // Preserve composite `${group}-${id}` strings; old FE sent the carrier
-  // selection verbatim so the BE could resolve the right FK.
-  if (value == null || value === '') return null;
-  if (typeof value === 'string') return value.trim() || null;
-  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
-  return null;
-};
-
 const toDateString = (value: unknown): string | null | undefined => {
   if (value == null || value === '') return null;
   if (dayjs.isDayjs(value)) return value.format('YYYY-MM-DD');
@@ -37,16 +31,10 @@ const toDateString = (value: unknown): string | null | undefined => {
   return undefined;
 };
 
-const toNullableInteger = (value: unknown): number | null | undefined => {
-  if (value == null || value === '') return null;
-  if (typeof value === 'number') return Number.isInteger(value) ? value : undefined;
-  if (typeof value === 'string') {
-    const trimmed = value.trim();
-    if (!trimmed) return null;
-    if (!/^\d+$/.test(trimmed)) return undefined;
-    return Number(trimmed);
-  }
-  return undefined;
+const toSeats = (value: unknown): number | undefined => {
+  if (value == null || value === '') return undefined;
+  const seats = Number(value);
+  return Number.isInteger(seats) && seats >= 1 ? seats : undefined;
 };
 
 export function useLicenseForm() {
@@ -54,6 +42,9 @@ export function useLicenseForm() {
   const [updateLicense, { isLoading: updating }] = useUpdateLicenseMutation();
   const [deleteLicense, { isLoading: deleting }] = useDeleteLicenseMutation();
   const [updateImageMutation] = useUpdateLicenseImageMutation();
+  const [changeStatusMutation] = useChangeLicenseStatusMutation();
+  const [assignMutation] = useAssignLicenseMutation();
+  const [releaseMutation] = useReleaseLicenseMutation();
   const actions = useEquipmentCrudActions<LicenseUpsertPayload>({
     updateMutation: updateLicense,
     updateImageMutation,
@@ -73,14 +64,13 @@ export function useLicenseForm() {
     const payload: LicenseUpsertPayload = {
       sku: typeof values.sku === 'string' ? values.sku : undefined,
       name: typeof values.name === 'string' ? values.name : undefined,
-      maximum_version: toNullableInteger(values.maximum_version),
+      maximum_version: typeof values.maximum_version === 'string' ? values.maximum_version.trim() : undefined,
       license_ID: typeof values.license_ID === 'string' ? values.license_ID : undefined,
-      log_label: typeof values.log_label === 'string' ? values.log_label : undefined,
+      license_seats: toSeats(values.license_seats),
       remark: typeof values.remark === 'string' ? values.remark : undefined,
       expiry_date: toDateString(values.expiry_date),
       license_product: toNullableId(values.license_product),
       license_vendor: toNullableId(values.license_vendor),
-      carrier_device: toCarrierDeviceValue(values.carrier_device),
       license_category: toNullableId(values.license_category),
       license_type: toNullableId(values.license_type),
       license_restriction: toNullableId(values.license_restriction),
@@ -90,6 +80,11 @@ export function useLicenseForm() {
     try {
       const created = await createLicense(payload).unwrap();
       if (imageFile) await updateImageMutation({ id: created.id, image: imageFile }).unwrap();
+      const equipmentIds = Array.isArray(values.assigned_equipment_ids)
+        ? values.assigned_equipment_ids.map(Number).filter(Number.isFinite)
+        : [];
+      // The license already exists here; a failed assignment is reported and can be retried from the table.
+      if (equipmentIds.length > 0) await syncAssignments(created.id, [], equipmentIds);
       notifyEquipmentCreated('License', created, { sku: payload.sku, name: payload.name });
     } catch (err) {
       notifyEquipmentError('create', 'License', err);
@@ -97,8 +92,38 @@ export function useLicenseForm() {
     }
   };
 
+  /**
+   * Bring the license's equipment from `current` to `desired`: release first (it frees seats), then assign.
+   * Each call is its own transaction; a failure is reported and the rest still run. Returns true when all succeeded.
+   */
+  const syncAssignments = async (licenseId: number, current: readonly number[], desired: readonly number[]) => {
+    const { release, assign } = diffAssignments(current, desired);
+    let ok = true;
+    for (const [mutate, ids] of [[releaseMutation, release], [assignMutation, assign]] as const) {
+      for (const equipmentId of ids) {
+        try {
+          await mutate({ licenseId, equipmentId }).unwrap();
+        } catch (err) {
+          ok = false;
+          notifyEquipmentError('update', 'license assignment', err);
+        }
+      }
+    }
+    return ok;
+  };
+
+  const changeStatus = async (id: number, status: string, details: Record<string, unknown> = {}) => {
+    try {
+      await changeStatusMutation({ id, status, details }).unwrap();
+    } catch (err) {
+      notifyEquipmentError('update', 'status', err);
+    }
+  };
+
   return {
     createFromValues,
+    changeStatus,
+    syncAssignments,
     ...actions,
     creating,
     updating,

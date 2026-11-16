@@ -8,8 +8,8 @@ import type {
 } from "./types";
 import { mapLabMonitoringExportResponse, mapLabMonitoringListResponse } from './mapper';
 import type {
-  LabsLabMonitoringRetrieveApiResponse,
-  LabsLabMonitoringExportRetrieveApiResponse,
+  LabsMonitoringEventsRetrieveApiResponse,
+  LabsMonitoringEventsExportRetrieveApiResponse,
 } from '@/shared/api/generated/api';
 
 const labMonitoringApi = baseApi.injectEndpoints({
@@ -20,9 +20,9 @@ const labMonitoringApi = baseApi.injectEndpoints({
     >({
       query: (params) => {
         const query = buildQueryString(params);
-        return { url: `/api/labs/lab-monitoring${query ? `?${query}` : ""}` };
+        return { url: `/api/labs/monitoring-events${query ? `?${query}` : ""}` };
       },
-      transformResponse: (response: LabsLabMonitoringRetrieveApiResponse): ILabMonitoringResponse =>
+      transformResponse: (response: LabsMonitoringEventsRetrieveApiResponse): ILabMonitoringResponse =>
         mapLabMonitoringListResponse(response),
       providesTags: ["Monitoring"],
     }),
@@ -34,10 +34,10 @@ const labMonitoringApi = baseApi.injectEndpoints({
       query: (params) => {
         const query = buildQueryString(params);
         return {
-          url: `/api/labs/lab-monitoring/export${query ? `?${query}` : ""}`,
+          url: `/api/labs/monitoring-events/export${query ? `?${query}` : ""}`,
         };
       },
-      transformResponse: (res: LabsLabMonitoringExportRetrieveApiResponse) =>
+      transformResponse: (res: LabsMonitoringEventsExportRetrieveApiResponse) =>
         mapLabMonitoringExportResponse(res),
     }),
   }),

@@ -5,7 +5,7 @@ import {
   ResourceStatus,
   InlineImageUpload,
   buildEquipmentInfo,
-  renderAuditCell,
+  LastAuditCell,
   renderImageCell,
 } from "@/features/lab-equipment/shared";
 import type { IRoom } from "../types";
@@ -230,7 +230,7 @@ export const buildRoomColumns = ({
       key: "lab_audit",
       width: 140,
       align: "center" as const,
-      render: (_: unknown, record: IRoom) => renderAuditCell(record.lab_audit),
+      render: (_: unknown, record: IRoom) => <LastAuditCell resourceType="room" resourceId={record.id} />,
     },
     {
       title: "Image",
