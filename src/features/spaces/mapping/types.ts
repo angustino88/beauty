@@ -7,8 +7,6 @@ export interface MappingRoomRef {
   name: string;
   layout_rows?: number | null;
   layout_columns?: number | null;
-  location?: string | null;
-  status?: string | null;
 }
 
 export interface MappingRoomSlotRef {
@@ -31,7 +29,6 @@ export interface MappingStationRef {
   name: string;
   room_id?: number | null;
   slot_id?: number | null;
-  status?: string | null;
 }
 
 export interface MappingStationSlotRef {
@@ -49,13 +46,6 @@ export interface MappingBenchRef {
   name: string;
   setup_location_id?: number | null;
   station_slot_id?: number | null;
-  status?: string | null;
-  remark?: string | null;
-  criticality?: string | null;
-  requested_power_w?: number | null;
-  requested_load_kg?: number | null;
-  requested_cooling_w?: number | null;
-  required_utilities?: string[] | string | null;
 }
 
 export interface MappingEquipmentCategory {
@@ -74,8 +64,6 @@ export interface MappingEquipmentItem {
   position?: number;
   is_monitored?: boolean;
   assigned_at?: string;
-  display_status?: { value?: string; label?: string } | string | null;
-  remark?: string | null;
 }
 
 export interface MappingLicenseItem {
@@ -88,7 +76,11 @@ export interface MappingLicenseItem {
   assigned_at?: string;
 }
 
+/** Same rule as the server (`mapping_state`): a station in a room, then at least one unit. */
+export type MappingState = "fully_mapped" | "needs_equipment" | "needs_placement";
+
 export interface ResourceMappingStatus {
+  state: MappingState;
   is_fully_mapped: boolean;
   has_station: boolean;
   has_room: boolean;
@@ -106,42 +98,38 @@ export interface ResourceMappingRow {
   equipment: MappingEquipmentItem[];
   licenses: MappingLicenseItem[];
   status: ResourceMappingStatus;
-  remark?: string | null;
 }
 
-/** Legacy alias for compatibility during migration */
-export type IMappingRow = ResourceMappingRow;
+/** Counts over every bench matching the filters (state not applied), from `meta.summary`. */
+export interface MappingSummary {
+  benches: number;
+  fully_mapped: number;
+  needs_equipment: number;
+  needs_placement: number;
+  equipment: number;
+}
 
 export interface ResourceMappingListResponse {
   total_count: number;
   data: ResourceMappingRow[];
+  summary: MappingSummary;
 }
 
-export type IMappingListResponse = ResourceMappingListResponse;
-
+/** Query of GET /api/labs/resource-mappings; every filter runs on the server. */
 export interface ResourceMappingParams {
   page?: number;
   page_size?: number;
-  search?: string;
-  ordering?: string;
-  room_id?: number | string;
-  station_id?: number | string;
-  bench_id?: number | string;
-  category?: string;
-  status?: string;
+  q?: string;
+  room_id?: number;
+  station_id?: number;
+  bench_id?: number;
+  equipment_category_id?: number;
+  state?: MappingState;
 }
-
-export type IMappingParams = ResourceMappingParams;
 
 export interface BenchPlacementPayload {
   setup_location_id?: number | null;
   station_slot_id?: number | null;
-}
-
-export interface StationPlacementPayload {
-  room_id?: number | null;
-  slot_id?: number | null;
-  power_reserved_w?: string | null;
 }
 
 export interface EquipmentAssignmentPayload {
@@ -150,18 +138,18 @@ export interface EquipmentAssignmentPayload {
   position?: number;
 }
 
-export interface MappingFilterOptionItem {
-  text: string;
-  value: string | number;
+/** A selector item (`/options` endpoints): id, SKU and name. */
+export interface MappingOptionItem {
+  id: number;
+  sku: string | null;
+  name: string;
 }
 
 export interface MappingFilterOptions {
-  rooms: MappingFilterOptionItem[];
-  stations: MappingFilterOptionItem[];
-  benches: MappingFilterOptionItem[];
-  categories: MappingFilterOptionItem[];
+  rooms: MappingOptionItem[];
+  stations: MappingOptionItem[];
+  benches: MappingOptionItem[];
+  categories: MappingOptionItem[];
 }
-
-export type IMappingFilterOptions = MappingFilterOptions;
 
 export type TableFilters = Record<string, Key[] | null>;

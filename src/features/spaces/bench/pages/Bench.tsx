@@ -1,6 +1,7 @@
 import { useLabsBenchTypesOptionsRetrieveQuery, useLabsStationsOptionsRetrieveQuery, useLabsStationsSlotsRetrieveByStationIdQuery } from "@/shared/api/generated/api";
 import { WorkbookImportButton } from "@/features/data-import";
 import { useGetUsersQuery } from "@/features/lab-equipment/shared";
+import { toResourceOption } from "@/components/inputs/ResourceOption";
 import { useCallback, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 import { skipToken } from "@reduxjs/toolkit/query";
@@ -39,7 +40,7 @@ export default function BenchPage() {
 
   const { data: stationOptionsData } = useLabsStationsOptionsRetrieveQuery({});
   const stationOptions = useMemo(
-    () => (stationOptionsData?.data ?? []).map((s) => ({ label: s.name || s.sku, value: s.id })),
+    () => (stationOptionsData?.data ?? []).map((station) => toResourceOption(station)),
     [stationOptionsData],
   );
 
@@ -51,7 +52,7 @@ export default function BenchPage() {
   const slotOptions = useMemo(
     () => (slotsData?.data ?? [])
       .filter((slot) => slot.is_active !== false)
-      .map((slot) => ({ label: slot.label || slot.slot_code, value: slot.id })),
+      .map((slot) => toResourceOption({ id: slot.id, sku: slot.slot_code, name: slot.label })),
     [slotsData],
   );
   const handleFormValues = useCallback((values: Record<string, unknown>) => {
@@ -76,7 +77,7 @@ export default function BenchPage() {
   const { data: benchTypeOptions } = useLabsBenchTypesOptionsRetrieveQuery({});
   const { data: users } = useGetUsersQuery();
   const typeFallback = useMemo(() => (benchTypeOptions?.data ?? []).map((t) => ({ text: String(t.name || t.sku || t.id), value: String(t.id) })), [benchTypeOptions]);
-  const stationFallback = useMemo(() => stationOptions.map((s) => ({ text: String(s.label), value: String(s.value) })), [stationOptions]);
+  const stationFallback = useMemo(() => stationOptions.map((s) => ({ text: s.selectedLabel, value: String(s.value) })), [stationOptions]);
   const ownerFallback = useMemo(() => (users ?? []).map((u) => ({ text: u.display_name || u.username || String(u.id), value: String(u.id) })), [users]);
   const typeFilters = useMemo(() => facetFilters(['type', 'type_id', 'bench_type'], typeFallback), [facetFilters, typeFallback]);
   const locationFilters = useMemo(() => facetFilters(['setup_location', 'setup_location_id', 'location', 'room'], stationFallback), [facetFilters, stationFallback]);

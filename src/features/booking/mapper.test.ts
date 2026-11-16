@@ -6,6 +6,7 @@ import {
   toBookingInstant,
   mapProjectOptions,
   mapBenchOptions,
+  mapBookingBenchChoices,
 } from './mapper.ts';
 import {
   extractBookingErrorMessage,
@@ -253,4 +254,23 @@ test('calendar range dates are sent as absolute instants, not server-zone dates'
   assert.equal(qs.get('starts_at_after'), new Date('2026-11-09T00:00:00').toISOString());
   assert.equal(qs.get('starts_at_before'), new Date('2026-11-16T10:30:00').toISOString());
   assert.equal(toBookingInstant('2026-11-16T03:00:00+07:00'), '2026-11-16T03:00:00+07:00');
+});
+
+test('mapBookingBenchChoices keeps the server order and the computers of each bench', () => {
+  const choices = mapBookingBenchChoices({
+    data: [
+      {
+        id: 7,
+        sku: 'BN-007',
+        name: 'Radar bench',
+        computers: [{ id: 70, sku: 'PC-70', name: 'HCM-RADAR-PC01', hostname: 'hcm-radar-01' }],
+      },
+      { id: 3, sku: 'BN-003', name: 'Video bench', computers: [] },
+      { sku: 'no-id' },
+    ],
+  });
+
+  assert.deepEqual(choices.map((bench) => bench.id), [7, 3]);
+  assert.deepEqual(choices[0].computers, [{ id: 70, sku: 'PC-70', name: 'HCM-RADAR-PC01', hostname: 'hcm-radar-01' }]);
+  assert.deepEqual(choices[1].computers, []);
 });

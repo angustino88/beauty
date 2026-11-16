@@ -1,10 +1,8 @@
 import { Form, Modal, Select, message, Space, Button, Alert } from "antd";
 import { useLabsStationsOptionsRetrieveQuery } from "@/shared/api/generated/api";
-import {
-  useGetMappingFilterOptionsQuery,
-  useGetStationSlotsQuery,
-  usePlaceBenchMutation,
-} from "../../api";
+import { filterResourceOption, toResourceOption } from "@/components/inputs/ResourceOption";
+import { useGetStationSlotsQuery } from "@/features/spaces/station/api";
+import { useGetMappingFilterOptionsQuery, usePlaceBenchMutation } from "../../api";
 import type { ResourceMappingRow } from "../../types";
 
 interface BenchPlacementModalProps {
@@ -95,29 +93,11 @@ export function BenchPlacementModal({
     }
   };
 
-  const roomOptions = (filterOptions?.rooms ?? []).map((rm) => ({
-    label: rm.text,
-    value: Number(rm.value),
-  }));
-
-  const stationOptions: { label: string; title?: string; value: number }[] =
-    stationData && Array.isArray(stationData.data)
-      ? stationData.data.map((st) => ({
-          // SKU is the identity shown in the control; the name appears on hover and is still searchable.
-          label: st.sku || st.name,
-          title: st.name,
-          value: st.id,
-        }))
-      : (filterOptions?.stations ?? []).map((st) => ({
-          label: st.text,
-          value: Number(st.value),
-        }));
-
-  const slotOptions = (slots ?? []).map((s) => ({
-    label: s.slot_code,
-    title: s.label ?? undefined,
-    value: s.id,
-  }));
+  // SKU on the first line, name on the second; search matches both.
+  const roomOptions = (filterOptions?.rooms ?? []).map((room) => toResourceOption(room));
+  const stationOptions = (stationData && Array.isArray(stationData.data) ? stationData.data : filterOptions?.stations ?? [])
+    .map((station) => toResourceOption(station));
+  const slotOptions = (slots ?? []).map((slot) => toResourceOption({ id: slot.id, sku: slot.slot_code, name: slot.label }));
 
   return (
     <Modal
@@ -127,7 +107,7 @@ export function BenchPlacementModal({
       onOk={handleSubmit}
       confirmLoading={saving}
       okText="Save Placement"
-      destroyOnClose
+      destroyOnHidden
     >
       <div style={{ marginTop: 12 }}>
         <Alert
@@ -168,9 +148,8 @@ export function BenchPlacementModal({
               options={roomOptions}
               loading={loadingFilters}
               showSearch
-              filterOption={(input, option) =>
-                (option?.label ?? "").toLowerCase().includes(input.toLowerCase())
-              }
+              optionLabelProp="selectedLabel"
+              filterOption={filterResourceOption}
               allowClear
               onChange={() => {
                 form.setFieldValue("stationId", null);
@@ -193,9 +172,8 @@ export function BenchPlacementModal({
               options={stationOptions}
               loading={loadingStations || loadingFilters}
               showSearch
-              filterOption={(input, option) =>
-                `${option?.label ?? ""} ${option?.title ?? ""}`.toLowerCase().includes(input.toLowerCase())
-              }
+              optionLabelProp="selectedLabel"
+              filterOption={filterResourceOption}
               allowClear
               onChange={() => {
                 form.setFieldValue("slotId", null);
@@ -213,6 +191,7 @@ export function BenchPlacementModal({
                 selectedStationId ? "Select Slot" : "Select a station first"
               }
               options={slotOptions}
+              optionLabelProp="selectedLabel"
               loading={loadingSlots}
               disabled={!selectedStationId}
               allowClear

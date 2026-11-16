@@ -1,14 +1,11 @@
 import type { Key } from "react";
 import type { ColumnsType } from "antd/es/table";
-import { Button, Dropdown, Space } from "antd";
-import {
-  AppstoreAddOutlined,
-  EnvironmentOutlined,
-  MoreOutlined,
-  PrinterOutlined,
-} from "@ant-design/icons";
+import { Space } from "antd";
+import { AppstoreAddOutlined, EnvironmentOutlined, PrinterOutlined } from "@ant-design/icons";
 import { TooltipButton } from "@/components/layout/TooltipButton";
-import type { MappingFilterOptions, ResourceMappingRow } from "../types";
+import { resourceText } from "@/components/inputs/ResourceOption";
+import type { MappingFilterOptions, MappingOptionItem, MappingState, ResourceMappingRow } from "../types";
+import { MAPPING_STATE_LABELS } from "../utils/mappingExportConfig";
 import {
   renderBenchTag,
   renderEquipmentCategories,
@@ -21,12 +18,14 @@ import {
 interface BuildColumnsArgs {
   filters: Record<string, Key[] | null>;
   filterOptions: MappingFilterOptions;
+  canEdit: boolean;
   onPlace: (row: ResourceMappingRow) => void;
   onAssignEquipment: (row: ResourceMappingRow) => void;
-  onPrintAll: (row: ResourceMappingRow) => void;
+  onPrintLabels: (row: ResourceMappingRow) => void;
 }
 
-const colFilter = (
+/** Server-side single-choice column filter; options read "SKU · Name". */
+const serverFilter = (
   key: string,
   options: Array<{ text: string; value: string | number }>,
   filters: BuildColumnsArgs["filters"],
@@ -37,97 +36,79 @@ const colFilter = (
   filteredValue: filters[key] ?? null,
 });
 
+const choices = (items: MappingOptionItem[]) =>
+  items.map((item) => ({ text: resourceText(item.sku, item.name) || String(item.id), value: item.id }));
+
+const STATE_FILTERS = (Object.keys(MAPPING_STATE_LABELS) as MappingState[]).map((state) => ({
+  text: MAPPING_STATE_LABELS[state],
+  value: state,
+}));
+
 export const buildMappingColumns = ({
   filters,
   filterOptions,
+  canEdit,
   onPlace,
   onAssignEquipment,
-  onPrintAll,
-}: BuildColumnsArgs): ColumnsType<ResourceMappingRow> => {
-  return [
-    {
-      title: "ID",
-      key: "id",
-      width: 75,
-      align: "center",
-      render: (_v, row) => row.id,
-    },
-    {
-      title: "Bench",
-      key: "bench",
-      width: 220,
-      ...colFilter("bench", filterOptions.benches, filters),
-      render: (_v, row) => renderBenchTag(row),
-    },
-    {
-      title: "Status",
-      key: "status",
-      width: 140,
-      align: "center",
-      render: (_v, row) => renderMappingStatus(row),
-    },
-    {
-      title: "Station & Slot",
-      key: "station",
-      width: 230,
-      ...colFilter("station", filterOptions.stations, filters),
-      render: (_v, row) => renderStationTag(row),
-    },
-    {
-      title: "Room & Slot",
-      key: "room",
-      width: 230,
-      ...colFilter("room", filterOptions.rooms, filters),
-      render: (_v, row) => renderRoomTag(row),
-    },
-    {
-      title: "Equipment",
-      key: "equipment",
-      width: 320,
-      ...colFilter("category", filterOptions.categories, filters),
-      render: (_v, row) => renderEquipmentCategories(row.equipment),
-    },
-    {
-      title: "Licenses",
-      key: "licenses",
-      width: 180,
-      render: (_v, row) => renderLicenses(row.licenses),
-    },
-    {
-      title: "Actions",
-      key: "actions",
-      width: 140,
-      fixed: "right",
-      align: "center",
-      render: (_v, row) => (
-        <Space size={4}>
-          <TooltipButton
-            tooltip="Place Bench into Station & Room"
-            icon={<EnvironmentOutlined />}
-            onClick={() => onPlace(row)}
-          />
-          <TooltipButton
-            tooltip="Assign / Manage Equipment"
-            icon={<AppstoreAddOutlined />}
-            onClick={() => onAssignEquipment(row)}
-          />
-          <Dropdown
-            menu={{
-              items: [
-                {
-                  key: "print",
-                  icon: <PrinterOutlined />,
-                  label: "Print device labels",
-                  onClick: () => onPrintAll(row),
-                },
-              ],
-            }}
-            placement="bottomRight"
-          >
-            <Button icon={<MoreOutlined />} size="middle" />
-          </Dropdown>
-        </Space>
-      ),
-    },
-  ];
-};
+  onPrintLabels,
+}: BuildColumnsArgs): ColumnsType<ResourceMappingRow> => [
+  {
+    title: "Bench",
+    key: "bench",
+    width: 230,
+    fixed: "left",
+    ...serverFilter("bench", choices(filterOptions.benches), filters),
+    render: (_v, row) => renderBenchTag(row),
+  },
+  {
+    title: "Mapping",
+    key: "state",
+    width: 170,
+    ...serverFilter("state", STATE_FILTERS, filters),
+    render: (_v, row) => renderMappingStatus(row),
+  },
+  {
+    title: "Station",
+    key: "station",
+    width: 220,
+    ...serverFilter("station", choices(filterOptions.stations), filters),
+    render: (_v, row) => renderStationTag(row),
+  },
+  {
+    title: "Room",
+    key: "room",
+    width: 220,
+    ...serverFilter("room", choices(filterOptions.rooms), filters),
+    render: (_v, row) => renderRoomTag(row),
+  },
+  {
+    title: "Equipment",
+    key: "category",
+    ...serverFilter("category", choices(filterOptions.categories), filters),
+    render: (_v, row) => renderEquipmentCategories(row.equipment),
+  },
+  {
+    title: "Licenses",
+    key: "licenses",
+    width: 200,
+    render: (_v, row) => renderLicenses(row.licenses),
+  },
+  {
+    title: "",
+    key: "actions",
+    width: canEdit ? 132 : 56,
+    fixed: "right",
+    align: "center",
+    render: (_v, row) => (
+      <Space size={4}>
+        {canEdit && (
+          <TooltipButton tooltip="Place on a station" icon={<EnvironmentOutlined />} onClick={() => onPlace(row)} />
+        )}
+        {canEdit && (
+          <TooltipButton tooltip="Manage equipment" icon={<AppstoreAddOutlined />} onClick={() => onAssignEquipment(row)} />
+        )}
+        <TooltipButton tooltip="Print labels" icon={<PrinterOutlined />} onClick={() => onPrintLabels(row)} />
+      </Space>
+    ),
+  },
+];

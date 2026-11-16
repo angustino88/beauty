@@ -15,9 +15,11 @@ import {
 } from 'antd';
 import { ClockCircleOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { filterResourceOption } from '@/components/inputs/ResourceOption';
 import type { IBenchBookingFormValues } from '../types';
-import { useGetBenchBookingsQuery, useGetBenchOptionsQuery, useGetProjectOptionsQuery } from '../api';
+import { useGetBenchBookingsQuery, useGetBookingBenchChoicesQuery, useGetProjectOptionsQuery } from '../api';
+import { toBenchChoiceOption } from '../utils/benchChoiceOption';
 import { useRecommendedSlots } from '../hooks/useRecommendedSlots';
 import { useAuthState } from '@/features/auth/hooks/useAuthState';
 import { DATETIMEFORMAT, TIME_FORMAT, disabledRangeTime } from '@/shared/utils/booking';
@@ -52,7 +54,10 @@ const uniqueReasons = (reasons: string[]) =>
 
 export const BookingForm: React.FC<BookingFormProps> = ({ form, formProps }) => {
   const { id: myUserId, username: myUsername } = useAuthState();
-  const { data: benchOptions } = useGetBenchOptionsQuery();
+  // The bench of the booking being edited stays selectable even when it is no longer in service.
+  const initialBenchId = (formProps.initialValues as Partial<IBenchBookingFormValues> | undefined)?.bench_id;
+  const { data: benchChoices } = useGetBookingBenchChoicesQuery({ includeId: initialBenchId ?? null });
+  const benchOptions = useMemo(() => (benchChoices ?? []).map(toBenchChoiceOption), [benchChoices]);
   const { data: projectOptions } = useGetProjectOptionsQuery();
   const sortedProjectOptions = [...(projectOptions ?? [])].sort((first, second) =>
     String(first.label).localeCompare(String(second.label), undefined, { sensitivity: 'base' }),
@@ -140,8 +145,6 @@ export const BookingForm: React.FC<BookingFormProps> = ({ form, formProps }) => 
     startsAtDayjs ?? undefined,
   );
 
-  const filterOption = (input: string, option?: { label: string; value: number }) =>
-    (option?.label ?? '').toLowerCase().includes(input.toLowerCase());
 
   const checkDatetime = () => {
     const start = form.getFieldValue('starts_at');
@@ -201,9 +204,11 @@ export const BookingForm: React.FC<BookingFormProps> = ({ form, formProps }) => 
               <Form.Item label="Bench" name="bench_id" rules={[{ required: true, message: 'Please select a bench' }]}>
                 <Select
                   showSearch
-                  placeholder="Select a bench"
+                  placeholder="Search by bench or computer name"
                   options={benchOptions}
-                  filterOption={filterOption}
+                  optionLabelProp="selectedLabel"
+                  filterOption={filterResourceOption}
+                  listItemHeight={52}
                   disabled={currentStatus === 'in_progress'}
                 />
               </Form.Item>

@@ -1,4 +1,3 @@
-import { StatusBadge } from "@/shared/components/StatusBadge";
 import {
   ReloadOutlined,
   ZoomInOutlined,
@@ -25,6 +24,7 @@ import {
   RackIcon,
   SampleIcon,
 } from "@/features/lab-equipment/shared/components/EquipmentIcons";
+import { MAPPING_STATE_LABELS } from "../utils/mappingExportConfig";
 import styles from "./MappingVisualization.module.css";
 
 let rememberedZoom = 1;
@@ -114,7 +114,6 @@ const Node = ({
   path,
   tone,
   subLabel,
-  statusLabel,
   muted = false,
   compact = false,
   selected = false,
@@ -126,7 +125,6 @@ const Node = ({
   path: string;
   tone: AssetTone;
   subLabel?: string | null;
-  statusLabel?: string | null;
   muted?: boolean;
   compact?: boolean;
   selected?: boolean;
@@ -138,7 +136,6 @@ const Node = ({
         {!compact && <span className={styles.nodeType}>{type}</span>}
         <strong title={name ?? undefined}>{name || "Not mapped"}</strong>
         {sku && <span className={styles.sku}>{subLabel ? `${subLabel} · ${sku}` : sku}</span>}
-        {statusLabel && <span className={styles.entityStatus}><StatusBadge fit status={statusLabel} label={statusLabel} /></span>}
       </span>
     </>
   );
@@ -211,15 +208,10 @@ const MappingLane = ({
           muted={!row.room}
           compact={compact}
           selected={isSelected("room", row.room?.id)}
-          statusLabel={row.room?.status}
         />
-        {row.room?.location && (
-          <span className={styles.location}>{row.room.location}</span>
-        )}
-        {row.room_slot && <span className={styles.detailLine}>Room slot {row.room_slot.slot_code}</span>}
         <span className={styles.mappingStatus}>
           <span className={`${styles.statusDot} ${row.status.is_fully_mapped ? styles.completeDot : styles.partialDot}`} />
-          {row.status.is_fully_mapped ? "Fully mapped" : "Partial mapping"}
+          {MAPPING_STATE_LABELS[row.status.state]}
         </span>
         <span className={styles.detailCount}>{row.status.equipment_count} assets · {row.status.license_count} licences</span>
       </div>
@@ -239,7 +231,6 @@ const MappingLane = ({
           muted={!row.station}
           compact={compact}
           selected={isSelected("station", row.station?.id)}
-          statusLabel={row.station?.status}
         />
         <Node
           icon={<ComputerIcon />}
@@ -250,27 +241,7 @@ const MappingLane = ({
           tone="bench"
           compact={compact}
           selected={isSelected("bench", row.bench.id)}
-          statusLabel={row.bench.status}
-          subLabel={row.bench.criticality ? `Criticality ${row.bench.criticality}` : null}
         />
-        {row.bench.status && <span className={styles.detailLine}>Bench status: {row.bench.status}</span>}
-        {row.bench.remark && <span className={styles.detailLine} title={row.bench.remark}>Note: {row.bench.remark}</span>}
-        {(row.bench.requested_power_w != null || row.bench.requested_load_kg != null || row.bench.requested_cooling_w != null) && (
-          <span className={styles.detailLine}>
-            {[row.bench.requested_power_w != null ? `${row.bench.requested_power_w} W` : null,
-              row.bench.requested_load_kg != null ? `${row.bench.requested_load_kg} kg` : null,
-              row.bench.requested_cooling_w != null ? `${row.bench.requested_cooling_w} W cooling` : null]
-              .filter(Boolean)
-              .join(" · ")}
-          </span>
-        )}
-        {row.bench.required_utilities && (
-          <span className={styles.detailLine}>
-            Utilities: {Array.isArray(row.bench.required_utilities)
-              ? row.bench.required_utilities.join(", ")
-              : row.bench.required_utilities}
-          </span>
-        )}
       </div>
 
       <div className={styles.connector} aria-hidden="true" />
@@ -322,11 +293,7 @@ const MappingLane = ({
                             tone={tone}
                             compact={compact}
                             selected={isSelected(catKey, eq.id)}
-                            statusLabel={typeof eq.display_status === "string"
-                              ? eq.display_status
-                              : eq.display_status?.label ?? eq.display_status?.value}
                           />
-                          {eq.remark && <span className={styles.detailLine}>{eq.remark}</span>}
 
                           {hasLicenses && (
                             <>

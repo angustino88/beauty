@@ -1,5 +1,6 @@
 import { useGetUsersQuery } from "@/features/lab-equipment/shared";
 import { WorkbookImportButton } from "@/features/data-import";
+import { toResourceOption } from "@/components/inputs/ResourceOption";
 import { useCallback, useMemo, useState } from "react";
 import { skipToken } from "@reduxjs/toolkit/query";
 import { useLabsRoomsSlotsRetrieveByRoomIdQuery } from "@/shared/api/generated/api";
@@ -44,10 +45,7 @@ export default function StationPage() {
   const { data: facets } = useGetStationFiltersQuery();
 
   const roomOptions = useMemo(() => {
-    return (dropdownData?.rooms ?? []).map((r) => ({
-      label: r.name,
-      value: r.id,
-    }));
+    return (dropdownData?.rooms ?? []).map((room) => toResourceOption(room));
   }, [dropdownData?.rooms]);
 
   // The slot list follows the room chosen in whichever form is open; occupied slots are hidden

@@ -118,7 +118,7 @@ export interface IStationPayload {
 }
 
 export interface IStationDropdownOptions {
-  rooms: Array<{ id: number; name: string }>;
+  rooms: Array<{ id: number; sku?: string | null; name: string }>;
   departments: Array<{ id: number; name: string }>;
   groups: Array<{ id: number; name: string }>;
 }

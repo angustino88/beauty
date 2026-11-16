@@ -15,6 +15,7 @@ import { useMemo } from 'react';
 import { MappingVisualization } from '@/features/spaces/mapping/components/MappingVisualization';
 import { useGetLicenseOptionsQuery } from '@/features/lab-equipment/license/api';
 import type { MappingEquipmentItem, MappingLicenseItem, ResourceMappingRow } from '@/features/spaces/mapping/types';
+import { mappingState } from '@/features/spaces/mapping/mapper';
 import dayjs from 'dayjs';
 import { LabStatus } from '@/components/display/LabStatus';
 import { useInfoModalStyles } from './InfoModal.styles';
@@ -88,7 +89,6 @@ export default function InfoModal({ data }: InfoModalProps) {
       id: 0,
       sku: data.location_name,
       name: data.location_name,
-      location: data.location_name,
     } : null;
     const station = equipment?.rack ? {
       id: equipment.rack.id ?? 0,
@@ -172,6 +172,7 @@ export default function InfoModal({ data }: InfoModalProps) {
       equipment: equipmentList,
       licenses: licenseList,
       status: {
+        state: mappingState(Boolean(room), equipmentList.length),
         is_fully_mapped: Boolean(station && room && equipmentList.length > 0),
         has_station: Boolean(station),
         has_room: Boolean(room),

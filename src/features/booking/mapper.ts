@@ -2,6 +2,7 @@ import type {
   BenchBookingItem,
   IBenchBookingListParams,
   IBenchOption,
+  IBookingBenchChoice,
   IProjectOption,
 } from './types';
 
@@ -275,6 +276,27 @@ export function mapProjectOptions(response: unknown): IProjectOption[] {
     }))
     .filter((project) => project.label.trim().length > 0)
     .sort((first, second) => first.label.localeCompare(second.label));
+}
+
+/** Booking bench choices: benches with their computers; rows without an id are dropped. Server order (name). */
+export function mapBookingBenchChoices(response: unknown): IBookingBenchChoice[] {
+  const norm = normalizeListResponse<Record<string, unknown>>(response);
+  const text = (value: unknown) => (typeof value === 'string' ? value : value == null ? '' : String(value));
+  return norm.data
+    .filter((bench) => typeof bench.id === 'number')
+    .map((bench) => ({
+      id: bench.id as number,
+      sku: text(bench.sku),
+      name: text(bench.name),
+      computers: (Array.isArray(bench.computers) ? bench.computers : [])
+        .filter((item): item is Record<string, unknown> => typeof item === 'object' && item !== null)
+        .map((computer) => ({
+          id: Number(computer.id),
+          sku: text(computer.sku),
+          name: text(computer.name),
+          hostname: text(computer.hostname),
+        })),
+    }));
 }
 
 export function mapBenchOptions(response: unknown): IBenchOption[] {

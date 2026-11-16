@@ -576,12 +576,6 @@
 
 .nodeText strong,
 .sku,
-.location {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .nodeText strong {
   color: var(--map-text);
   font-size: 13px;
@@ -590,7 +584,6 @@
 
 .nodeType,
 .sku,
-.location,
 .mappingStatus {
   color: var(--map-muted);
   font-size: 11px;
@@ -604,25 +597,6 @@
 
 .sku {
   margin-top: 3px;
-}
-
-.entityStatus {
-  display: block;
-  width: fit-content;
-  max-width: 100%;
-  margin-top: 6px;
-  font-size: 11px;
-}
-
-.detailLine {
-  display: block;
-  max-width: 100%;
-  margin-top: 4px;
-  overflow: hidden;
-  color: var(--lm-text-secondary);
-  font-size: 10px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .mappingStatus {
@@ -658,8 +632,6 @@
   box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.12);
 }
 
-.compactVisualization .detailLine,
-.compactVisualization .entityStatus,
 .compactVisualization .detailCount {
   font-size: 9px;
 }
@@ -900,7 +872,6 @@
 
 .compactVisualization .nodeType,
 .compactVisualization .sku,
-.compactVisualization .location,
 .compactVisualization .mappingStatus {
   font-size: 8px;
 }

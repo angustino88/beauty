@@ -8,25 +8,37 @@ import {
   EquipmentPageLayout,
   EquipmentFormModal,
   createActionsRenderer,
-  InlineEditActions,
   printDeviceLabel,
-  useInlineEquipmentEdit,
 } from "@/features/lab-equipment/shared";
-import type { FieldConfig } from "@/features/lab-equipment/shared";
 import type { IRoom, IRoomPayload } from "../types";
 import SpaceOverview from "../../shared/SpaceOverview";
 import { useRoomTable } from "../hooks/useRoomTable";
 import { useRoomForm } from "../hooks/useRoomForm";
-import {
-  buildRoomColumns,
-  buildRoomCreateFields,
-  toRoomInlineDraft,
-  ROOM_SPECS_FIELDS,
-  type RoomInlineDraft,
-} from "../columns/roomColumns";
+import { buildRoomColumns, buildRoomFormFields, toRoomFormValues } from "../columns/roomColumns";
 
 const isAdminGroupMap = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
+
+const nullableNumber = (value: unknown): number | null =>
+  value == null || value === "" || Number.isNaN(Number(value)) ? null : Number(value);
+
+/** Form values → the room write payload. The SKU is never sent on edit: it cannot change after creation. */
+const toRoomUpdatePayload = (values: Record<string, unknown>): IRoomPayload & Record<string, unknown> => ({
+  name: String(values.name ?? ""),
+  label: String(values.label ?? ""),
+  remark: values.remark == null ? "" : String(values.remark),
+  location: String(values.location ?? ""),
+  floor: String(values.floor ?? ""),
+  rows: nullableNumber(values.rows),
+  cols: nullableNumber(values.cols),
+  length: nullableNumber(values.length),
+  width: nullableNumber(values.width),
+  country: nullableNumber(values.country),
+  city: nullableNumber(values.city),
+  building: nullableNumber(values.building),
+  max_power: nullableNumber(values.max_power),
+  primary_owner: nullableNumber(values.primary_owner),
+});
 
 export default function RoomPage() {
   const permissionGroups = useSelector(
@@ -38,114 +50,23 @@ export default function RoomPage() {
   const table = useRoomTable();
   const form = useRoomForm();
 
-  const [modalOpen, setModalOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [editingRoom, setEditingRoom] = useState<IRoom | null>(null);
   const [historyId, setHistoryId] = useState<number | null>(null);
   const [historyPage, setHistoryPage] = useState(1);
   const [historyPageSize, setHistoryPageSize] = useState(10);
-  const [specsRecord, setSpecsRecord] = useState<IRoom | null>(null);
-  const [inlineImageFile, setInlineImageFile] = useState<File | null>(null);
-
-  const {
-    editingId,
-    draft: editingDraft,
-    setDraft: setEditingDraft,
-    isEditing,
-    startEdit,
-    clearEdit,
-    cancelEdit,
-  } = useInlineEquipmentEdit<IRoom, RoomInlineDraft>();
 
   const { data: historyData, isFetching: historyLoading } = useGetRoomHistoryQuery(
     historyId === null ? skipToken : { id: historyId, page: historyPage, pageSize: historyPageSize },
   );
 
-  const formFields = useMemo<FieldConfig[]>(
-    () => [
-      ...buildRoomCreateFields(table.optionsMap).map((field) =>
-        field.name === "setup_capacity"
-          ? {
-              ...field,
-              disabled: true,
-              help: "Auto-calculated from Rows × Columns",
-            }
-          : field,
-      ),
-      { name: "image", label: "Image", type: "image" as const },
-    ],
-    [table.optionsMap],
-  );
+  const formFields = useMemo(() => buildRoomFormFields(table.optionsMap), [table.optionsMap]);
+  const editValues = useMemo(() => (editingRoom ? toRoomFormValues(editingRoom) : undefined), [editingRoom]);
 
-  const handleEdit = (id: number) => {
-    const record = table.rows.find((r) => r.id === id);
-    if (record) startEdit(record, toRoomInlineDraft);
-  };
-
-  const updateDraftField = <K extends keyof RoomInlineDraft>(
-    key: K,
-    value: RoomInlineDraft[K],
-  ) => {
-    setEditingDraft((prev) => (prev ? { ...prev, [key]: value } : prev));
-  };
-
-  const handleStatusChange = (
-    _record: IRoom,
-    values: { status_type: string; status_data: Record<string, unknown> },
-  ) => {
-    // Store in draft — API call deferred to Save
-    updateDraftField("pending_status_type", values.status_type);
-    updateDraftField("pending_status_data", values.status_data);
-  };
-
-  const handleCreateSubmit = async (
-    values: Record<string, unknown>,
-    imageFile?: File | null,
-  ) => {
-    await form.createFromValues(values, imageFile);
-    setModalOpen(false);
-  };
-
-  const handleInlineSave = async () => {
-    if (editingId === null || !editingDraft) return;
-
-    // Extract pending status, map to status_type/status_data for normalizeStatusBody
-    const { pending_status_type, pending_status_data, ...restDraft } =
-      editingDraft;
-    const payload = {
-      ...restDraft,
-      ...(pending_status_type
-        ? {
-            current_status: {
-              status_type: pending_status_type,
-              status_data: pending_status_data ?? {},
-            },
-          }
-        : {}),
-    } as IRoomPayload;
-
-    await form.updateInline(editingId, payload);
-    if (inlineImageFile) {
-      await form.updateImage?.(editingId, inlineImageFile);
-      setInlineImageFile(null);
-    }
-    cancelEdit();
-  };
-
-  const handleSpecsSubmit = async (values: Record<string, unknown>) => {
-    if (!specsRecord) return;
-    const payload = Object.fromEntries(
-      ROOM_SPECS_FIELDS.filter((f) => f.inEdit !== false).map((f) => [
-        f.name,
-        values[f.name],
-      ]),
-    ) as IRoomPayload;
-    await form.updateInline(specsRecord.id, payload);
-    setSpecsRecord(null);
-  };
-
-  const defaultActionsRenderer = createActionsRenderer<IRoom>({
+  const actionsRenderer = createActionsRenderer<IRoom>({
     isAdmin,
     deleting: form.deleting,
-    onEdit: handleEdit,
+    onEdit: (id) => setEditingRoom(table.rows.find((room) => room.id === id) ?? null),
     onDelete: form.deleteById,
     onHistory: (id) => {
       setHistoryPage(1);
@@ -155,30 +76,11 @@ export default function RoomPage() {
     onPrint: printDeviceLabel,
   });
 
-  const actionsRenderer = (_: unknown, record: IRoom) =>
-    isEditing(record) ? (
-      <InlineEditActions
-        onSave={handleInlineSave}
-        onClear={clearEdit}
-        onCancel={cancelEdit}
-        saving={form.updating}
-      />
-    ) : (
-      defaultActionsRenderer(_, record)
-    );
-
   const columns = buildRoomColumns({
     activeFilters: table.filters,
     filtersMap: table.filtersMap,
-    optionsMap: table.optionsMap,
     statusFilters: table.statusFilters,
-    isEditing,
-    editingDraft,
-    updateDraftField,
     actionsRenderer,
-    onStatusChange: handleStatusChange,
-    onSpecsEdit: setSpecsRecord,
-    onImageChange: (file) => setInlineImageFile(file),
   });
 
   return (
@@ -208,7 +110,7 @@ export default function RoomPage() {
         onFiltersChange={table.setFilters}
         showCreate={isAdmin}
         createLabel="New Room"
-        onCreate={() => setModalOpen(true)}
+        onCreate={() => setCreateOpen(true)}
         scrollX={2200}
         historyId={historyId}
         historyOpen={historyId !== null}
@@ -231,23 +133,34 @@ export default function RoomPage() {
       />
 
       <EquipmentFormModal
-        open={modalOpen}
+        open={createOpen}
         mode="create"
         title="New Room"
+        professionalForm
         fields={formFields}
-        onSubmit={handleCreateSubmit}
-        onCancel={() => setModalOpen(false)}
+        onSubmit={async (values, imageFile) => {
+          await form.createFromValues(values, imageFile);
+          setCreateOpen(false);
+        }}
+        onCancel={() => setCreateOpen(false)}
         loading={form.creating}
       />
 
       <EquipmentFormModal
-        open={specsRecord !== null}
+        open={editingRoom !== null}
         mode="edit"
-        title="Edit Room Specs"
-        fields={ROOM_SPECS_FIELDS.filter((f) => f.inEdit !== false)}
-        initialValues={specsRecord ?? undefined}
-        onSubmit={handleSpecsSubmit}
-        onCancel={() => setSpecsRecord(null)}
+        title={editingRoom ? `Edit Room ${editingRoom.sku}` : "Edit Room"}
+        professionalForm
+        fields={formFields}
+        initialValues={editValues}
+        onSubmit={async (values, imageFile) => {
+          if (!editingRoom) return;
+          await form.updateInline(editingRoom.id, toRoomUpdatePayload(values));
+          if (imageFile) await form.updateImage(editingRoom.id, imageFile);
+          else if (imageFile === null) await form.removeImage(editingRoom.id);
+          setEditingRoom(null);
+        }}
+        onCancel={() => setEditingRoom(null)}
         loading={form.updating}
       />
     </>

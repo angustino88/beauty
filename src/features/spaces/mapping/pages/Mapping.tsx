@@ -1,309 +1,221 @@
-import { useMemo, useState } from "react";
-import { Card, Col, message, Progress, Row, Segmented, Table, Typography } from "antd";
+import { useState, type Key } from "react";
+import { Alert, Button, Card, Dropdown, Empty, Segmented, Table } from "antd";
+import type { FilterValue } from "antd/es/table/interface";
 import {
+  AppstoreOutlined,
   ClearOutlined,
-  AppstoreAddOutlined,
-  ExportOutlined,
-  ImportOutlined,
+  DownloadOutlined,
   LayoutOutlined,
   ReloadOutlined,
   TableOutlined,
 } from "@ant-design/icons";
-import type { Key } from "react";
-import type { FilterValue } from "antd/es/table/interface";
+import { useSelector } from "react-redux";
+import type { RootState } from "@/app/store";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { FullTextSearch } from "@/components/inputs/FullTextSearch";
 import { TooltipButton } from "@/components/layout/TooltipButton";
-import { CheckCircleFilled, ExclamationCircleFilled } from "@ant-design/icons";
+import { WorkbookImportButton } from "@/features/data-import";
 import { printDeviceLabel, printLabInfoLabel } from "@/features/lab-equipment/shared";
-import type { ResourceMappingRow, TableFilters } from "../types";
+import type { MappingState, ResourceMappingRow, TableFilters } from "../types";
 import { useMappingTable } from "../hooks/useMappingTable";
 import { useMappingExport } from "../hooks/useMappingExport";
 import { buildMappingColumns } from "../columns/mappingColumns";
+import { MappingStateTag } from "../columns/mappingColumnRenderers";
 import { MappingVisualization } from "../components/MappingVisualization";
 import { BenchPlacementModal } from "../components/modals/BenchPlacementModal";
 import { EquipmentAssignmentModal } from "../components/modals/EquipmentAssignmentModal";
-import styles from "@/features/lab-equipment/shared/components/layout/EquipmentTable.module.css";
-import mappingStyles from "../columns/MappingTable.module.css";
+import tableStyles from "@/features/lab-equipment/shared/components/layout/EquipmentTable.module.css";
+import styles from "../columns/MappingTable.module.css";
 
 type MappingViewMode = "table" | "visualization";
 
+const isGroupMap = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+const STATE_CARDS: Array<{ state: MappingState; hint: string }> = [
+  { state: "fully_mapped", hint: "In a room, on a station, with equipment" },
+  { state: "needs_equipment", hint: "Placed, but nothing on the bench" },
+  { state: "needs_placement", hint: "No station, or a station without a room" },
+];
+
+const printLabels = (row: ResourceMappingRow) => {
+  if (row.room) printDeviceLabel({ sku: row.room.sku, name: row.room.name });
+  if (row.station) printDeviceLabel({ sku: row.station.sku, name: row.station.name });
+  printLabInfoLabel({ sku: row.bench.sku, lab_name: row.bench.name });
+  row.equipment.forEach((item) => printDeviceLabel({ sku: item.sku, name: item.name }));
+};
+
 export default function MappingPage() {
+  const permissionGroups = useSelector((state: RootState) => state.me.permissionGroups);
+  const canEdit = isGroupMap(permissionGroups) && ("admin" in permissionGroups || "lab-coordinator" in permissionGroups);
+
   const [viewMode, setViewMode] = useState<MappingViewMode>("table");
-  const [placementModalRow, setPlacementModalRow] = useState<ResourceMappingRow | null>(null);
-  const [assignmentModalRow, setAssignmentModalRow] = useState<ResourceMappingRow | null>(null);
+  const [placementTarget, setPlacementTarget] = useState<ResourceMappingRow | null>(null);
+  const [assignmentTarget, setAssignmentTarget] = useState<ResourceMappingRow | null>(null);
 
   const table = useMappingTable();
-  // An open modal holds the row it was opened with; read the refetched row so it shows changes made inside it.
-  const livePlacementRow = placementModalRow
-    ? (table.rows.find((candidate) => candidate.id === placementModalRow.id) ?? placementModalRow)
-    : null;
-  const liveAssignmentRow = assignmentModalRow
-    ? (table.rows.find((candidate) => candidate.id === assignmentModalRow.id) ?? assignmentModalRow)
-    : null;
-  const export_ = useMappingExport({
-    search: table.search,
-    filters: table.filters,
-  });
+  const exporter = useMappingExport(table.params);
+  // Modals read the refetched row, so they show the changes made inside them; the row they were opened with is the
+  // fallback when a filter drops it from the page meanwhile.
+  const liveRow = (target: ResourceMappingRow | null) =>
+    target ? (table.rows.find((row) => row.id === target.id) ?? target) : null;
 
-  const handlePrintAllDeviceLabels = (record: ResourceMappingRow) => {
-    const hasMapped = Boolean(
-      record.bench ||
-      record.station ||
-      record.room ||
-      record.equipment.length,
-    );
-    if (!hasMapped) {
-      void message.info("No mapped devices to print");
-      return;
-    }
+  const activeState = (table.filters.state?.[0] as MappingState | undefined) ?? null;
+  const hasFilters = Boolean(table.search) || Object.values(table.filters).some((value) => value?.length);
 
-    if (record.room) {
-      printDeviceLabel({
-        sku: record.room.sku,
-        name: record.room.name,
-      });
-    }
-
-    if (record.station) {
-      printDeviceLabel({
-        sku: record.station.sku,
-        name: record.station.name,
-      });
-    }
-
-    if (record.bench) {
-      printLabInfoLabel({
-        sku: record.bench.sku,
-        lab_name: record.bench.name,
-        location_name: record.room?.location ?? undefined,
-      });
-    }
-
-    record.equipment.forEach((eq) =>
-      printDeviceLabel({
-        sku: eq.sku,
-        name: eq.name,
-      }),
-    );
+  const applyFilters = (next: TableFilters) => {
+    table.setFilters(next);
+    table.setPage(1);
+  };
+  const toggleState = (state: MappingState) =>
+    applyFilters({ ...table.filters, state: activeState === state ? null : [state] });
+  const resetFilters = () => {
+    table.setSearch("");
+    applyFilters({});
   };
 
   const columns = buildMappingColumns({
     filters: table.filters,
     filterOptions: table.filterOptions,
-    onPlace: (row) => setPlacementModalRow(row),
-    onAssignEquipment: (row) => setAssignmentModalRow(row),
-    onPrintAll: handlePrintAllDeviceLabels,
+    canEdit,
+    onPlace: setPlacementTarget,
+    onAssignEquipment: setAssignmentTarget,
+    onPrintLabels: printLabels,
   });
 
   const handleTableChange = (
     pagination: { current?: number; pageSize?: number },
     nextFilters: Record<string, FilterValue | null>,
   ) => {
-    const safeFilters: TableFilters = {};
-    for (const [k, v] of Object.entries(nextFilters)) {
-      safeFilters[k] = v
-        ? v.filter((i): i is Key => i !== true && i !== false)
-        : null;
+    const safe: TableFilters = {};
+    for (const [key, value] of Object.entries(nextFilters)) {
+      safe[key] = value ? value.filter((item): item is Key => typeof item !== "boolean") : null;
     }
-    table.setPageSize(pagination.pageSize ?? 10);
-    table.setPage(pagination.current ?? 1);
-
-    if (JSON.stringify(safeFilters) !== JSON.stringify(table.filters)) {
-      table.setFilters(safeFilters);
-    }
+    const filtersChanged = JSON.stringify(safe) !== JSON.stringify(table.filters);
+    table.setPageSize(pagination.pageSize ?? table.pageSize);
+    if (filtersChanged) applyFilters(safe);
+    else table.setPage(pagination.current ?? 1);
   };
 
-  const summaryCounts = useMemo(() => {
-    const rows = table.rows;
-    let fullyMapped = 0;
-    let partial = 0;
-    let unplaced = 0;
-    let totalAssets = 0;
-
-    for (const r of rows) {
-      if (r.status.is_fully_mapped) fullyMapped++;
-      if (!r.status.has_station || !r.status.has_room) unplaced++;
-      else if (!r.status.is_fully_mapped) partial++;
-      totalAssets += r.status.equipment_count;
-    }
-
-    return { fullyMapped, partial, unplaced, totalAssets };
-  }, [table.rows]);
-
-  const visibleBenchCount = table.rows.length;
-
-  const summary = useMemo(
-    () => (
-      <Card className={mappingStyles.mappingSummary}>
-        <div className={mappingStyles.summaryHeader}>
-          <div>
-            <Typography.Text className={mappingStyles.summaryEyebrow}>Mapping status</Typography.Text>
-            <Typography.Title level={4} className={mappingStyles.summaryTitle}>Placement overview</Typography.Title>
-          </div>
-          <div className={mappingStyles.summaryTotal}>
-            <strong>{table.loading ? "—" : visibleBenchCount}</strong>
-            <span>Benches on this page</span>
-          </div>
-        </div>
-        <Progress
-          className={mappingStyles.summaryProgress}
-          percent={visibleBenchCount ? Math.round((summaryCounts.fullyMapped / visibleBenchCount) * 100) : 0}
-          showInfo={false}
-          strokeColor="var(--lm-success-solid)"
-          trailColor="var(--lm-border)"
-        />
-        <Row gutter={[12, 12]} className={mappingStyles.summaryMetrics}>
-          <Col xs={12} md={6}>
-            <div className={`${mappingStyles.summaryMetric} ${mappingStyles.metricComplete}`}>
-              <span className={mappingStyles.metricIcon}><CheckCircleFilled /></span>
-              <span className={mappingStyles.metricText}><strong>{table.loading ? "—" : summaryCounts.fullyMapped}</strong><small>Fully mapped</small></span>
-              <span className={mappingStyles.metricHint}>Room + station + equipment</span>
-            </div>
-          </Col>
-          <Col xs={12} md={6}>
-            <div className={`${mappingStyles.summaryMetric} ${mappingStyles.metricPartial}`}>
-              <span className={mappingStyles.metricIcon}><ExclamationCircleFilled /></span>
-              <span className={mappingStyles.metricText}><strong>{table.loading ? "—" : summaryCounts.partial}</strong><small>Needs equipment</small></span>
-              <span className={mappingStyles.metricHint}>Placed, but no equipment assigned</span>
-            </div>
-          </Col>
-          <Col xs={12} md={6}>
-            <div className={`${mappingStyles.summaryMetric} ${mappingStyles.metricUnplaced}`}>
-              <span className={mappingStyles.metricIcon}><ExclamationCircleFilled /></span>
-              <span className={mappingStyles.metricText}><strong>{table.loading ? "—" : summaryCounts.unplaced}</strong><small>Needs placement</small></span>
-              <span className={mappingStyles.metricHint}>Missing room or station</span>
-            </div>
-          </Col>
-          <Col xs={12} md={6}>
-            <div className={`${mappingStyles.summaryMetric} ${mappingStyles.metricAssets}`}>
-              <span className={mappingStyles.metricIcon}><AppstoreAddOutlined /></span>
-              <span className={mappingStyles.metricText}><strong>{table.loading ? "—" : summaryCounts.totalAssets}</strong><small>Assigned equipment</small></span>
-              <span className={mappingStyles.metricHint}>Across the current result set</span>
-            </div>
-          </Col>
-        </Row>
-      </Card>
-    ),
-    [table.loading, visibleBenchCount, summaryCounts],
-  );
+  const { summary } = table;
+  const placedShare = summary.benches ? Math.round((summary.fully_mapped / summary.benches) * 100) : 0;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+    <div className={styles.page}>
       <PageHeader title="Lab Equipment Mapping" />
-      {summary}
-      <Card className={styles.tableCard}>
-        <Row
-          className={styles.toolbar}
-          style={{
-            marginBottom: 8,
-            backgroundColor: "var(--lm-surface)",
-            position: "sticky",
-            top: 0,
-            paddingTop: 20,
-            zIndex: 100,
-          }}
-        >
-          <Col flex="auto">
-            <FullTextSearch
-              className={styles.search}
-              value={table.search}
-              onSearch={(v) => {
-                table.setSearch(v);
-                table.setPage(1);
-              }}
-              placeholder="Search by Bench, Station, Room, Equipment, License..."
-            />
-          </Col>
-          <Col className={styles.actions}>
+      <p className={styles.pageIntro}>
+        Where every bench is placed and what is on it: room, station, equipment and licenses.
+      </p>
+
+      <section className={styles.kpis} aria-label="Mapping summary">
+        <div className={styles.kpiTotal}>
+          <span className={styles.kpiLabel}>Benches</span>
+          <strong>{table.isLoading ? "—" : summary.benches}</strong>
+          <span className={styles.kpiHint}>
+            {table.isLoading ? " " : `${placedShare}% fully mapped · ${summary.equipment} units placed`}
+          </span>
+          <span className={styles.kpiBar} aria-hidden="true">
+            <span style={{ width: `${placedShare}%` }} />
+          </span>
+        </div>
+        {STATE_CARDS.map(({ state, hint }) => (
+          <button
+            key={state}
+            type="button"
+            className={styles.kpiCard}
+            data-state={state}
+            aria-pressed={activeState === state}
+            onClick={() => toggleState(state)}
+            title={activeState === state ? "Show all benches" : "Show only these benches"}
+          >
+            <MappingStateTag state={state} />
+            <strong>{table.isLoading ? "—" : summary[state]}</strong>
+            <span className={styles.kpiHint}>{hint}</span>
+          </button>
+        ))}
+      </section>
+
+      <Card className={tableStyles.tableCard}>
+        <div className={styles.toolbar}>
+          <FullTextSearch
+            className={styles.search}
+            value={table.search}
+            onSearch={(value) => {
+              table.setSearch(value);
+              table.setPage(1);
+            }}
+            placeholder="Search bench, station, room or equipment (SKU or name)"
+          />
+          <div className={styles.toolbarActions}>
             <Segmented<MappingViewMode>
               value={viewMode}
               onChange={setViewMode}
               options={[
                 { value: "table", label: "Table", icon: <TableOutlined /> },
-                {
-                  value: "visualization",
-                  label: "Visualization",
-                  icon: <LayoutOutlined />,
-                },
+                { value: "visualization", label: "Diagram", icon: <LayoutOutlined /> },
               ]}
             />
-            <TooltipButton
-              responsive
-              tooltip="Clear all filters"
-              icon={<ClearOutlined />}
-              onClick={() => {
-                table.setSearch("");
-                table.setFilters({});
-                table.setPage(1);
-              }}
-            >
-              Clear all filters
+            <TooltipButton responsive tooltip="Clear search and filters" icon={<ClearOutlined />}
+              onClick={resetFilters} disabled={!hasFilters}>
+              Reset
             </TooltipButton>
-            <TooltipButton
-              responsive
-              tooltip="Re-fetch data"
-              icon={<ReloadOutlined />}
-              loading={table.loading}
-              onClick={() => void table.refetch()}
-            >
+            <TooltipButton responsive tooltip="Reload" icon={<ReloadOutlined />} loading={table.loading}
+              onClick={() => void table.refetch()}>
               Refresh
             </TooltipButton>
-            <TooltipButton
-              responsive
-              tooltip="Import XLXS file"
-              icon={<ImportOutlined />}
-              onClick={() =>
-                void message.info("Import Resource Mapping - Not implemented")
-              }
+            <WorkbookImportButton />
+            <Dropdown
+              menu={{
+                items: [
+                  { key: "mapping", icon: <AppstoreOutlined />, label: "Mapping (filtered rows, .xlsx)" },
+                  { key: "audits", icon: <DownloadOutlined />, label: "Bench audit history (.xlsx)" },
+                ],
+                onClick: ({ key }) => {
+                  if (key === "mapping") void exporter.handleExportMapping();
+                  else void exporter.handleExportAudits();
+                },
+              }}
             >
-              Import
-            </TooltipButton>
-            <TooltipButton
-              responsive
-              tooltip="Export mapping"
-              type="default"
-              icon={<ExportOutlined />}
-              loading={export_.exportMappingLoading}
-              onClick={() => void export_.handleExportMapping()}
-            >
-              Export
-            </TooltipButton>
-            <TooltipButton
-              responsive
-              tooltip="Export change log"
-              type="default"
-              icon={<ExportOutlined />}
-              loading={export_.exportChangeLogLoading}
-              onClick={() => void export_.handleExportChangeLog()}
-            >
-              Change Log
-            </TooltipButton>
-          </Col>
-        </Row>
+              <Button icon={<DownloadOutlined />} loading={exporter.exportMappingLoading || exporter.exportAuditLoading}>
+                Export
+              </Button>
+            </Dropdown>
+          </div>
+        </div>
+
+        {table.error && (
+          <Alert type="error" showIcon className={styles.error} message="The mapping could not be loaded."
+            action={<Button size="small" onClick={() => void table.refetch()}>Retry</Button>} />
+        )}
+
         {viewMode === "table" ? (
           <Table<ResourceMappingRow>
-            className={`${styles.table} ${mappingStyles.mappingTable}`}
-            rowKey={(row) => row.id}
+            className={`${tableStyles.table} ${styles.mappingTable}`}
+            rowKey="id"
+            size="middle"
             loading={table.loading}
             columns={columns}
             dataSource={table.rows}
-            sticky={{ offsetHeader: 60 }}
-            tableLayout="auto"
-            scroll={{ x: 1800, y: "calc(100vh - 280px)" }}
-            rowClassName={(_, index) =>
-              index % 2 === 1 ? "stripedRow" : ""
-            }
+            sticky={{ offsetHeader: 0 }}
+            tableLayout="fixed"
+            scroll={{ x: 1400 }}
             onChange={handleTableChange}
+            locale={{
+              emptyText: (
+                <Empty image={Empty.PRESENTED_IMAGE_SIMPLE}
+                  description={hasFilters ? "No bench matches the search and filters." : "No benches yet."}>
+                  {hasFilters && <Button onClick={resetFilters}>Reset filters</Button>}
+                </Empty>
+              ),
+            }}
             pagination={{
               total: table.total,
-              pageSizeOptions: [5, 10, 25, 50],
-              pageSize: table.pageSize,
-              showQuickJumper: true,
-              showSizeChanger: true,
-              defaultPageSize: 10,
               current: table.page,
-              showTotal: (total) => `Total ${total} items`,
+              pageSize: table.pageSize,
+              pageSizeOptions: [10, 25, 50, 100],
+              showSizeChanger: true,
+              showQuickJumper: true,
+              showTotal: (total, [from, to]) => `${from}–${to} of ${total} benches`,
             }}
           />
         ) : (
@@ -321,19 +233,23 @@ export default function MappingPage() {
         )}
       </Card>
 
-      <BenchPlacementModal
-        open={Boolean(placementModalRow)}
-        row={livePlacementRow}
-        onClose={() => setPlacementModalRow(null)}
-        onSuccess={() => void table.refetch()}
-      />
-
-      <EquipmentAssignmentModal
-        open={Boolean(assignmentModalRow)}
-        row={liveAssignmentRow}
-        onClose={() => setAssignmentModalRow(null)}
-        onSuccess={() => void table.refetch()}
-      />
+      {canEdit && (
+        <>
+          {/* Saving invalidates the mapping list, which refetches on its own. */}
+          <BenchPlacementModal
+            open={placementTarget !== null}
+            row={liveRow(placementTarget)}
+            onClose={() => setPlacementTarget(null)}
+            onSuccess={() => undefined}
+          />
+          <EquipmentAssignmentModal
+            open={assignmentTarget !== null}
+            row={liveRow(assignmentTarget)}
+            onClose={() => setAssignmentTarget(null)}
+            onSuccess={() => undefined}
+          />
+        </>
+      )}
     </div>
   );
 }

@@ -7,7 +7,7 @@ import { mapRoomApiItem } from '../mapper';
 import { useGetUsersQuery, useServerEquipmentFilter } from '@/features/lab-equipment/shared';
 import { EQUIPMENT_FILTER_RULES } from '@/features/lab-equipment/shared/utils/equipmentFilterRules';
 import type { IRoom } from '../types';
-import { ROOM_OPTIONS_CONFIG } from '../columns/roomColumns';
+import { ROOM_OPTIONS_CONFIG } from '../columns/roomConfig';
 import { facetToAntdFilters, getFacetOptions } from '@/features/lab-equipment/shared/facets/filterFacets';
 
 type FilterItem   = { text: string; value: string };
@@ -31,7 +31,6 @@ export function useRoomTable() {
   const serverFilter = useServerEquipmentFilter<IRoom>({ filters, filterKey: 'Room', filterRules: EQUIPMENT_FILTER_RULES.Room, page, mapItem: mapRoomApiItem });
   const dropdownQuery = useGetRoomDropdownQuery();
   const facetsQuery = useGetRoomFiltersQuery();
-  const stationAllQuery = useGetStationsQuery({ page: 1, page_size: 100, ordering: 'id' });
   const usersQuery    = useGetUsersQuery();
 
   const baseRows    = useMemo(() => serverFilter.hasActiveFilters ? serverFilter.data : listQuery.data?.data ?? [], [listQuery.data?.data, serverFilter.data, serverFilter.hasActiveFilters]);
@@ -61,11 +60,10 @@ export function useRoomTable() {
     return {
       city:          dropdownQuery.data?.cities     ?? [],
       building:      dropdownQuery.data?.buildings  ?? [],
-      rack_list:     stationAllQuery.data?.data     ?? [],
       country:       dropdownQuery.data?.countries  ?? [],
       primary_owner: owners,
     } as unknown as Record<string, Record<string, unknown>[]>;
-  }, [dropdownQuery.data, stationAllQuery.data, usersQuery.data]);
+  }, [dropdownQuery.data, usersQuery.data]);
 
   // One pass over ROOM_OPTIONS_CONFIG builds both maps  no per-field boilerplate
   const { optionsMap, filtersMap } = useMemo(() => {

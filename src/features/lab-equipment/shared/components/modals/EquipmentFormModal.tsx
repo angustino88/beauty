@@ -12,6 +12,7 @@ import { InboxOutlined } from '@ant-design/icons';
 import { FormDialog } from '@/components/ui/form-dialog';
 import type { RcFile } from 'antd/es/upload/interface';
 import dayjs from 'dayjs';
+import { filterResourceOption } from '@/components/inputs/ResourceOption';
 import { parseFormApiError } from '../../utils/formApiError';
 import { buildRequiredFieldRules } from '../../utils/formValidation';
 import { RESOURCE_IMAGE_ACCEPT, validateResourceImage } from '@/shared/lib/api/resourceImage';
@@ -27,6 +28,9 @@ export interface SelectOptionLeaf {
     label: React.ReactNode;
     value: string | number;
     title?: string;
+    /** Resource options (toResourceOption): short text for the closed select, and the text search matches. */
+    selectedLabel?: string;
+    searchText?: string;
 }
 export interface SelectOptionGroup {
     label: React.ReactNode;
@@ -92,6 +96,12 @@ const normalizeSelectLikeValue = (value: unknown): SelectLikeValue | undefined =
     return undefined;
 };
 
+/** Resource options carry a one-line `selectedLabel` for the closed select (their list label has two lines). */
+const resourceSelectProps = (options?: SelectFieldOption[]) =>
+    options?.some((option) => 'selectedLabel' in option && option.selectedLabel)
+        ? { optionLabelProp: 'selectedLabel' as const }
+        : {};
+
 interface FormFieldsProps {
     fields: FieldConfig[];
     form: ReturnType<typeof Form.useForm>[0];
@@ -112,17 +122,16 @@ function FormFields({ fields, form, mode, professionalForm }: FormFieldsProps) {
             case 'select':
                 return <Select showSearch allowClear placeholder={field.placeholder ?? `Select ${field.label}`}
                     disabled={disabled} onSearch={field.onSearch}
-                    filterOption={field.onSearch ? false : (input, option) =>
-                        String(option?.label ?? '').toLowerCase().includes(input.toLowerCase())}
-                    options={field.options}
+                    filterOption={field.onSearch ? false : filterResourceOption}
+                    options={field.options} {...resourceSelectProps(field.options)}
                     {...(field.creatable ? { mode: 'tags', tokenSeparators: [','] } : {})}
                 />;
             case 'multi-select':
                 return <Select mode="multiple" showSearch allowClear placeholder={field.placeholder ?? `Select ${field.label}`}
                     disabled={disabled} options={field.options} onSearch={field.onSearch}
+                    {...resourceSelectProps(field.options)}
                     // With a search callback the options come from the server, so do not filter them again here.
-                    filterOption={field.onSearch ? false : (input, option) =>
-                        String(option?.label ?? '').toLowerCase().includes(input.toLowerCase())}
+                    filterOption={field.onSearch ? false : filterResourceOption}
                 />;
             case 'date':
                 return <DatePicker style={{ width: '100%' }} disabled={disabled} />;
@@ -154,9 +163,8 @@ function FormFields({ fields, form, mode, professionalForm }: FormFieldsProps) {
                                         rules={field.required ? [{ required: true, message: `Please select ${field.label}` }] : []}>
                                         <Select showSearch allowClear
                                             placeholder={options.length ? `Select ${field.label}` : (field.placeholder ?? 'Select a parent field first')}
-                                            disabled={disabled} options={options}
-                                            filterOption={(input, option) =>
-                                                String(option?.label ?? '').toLowerCase().includes(input.toLowerCase())}
+                                            disabled={disabled} options={options} {...resourceSelectProps(options)}
+                                            filterOption={filterResourceOption}
                                         />
                                     </Form.Item>
                                 );
