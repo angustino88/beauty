@@ -85,7 +85,8 @@ export default function BenchPage() {
 
   const formFields: FieldConfig[] = useMemo(
     () => [
-      { name: "sku", label: "SKU", type: "text", required: true },
+      // The SKU identifies the bench and cannot change after creation (the API refuses a changed SKU).
+      { name: "sku", label: "SKU", type: "text", required: true, disabledInEdit: true },
       { name: "name", label: "Name", type: "text", required: true },
       { name: "bench_group_id", label: "Bench Group", type: "select", options: groupOptions },
       { name: "setup_location_id", label: "Station", type: "select", options: stationOptions },
@@ -176,7 +177,6 @@ export default function BenchPage() {
         onSubmit={async (values, imageFile) => {
           if (!editingBench) return;
           const payload: IBenchPayload = {
-            sku: String(values.sku ?? ''),
             name: String(values.name ?? ''),
             bench_group_id: values.bench_group_id == null ? null : Number(values.bench_group_id),
             remark: values.remark == null ? (editingBench.remark ?? "") : String(values.remark),

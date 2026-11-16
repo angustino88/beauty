@@ -1,5 +1,12 @@
 export type ProblemSeverity = 'error' | 'warning';
 
+/**
+ * `create`: every asset tag must be new (an existing one is an error).
+ * `upsert`: a row whose asset tag exists updates that record; blank cells keep stored values.
+ * The asset tag (SKU) itself is never changed.
+ */
+export type ImportMode = 'create' | 'upsert';
+
 export interface ImportProblem {
   sheet: string;
   row: number | null;
@@ -14,6 +21,8 @@ export interface ImportSheetOutcome {
   name: string;
   rows: number;
   created: number;
+  updated: number;
+  /** Rows that match a stored record and change nothing (reference rows; unchanged rows in update mode). */
   existing: number;
   failed: number;
   ignoredColumns: string[];
@@ -23,7 +32,8 @@ export interface ImportReport {
   isDryRun: boolean;
   isValid: boolean;
   templateVersion: string | null;
-  summary: { created: number; existing: number; errorCount: number; warningCount: number };
+  mode: ImportMode;
+  summary: { created: number; updated: number; existing: number; errorCount: number; warningCount: number };
   sheets: ImportSheetOutcome[];
   problems: ImportProblem[];
   unknownSheets: string[];
@@ -34,12 +44,15 @@ export interface ImportReportApi {
   is_dry_run: boolean;
   is_valid: boolean;
   template_version: string | null;
-  summary: { created: number; existing: number; error_count: number; warning_count: number };
+  /** Absent from servers older than the update mode. */
+  mode?: { value: string; label: string } | null;
+  summary: { created: number; updated?: number; existing: number; error_count: number; warning_count: number };
   sheets: Array<{
     key: string;
     name: string;
     rows: number;
     created: number;
+    updated?: number;
     existing: number;
     failed: number;
     ignored_columns: string[];

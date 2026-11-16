@@ -1,10 +1,15 @@
 import { useMemo, useState } from 'react';
-import { Alert, Button, Modal, Segmented, Space, Steps, Table, Tag, Typography, Upload, message } from 'antd';
+import { Alert, Button, Modal, Radio, Segmented, Space, Steps, Table, Tag, Typography, Upload, message } from 'antd';
 import type { TableColumnsType, UploadFile } from 'antd';
-import { DownloadOutlined, FileExcelOutlined, InboxOutlined } from '@ant-design/icons';
-import { useApplyWorkbookMutation, useCheckWorkbookMutation, useDownloadWorkbookTemplateMutation } from '../api.ts';
+import { CloudDownloadOutlined, DownloadOutlined, FileExcelOutlined, InboxOutlined } from '@ant-design/icons';
+import {
+  useApplyWorkbookMutation,
+  useCheckWorkbookMutation,
+  useDownloadWorkbookExportMutation,
+  useDownloadWorkbookTemplateMutation,
+} from '../api.ts';
 import { mapApplyErrorDetail, problemsToCsv, sortProblems } from '../mapper.ts';
-import type { ApiErrorDetail, ImportProblem, ImportReport, ImportSheetOutcome } from '../types.ts';
+import type { ApiErrorDetail, ImportMode, ImportProblem, ImportReport, ImportSheetOutcome } from '../types.ts';
 
 const MAX_BYTES = 10 * 1024 * 1024;
 
@@ -33,19 +38,20 @@ function downloadCsv(problems: ImportProblem[]) {
   setTimeout(() => URL.revokeObjectURL(url), 100);
 }
 
-const sheetColumns: TableColumnsType<ImportSheetOutcome> = [
-  { title: 'Sheet', dataIndex: 'name' },
-  { title: 'Rows', dataIndex: 'rows', width: 80, align: 'right' },
-  { title: 'Create', dataIndex: 'created', width: 90, align: 'right' },
-  { title: 'Already there', dataIndex: 'existing', width: 120, align: 'right' },
-  {
-    title: 'Rows with errors',
-    dataIndex: 'failed',
-    width: 140,
-    align: 'right',
-    render: (value: number) => (value ? <Tag color="error">{value}</Tag> : 0),
-  },
-];
+const count = (color: string) => (value: number) => (value ? <Tag color={color}>{value}</Tag> : 0);
+
+function sheetColumns(mode: ImportMode): TableColumnsType<ImportSheetOutcome> {
+  return [
+    { title: 'Sheet', dataIndex: 'name' },
+    { title: 'Rows', dataIndex: 'rows', width: 80, align: 'right' },
+    { title: 'New', dataIndex: 'created', width: 90, align: 'right', render: count('success') },
+    ...(mode === 'upsert'
+      ? [{ title: 'Updated', dataIndex: 'updated', width: 100, align: 'right' as const, render: count('processing') }]
+      : []),
+    { title: mode === 'upsert' ? 'Unchanged' : 'Already there', dataIndex: 'existing', width: 120, align: 'right' },
+    { title: 'Rows with errors', dataIndex: 'failed', width: 140, align: 'right', render: count('error') },
+  ];
+}
 
 const problemColumns: TableColumnsType<ImportProblem> = [
   {
@@ -61,7 +67,21 @@ const problemColumns: TableColumnsType<ImportProblem> = [
   { title: 'Problem', dataIndex: 'message' },
 ];
 
+const MODE_HELP: Record<ImportMode, string> = {
+  create: 'Every asset tag in the file must be new. A tag that already exists is reported as an error.',
+  upsert:
+    'Rows whose asset tag exists update that record; other rows are created. Blank cells keep the stored value. '
+    + 'The asset tag (SKU) itself can never be changed.',
+};
+
+function changeSummary(report: ImportReport): string {
+  const parts = [`${report.summary.created} new`];
+  if (report.mode === 'upsert') parts.push(`${report.summary.updated} updated`);
+  return parts.join(', ');
+}
+
 export default function WorkbookImportModal({ open, onClose }: Props) {
+  const [mode, setMode] = useState<ImportMode>('create');
   const [file, setFile] = useState<File | null>(null);
   const [report, setReport] = useState<ImportReport | null>(null);
   const [applied, setApplied] = useState<ImportReport | null>(null);
@@ -69,14 +89,17 @@ export default function WorkbookImportModal({ open, onClose }: Props) {
   const [filter, setFilter] = useState<'all' | 'error' | 'warning'>('all');
   const [checkWorkbook, { isLoading: checking }] = useCheckWorkbookMutation();
   const [applyWorkbook, { isLoading: applying }] = useApplyWorkbookMutation();
-  const [downloadTemplate, { isLoading: downloading }] = useDownloadWorkbookTemplateMutation();
+  const [downloadTemplate, { isLoading: downloadingTemplate }] = useDownloadWorkbookTemplateMutation();
+  const [downloadExport, { isLoading: exporting }] = useDownloadWorkbookExportMutation();
 
   const step = applied ? 2 : report ? 1 : 0;
+  const changes = report ? report.summary.created + report.summary.updated : 0;
   const problems = useMemo(() => {
     const source = applyProblems.length ? applyProblems : report?.problems ?? [];
     const sorted = sortProblems(source, (report?.sheets ?? []).map((sheet) => sheet.name));
     return filter === 'all' ? sorted : sorted.filter((problem) => problem.severity === filter);
   }, [applyProblems, report, filter]);
+  const alreadyExists = (report?.problems ?? []).some((problem) => problem.code === 'already_exists');
 
   const reset = () => {
     setFile(null);
@@ -91,21 +114,28 @@ export default function WorkbookImportModal({ open, onClose }: Props) {
     onClose();
   };
 
-  const handleCheck = async (selected: File) => {
+  const runCheck = async (selected: File, selectedMode: ImportMode) => {
     setFile(selected);
     setApplyProblems([]);
     try {
-      setReport(await checkWorkbook(selected).unwrap());
+      setReport(await checkWorkbook({ file: selected, mode: selectedMode }).unwrap());
     } catch (error) {
       setFile(null);
+      setReport(null);
       message.error(apiErrorMessage(error));
     }
+  };
+
+  // Changing the mode after a check checks the same file again, so the report always matches the mode.
+  const changeMode = (next: ImportMode) => {
+    setMode(next);
+    if (file && !applied) void runCheck(file, next);
   };
 
   const handleApply = async () => {
     if (!file) return;
     try {
-      setApplied(await applyWorkbook(file).unwrap());
+      setApplied(await applyWorkbook({ file, mode }).unwrap());
     } catch (error) {
       const details = apiErrorDetails(error);
       if (details.length) {
@@ -117,9 +147,9 @@ export default function WorkbookImportModal({ open, onClose }: Props) {
     }
   };
 
-  const handleTemplate = async () => {
+  const download = async (action: () => { unwrap: () => Promise<unknown> }) => {
     try {
-      await downloadTemplate().unwrap();
+      await action().unwrap();
     } catch (error) {
       message.error(apiErrorMessage(error));
     }
@@ -131,10 +161,22 @@ export default function WorkbookImportModal({ open, onClose }: Props) {
     } else if (candidate.size > MAX_BYTES) {
       message.error('The workbook must not exceed 10 MB.');
     } else {
-      void handleCheck(candidate);
+      void runCheck(candidate, mode);
     }
     return Upload.LIST_IGNORE;
   };
+
+  const modePicker = (
+    <Space direction="vertical" size={4} style={{ width: '100%' }}>
+      <Radio.Group value={mode} onChange={(event) => changeMode(event.target.value as ImportMode)}
+        disabled={checking || applying} optionType="button" buttonStyle="solid"
+        options={[
+          { label: 'Create new records', value: 'create' },
+          { label: 'Update existing records', value: 'upsert' },
+        ]} />
+      <Typography.Text type="secondary">{MODE_HELP[mode]}</Typography.Text>
+    </Space>
+  );
 
   const footer = [
     <Button key="close" onClick={close}>{applied ? 'Close' : 'Cancel'}</Button>,
@@ -142,32 +184,39 @@ export default function WorkbookImportModal({ open, onClose }: Props) {
       <Button key="again" onClick={reset} disabled={applying}>Choose another file</Button>
     ),
     step === 1 && (
-      <Button key="apply" type="primary" loading={applying} disabled={!report?.isValid || applyProblems.length > 0}
+      <Button key="apply" type="primary" loading={applying}
+        disabled={!report?.isValid || applyProblems.length > 0 || changes === 0 || checking}
         onClick={handleApply}>
-        Import {report?.summary.created ?? 0} rows
+        {mode === 'upsert' ? `Apply ${changes} changes` : `Import ${changes} rows`}
       </Button>
     ),
   ].filter(Boolean);
 
   return (
-    <Modal open={open} onCancel={close} title="Import from Excel" width={980} footer={footer} destroyOnHidden>
+    <Modal open={open} onCancel={close} title="Excel import and export" width={980} footer={footer} destroyOnHidden>
       <Steps size="small" current={step} style={{ marginBottom: 16 }}
-        items={[{ title: 'Choose file' }, { title: 'Check' }, { title: 'Imported' }]} />
+        items={[{ title: 'Choose file' }, { title: 'Check' }, { title: mode === 'upsert' ? 'Applied' : 'Imported' }]} />
 
       {step === 0 && (
         <Space direction="vertical" size="middle" style={{ width: '100%' }}>
           <Alert type="info" showIcon message="One workbook for reference data, spaces and equipment"
             description={(
               <>
-                Download the template: it already lists the reference data in the system. Fill the sheets from left to
-                right and upload the file. The check lists every problem and saves nothing. The import then creates
-                every row, or nothing if any row has an error. Existing rooms, stations, benches and equipment are
-                never changed.
+                To add records, download the <b>template</b>, fill the sheets from left to right and upload it. To change
+                records, download the <b>current data</b>, edit it and upload it with <b>Update existing records</b>.
+                The check lists every problem and saves nothing; the import then saves every row, or nothing if any row
+                has an error.
               </>
             )} />
-          <Button icon={<DownloadOutlined />} loading={downloading} onClick={handleTemplate}>
-            Download template
-          </Button>
+          <Space wrap>
+            <Button icon={<DownloadOutlined />} loading={downloadingTemplate} onClick={() => download(downloadTemplate)}>
+              Download template
+            </Button>
+            <Button icon={<CloudDownloadOutlined />} loading={exporting} onClick={() => download(downloadExport)}>
+              Export current data
+            </Button>
+          </Space>
+          {modePicker}
           <Upload.Dragger accept=".xlsx" multiple={false} showUploadList={false} beforeUpload={beforeUpload}
             disabled={checking}>
             <p className="ant-upload-drag-icon">{checking ? <FileExcelOutlined /> : <InboxOutlined />}</p>
@@ -179,24 +228,33 @@ export default function WorkbookImportModal({ open, onClose }: Props) {
 
       {step === 1 && report && (
         <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+          {modePicker}
           {applyProblems.length > 0 ? (
             <Alert type="error" showIcon message="Nothing was imported"
               description="The data changed since the check, or the import found new problems. Fix them and check again." />
+          ) : report.isValid && changes === 0 ? (
+            <Alert type="info" showIcon message="Nothing to change"
+              description="Every row matches the data in the system." />
           ) : report.isValid ? (
-            <Alert type="success" showIcon message={`Ready to import ${report.summary.created} rows`}
-              description={`${report.summary.existing} reference rows already exist and stay as they are.${
+            <Alert type="success" showIcon message={`Ready: ${changeSummary(report)}`}
+              description={`${report.summary.existing} rows match the system and stay as they are.${
                 report.summary.warningCount ? ` ${report.summary.warningCount} warnings: read them before importing.` : ''}`} />
           ) : (
             <Alert type="error" showIcon
               message={`${report.summary.errorCount} problems must be fixed before the import`}
-              description="Fix them in the workbook and upload it again. Nothing has been saved." />
+              description={alreadyExists && mode === 'create'
+                ? 'Some asset tags already exist. To change those records, choose Update existing records.'
+                : 'Fix them in the workbook and upload it again. Nothing has been saved.'}
+              action={alreadyExists && mode === 'create'
+                ? <Button size="small" onClick={() => changeMode('upsert')}>Update existing records</Button>
+                : undefined} />
           )}
           {report.unknownSheets.length > 0 && (
             <Alert type="warning" showIcon message={`Sheets not read: ${report.unknownSheets.join(', ')}`} />
           )}
           <Typography.Text type="secondary">File: {file?.name} · template {report.templateVersion ?? 'v1'}</Typography.Text>
-          <Table<ImportSheetOutcome> size="small" rowKey="key" pagination={false} columns={sheetColumns}
-            dataSource={report.sheets.filter((sheet) => sheet.rows > 0)} />
+          <Table<ImportSheetOutcome> size="small" rowKey="key" pagination={false} columns={sheetColumns(report.mode)}
+            dataSource={report.sheets.filter((sheet) => sheet.rows > 0)} loading={checking} />
           {(applyProblems.length > 0 || report.problems.length > 0) && (
             <>
               <Space style={{ justifyContent: 'space-between', width: '100%' }}>
@@ -219,9 +277,9 @@ export default function WorkbookImportModal({ open, onClose }: Props) {
 
       {step === 2 && applied && (
         <Space direction="vertical" size="middle" style={{ width: '100%' }}>
-          <Alert type="success" showIcon message={`Imported ${applied.summary.created} rows`}
-            description={`${applied.summary.existing} reference rows already existed.`} />
-          <Table<ImportSheetOutcome> size="small" rowKey="key" pagination={false} columns={sheetColumns}
+          <Alert type="success" showIcon message={`Saved: ${changeSummary(applied)}`}
+            description={`${applied.summary.existing} rows matched the system and were left as they are.`} />
+          <Table<ImportSheetOutcome> size="small" rowKey="key" pagination={false} columns={sheetColumns(applied.mode)}
             dataSource={applied.sheets.filter((sheet) => sheet.rows > 0)} />
         </Space>
       )}

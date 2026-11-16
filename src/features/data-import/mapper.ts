@@ -5,8 +5,10 @@ export function mapImportReport(api: ImportReportApi): ImportReport {
     isDryRun: api.is_dry_run,
     isValid: api.is_valid,
     templateVersion: api.template_version,
+    mode: api.mode?.value === 'upsert' ? 'upsert' : 'create',
     summary: {
       created: api.summary.created,
+      updated: api.summary.updated ?? 0,
       existing: api.summary.existing,
       errorCount: api.summary.error_count,
       warningCount: api.summary.warning_count,
@@ -16,6 +18,7 @@ export function mapImportReport(api: ImportReportApi): ImportReport {
       name: sheet.name,
       rows: sheet.rows,
       created: sheet.created,
+      updated: sheet.updated ?? 0,
       existing: sheet.existing,
       failed: sheet.failed,
       ignoredColumns: sheet.ignored_columns ?? [],

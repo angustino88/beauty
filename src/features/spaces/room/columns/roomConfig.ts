@@ -26,7 +26,8 @@ export interface RoomFieldConfig {
 
 export const ROOM_FIELD_CONFIG: RoomFieldConfig[] = [
   // ─── create form ──────────────────────────────────────────────────────────
-  { key: "sku", label: "SKU", type: "text", required: true, inCreate: true },
+  // The SKU identifies the room and cannot change after creation: create only, never edited.
+  { key: "sku", label: "SKU", type: "text", required: true, inCreate: true, inEdit: false },
   {
     key: "name",
     label: "Name",
