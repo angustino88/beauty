@@ -12,10 +12,6 @@ export function BenchLocationCell({ bench }: { bench: IBench }) {
 
   if (!station && !roomLabel) return <span className={styles.muted}>Unplaced</span>;
 
-  const roomLink = bench.room
-    ? `/spaces/room?search=${encodeURIComponent(bench.room.sku)}`
-    : null;
-
   return (
     <Tooltip title={path ? `Location: ${path}` : undefined} placement="topLeft">
       <div className={styles.cell}>
@@ -36,12 +32,14 @@ export function BenchLocationCell({ bench }: { bench: IBench }) {
         </div>
         <div className={styles.row}>
           <span className={`${styles.icon} ${styles.roomIcon}`} aria-hidden>{pageIcons.rooms}</span>
-          {roomLabel ? (
-            roomLink ? (
-              <Link className={styles.room} to={roomLink} aria-label={`Room ${roomLabel}`}>{roomLabel}</Link>
-            ) : (
-              <span className={styles.room}>{roomLabel}</span>
-            )
+          {bench.room && roomLabel ? (
+            <Link
+              className={styles.room}
+              to={`/spaces/room?search=${encodeURIComponent(bench.room.sku)}`}
+              aria-label={`Room ${roomLabel}`}
+            >
+              {roomLabel}
+            </Link>
           ) : (
             <span className={styles.muted}>No room</span>
           )}
