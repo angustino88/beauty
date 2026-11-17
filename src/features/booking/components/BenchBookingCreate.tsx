@@ -12,7 +12,6 @@ import type { IBenchBookingFormValues } from '../types';
 import type { BenchBookingCreateRequest } from '../mapper';
 import { BookingForm } from './BookingForm';
 import { useCreateBenchBookingMutation, useGetBookingBenchChoicesQuery } from '../api';
-import { selectBookableBenches } from '../utils/benchChoiceOption';
 import styles from './BookingModal.module.css';
 
 export type CustomModalProps = {
@@ -37,7 +36,7 @@ export const BenchBookingCreate: React.FC<CustomModalProps> = ({
   const [loading, setLoading] = useState(false);
 
   // Same query (and cache entry) as the form's bench select.
-  const { data: benchChoices } = useGetBookingBenchChoicesQuery({ includeId: null });
+  const { data: benchChoices } = useGetBookingBenchChoicesQuery({ includeId: null, hasComputing: true });
   const [createBooking] = useCreateBenchBookingMutation();
 
   useEffect(() => {
@@ -57,7 +56,7 @@ export const BenchBookingCreate: React.FC<CustomModalProps> = ({
     const rawIds = searchParams.get('bench_ids');
     const res = rawIds?.split(',') || [];
     const targetId = parseInt(res[0], 10);
-    if (!Number.isNaN(targetId) && selectBookableBenches(benchChoices).some((bench) => bench.id === targetId)) {
+    if (!Number.isNaN(targetId) && benchChoices?.some((bench) => bench.id === targetId)) {
       formInstance.setFieldValue('bench_id', targetId);
     }
   }, [benchChoices, searchParams, formInstance]);
