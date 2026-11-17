@@ -1,12 +1,11 @@
 import { useState, type Key } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useUrlSearch } from '@/shared/hooks/useUrlSearch';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 
 type TableFilters = Record<string, Key[] | null>;
 
 export function useEquipmentTableState(debounceMs = 500) {
-  const [searchParams] = useSearchParams();
-  const [search, setSearch] = useState(() => searchParams.get('search') ?? '');
+  const [search, setSearch] = useUrlSearch();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [filters, setFilters] = useState<TableFilters>({});

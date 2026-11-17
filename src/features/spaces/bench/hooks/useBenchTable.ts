@@ -1,10 +1,11 @@
+import { useUrlSearch } from '@/shared/hooks/useUrlSearch';
 import { useCallback, useMemo, useState } from "react";
 import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
 import { useGetBenchesQuery } from "../api";
 import type { IBench } from "../types";
 
 export function useBenchTable() {
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useUrlSearch();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [filters, setFilters] = useState<Record<string, (string | number)[] | null>>({});

@@ -1,12 +1,11 @@
+import { useUrlSearch } from '@/shared/hooks/useUrlSearch';
 import { useCallback, useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
 import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
 import { useGetStationsQuery } from "../api";
 import type { IStation } from "../types";
 
 export function useStationTable() {
-  const [searchParams] = useSearchParams();
-  const [search, setSearch] = useState(() => searchParams.get("search") ?? "");
+  const [search, setSearch] = useUrlSearch();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [filters, setFilters] = useState<Record<string, (string | number)[] | null>>({});

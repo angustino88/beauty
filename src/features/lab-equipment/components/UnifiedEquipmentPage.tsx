@@ -1,3 +1,4 @@
+import { useUrlSearch } from '@/shared/hooks/useUrlSearch';
 import { SpaceLocationRow } from '@/features/spaces/shared/components/SpaceLocation';
 import React, { useState, useMemo, useCallback, type Key } from 'react';
 import { WorkbookImportButton } from '@/features/data-import';
@@ -75,7 +76,8 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
   // Table state: pagination, search, column filters
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [search, setSearch] = useState('');
+  // Seeded from ?q= so links from mapping, placement and the graph open the list filtered.
+  const [search, setSearch] = useUrlSearch();
   const [filters, setFilters] = useState<Record<string, Key[] | null>>({});
 
   // Modals state

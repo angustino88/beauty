@@ -157,7 +157,7 @@ const Node = ({
       data-tone={tone}
       aria-label={`View ${ariaLabel}`}
       aria-current={selected ? "true" : undefined}
-      to={`${path}?search=${encodeURIComponent(sku || name || "")}`}
+      to={`${path}?q=${encodeURIComponent(sku || name || "")}`}
     >
       {content}
     </Link>

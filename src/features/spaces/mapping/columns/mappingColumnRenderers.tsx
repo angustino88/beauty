@@ -70,7 +70,7 @@ export const MappingAsset = ({
       className={styles.asset}
       aria-label={`Open ${[primary, secondary].filter(Boolean).join(", ")}`}
       title={[secondary ? `${secondary} (${primary})` : primary, meta].filter(Boolean).join(" · ")}
-      to={`${path}?search=${encodeURIComponent(sku || name || "")}`}
+      to={`${path}?q=${encodeURIComponent(sku || name || "")}`}
     >
       <span className={styles.assetIcon} aria-hidden="true">{icon}</span>
       <span className={styles.assetText}>
@@ -194,7 +194,7 @@ export const renderLicenses = (licenses: MappingLicenseItem[]) => {
     <span className={styles.categoryChips}>
       {shown.map((license) => (
         <Tooltip key={`${license.id}-${license.equipment_id}`} title={`${license.name} (${license.sku})`}>
-          <Link to={`${ENTITY_PATHS.license}?search=${encodeURIComponent(license.sku || license.name)}`}>
+          <Link to={`${ENTITY_PATHS.license}?q=${encodeURIComponent(license.sku || license.name)}`}>
             <Tag icon={<span className={styles.chipIcon}><LicenseIcon /></span>} className={styles.licenseTag}>
               {license.sku || license.name}
             </Tag>

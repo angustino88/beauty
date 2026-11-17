@@ -47,7 +47,7 @@ export function SpaceLocationRow({ kind, label, searchKey, slot, refId, primary 
     search ? (
       <Link
         className={primary ? styles.primary : styles.secondary}
-        to={`${PAGE_PATH[kind]}?search=${encodeURIComponent(search)}`}
+        to={`${PAGE_PATH[kind]}?q=${encodeURIComponent(search)}`}
         aria-label={`${KIND_LABEL[kind]} ${text}`}
       >
         {text}
