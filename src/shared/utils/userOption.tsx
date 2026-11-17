@@ -27,14 +27,14 @@ export function userText(user: Pick<UserOptionSource, 'username' | 'display_name
 
 /**
  * Select option for choosing a person (owner, assignee): the list shows the username (the stable identifier the
- * backend uses) and hovering an option shows the display name (and email). Search still finds a person by display
+ * backend uses) and hovering an option shows the display name. Search still finds a person by display
  * name, username or email.
  */
 export function toUserOption(user: UserOptionSource): UserSelectOption {
   const name = user.display_name?.trim();
   const username = user.username?.trim();
   const primary = username || name || String(user.id);
-  const hover = [name && name !== primary ? name : null, user.email?.trim()].filter(Boolean).join(' · ');
+  const hover = name && name !== primary ? name : '';
   return {
     value: user.id,
     label: <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{primary}</span>,
