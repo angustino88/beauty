@@ -10,8 +10,8 @@ import { SeasonDecor } from './SeasonDecor';
 import styleCss from './layout.module.css';
 
 const { Header: AntHeader } = Layout;
-// The documentation site is served next to the app at /docs/ (see docs-site/README.md).
-const DOCS_URL = (import.meta.env.VITE_DOCS_URL as string | undefined) || '/docs/';
+// The documentation site runs on its own server (lab-mango-docs repository). No URL, no link.
+const DOCS_URL = (import.meta.env.VITE_DOCS_URL as string | undefined)?.trim() || null;
 
 const GameWidget = lazy(() => import('@/features/game-widget/components/GameWidget'));
 
@@ -51,17 +51,19 @@ const AppHeader = () => {
             </button>
           </Tooltip>
         )}
-        <Tooltip title="Help and documentation">
-          <a
-            href={DOCS_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styleCss.headerIconButton}
-            aria-label="Help and documentation (opens in a new tab)"
-          >
-            <BookOpen size={16} />
-          </a>
-        </Tooltip>
+        {DOCS_URL ? (
+          <Tooltip title="Help and documentation">
+            <a
+              href={DOCS_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styleCss.headerIconButton}
+              aria-label="Help and documentation (opens in a new tab)"
+            >
+              <BookOpen size={16} />
+            </a>
+          </Tooltip>
+        ) : null}
         <Tooltip title={themeLabel}>
           <button type="button" className={styleCss.headerIconButton} onClick={toggleTheme} aria-label={themeLabel} aria-pressed={isDark}>
             {isDark ? <SunOutlined /> : <MoonOutlined />}

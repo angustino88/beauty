@@ -45,6 +45,7 @@ Minimum variables:
 - `VITE_REDIRECT_URI`
 - `VITE_APP_URL`
 - `VITE_WS_URL_CHATBOT`
+- `VITE_DOCS_URL` (optional): documentation site URL; shows the docs link in the header
 
 For exact values per environment, use secure internal channels and contact the team lead.
 
@@ -79,20 +80,11 @@ The equipment collection response includes pagination metadata, but the current 
 
 The code generator reads the local contract by default. To generate from another contract, set `OPENAPI_SPEC` before running the command.
 
-## Documentation Site
+## Documentation
 
-`docs-site/` is the Lab Mango documentation site (Docusaurus), served next to the app at `/docs/`. The header's book icon links to it.
+User guides and the developer handbook are published by the separate `lab-mango-docs` repository on their own server. It copies `README.md` and `docs/` from this repository on every build, so keep editing them here; a merge to `main` that changes them triggers a docs rebuild (`.github/workflows/docs-sync.yml`).
 
-- **User guides** for lab users, lab coordinators and lab admins are written in `docs-site/docs/guides/`.
-- **Developer docs** are synced on every build from this repository (`README.md`, `docs/`) and from `lab-mango` (`docs/`, feature docs in `core/**/docs/`, engineering rules). Edit them in their source repository, never in `docs-site/docs/developer/frontend|backend/`.
-
-```bash
-npm run docs:dev     # live preview on http://localhost:3001/docs/ (expects lab-mango cloned next to this repo, or LAB_MANGO_DIR)
-npm run docs:build   # build into build/docs/
-npm run build:all    # app into build/ and docs into build/docs/
-```
-
-How syncing, CI and hosting work: `docs-site/docs/developer/docs-workflow.md`.
+Set `VITE_DOCS_URL` to the docs site's URL to show the docs link in the app header.
 
 ## Repository Structure
 
