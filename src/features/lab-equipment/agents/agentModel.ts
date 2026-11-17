@@ -83,9 +83,9 @@ export function liveAgentsByEquipment<T extends AgentLike>(agents: readonly T[])
 
 /** Steps of the enrollment checklist, in order. */
 export const ENROLLMENT_STEPS = [
-  { key: 'grant', title: 'Grant issued', description: 'One-time, short-lived, bound to this computer' },
-  { key: 'enroll', title: 'Device enrolled', description: 'The agent proved its key and redeemed the grant' },
-  { key: 'heartbeat', title: 'First heartbeat', description: 'The agent reached the backend with a signed request' },
+  { key: 'grant', title: 'Grant issued' },
+  { key: 'enroll', title: 'Enrolled' },
+  { key: 'heartbeat', title: 'First heartbeat' },
 ] as const;
 
 /**
@@ -140,31 +140,22 @@ export function setupBlocks(platform: SetupPlatform, ctx: SetupContext): SetupBl
   if (platform === 'stub') {
     return [
       {
-        title: 'Enroll the stub agent',
-        description: 'Development and test only. Run from the backend repository; the key is written to ~/.labmango-stub-agent.json.',
+        title: 'Enroll (from the backend repository)',
         shell: 'bash',
         code: `python tools/stub_agent.py enroll --base-url ${url} --agent-uid ${ctx.agentUid} --grant ${ctx.grant ?? '<grant>'}`,
       },
-      { title: 'Send the first heartbeat', shell: 'bash', code: 'python tools/stub_agent.py heartbeat' },
+      { title: 'Heartbeat', shell: 'bash', code: 'python tools/stub_agent.py heartbeat' },
     ];
   }
   const exe = platform === 'windows' ? `.\\${ctx.cli}.exe` : platform === 'macos' ? `./${ctx.cli}` : `sudo ./${ctx.cli}`;
   const shell = platform === 'windows' ? 'powershell' : 'bash';
-  const where = platform === 'windows'
-    ? 'Open PowerShell as Administrator in the folder where the agent was installed.'
-    : 'Open a terminal in the folder where the agent was installed.';
   return [
     {
-      title: 'Enroll',
-      description: `${where} When asked, paste the enrollment grant below; the input is hidden and the grant is never stored.`,
+      title: platform === 'windows' ? 'Enroll (PowerShell as Administrator)' : 'Enroll',
+      description: 'Paste the grant when prompted.',
       shell,
       code: `${exe} enroll --url ${url} --agent-uid ${ctx.agentUid}`,
     },
-    {
-      title: 'Check the connection',
-      description: 'The agent generates its key on the device, proves it to the backend and starts sending heartbeats.',
-      shell,
-      code: `${exe} status`,
-    },
+    { title: 'Verify', shell, code: `${exe} status` },
   ];
 }

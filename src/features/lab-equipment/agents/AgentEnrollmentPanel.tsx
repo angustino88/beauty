@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, Button, Segmented, Steps, Tooltip, Typography, message } from 'antd';
-import { CopyOutlined, KeyOutlined, ReloadOutlined } from '@ant-design/icons';
+import { Button, Segmented, Steps, Tooltip, Typography, message } from 'antd';
+import { CopyOutlined } from '@ant-design/icons';
 import type { AgentIdentityRead } from '@/shared/api/generated/api';
 import {
   ENROLLMENT_STEPS,
@@ -34,7 +34,7 @@ async function copy(text: string, what: string) {
     await navigator.clipboard.writeText(text);
     message.success(`${what} copied`);
   } catch {
-    message.error('Copy failed; select the text and copy it manually');
+    message.error('Copy failed; copy the text manually');
   }
 }
 
@@ -49,8 +49,8 @@ function useCountdown(expiresAt: string | undefined): number {
 }
 
 /**
- * "Add a new agent" panel, modelled on self-hosted CI runner setup: pick the platform, run the
- * commands on the computer, and watch the checklist turn green as the device enrolls and reports.
+ * Compact enrollment checklist, modelled on self-hosted CI runner setup: the steps advance on
+ * their own while the drawer polls; the commands show only while the agent is pending.
  */
 export function AgentEnrollmentPanel({ agent, issued, canManage, onNewGrant }: {
   agent: AgentIdentityRead | undefined;
@@ -65,7 +65,8 @@ export function AgentEnrollmentPanel({ agent, issued, canManage, onNewGrant }: {
   const grant = issued && agent && issued.agentUid === agent.agent_uid ? issued : null;
   const remaining = useCountdown(grant?.expiresAt);
   const grantExpired = Boolean(grant) && remaining === 0;
-  const progress = enrollmentProgress(agent, { grantExpired: grantExpired && agent?.state.value === 'pending' });
+  const pending = agent?.state.value === 'pending';
+  const progress = enrollmentProgress(agent, { grantExpired: grantExpired && pending });
   const done = progress.current >= ENROLLMENT_STEPS.length;
 
   const blocks = useMemo(
@@ -75,72 +76,44 @@ export function AgentEnrollmentPanel({ agent, issued, canManage, onNewGrant }: {
 
   return (
     <section className={styles.panel} aria-label="Agent enrollment">
-      <div className={styles.panelHeader}>
-        <div>
-          <h3 className={styles.panelTitle}>{done ? 'Agent connected' : 'Connect the agent on this computer'}</h3>
-          <p className={styles.panelHint}>
-            {done
-              ? 'Enrollment finished. The agent signs every request with a key that never leaves the computer.'
-              : 'Run these steps on the computer itself. This page updates on its own as the agent checks in.'}
-          </p>
-        </div>
-      </div>
-
       <Steps
         size="small"
+        responsive={false}
         current={Math.min(progress.current, ENROLLMENT_STEPS.length - 1)}
         status={done ? 'finish' : progress.failed ? 'error' : 'process'}
         items={ENROLLMENT_STEPS.map((step, index) => ({
           title: step.title,
-          description: step.description,
           status: index < progress.current || done ? 'finish' : undefined,
         }))}
       />
 
-      {!done && agent?.state.value === 'pending' && (
+      {pending && (
         <>
-          <div className={styles.block}>
-            <div className={styles.blockTitle}><KeyOutlined /> Enrollment grant</div>
+          <div className={styles.grantRow}>
+            <span className={styles.grantLabel}>Grant</span>
             {grant && !grantExpired ? (
               <>
-                <p className={styles.blockDescription} style={{ marginLeft: 0 }}>
-                  Shown once and never stored in clear. Expires in{' '}
-                  <strong className={styles.countdown}>{formatCountdown(remaining)}</strong>; paste it when the agent asks.
-                </p>
-                <div className={styles.secretRow}>
-                  <span className={styles.secretValue}>{grant.grant}</span>
-                  <Tooltip title="Copy grant">
-                    <Button size="small" icon={<CopyOutlined />} aria-label="Copy grant" onClick={() => copy(grant.grant, 'Grant')} />
-                  </Tooltip>
-                </div>
+                <span className={styles.secretValue}>{grant.grant}</span>
+                <Tooltip title="Shown once; expires soon">
+                  <span className={styles.countdown}>{formatCountdown(remaining)}</span>
+                </Tooltip>
+                <Button size="small" type="text" icon={<CopyOutlined />} aria-label="Copy grant" onClick={() => copy(grant.grant, 'Grant')} />
               </>
             ) : (
-              <Alert
-                type={grantExpired ? 'error' : 'info'}
-                showIcon
-                style={{ marginTop: 8 }}
-                message={grantExpired ? 'This grant expired before the agent enrolled.' : 'The grant was shown when it was issued and cannot be displayed again.'}
-                description={canManage ? 'Issue a new grant; any unredeemed grant for this computer is revoked.' : 'Ask a lab coordinator for a new grant.'}
-                action={canManage ? <Button size="small" icon={<ReloadOutlined />} onClick={onNewGrant}>New grant</Button> : undefined}
-              />
+              <>
+                <span className={styles.muted} style={{ flex: 1 }}>{grantExpired ? 'Expired' : 'Hidden (shown once)'}</span>
+                {canManage && <Button size="small" onClick={onNewGrant}>New grant</Button>}
+              </>
             )}
           </div>
 
-          <div className={styles.block}>
-            <Segmented<SetupPlatform> options={PLATFORMS} value={platform} onChange={setPlatform} />
-          </div>
-          {platform !== 'stub' && (
-            <div className={styles.block}>
-              <div className={styles.blockTitle}><span className={styles.blockStep}>0</span> Install</div>
-              <p className={styles.blockDescription}>
-                Install the LabMango agent package from your lab's software distribution on this computer.
-              </p>
-            </div>
-          )}
-          {blocks.map((block, index) => (
+          <Segmented<SetupPlatform> size="small" block options={PLATFORMS} value={platform} onChange={setPlatform} style={{ marginTop: 12 }} />
+          {blocks.map((block) => (
             <div key={block.title} className={styles.block}>
-              <div className={styles.blockTitle}><span className={styles.blockStep}>{index + 1}</span>{block.title}</div>
-              {block.description && <p className={styles.blockDescription}>{block.description}</p>}
+              <div className={styles.blockTitle}>
+                {block.title}
+                {block.description && <span className={styles.muted}> · {block.description}</span>}
+              </div>
               <div className={styles.commandWrap}>
                 <pre className={styles.command} aria-label={`${block.shell} command`}>{block.code}</pre>
                 <Button
@@ -155,22 +128,17 @@ export function AgentEnrollmentPanel({ agent, issued, canManage, onNewGrant }: {
             </div>
           ))}
           {platform === 'stub' && (
-            <Alert
-              style={{ marginTop: 14 }}
-              type="warning"
-              showIcon
-              message="Development only"
-              description="The stub agent takes the grant on its command line and keeps its key in a file. Never use it on a real lab computer."
-            />
+            <Typography.Text type="warning" style={{ display: 'block', marginTop: 8, fontSize: 12 }}>
+              Development only — never on a real lab computer.
+            </Typography.Text>
           )}
         </>
       )}
 
-      {!done && agent?.state.value === 'active' && (
-        <Typography.Paragraph type="secondary" style={{ margin: '14px 0 0' }}>
-          Enrolled. Waiting for the first signed heartbeat — check that the agent service is running and can reach{' '}
-          <span className={styles.mono}>{backendUrl()}</span>.
-        </Typography.Paragraph>
+      {agent?.state.value === 'active' && !done && (
+        <Typography.Text type="secondary" style={{ display: 'block', marginTop: 10, fontSize: 12 }}>
+          Waiting for the first heartbeat…
+        </Typography.Text>
       )}
     </section>
   );

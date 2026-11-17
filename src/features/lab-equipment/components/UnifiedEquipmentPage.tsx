@@ -58,7 +58,7 @@ import { buildEquipmentFormFields, equipmentFormInitialValues } from '../shared/
 import { notifyEquipmentCreated, notifyEquipmentDeleted, notifyEquipmentUpdated } from '../shared/utils/equipmentNotifications';
 import { equipmentStatusTone } from '../shared/utils/equipmentStatus';
 import { userLabel } from '@/shared/utils/userRef';
-import { AgentHealthCell, ComputingAgentDrawer, liveAgentsByEquipment, useGetComputingAgentsQuery, type AgentComputer } from '../agents';
+import { AgentHealthCell, ComputingAgentDialog, liveAgentsByEquipment, useGetComputingAgentsQuery, type AgentComputer } from '../agents';
 
 export interface UnifiedEquipmentPageProps {
   config: EquipmentCategoryConfig;
@@ -918,7 +918,7 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
       />
 
       {config.supportsAgent && (
-        <ComputingAgentDrawer key={agentComputer?.id ?? 'closed'} computer={agentComputer} canManage={isCoordinator} onClose={() => setAgentComputer(null)} />
+        <ComputingAgentDialog key={agentComputer?.id ?? 'closed'} computer={agentComputer} canManage={isCoordinator} onClose={() => setAgentComputer(null)} />
       )}
 
       {/* Equipment lifecycle change-status action */}
