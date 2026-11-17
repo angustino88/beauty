@@ -79,6 +79,21 @@ The equipment collection response includes pagination metadata, but the current 
 
 The code generator reads the local contract by default. To generate from another contract, set `OPENAPI_SPEC` before running the command.
 
+## Documentation Site
+
+`docs-site/` is the Lab Mango documentation site (Docusaurus), served next to the app at `/docs/`. The header's book icon links to it.
+
+- **User guides** for lab users, lab coordinators and lab admins are written in `docs-site/docs/guides/`.
+- **Developer docs** are synced on every build from this repository (`README.md`, `docs/`) and from `lab-mango` (`docs/`, feature docs in `core/**/docs/`, engineering rules). Edit them in their source repository, never in `docs-site/docs/developer/frontend|backend/`.
+
+```bash
+npm run docs:dev     # live preview on http://localhost:3001/docs/ (expects lab-mango cloned next to this repo, or LAB_MANGO_DIR)
+npm run docs:build   # build into build/docs/
+npm run build:all    # app into build/ and docs into build/docs/
+```
+
+How syncing, CI and hosting work: `docs-site/docs/developer/docs-workflow.md`.
+
 ## Repository Structure
 
 Top-level structure:

@@ -10,6 +10,9 @@
     "test": "node --experimental-strip-types --test src/**/*.test.ts",
     "typecheck": "tsc -b",
     "preview": "vite preview",
+    "docs:dev": "npm --prefix docs-site start",
+    "docs:build": "npm --prefix docs-site run build -- --out-dir ../build/docs",
+    "build:all": "npm run build && npm run docs:build",
     "api:generate": "rtk-query-codegen-openapi scripts/rtk-query-codegen.mjs"
   },
   "dependencies": {
