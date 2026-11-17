@@ -82,7 +82,8 @@ export default function Dashboard() {
   // Sample and license filters have no server-side parameter; they narrow the loaded page.
   const { sample_ids: sampleIds, license_ids: licenseIds } = state.columnFilters;
   const tableData = useMemo(() => {
-    const rows = pageData?.results ?? EMPTY_DATA;
+    // Benches with no computing resource mapped are not listed: they cannot be booked or remoted into.
+    const rows = (pageData?.results ?? EMPTY_DATA).filter((row) => row.computing || row.computer);
     if (!sampleIds.length && !licenseIds.length) return rows;
     return rows.filter(
       (row) =>
