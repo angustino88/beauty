@@ -116,18 +116,27 @@ export function useBookingCalendarEvents() {
               return [
                 {
                   id: `downtime-${d.id}`,
-                  title: `[Unavailable] ${condLabel} (${reasonLabel})`,
+                  title: condLabel,
                   start: startStr,
                   end: endStr,
-                  classNames: ['lm-event', 'lm-event-downtime'],
+                  classNames: [
+                    'lm-event',
+                    'lm-event-downtime',
+                    d.condition.value === 'out_of_service' ? 'lm-event-downtime-oos' : 'lm-event-downtime-maint',
+                  ],
                   allDay: false,
                   editable: false,
                   extendedProps: {
                     isDowntime: true,
                     downtimeId: d.id,
                     condition: condLabel,
+                    conditionValue: d.condition.value,
                     reason: reasonLabel,
                     notes: d.notes,
+                    openEnded: !d.ends_at,
+                    state: d.state,
+                    resourceType: d.resource.type,
+                    resourceId: d.resource.id,
                   },
                 },
               ];

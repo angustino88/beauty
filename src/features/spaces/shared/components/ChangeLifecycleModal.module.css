@@ -1,0 +1,77 @@
+/* Change lifecycle & access dialog. Tokens only. */
+
+.current {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+  margin-bottom: 20px; padding: 10px 12px;
+  background: var(--lm-surface-subtle); border: 1px solid var(--lm-border); border-radius: 8px;
+}
+.currentLabel { margin-right: 4px; color: var(--lm-text-tertiary); font-size: 12px; font-weight: 500; }
+
+.pill {
+  display: inline-flex; align-items: center; gap: 5px; height: 24px; padding: 0 9px;
+  color: var(--lm-text-secondary); font-size: 12px; font-weight: 600;
+  background: var(--lm-neutral-bg); border: 1px solid var(--lm-neutral-border); border-radius: 999px;
+}
+.pill_success { color: var(--lm-success-fg); background: var(--lm-success-bg); border-color: var(--lm-success-border); }
+.pill_info { color: var(--lm-info-fg); background: var(--lm-info-bg); border-color: var(--lm-info-border); }
+.pill_danger { color: var(--lm-danger-fg); background: var(--lm-danger-bg); border-color: var(--lm-danger-border); }
+
+.section { margin-bottom: 20px; }
+.sectionTitle { margin: 0 0 8px; color: var(--lm-text); font-size: 13px; font-weight: 600; }
+
+.options { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+.optionsTwo { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+.option {
+  position: relative; display: flex; align-items: flex-start; gap: 10px; width: 100%;
+  padding: 12px 34px 12px 12px; text-align: left; cursor: pointer; font: inherit;
+  color: var(--lm-text); background: var(--lm-surface); border: 1px solid var(--lm-border); border-radius: 8px;
+  transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+.option:hover { border-color: var(--lm-border-strong); background: var(--lm-surface-subtle); }
+.option:focus-visible { outline: none; box-shadow: var(--lm-focus-ring); }
+.optionSelected, .optionSelected:hover {
+  background: var(--lm-primary-bg); border-color: var(--lm-primary); box-shadow: 0 0 0 1px var(--lm-primary);
+}
+.optionDanger.optionSelected, .optionDanger.optionSelected:hover {
+  background: var(--lm-danger-bg); border-color: var(--lm-danger-solid); box-shadow: 0 0 0 1px var(--lm-danger-solid);
+}
+
+.optionIcon {
+  display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto;
+  width: 28px; height: 28px; font-size: 14px; border-radius: 7px; border: 1px solid transparent;
+}
+.tone_neutral { color: var(--lm-text-secondary); background: var(--lm-neutral-bg); border-color: var(--lm-neutral-border); }
+.tone_success { color: var(--lm-success-fg); background: var(--lm-success-bg); border-color: var(--lm-success-border); }
+.tone_info { color: var(--lm-info-fg); background: var(--lm-info-bg); border-color: var(--lm-info-border); }
+.tone_danger { color: var(--lm-danger-fg); background: var(--lm-danger-bg); border-color: var(--lm-danger-border); }
+
+.optionText { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.optionTitle { font-size: 13px; font-weight: 600; line-height: 18px; }
+.optionDanger .optionTitle { color: var(--lm-danger-fg); }
+.optionHint { color: var(--lm-text-tertiary); font-size: 12px; line-height: 17px; }
+
+.optionRadio {
+  position: absolute; top: 14px; right: 12px; width: 14px; height: 14px;
+  border: 1.5px solid var(--lm-border-strong); border-radius: 50%;
+}
+.optionSelected .optionRadio { border: 4px solid var(--lm-primary); }
+.optionDanger.optionSelected .optionRadio { border-color: var(--lm-danger-solid); }
+
+.locked {
+  display: flex; align-items: center; gap: 8px; padding: 10px 12px;
+  color: var(--lm-text-secondary); font-size: 13px;
+  background: var(--lm-surface-subtle); border: 1px dashed var(--lm-border-strong); border-radius: 8px;
+}
+
+.note {
+  display: flex; align-items: flex-start; gap: 8px; padding: 10px 12px;
+  color: var(--lm-text-secondary); font-size: 12px; line-height: 18px;
+  background: var(--lm-info-bg); border: 1px solid var(--lm-info-border); border-radius: 8px;
+}
+.note strong { color: var(--lm-text); }
+.noteIcon { margin-top: 2px; color: var(--lm-info-fg); }
+
+@media (max-width: 520px) {
+  .optionsTwo { grid-template-columns: 1fr; }
+}

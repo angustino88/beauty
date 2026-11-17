@@ -29,6 +29,13 @@ import { StatusBadge } from '@/shared/components/StatusBadge';
 
 dayjs.extend(relativeTime);
 
+/** Short date for table cells; the end drops the date when it is on the same day as the start. */
+function formatWhen(value: string, sameDayAs?: string): string {
+  const d = dayjs(value);
+  if (sameDayAs && d.isSame(dayjs(sameDayAs), 'day')) return d.format('HH:mm');
+  return d.format(d.isSame(dayjs(), 'year') ? 'MMM D, HH:mm' : 'MMM D, YYYY HH:mm');
+}
+
 interface DowntimeTabProps {
   resourceType: ResourceType;
   resourceId: number;
@@ -158,71 +165,65 @@ export const DowntimeTab: React.FC<DowntimeTabProps> = ({
     {
       title: 'Condition',
       key: 'condition',
-      width: 140,
+      width: 170,
       render: (_, r) => {
         const isOutOfService = r.condition.value === 'out_of_service';
         return (
-          <Tag
-            color={isOutOfService ? 'volcano' : 'gold'}
-            icon={isOutOfService ? <ExclamationCircleOutlined /> : <ToolOutlined />}
-            style={{ fontWeight: 600 }}
-          >
-            {r.condition.label || CONDITION_LABELS[r.condition.value] || r.condition.value}
-          </Tag>
+          <div className={styles.cellStack}>
+            <span className={`${styles.conditionChip} ${isOutOfService ? styles.conditionChipDanger : ''}`}>
+              {isOutOfService ? <ExclamationCircleOutlined /> : <ToolOutlined />}
+              {r.condition.label || CONDITION_LABELS[r.condition.value] || r.condition.value}
+            </span>
+            <span className={styles.cellSub}>
+              {r.reason.label || DOWNTIME_REASON_LABELS[r.reason.value] || r.reason.value}
+            </span>
+          </div>
         );
       },
     },
     {
-      title: 'Reason',
-      key: 'reason',
-      width: 140,
+      title: 'Window',
+      key: 'window',
+      width: 170,
       render: (_, r) => (
-        <span style={{ fontWeight: 500, color: 'var(--lm-text)' }}>
-          {r.reason.label || DOWNTIME_REASON_LABELS[r.reason.value] || r.reason.value}
-        </span>
+        <div className={styles.cellStack}>
+          <span className={styles.cellMain}>{formatWhen(r.starts_at)}</span>
+          <span className={styles.cellSub}>
+            → {r.ends_at ? formatWhen(r.ends_at, r.starts_at) : 'Until resolved'}
+          </span>
+        </div>
       ),
-    },
-    {
-      title: 'Starts',
-      dataIndex: 'starts_at',
-      key: 'starts_at',
-      width: 150,
-      render: (val: string) => (val ? dayjs(val).format('YYYY-MM-DD HH:mm') : '—'),
-    },
-    {
-      title: 'Ends',
-      dataIndex: 'ends_at',
-      key: 'ends_at',
-      width: 150,
-      render: (val: string | null) =>
-        val ? dayjs(val).format('YYYY-MM-DD HH:mm') : <Tag color="warning">Open-ended</Tag>,
     },
     {
       title: 'Duration',
       key: 'duration',
-      width: 120,
+      width: 110,
       render: (_, r) => formatDuration(r.starts_at, r.ends_at, r.state === 'current'),
     },
     {
       title: 'Actor',
       key: 'actor',
-      width: 130,
-      render: (_, r) => (
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: 'var(--lm-text-secondary)' }}>
-          <UserOutlined style={{ fontSize: 11, color: 'var(--lm-text-disabled)' }} />
-          {r.actor?.display_name || r.actor?.username || 'System'}
-        </span>
-      ),
+      width: 150,
+      render: (_, r) => {
+        const actor = r.actor?.display_name || r.actor?.username || 'System';
+        return (
+          <span className={styles.actorCell} title={actor}>
+            <UserOutlined className={styles.actorIcon} />
+            <span className={styles.actorName}>{actor}</span>
+          </span>
+        );
+      },
     },
     {
       title: 'Notes',
       dataIndex: 'notes',
       key: 'notes',
-      ellipsis: true,
+      width: 200,
+      ellipsis: { showTitle: false },
       render: (val: string) =>
         val ? (
           <Tooltip title={val}>
-            <span>{val}</span>
+            <span className={styles.notesCell}>{val}</span>
           </Tooltip>
         ) : (
           <span style={{ color: 'var(--lm-text-disabled)' }}>—</span>
@@ -234,7 +235,7 @@ export const DowntimeTab: React.FC<DowntimeTabProps> = ({
     columns.push({
       title: 'Actions',
       key: 'actions',
-      width: 110,
+      width: 120,
       align: 'center',
       fixed: 'right',
       render: (_, r) => {
@@ -323,7 +324,7 @@ export const DowntimeTab: React.FC<DowntimeTabProps> = ({
             <div className={styles.activeDetails}>
               <div className={styles.activeTitle}>
                 <span>
-                  ACTIVE DOWNTIME:{' '}
+                  Active downtime:{' '}
                   {activeDowntime.condition.label ||
                     CONDITION_LABELS[activeDowntime.condition.value] ||
                     activeDowntime.condition.value}
@@ -418,6 +419,9 @@ export const DowntimeTab: React.FC<DowntimeTabProps> = ({
           columns={columns}
           loading={isFetching}
           size="small"
+          className={styles.table}
+          scroll={{ x: 'max-content' }}
+          tableLayout="fixed"
           pagination={{
             current: page,
             pageSize,

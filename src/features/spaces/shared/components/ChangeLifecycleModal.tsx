@@ -1,5 +1,13 @@
-import React, { useState } from 'react';
-import { Alert, Form, Radio, Select, message } from 'antd';
+import React, { useState, type ReactNode } from 'react';
+import { Alert, Form, message } from 'antd';
+import {
+  CheckCircleOutlined,
+  ClockCircleOutlined,
+  InfoCircleOutlined,
+  LockOutlined,
+  StopOutlined,
+  UnlockOutlined,
+} from '@ant-design/icons';
 import { FormDialog } from '@/components/ui/form-dialog';
 import {
   ACCESS_POLICY_LABELS,
@@ -12,7 +20,7 @@ import {
 import { useChangeRoomLifecycleMutation } from '../../room/api';
 import { useChangeStationLifecycleMutation } from '../../station/api';
 import { useChangeBenchLifecycleMutation } from '../../bench/api';
-import styles from './ResourceStatusComponents.module.css';
+import styles from './ChangeLifecycleModal.module.css';
 
 interface ChangeLifecycleModalProps {
   open: boolean;
@@ -25,9 +33,54 @@ interface ChangeLifecycleModalProps {
   onSuccess?: () => void;
 }
 
+const KEEP = 'keep' as const;
+type LifecycleChoice = LifecycleStatus | typeof KEEP;
+
 interface FormValues {
+  lifecycle_status?: LifecycleChoice;
+  access_policy?: AccessPolicy;
+}
+
+interface SubmitValues {
   lifecycle_status?: LifecycleStatus;
   access_policy?: AccessPolicy;
+}
+
+const LIFECYCLE_META: Record<LifecycleStatus, { icon: ReactNode; hint: string; tone: 'info' | 'success' | 'danger' }> = {
+  planned: { icon: <ClockCircleOutlined />, hint: 'Being prepared. Not bookable yet.', tone: 'info' },
+  in_service: { icon: <CheckCircleOutlined />, hint: 'Available for bookings and daily use.', tone: 'success' },
+  retired: { icon: <StopOutlined />, hint: 'Permanently out of use. This cannot be undone.', tone: 'danger' },
+};
+
+const ACCESS_META: Record<AccessPolicy, { icon: ReactNode; hint: string }> = {
+  open: { icon: <UnlockOutlined />, hint: 'Everyone in the lab can book it.' },
+  restricted: { icon: <LockOutlined />, hint: 'Only people granted access can book it.' },
+};
+
+function OptionCard({ selected, tone, icon, title, hint, onSelect }: {
+  selected: boolean;
+  tone?: 'info' | 'success' | 'danger' | 'neutral';
+  icon: ReactNode;
+  title: ReactNode;
+  hint: string;
+  onSelect: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={selected}
+      className={`${styles.option} ${selected ? styles.optionSelected : ''} ${tone === 'danger' ? styles.optionDanger : ''}`}
+      onClick={onSelect}
+    >
+      <span className={`${styles.optionIcon} ${styles[`tone_${tone ?? 'neutral'}`]}`}>{icon}</span>
+      <span className={styles.optionText}>
+        <span className={styles.optionTitle}>{title}</span>
+        <span className={styles.optionHint}>{hint}</span>
+      </span>
+      <span className={styles.optionRadio} aria-hidden="true" />
+    </button>
+  );
 }
 
 export const ChangeLifecycleModal: React.FC<ChangeLifecycleModalProps> = ({
@@ -42,7 +95,7 @@ export const ChangeLifecycleModal: React.FC<ChangeLifecycleModalProps> = ({
 }) => {
   const [form] = Form.useForm<FormValues>();
   const [showRetireConfirm, setShowRetireConfirm] = useState(false);
-  const [pendingValues, setPendingValues] = useState<FormValues | null>(null);
+  const [pendingValues, setPendingValues] = useState<SubmitValues | null>(null);
 
   const [changeRoom, { isLoading: roomLoading }] = useChangeRoomLifecycleMutation();
   const [changeStation, { isLoading: stationLoading }] = useChangeStationLifecycleMutation();
@@ -51,7 +104,16 @@ export const ChangeLifecycleModal: React.FC<ChangeLifecycleModalProps> = ({
   const isSubmitting = roomLoading || stationLoading || benchLoading;
   const allowedLifecycleMoves = getAllowedLifecycleTransitions(currentLifecycle);
 
-  const handleFinish = async (values: FormValues) => {
+  const supportsAccess = resourceType === 'room' || resourceType === 'station';
+  const lifecycleChoice = (Form.useWatch('lifecycle_status', form) ?? KEEP) as LifecycleChoice;
+  const accessChoice = Form.useWatch('access_policy', form) as AccessPolicy | undefined;
+  const dirty = lifecycleChoice !== KEEP || (supportsAccess && accessChoice !== currentAccessPolicy);
+
+  const handleFinish = async (formValues: FormValues) => {
+    const values: SubmitValues = {
+      lifecycle_status: formValues.lifecycle_status === KEEP ? undefined : formValues.lifecycle_status,
+      access_policy: supportsAccess ? formValues.access_policy : undefined,
+    };
     if (values.lifecycle_status === 'retired') {
       setPendingValues(values);
       setShowRetireConfirm(true);
@@ -61,7 +123,7 @@ export const ChangeLifecycleModal: React.FC<ChangeLifecycleModalProps> = ({
     await executeChange(values);
   };
 
-  const executeChange = async (values: FormValues) => {
+  const executeChange = async (values: SubmitValues) => {
     try {
       if (resourceType === 'room') {
         await changeRoom({
@@ -106,16 +168,18 @@ export const ChangeLifecycleModal: React.FC<ChangeLifecycleModalProps> = ({
     }
   };
 
-  const supportsAccess = resourceType === 'room' || resourceType === 'station';
+  const isRetired = currentLifecycle === 'retired';
+  const currentLabel = currentLifecycle ? LIFECYCLE_STATUS_LABELS[currentLifecycle] : 'Unknown';
 
   return (
     <>
       <FormDialog
         open={open && !showRetireConfirm}
-        title={`Change Lifecycle & Access: ${resourceType.toUpperCase()} ${resourceName || `#${resourceId}`}`}
+        title={`Change lifecycle & access · ${resourceName || `${resourceType} #${resourceId}`}`}
         description="Manage the resource lifecycle and access policy. Downtime is managed separately."
         submitLabel="Save changes"
         busy={isSubmitting}
+        submitDisabled={!dirty}
         onSubmit={() => form.submit()}
         onCancel={() => {
           form.resetFields();
@@ -126,58 +190,83 @@ export const ChangeLifecycleModal: React.FC<ChangeLifecycleModalProps> = ({
           form={form}
           layout="vertical"
           initialValues={{
-            lifecycle_status: allowedLifecycleMoves[0] ?? currentLifecycle,
+            lifecycle_status: KEEP,
             access_policy: currentAccessPolicy,
           }}
           onFinish={handleFinish}
         >
-          <div style={{ marginBottom: 16 }}>
-            <strong>Current status:</strong>{' '}
-            <span>{currentLifecycle ? LIFECYCLE_STATUS_LABELS[currentLifecycle] : '—'}</span>
-            {currentAccessPolicy && (
-              <span> ({ACCESS_POLICY_LABELS[currentAccessPolicy]})</span>
+          <div className={styles.current}>
+            <span className={styles.currentLabel}>Current</span>
+            <span className={`${styles.pill} ${styles[`pill_${currentLifecycle ? LIFECYCLE_META[currentLifecycle].tone : 'info'}`]}`}>
+              {currentLifecycle && LIFECYCLE_META[currentLifecycle].icon}
+              {currentLabel}
+            </span>
+            {supportsAccess && currentAccessPolicy && (
+              <span className={styles.pill}>
+                {ACCESS_META[currentAccessPolicy].icon}
+                {ACCESS_POLICY_LABELS[currentAccessPolicy]} access
+              </span>
             )}
           </div>
 
-          <Form.Item
-            name="lifecycle_status"
-            label="New Lifecycle Status"
-            help={
-              currentLifecycle === 'retired'
-                ? 'This resource is retired. Retiring is final.'
-                : 'Allowed moves: planned -> in_service, planned -> retired, in_service -> retired.'
-            }
-          >
-            {currentLifecycle === 'retired' || allowedLifecycleMoves.length === 0 ? (
-              <Select disabled value={currentLifecycle}>
-                <Select.Option value="retired">Retired (Final)</Select.Option>
-              </Select>
+          <section className={styles.section}>
+            <h4 className={styles.sectionTitle}>Lifecycle</h4>
+            {isRetired || allowedLifecycleMoves.length === 0 ? (
+              <div className={styles.locked}>
+                <StopOutlined /> This resource is retired. Retiring is final, so its lifecycle can no longer change.
+              </div>
             ) : (
-              <Radio.Group>
-                {allowedLifecycleMoves.map((status) => (
-                  <Radio.Button key={status} value={status}>
-                    {LIFECYCLE_STATUS_LABELS[status]}
-                  </Radio.Button>
-                ))}
-              </Radio.Group>
+              <Form.Item name="lifecycle_status" noStyle>
+                <div role="radiogroup" aria-label="Lifecycle" className={styles.options}>
+                  <OptionCard
+                    selected={lifecycleChoice === KEEP}
+                    tone="neutral"
+                    icon={currentLifecycle ? LIFECYCLE_META[currentLifecycle].icon : <CheckCircleOutlined />}
+                    title={`Keep as ${currentLabel.toLowerCase()}`}
+                    hint="No lifecycle change."
+                    onSelect={() => form.setFieldValue('lifecycle_status', KEEP)}
+                  />
+                  {allowedLifecycleMoves.map((status) => (
+                    <OptionCard
+                      key={status}
+                      selected={lifecycleChoice === status}
+                      tone={LIFECYCLE_META[status].tone}
+                      icon={LIFECYCLE_META[status].icon}
+                      title={`Move to ${LIFECYCLE_STATUS_LABELS[status].toLowerCase()}`}
+                      hint={LIFECYCLE_META[status].hint}
+                      onSelect={() => form.setFieldValue('lifecycle_status', status)}
+                    />
+                  ))}
+                </div>
+              </Form.Item>
             )}
-          </Form.Item>
+          </section>
 
           {supportsAccess && (
-            <Form.Item
-              name="access_policy"
-              label="Access Policy"
-              help="Open to everyone or Restricted"
-            >
-              <Radio.Group>
-                <Radio.Button value="open">{ACCESS_POLICY_LABELS.open}</Radio.Button>
-                <Radio.Button value="restricted">{ACCESS_POLICY_LABELS.restricted}</Radio.Button>
-              </Radio.Group>
-            </Form.Item>
+            <section className={styles.section}>
+              <h4 className={styles.sectionTitle}>Access policy</h4>
+              <Form.Item name="access_policy" noStyle>
+                <div role="radiogroup" aria-label="Access policy" className={`${styles.options} ${styles.optionsTwo}`}>
+                  {(['open', 'restricted'] as AccessPolicy[]).map((policy) => (
+                    <OptionCard
+                      key={policy}
+                      selected={accessChoice === policy}
+                      icon={ACCESS_META[policy].icon}
+                      title={ACCESS_POLICY_LABELS[policy]}
+                      hint={ACCESS_META[policy].hint}
+                      onSelect={() => form.setFieldValue('access_policy', policy)}
+                    />
+                  ))}
+                </div>
+              </Form.Item>
+            </section>
           )}
 
-          <div className={styles.warningBox}>
-            <strong>Note:</strong> Downtime and Out of Service conditions are managed separately under the <em>Downtime</em> tab and do not modify the stored lifecycle status.
+          <div className={styles.note}>
+            <InfoCircleOutlined className={styles.noteIcon} />
+            <span>
+              Maintenance and out-of-service periods are handled in the <strong>Downtime</strong> tab and don't change the lifecycle.
+            </span>
           </div>
         </Form>
       </FormDialog>

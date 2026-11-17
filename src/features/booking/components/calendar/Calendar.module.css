@@ -374,3 +374,33 @@
 .calendarSurface :global(.fc-day-today .fc-col-header-cell-cushion) {
     color: var(--lm-primary-fg) !important;
 }
+
+/* Downtime windows */
+.downtimeEvent {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    padding: 5px 7px;
+    line-height: 1.3;
+    overflow: hidden;
+}
+.downtimeTitleRow { display: flex; align-items: center; gap: 5px; min-width: 0; }
+.downtimeIcon { flex: 0 0 auto; color: var(--lm-downtime-fg, var(--lm-text-secondary)); font-size: 11px; }
+.downtimeTitle { min-width: 0; overflow: hidden; color: var(--lm-text); font-size: 12px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.downtimeReason { overflow: hidden; color: var(--lm-text-secondary); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.downtimeTime { color: var(--lm-text-tertiary); font-size: 10.5px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.downtimeEventCompact {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    padding: 2px 6px;
+    line-height: 1.2;
+    overflow: hidden;
+}
+.downtimeEventCompact .downtimeTitle { flex: 1 1 auto; }

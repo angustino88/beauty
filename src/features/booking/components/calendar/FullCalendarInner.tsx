@@ -9,6 +9,8 @@ import styles from './Calendar.module.css';
 import dayjs, { type Dayjs } from 'dayjs';
 import { Popover } from 'antd';
 import { EventDetailModal } from './EventDetailModal';
+import { DowntimeEventDetail, type DowntimeEventInfo } from './DowntimeEventDetail';
+import { ExclamationCircleOutlined, ToolOutlined } from '@ant-design/icons';
 import { DATE_FORMAT } from '@/shared/utils/booking';
 import type { BenchBookingItem } from '../../types';
 
@@ -64,29 +66,36 @@ const CalendarEventContent = ({ arg, refetchBooking }: CalendarEventContentProps
   );
 
   if (event.extendedProps?.isDowntime) {
-    const condition = event.extendedProps.condition as string | undefined;
-    const reason = event.extendedProps.reason as string | undefined;
-    const notes = event.extendedProps.notes as string | undefined;
+    const props = event.extendedProps as DowntimeEventInfo;
+    const outOfService = props.conditionValue === 'out_of_service';
+    const icon = outOfService ? <ExclamationCircleOutlined /> : <ToolOutlined />;
+    const timeLabel = props.openEnded
+      ? `${compactTimeText} · until resolved`
+      : timeText;
+    const downtimeContent = isMonthView || isListView || isCompactEvent ? (
+      <div className={styles.downtimeEventCompact}>
+        <span className={styles.downtimeIcon}>{icon}</span>
+        <span className={styles.downtimeTitle}>{event.title}</span>
+        {!isListView && <span className={styles.downtimeTime}>{compactTimeText}</span>}
+      </div>
+    ) : (
+      <div className={styles.downtimeEvent}>
+        <span className={styles.downtimeTitleRow}>
+          <span className={styles.downtimeIcon}>{icon}</span>
+          <span className={styles.downtimeTitle}>{event.title}</span>
+        </span>
+        {props.reason && <span className={styles.downtimeReason}>{props.reason}</span>}
+        <span className={styles.downtimeTime}>{timeLabel}</span>
+      </div>
+    );
 
     return (
       <Popover
         placement="right"
-        title="Downtime / Maintenance"
-        content={(
-          <div style={{ maxWidth: 280, padding: 4 }}>
-            <div><strong>Condition:</strong> {condition || 'Unavailable'}</div>
-            <div><strong>Reason:</strong> {reason || 'Maintenance'}</div>
-            {event.start && (
-              <div><strong>Starts:</strong> {dayjs(event.start).format('YYYY-MM-DD HH:mm')}</div>
-            )}
-            {event.end && (
-              <div><strong>Ends:</strong> {dayjs(event.end).format('YYYY-MM-DD HH:mm')}</div>
-            )}
-            {notes && <div style={{ marginTop: 4 }}><strong>Notes:</strong> {notes}</div>}
-          </div>
-        )}
+        styles={{ container: { padding: 0 } }}
+        content={<DowntimeEventDetail info={{ ...props, start: event.start, end: event.end }} />}
       >
-        {content}
+        {downtimeContent}
       </Popover>
     );
   }
