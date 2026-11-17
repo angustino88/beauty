@@ -9,8 +9,8 @@ import { MAPPING_STATE_LABELS } from "../utils/mappingExportConfig";
 import {
   renderBenchImage,
   renderBenchTag,
-  renderEquipmentCategories,
-  renderEquipmentImages,
+  renderCategoryImage,
+  renderCategoryUnits,
   renderLicenses,
   renderMappingStatus,
   renderRoomImage,
@@ -106,18 +106,22 @@ export const buildMappingColumns = ({
     align: "center",
     render: (_v, row) => renderRoomImage(row),
   },
-  {
-    title: "Equipment",
-    key: "category",
-    ...serverFilter("category", choices(filterOptions.categories), filters),
-    render: (_v, row) => renderEquipmentCategories(row.equipment),
-  },
-  {
-    title: "Equipment image",
-    key: "equipment_image",
-    width: 150,
-    render: (_v, row) => renderEquipmentImages(row.equipment),
-  },
+  // One units column and one image column per equipment category the system has.
+  ...filterOptions.categories.flatMap((category) => [
+    {
+      title: category.name,
+      key: `category-${category.id}`,
+      width: 170,
+      render: (_v: unknown, row: ResourceMappingRow) => renderCategoryUnits(row.equipment, category.id),
+    },
+    {
+      title: `${category.name} image`,
+      key: `category-${category.id}-image`,
+      width: 96,
+      align: "center" as const,
+      render: (_v: unknown, row: ResourceMappingRow) => renderCategoryImage(row.equipment, category.id, category.name),
+    },
+  ]),
   {
     title: "Licenses",
     key: "licenses",

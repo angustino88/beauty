@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { CheckCircleFilled, ExclamationCircleFilled, WarningFilled } from "@ant-design/icons";
-import { Popover, Tag, Tooltip } from "antd";
+import { Tag, Tooltip } from "antd";
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import type {
@@ -103,25 +103,6 @@ export const renderRoomImage = (row: ResourceMappingRow) => {
   return <MappingImage src={row.room.image_url} label={row.room.name || row.room.sku} fallback={pageIcons.rooms} />;
 };
 
-const MAX_EQUIPMENT_IMAGES = 3;
-
-/** One image per unit on the bench, each with the symbol of its category page when it has no image. */
-export const renderEquipmentImages = (equipment: MappingEquipmentItem[]) => {
-  if (!equipment.length) return <EmptyMapping label="—" />;
-  const shown = equipment.slice(0, MAX_EQUIPMENT_IMAGES);
-  const hidden = equipment.length - shown.length;
-  return (
-    <span className={styles.imageStack}>
-      {shown.map((item) => (
-        <Tooltip key={item.id} title={[item.name, item.sku].filter(Boolean).join(" · ")}>
-          <MappingImage src={item.image_url} label={item.name || item.sku} fallback={equipmentPageIcon(categoryKey(item))} />
-        </Tooltip>
-      ))}
-      {hidden > 0 && <span className={styles.imageMore}>+{hidden}</span>}
-    </span>
-  );
-};
-
 export const EmptyMapping = ({ label }: { label: string }) => (
   <span className={styles.emptyMapping}>{label}</span>
 );
@@ -182,45 +163,38 @@ export const renderRoomTag = (row: ResourceMappingRow) => {
   );
 };
 
-const EquipmentList = ({ equipment }: { equipment: MappingEquipmentItem[] }) => (
-  <div className={styles.popoverList}>
-    {equipment.map((item) => {
-      const key = categoryKey(item);
-      return (
-        <MappingAsset
-          key={item.id}
-          sku={item.sku}
-          name={item.name}
-          meta={[item.category.name, item.role && item.role !== "default" ? item.role : null].filter(Boolean).join(" · ")}
-          path={categoryPath(key)}
-          icon={categoryIcon(key)}
-        />
-      );
-    })}
-  </div>
-);
+const categoryUnits = (equipment: MappingEquipmentItem[], categoryId: number) =>
+  equipment.filter((item) => item.category.id === categoryId);
 
-export const renderEquipmentCategories = (equipment: MappingEquipmentItem[]) => {
-  if (!equipment.length) return <EmptyMapping label="No equipment" />;
-  const byCategory = new Map<string, { label: string; count: number }>();
-  for (const item of equipment) {
-    const key = categoryKey(item);
-    const entry = byCategory.get(key) ?? { label: item.category.name || "Other", count: 0 };
-    entry.count += 1;
-    byCategory.set(key, entry);
-  }
+/** Units of one category on the bench: SKUs, with "+N" for the rest. */
+export const renderCategoryUnits = (equipment: MappingEquipmentItem[], categoryId: number) => {
+  const units = categoryUnits(equipment, categoryId);
+  if (!units.length) return <EmptyMapping label="—" />;
+  const shown = units.slice(0, 2);
+  const hidden = units.length - shown.length;
   return (
-    <Popover content={<EquipmentList equipment={equipment} />} title={`${equipment.length} units on this bench`}>
-      <span className={styles.categoryChips} tabIndex={0}>
-        {[...byCategory.entries()].map(([key, { label, count }]) => (
-          <span key={key} className={styles.categoryChip}>
-            <span className={styles.chipIcon} aria-hidden="true">{categoryIcon(key)}</span>
-            {label}
-            <strong>{count}</strong>
-          </span>
-        ))}
-      </span>
-    </Popover>
+    <span className={styles.categoryChips}>
+      {shown.map((item) => (
+        <Link key={item.id} to={`${categoryPath(categoryKey(item))}?search=${encodeURIComponent(item.sku || item.name)}`} title={item.name}>
+          <span className={styles.categoryChip}><strong>{item.sku || item.name}</strong></span>
+        </Link>
+      ))}
+      {hidden > 0 && <span className={styles.categoryChip}>+{hidden}</span>}
+    </span>
+  );
+};
+
+/** The first unit's image of one category on the bench, or the category page's symbol when it has none. */
+export const renderCategoryImage = (equipment: MappingEquipmentItem[], categoryId: number, categoryName: string) => {
+  const units = categoryUnits(equipment, categoryId);
+  if (!units.length) return <EmptyMapping label="—" />;
+  const first = units[0];
+  const key = categoryKey(first) || categoryName.toLowerCase();
+  return (
+    <span className={styles.imageStack}>
+      <MappingImage src={first.image_url} label={first.name || first.sku} fallback={equipmentPageIcon(key)} />
+      {units.length > 1 && <span className={styles.imageMore}>+{units.length - 1}</span>}
+    </span>
   );
 };
 
