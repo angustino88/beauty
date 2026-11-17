@@ -1,4 +1,3 @@
-import { DesktopOutlined } from '@ant-design/icons';
 import type { ResourceSelectOption } from '@/components/inputs/ResourceOption';
 import type { IBookingBenchChoice } from '../types';
 
@@ -28,11 +27,11 @@ export function toBenchChoiceOption(bench: IBookingBenchChoice): ResourceSelectO
         {computerNames.length > 0 && (
           <span
             style={{
-              display: 'inline-flex', alignItems: 'center', gap: 4, minWidth: 0, color: 'var(--lm-text-secondary)',
+              minWidth: 0, color: 'var(--lm-text-secondary)',
               overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
             }}
           >
-            <DesktopOutlined />({computerNames.join(', ')})
+            ({computerNames.join(', ')})
           </span>
         )}
       </span>

@@ -4,7 +4,7 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import listPlugin from '@fullcalendar/list';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
-import { type Dispatch, type RefObject, type SetStateAction } from 'react';
+import { type CSSProperties, type Dispatch, type RefObject, type SetStateAction } from 'react';
 import styles from './Calendar.module.css';
 import dayjs, { type Dayjs } from 'dayjs';
 import { Popover } from 'antd';
@@ -13,6 +13,26 @@ import { DowntimeEventDetail, type DowntimeEventInfo } from './DowntimeEventDeta
 import { ExclamationCircleOutlined, ToolOutlined } from '@ant-design/icons';
 import { DATE_FORMAT } from '@/shared/utils/booking';
 import type { BenchBookingItem } from '../../types';
+
+// Tinted pairs from the theme. Green and orange are left out: they are the "mine" and "others'" booking fills.
+const INITIAL_TONES = ['primary', 'info', 'reserved', 'danger', 'neutral'] as const;
+
+function creatorInitialStyle(name: string): CSSProperties {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  const tone = INITIAL_TONES[Math.abs(hash) % INITIAL_TONES.length];
+  return {
+    color: `var(--lm-${tone}-fg)`,
+    background: `var(--lm-${tone}-bg)`,
+    borderColor: `var(--lm-${tone}-border)`,
+  };
+}
+
+const CreatorInitial = ({ name, className }: { name: string; className: string }) => (
+  <span className={className} style={creatorInitialStyle(name)} aria-hidden="true">
+    {name.trim().charAt(0).toUpperCase() || '?'}
+  </span>
+);
 
 type CalendarEventContentProps = {
   arg: EventContentArg;
@@ -51,7 +71,7 @@ const CalendarEventContent = ({ arg, refetchBooking }: CalendarEventContentProps
       </span>
       {creator && (
         <span className={styles.creatorBadge} title={creator}>
-          <span className={styles.creatorInitial} aria-hidden="true">{creator.charAt(0).toUpperCase()}</span>
+          <CreatorInitial name={creator} className={styles.creatorInitial} />
           <span className={styles.creatorName}>{creator}</span>
         </span>
       )}
@@ -74,8 +94,8 @@ const CalendarEventContent = ({ arg, refetchBooking }: CalendarEventContentProps
       <span className={styles.timeGridEventTitle} title={hoverTitle}>{event.title}</span>
       {creator && showCreator && (
         <span className={styles.timeGridEventCreator} title={creator}>
-          <span aria-hidden="true">{creator.charAt(0).toUpperCase()}</span>
-          {creator}
+          <CreatorInitial name={creator} className={styles.creatorMark} />
+          <span className={styles.creatorText}>{creator}</span>
         </span>
       )}
     </div>

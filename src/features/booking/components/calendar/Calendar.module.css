@@ -80,7 +80,7 @@
 .timeGridEventCreator {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 5px;
     overflow: hidden;
     margin-top: auto;
     color: var(--lm-text-secondary);
@@ -89,18 +89,22 @@
     white-space: nowrap;
 }
 
-.timeGridEventCreator > span {
+.creatorMark {
     display: inline-grid;
-    width: 15px;
-    height: 15px;
-    flex: 0 0 15px;
+    flex: 0 0 16px;
+    width: 16px;
+    height: 16px;
     place-items: center;
-    border: 1px solid rgba(32, 51, 44, 0.12);
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.62);
-    color: var(--lm-primary-fg);
-    font-size: 8px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    font-size: 9px;
     font-weight: 700;
+    line-height: 1;
+}
+
+.creatorText {
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .monthEvent {
@@ -163,14 +167,13 @@
 
 .creatorInitial {
     display: inline-grid;
-    width: 20px;
-    height: 20px;
-    flex: 0 0 20px;
+    width: 18px;
+    height: 18px;
+    flex: 0 0 18px;
     place-items: center;
-    border-radius: 50%;
-    background: var(--lm-primary);
-    color: #ffffff;
-    font-size: 9px;
+    border: 1px solid transparent;
+    border-radius: 5px;
+    font-size: 10px;
     font-weight: 700;
 }
 
