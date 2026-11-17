@@ -186,6 +186,15 @@
   outline-offset: 2px;
 }
 
+.assetImage {
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  object-fit: cover;
+  background: var(--lm-surface-muted);
+}
+
 .assetIcon {
   display: inline-flex;
   flex: 0 0 auto;

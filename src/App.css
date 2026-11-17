@@ -37,14 +37,14 @@
   --lm-booking-bg: color-mix(in srgb, var(--lm-success-solid) 25%, var(--lm-surface));
 }
 .lm-tone-other {
-  --lm-booking-solid: var(--lm-neutral-solid);
-  --lm-booking-bg: color-mix(in srgb, var(--lm-neutral-solid) 25%, var(--lm-surface));
+  --lm-booking-solid: var(--lm-warning-solid);
+  --lm-booking-bg: color-mix(in srgb, var(--lm-warning-solid) 25%, var(--lm-surface));
 }
 .fc .lm-event-mine { --lm-booking-solid: var(--lm-success-solid); --lm-booking-bg: color-mix(in srgb, var(--lm-success-solid) 25%, var(--lm-surface)); }
-.fc .lm-event-other { --lm-booking-solid: var(--lm-neutral-solid); --lm-booking-bg: color-mix(in srgb, var(--lm-neutral-solid) 25%, var(--lm-surface)); }
+.fc .lm-event-other { --lm-booking-solid: var(--lm-warning-solid); --lm-booking-bg: color-mix(in srgb, var(--lm-warning-solid) 25%, var(--lm-surface)); }
 
 /* Booking events: own = green (the today column is a faint purple tint). Fill vs today is only ~1.2:1 in both themes,
-   so the 4px left border carries the distinction (3.2:1 light, 5-6:1 dark against the today tint), others = neutral, downtime = hatched */
+   so the 4px left border carries the distinction (3.2:1 light, 5-6:1 dark against the today tint). Own = green, others = orange, downtime = hatched */
 .fc .lm-event {
   border-width: 0 0 0 4px !important;
   border-style: solid !important;

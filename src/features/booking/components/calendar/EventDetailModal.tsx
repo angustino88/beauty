@@ -69,7 +69,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
       ? [booking.computer.computer_name]
       : (choice?.computers ?? []).map((computer) => computer.name || computer.sku),
   ) || 'Unknown Bench';
-  // Same colour rule as the calendar event: own booking = green, others' = neutral.
+  // Same colour rule as the calendar event: own booking = green, others' = orange.
   const isMine = !!booking && myUserId != null && booking.creator?.id === myUserId;
 
   return (

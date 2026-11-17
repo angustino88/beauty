@@ -5,6 +5,7 @@ export interface MappingRoomRef {
   uid?: string;
   sku: string;
   name: string;
+  image_url?: string | null;
   layout_rows?: number | null;
   layout_columns?: number | null;
 }
@@ -27,6 +28,7 @@ export interface MappingStationRef {
   uid?: string;
   sku: string;
   name: string;
+  image_url?: string | null;
   room_id?: number | null;
   slot_id?: number | null;
 }
@@ -44,6 +46,7 @@ export interface MappingBenchRef {
   uid?: string;
   sku: string;
   name: string;
+  image_url?: string | null;
   setup_location_id?: number | null;
   station_slot_id?: number | null;
 }
@@ -58,6 +61,7 @@ export interface MappingEquipmentItem {
   uid?: string;
   sku: string;
   name: string;
+  image_url?: string | null;
   category: MappingEquipmentCategory;
   bench_id?: number | null;
   role?: string;

@@ -10,33 +10,15 @@ import type {
   ResourceMappingRow,
 } from "../types";
 import { MAPPING_STATE_LABELS } from "../utils/mappingExportConfig";
-import {
-  AccessoriesIcon,
-  ComputerIcon,
-  DebugHardwareIcon,
-  LabIcon,
-  LicenseIcon,
-  MonitorIcon,
-  NetworkInterfaceIcon,
-  PowerSupplyIcon,
-  RackIcon,
-  SampleIcon,
-} from "@/features/lab-equipment/shared/components/EquipmentIcons";
+import { LicenseIcon } from "@/features/lab-equipment/shared/components/EquipmentIcons";
+import { equipmentPageIcon, pageIcons } from "@/components/layout/pageIcons";
 import styles from "./MappingTable.module.css";
 
-const CATEGORY_ICONS: Record<string, ReactNode> = {
-  computing: <ComputerIcon />,
-  display: <MonitorIcon />,
-  debugging: <DebugHardwareIcon />,
-  networking: <NetworkInterfaceIcon />,
-  power: <PowerSupplyIcon />,
-  accessory: <AccessoriesIcon />,
-  sample: <SampleIcon />,
-  furniture: <RackIcon />,
-  instrument: <DebugHardwareIcon />,
-  laboratory: <LabIcon />,
-  mechanical: <PowerSupplyIcon />,
-};
+/** Equipment categories with a page of their own (`/lab-equipment/<key>`); others are listed under Other. */
+const CATEGORY_KEYS = new Set([
+  "computing", "display", "debugging", "networking", "power", "accessory",
+  "sample", "furniture", "instrument", "laboratory", "mechanical",
+]);
 
 export const ENTITY_PATHS = {
   room: "/spaces/room",
@@ -46,22 +28,28 @@ export const ENTITY_PATHS = {
 } as const;
 
 const categoryKey = (item: MappingEquipmentItem) => (item.category?.name || "Other").toLowerCase();
-export const categoryIcon = (key: string) => CATEGORY_ICONS[key] ?? <AccessoriesIcon />;
-export const categoryPath = (key: string) => `/lab-equipment/${CATEGORY_ICONS[key] ? key : "other"}`;
+/** The page symbol of a category, the same one its sidebar page uses. */
+export const categoryIcon = (key: string) => equipmentPageIcon(key);
+export const categoryPath = (key: string) => `/lab-equipment/${CATEGORY_KEYS.has(key) ? key : "other"}`;
 
-/** A linked resource: SKU on the first line, name on the second, an optional location line. */
+/**
+ * A linked resource: SKU on the first line, name on the second, an optional location line. The leading tile is the
+ * resource's image; without one, the symbol of the page the resource belongs to.
+ */
 export const MappingAsset = ({
   sku,
   name,
   meta,
   path,
   icon,
+  image,
 }: {
   sku?: string | null;
   name?: string | null;
   meta?: string | null;
   path: string;
   icon: ReactNode;
+  image?: string | null;
 }) => {
   const primary = sku || name || "—";
   const secondary = sku && name && name !== sku ? name : null;
@@ -72,7 +60,9 @@ export const MappingAsset = ({
       title={[secondary ? `${secondary} (${primary})` : primary, meta].filter(Boolean).join(" · ")}
       to={`${path}?search=${encodeURIComponent(sku || name || "")}`}
     >
-      <span className={styles.assetIcon} aria-hidden="true">{icon}</span>
+      {image
+        ? <img className={styles.assetImage} src={image} alt="" loading="lazy" />
+        : <span className={styles.assetIcon} aria-hidden="true">{icon}</span>}
       <span className={styles.assetText}>
         <strong className={styles.assetSku}>{primary}</strong>
         {secondary && <span>{secondary}</span>}
@@ -113,7 +103,8 @@ export const renderMappingStatus = (row: ResourceMappingRow) => {
 };
 
 export const renderBenchTag = (row: ResourceMappingRow) => (
-  <MappingAsset sku={row.bench.sku} name={row.bench.name} path={ENTITY_PATHS.bench} icon={<ComputerIcon />} />
+  <MappingAsset sku={row.bench.sku} name={row.bench.name} path={ENTITY_PATHS.bench} icon={pageIcons.benches}
+    image={row.bench.image_url} />
 );
 
 export const renderStationTag = (row: ResourceMappingRow) => {
@@ -124,7 +115,8 @@ export const renderStationTag = (row: ResourceMappingRow) => {
       name={row.station.name}
       meta={row.station_slot ? `Slot ${row.station_slot.slot_code}` : null}
       path={ENTITY_PATHS.station}
-      icon={<RackIcon />}
+      icon={pageIcons.stations}
+      image={row.station.image_url}
     />
   );
 };
@@ -137,7 +129,8 @@ export const renderRoomTag = (row: ResourceMappingRow) => {
       name={row.room.name}
       meta={row.room_slot ? `Slot ${row.room_slot.slot_code}` : null}
       path={ENTITY_PATHS.room}
-      icon={<LabIcon />}
+      icon={pageIcons.rooms}
+      image={row.room.image_url}
     />
   );
 };
@@ -154,6 +147,7 @@ const EquipmentList = ({ equipment }: { equipment: MappingEquipmentItem[] }) => 
           meta={[item.category.name, item.role && item.role !== "default" ? item.role : null].filter(Boolean).join(" · ")}
           path={categoryPath(key)}
           icon={categoryIcon(key)}
+          image={item.image_url}
         />
       );
     })}

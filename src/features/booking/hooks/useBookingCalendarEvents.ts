@@ -81,7 +81,7 @@ export function useBookingCalendarEvents() {
                   diffHours >= 23
                     ? dayjs(endStr).add(1, 'day').format(CALENDAR_DATETIME_FORMAT)
                     : endStr,
-                // Colours come from the theme (App.css .lm-event-*): own bookings in green, others' neutral.
+                // Colours come from the theme (App.css .lm-event-*): own bookings in green, others' orange.
                 // The event title is the project and reason; the bench and computer are in the detail popover.
                 classNames: ['lm-event', isMine ? 'lm-event-mine' : 'lm-event-other'],
                 allDay: diffHours >= 23,

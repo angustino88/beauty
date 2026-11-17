@@ -57,6 +57,7 @@ export function mapResourceMappingDataToRows(rawData: unknown): ResourceMappingR
     uid: asOptionalString(r.uid),
     sku: asString(r.sku),
     name: asString(r.name),
+    image_url: asOptionalString(r.image_url) ?? null,
     layout_rows: asNullableNumber(r.layout_rows),
     layout_columns: asNullableNumber(r.layout_columns),
   })));
@@ -77,6 +78,7 @@ export function mapResourceMappingDataToRows(rawData: unknown): ResourceMappingR
     uid: asOptionalString(s.uid),
     sku: asString(s.sku),
     name: asString(s.name),
+    image_url: asOptionalString(s.image_url) ?? null,
     room_id: asNullableNumber(s.room_id),
     slot_id: asNullableNumber(s.slot_id),
   })));
@@ -121,6 +123,7 @@ export function mapResourceMappingDataToRows(rawData: unknown): ResourceMappingR
       uid: asOptionalString(eq.uid),
       sku: asString(eq.sku),
       name: asString(eq.name),
+      image_url: asOptionalString(eq.image_url) ?? null,
       category: { id: asNumber(category.id), name: asString(category.name, "Uncategorized") || "Uncategorized" },
       bench_id: benchId,
       role: asOptionalString(assignment.role),
@@ -142,6 +145,7 @@ export function mapResourceMappingDataToRows(rawData: unknown): ResourceMappingR
         uid: asOptionalString(b.uid),
         sku: asString(b.sku),
         name: asString(b.name),
+        image_url: asOptionalString(b.image_url) ?? null,
         setup_location_id: asNullableNumber(b.setup_location_id),
         station_slot_id: asNullableNumber(b.station_slot_id),
       };
