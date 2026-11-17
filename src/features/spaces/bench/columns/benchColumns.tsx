@@ -7,13 +7,7 @@ import {
 } from "@/features/lab-equipment/shared";
 import { pageIcons } from "@/components/layout/pageIcons";
 import type { IBench } from "../types";
-import { ActivityCell, AvailabilityCell, LifecycleCell } from "@/features/spaces/shared/components/ResourceStateCells";
-import {
-  ACTIVITY_FILTERS,
-  AVAILABILITY_FILTERS,
-  LIFECYCLE_FILTERS,
-  STATE_COLUMN_HINTS,
-} from "@/features/spaces/shared/resourceStatusFilter";
+import { buildStateColumns } from "@/features/spaces/shared/stateColumns";
 import { BenchLocationCell } from "./BenchLocationCell";
 
 interface BuildBenchColumnsArgs {
@@ -65,34 +59,8 @@ export const buildBenchColumns = ({
       align: "center",
       render: (_: unknown, record) => renderImageCell(record.image, pageIcons.benches),
     },
-    // Three independent states, three columns, three server filters (see resourceStatusFilter.ts).
-    {
-      title: "Availability",
-      key: "status",
-      width: 170,
-      filters: AVAILABILITY_FILTERS,
-      filteredValue: activeFilters.status ?? null,
-      onHeaderCell: () => ({ title: STATE_COLUMN_HINTS.availability }),
-      render: (_, record) => <AvailabilityCell state={record} />,
-    },
-    {
-      title: "Activity",
-      key: "activity",
-      width: 150,
-      filters: ACTIVITY_FILTERS,
-      filteredValue: activeFilters.activity ?? null,
-      onHeaderCell: () => ({ title: STATE_COLUMN_HINTS.activity }),
-      render: (_, record) => <ActivityCell state={record} />,
-    },
-    {
-      title: "Lifecycle",
-      key: "lifecycle",
-      width: 140,
-      filters: LIFECYCLE_FILTERS,
-      filteredValue: activeFilters.lifecycle ?? null,
-      onHeaderCell: () => ({ title: STATE_COLUMN_HINTS.lifecycle }),
-      render: (_, record) => <LifecycleCell state={record} />,
-    },
+    // Availability, Activity and Lifecycle: the same three columns as rooms and stations.
+    ...buildStateColumns<IBench>("bench", activeFilters),
     {
       title: "Station & Room",
       key: "location",

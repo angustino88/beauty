@@ -79,7 +79,6 @@ export default function RoomPage() {
   const columns = buildRoomColumns({
     activeFilters: table.filters,
     filtersMap: table.filtersMap,
-    statusFilters: table.statusFilters,
     actionsRenderer,
   });
 

@@ -96,7 +96,6 @@ export default function StationPage() {
   const { data: users } = useGetUsersQuery();
   const ownerFallback = useMemo(() => (users ?? []).map((u) => ({ text: u.display_name || u.username || String(u.id), value: String(u.id) })), [users]);
   const ownerFilters = useMemo(() => facetToAntdFilters(getFacetOptions(facets, 'owner', 'owner_id', 'primary_owner'))?.map(({ text, value }) => ({ text, value: String(value) })) ?? ownerFallback, [facets, ownerFallback]);
-  const statusFilters = useMemo(() => facetToAntdFilters(getFacetOptions(facets, 'status', 'status_type'))?.map(({ text, value }) => ({ text, value: String(value) })) ?? [], [facets]);
 
   const formFields: FieldConfig[] = useMemo(
     () => [
@@ -152,7 +151,6 @@ export default function StationPage() {
     activeFilters: table.filters,
     roomFilters,
     ownerFilters,
-    statusFilters,
     actionsRenderer,
   });
 

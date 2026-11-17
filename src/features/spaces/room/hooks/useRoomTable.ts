@@ -28,7 +28,13 @@ export function useRoomTable() {
       skipPollingIfUnfocused: true,
     },
   );
-  const serverFilter = useServerEquipmentFilter<IRoom>({ filters, filterKey: 'Room', filterRules: EQUIPMENT_FILTER_RULES.Room, page, mapItem: mapRoomApiItem });
+  // The state columns (status = availability, activity, lifecycle) filter on the server's
+  // condition, activity_status and lifecycle_status parameters.
+  const serverFilters = useMemo(() => {
+    const { status, activity, lifecycle, ...rest } = filters;
+    return { ...rest, condition: status ?? null, activity_status: activity ?? null, lifecycle_status: lifecycle ?? null };
+  }, [filters]);
+  const serverFilter = useServerEquipmentFilter<IRoom>({ filters: serverFilters, filterKey: 'Room', filterRules: EQUIPMENT_FILTER_RULES.Room, page, mapItem: mapRoomApiItem });
   const dropdownQuery = useGetRoomDropdownQuery();
   const facetsQuery = useGetRoomFiltersQuery();
   const usersQuery    = useGetUsersQuery();

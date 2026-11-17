@@ -101,9 +101,8 @@ export interface ResourceBadgeResult {
  * 5. If room or station and operational -> { text: "Operational", tone: "success" }
  * 6. Default (bench/asset) -> { text: "Available", tone: "success" }
  *
- * Booking activity (in use now, booked later today) is a separate field and a
- * separate state machine, so it never replaces this badge: show it next to the
- * badge with resourceActivityMarker().
+ * Booking activity is a separate field and state machine; tables show it in its
+ * own column (resourceStatusViews.activityView).
  */
 export function resourceBadge(
   r?: Partial<ResourceState> | null,
@@ -131,32 +130,6 @@ export function resourceBadge(
     return { text: 'Operational', tone: 'success' };
   }
   return { text: 'Available', tone: 'success' };
-}
-
-export interface ResourceActivityMarker {
-  value: Exclude<ActivityStatus, 'idle'>;
-  /** Short text for the marker beside the status badge. */
-  text: string;
-  /** Plain-language detail for the tooltip. */
-  description: string;
-  tone: BadgeTone;
-}
-
-/**
- * Booking activity shown beside the status badge, the way the dashboard shows
- * "Booked" beside a bench's activity status. Idle (no booking) shows nothing.
- *   active    -> "In use"  (a booking in progress, or live use reported on the bench)
- *   scheduled -> "Booked"  (an approved booking later today)
- */
-export function resourceActivityMarker(r?: Partial<ResourceState> | null): ResourceActivityMarker | null {
-  const value = r?.activity_status?.value;
-  if (value === 'active') {
-    return { value, text: 'In use', description: 'In use now: a booking is in progress or someone is working on it.', tone: 'info' };
-  }
-  if (value === 'scheduled') {
-    return { value, text: 'Booked', description: 'Booked: an approved booking starts later today.', tone: 'reserved' };
-  }
-  return null;
 }
 
 /**

@@ -1,7 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
-  resourceActivityMarker,
   resourceBadge,
   parseDowntimeBookingConflicts,
   getAllowedLifecycleTransitions,
@@ -76,7 +75,6 @@ test('resourceBadge keeps booking activity out of the status badge', () => {
     status: null,
   };
   assert.deepEqual(resourceBadge(active), { text: 'Available', tone: 'success' });
-  assert.equal(resourceActivityMarker(active)?.text, 'In use');
 
   const scheduled: ResourceState = {
     lifecycle_status: { value: 'in_service', label: 'In Service' },
@@ -86,10 +84,6 @@ test('resourceBadge keeps booking activity out of the status badge', () => {
     status: null,
   };
   assert.deepEqual(resourceBadge(scheduled), { text: 'Available', tone: 'success' });
-  assert.deepEqual(
-    { text: resourceActivityMarker(scheduled)?.text, tone: resourceActivityMarker(scheduled)?.tone },
-    { text: 'Booked', tone: 'reserved' },
-  );
 
   const idle: ResourceState = {
     lifecycle_status: { value: 'in_service', label: 'In Service' },
@@ -101,7 +95,6 @@ test('resourceBadge keeps booking activity out of the status badge', () => {
   assert.deepEqual(resourceBadge(idle), { text: 'Available', tone: 'success' });
   assert.deepEqual(resourceBadge(idle, 'station'), { text: 'Operational', tone: 'success' });
   assert.deepEqual(resourceBadge(idle, 'room'), { text: 'Operational', tone: 'success' });
-  assert.equal(resourceActivityMarker(idle), null);
 });
 
 test('parseDowntimeBookingConflicts extracts booking details', () => {

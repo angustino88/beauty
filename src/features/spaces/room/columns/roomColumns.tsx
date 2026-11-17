@@ -13,8 +13,7 @@ import {
   renderRoomRacksCell,
   renderRoomSpecsCell,
 } from "./roomColumnRenderers";
-import SpaceStatusBadge from "@/features/spaces/shared/SpaceStatusBadge";
-import { readSpaceStatus } from "@/features/spaces/shared/spaceStatus";
+import { buildStateColumns } from "@/features/spaces/shared/stateColumns";
 
 // Re-export config & types so existing consumers don't need to change imports
 export type { RoomFieldConfig, RoomOptionSource, RoomSpecField } from "./roomConfig";
@@ -34,7 +33,6 @@ interface BuildColumnsArgs {
   /** Column filter dropdown items keyed by ROOM_OPTIONS_CONFIG key */
   filtersMap: Record<string, FilterItem[]>;
   /** Backend facet-derived status filter options */
-  statusFilters: FilterItem[];
   actionsRenderer: (_: unknown, record: IRoom) => ReactNode;
 }
 
@@ -44,41 +42,14 @@ const text = (key: string) => (_: unknown, record: IRoom) => readField(key, reco
 export const buildRoomColumns = ({
   activeFilters,
   filtersMap,
-  statusFilters,
   actionsRenderer,
 }: BuildColumnsArgs) => [
   { title: "ID", dataIndex: "id", key: "id", width: 70, fixed: "left" as const },
   { title: "SKU", dataIndex: "sku", key: "sku", width: 120, fixed: "left" as const },
   { title: "Name", key: "name", width: 180, fixed: "left" as const, render: text("name") },
   { title: "Image", key: "image", width: 90, align: "center" as const, render: (_: unknown, record: IRoom) => renderImageCell(record.image, pageIcons.rooms) },
-  {
-    title: "Status",
-    key: "status",
-    width: 172,
-    align: "left" as const,
-    onHeaderCell: () => ({ className: 'centeredFilterHeader' }),
-    filters: statusFilters,
-    filterSearch: true,
-    filteredValue: activeFilters.status ?? null,
-    onFilter: (value: boolean | Key, r: IRoom) => {
-      const val = String(value);
-      return (
-        r.lifecycle_status?.value === val ||
-        r.access_policy?.value === val ||
-        r.condition?.value === val ||
-        r.activity_status?.value === val ||
-        readSpaceStatus(r) === val
-      );
-    },
-    render: (_: unknown, record: IRoom) => (
-      <SpaceStatusBadge
-        spaceKind="room"
-        resourceState={record}
-        accessPolicy={record.access_policy}
-        status={readSpaceStatus(record)}
-      />
-    ),
-  },
+  // Availability, Activity and Lifecycle: the same three columns as stations and benches.
+  ...buildStateColumns<IRoom>("room", activeFilters),
   { title: "Location", key: "location", width: 220, render: (_: unknown, record: IRoom) => renderRoomLocationCell(record) },
   {
     title: "Country",

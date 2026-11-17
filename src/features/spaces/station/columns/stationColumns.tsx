@@ -7,15 +7,13 @@ import {
 import { pageIcons } from "@/components/layout/pageIcons";
 import type { IStation } from "../types";
 import { SpaceLocationEmpty, SpaceLocationRow, SpaceLocationStack } from "@/features/spaces/shared/components/SpaceLocation";
-import SpaceStatusBadge from "@/features/spaces/shared/SpaceStatusBadge";
-import { readSpaceStatus } from "@/features/spaces/shared/spaceStatus";
+import { buildStateColumns } from "@/features/spaces/shared/stateColumns";
 
 interface BuildStationColumnsArgs {
   isAdmin: boolean;
   activeFilters: Record<string, Key[] | null>;
   roomFilters: Array<{ text: string; value: string }>;
   ownerFilters: Array<{ text: string; value: string }>;
-  statusFilters: Array<{ text: string; value: string }>;
   actionsRenderer: (_: unknown, record: IStation) => ReactNode;
 }
 
@@ -23,7 +21,6 @@ export const buildStationColumns = ({
   activeFilters,
   roomFilters,
   ownerFilters,
-  statusFilters,
   actionsRenderer,
 }: BuildStationColumnsArgs): ColumnsType<IStation> => {
   return [
@@ -57,32 +54,8 @@ export const buildStationColumns = ({
       align: "center",
       render: (_: unknown, record) => renderImageCell(record.image, pageIcons.stations),
     },
-    {
-      title: "Status",
-      key: "status",
-      width: 172,
-      align: "left",
-      filters: statusFilters,
-      filteredValue: activeFilters.status ?? null,
-      onFilter: (value: boolean | Key, record: IStation) => {
-        const val = String(value);
-        return (
-          record.lifecycle_status?.value === val ||
-          record.access_policy?.value === val ||
-          record.condition?.value === val ||
-          record.activity_status?.value === val ||
-          readSpaceStatus(record) === val
-        );
-      },
-      render: (_, record) => (
-        <SpaceStatusBadge
-          spaceKind="station"
-          resourceState={record}
-          accessPolicy={record.access_policy}
-          status={readSpaceStatus(record)}
-        />
-      ),
-    },
+    // Availability, Activity and Lifecycle: the same three columns as rooms and benches.
+    ...buildStateColumns<IStation>("station", activeFilters),
     {
       title: "Room & Slot",
       key: "room",

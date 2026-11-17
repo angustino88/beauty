@@ -18,7 +18,7 @@ export const AVAILABILITY_FILTERS: Filter[] = [
 ];
 
 export const ACTIVITY_FILTERS: Filter[] = [
-  { text: "No booking today", value: "idle" },
+  { text: "No booking", value: "idle" },
   { text: "Booked (later today)", value: "scheduled" },
   { text: "In use now", value: "active" },
 ];
@@ -31,7 +31,7 @@ export const LIFECYCLE_FILTERS: Filter[] = [
 
 export const STATE_COLUMN_HINTS = {
   availability: "Can it be used now? Set by its own condition and by downtime of its station or room.",
-  activity: "Bookings today: in use now, booked for later today, or none.",
+  activity: "Bookings today: in use now, booked for later today, or none. Rooms and stations count the benches they hold.",
   lifecycle: "Stage in its life: planned, in service, or retired.",
 } as const;
 

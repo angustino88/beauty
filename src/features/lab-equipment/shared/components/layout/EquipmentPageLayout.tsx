@@ -143,9 +143,9 @@ export default function EquipmentPageLayout<T extends { id: number | string }>({
   const [selectedRecord, setSelectedRecord] = useState<T | null>(null);
   const [visibleKeys, setVisibleKeys] = useState<string[] | undefined>(undefined);
   const inventoryDefaultKeys = spaceKind === 'room'
-    ? ['id', 'sku', 'name', 'image', 'status', 'location', 'country', 'building', 'capacity', 'primary_owner', 'actions']
+    ? ['id', 'sku', 'name', 'image', 'status', 'activity', 'lifecycle', 'location', 'country', 'building', 'capacity', 'primary_owner', 'actions']
     : spaceKind === 'station'
-      ? ['id', 'sku', 'name', 'image', 'status', 'room', 'bench_capacity', 'available_power_w', 'owner', 'actions']
+      ? ['id', 'sku', 'name', 'image', 'status', 'activity', 'lifecycle', 'room', 'bench_capacity', 'available_power_w', 'owner', 'actions']
       : spaceKind === 'bench'
         ? ['id', 'sku', 'name', 'image', 'status', 'activity', 'lifecycle', 'location', 'group', 'type', 'equipment_count', 'actions']
         : professionalTable ? ['id', 'sku', 'name', 'image', 'status', 'placement', 'owner', 'kind', 'type', 'manufacturer', 'product_model', 'actions'] : undefined;
