@@ -4,6 +4,7 @@ import type { EventInput } from '@fullcalendar/core';
 import { useLazyGetBenchBookingsQuery } from '../api';
 import { useLazyGetDowntimesQuery } from '@/features/spaces/shared/downtimeApi';
 import { useAuthState } from '@/features/auth/hooks/useAuthState';
+import { benchColor } from '../utils/benchColors';
 
 const CALENDAR_DATETIME_FORMAT = 'YYYY-MM-DDTHH:mm:ss';
 
@@ -87,6 +88,9 @@ export function useBookingCalendarEvents() {
                 allDay: diffHours >= 23,
                 stick: true,
                 booking,
+                // With several benches on screen, each booking carries its bench's colour and SKU.
+                benchColor: benchIds.length > 1 ? benchColor(benchIds, booking.bench?.id) : undefined,
+                benchSku: benchIds.length > 1 ? booking.bench?.sku || booking.bench?.name : undefined,
               },
             ];
           });

@@ -31,15 +31,24 @@ const CalendarEventContent = ({ arg, refetchBooking }: CalendarEventContentProps
   const isCompactEvent = !event.allDay && durationMinutes <= 45;
   const compactTimeText = event.start ? dayjs(event.start).format('h:mm A') : timeText;
   const showCreator = durationMinutes >= 90;
+  const benchColor = event.extendedProps?.benchColor as string | undefined;
+  const benchSku = event.extendedProps?.benchSku as string | undefined;
+  const benchDot = benchColor
+    ? <i className={styles.benchDot} style={{ background: benchColor }} title={benchSku} aria-label={benchSku} />
+    : null;
 
   const content = isMonthView ? (
     <div className={styles.monthEvent}>
+      {benchDot}
       {timeText && <span className={styles.monthEventTime}>{timeText}</span>}
       <span className={styles.monthEventTitle}>{event.title}</span>
     </div>
   ) : isListView ? (
     <div className={styles.listEventContent}>
-      <span className={styles.listEventTitle}>{event.title}</span>
+      <span className={styles.listEventTitle}>
+        {benchDot && <>{benchDot}{' '}<span className={styles.listBench}>{benchSku}</span>{' · '}</>}
+        {event.title}
+      </span>
       {creator && (
         <span className={styles.creatorBadge} title={creator}>
           <span className={styles.creatorInitial} aria-hidden="true">{creator.charAt(0).toUpperCase()}</span>
@@ -48,12 +57,19 @@ const CalendarEventContent = ({ arg, refetchBooking }: CalendarEventContentProps
       )}
     </div>
   ) : isCompactEvent ? (
-    <div className={styles.compactTimeGridEvent} title={`${timeText} ${hoverTitle}`}>
+    <div className={styles.compactTimeGridEvent} title={`${benchSku ? `${benchSku} · ` : ''}${timeText} ${hoverTitle}`}>
+      {benchDot}
       {compactTimeText && <span className={styles.compactEventTime}>{compactTimeText}</span>}
       <span className={styles.compactEventTitle}>{event.title}</span>
     </div>
   ) : (
     <div className={styles.timeGridEvent}>
+      {benchColor && benchSku && (
+        <span className={styles.benchLabel} style={{ color: benchColor }}>
+          <i className={styles.benchDot} style={{ background: benchColor }} aria-hidden="true" />
+          {benchSku}
+        </span>
+      )}
       {timeText && <span className={styles.timeGridEventTime}>{timeText}</span>}
       <span className={styles.timeGridEventTitle} title={hoverTitle}>{event.title}</span>
       {creator && showCreator && (

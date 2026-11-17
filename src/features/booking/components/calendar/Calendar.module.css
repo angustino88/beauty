@@ -404,3 +404,26 @@
     overflow: hidden;
 }
 .downtimeEventCompact .downtimeTitle { flex: 1 1 auto; }
+
+/* Bench colour, shown when several benches are on the calendar */
+.benchDot {
+    display: inline-block;
+    flex: 0 0 auto;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    box-shadow: 0 0 0 1.5px var(--lm-surface);
+}
+.benchLabel {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    min-width: 0;
+    overflow: hidden;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.listBench { color: var(--lm-text-secondary); font-weight: 600; }
