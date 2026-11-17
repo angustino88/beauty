@@ -5,10 +5,11 @@ import {
   UserOutlined,
   LockOutlined,
 } from '@ant-design/icons';
-import { Space, Spin, Typography, Button, theme } from 'antd';
+import { Space, Spin, Typography, Button } from 'antd';
 import dayjs from 'dayjs';
 import React, { useEffect, useMemo, useState } from 'react';
-import { useLazyGetBenchBookingByIdQuery } from '../../api';
+import { useGetBookingBenchChoicesQuery, useLazyGetBenchBookingByIdQuery } from '../../api';
+import { formatBenchLabel } from '../../utils/benchChoiceOption';
 import { useAuthState } from '@/features/auth/hooks/useAuthState';
 import { BenchBookingEdit } from '../BenchBookingEdit';
 import type { BenchBookingItem } from '../../types';
@@ -28,7 +29,6 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
   refetchBooking,
   listedBooking,
 }) => {
-  const { token } = theme.useToken();
   const { id: myUserId, permissionGroups } = useAuthState();
   const [fetchBooking, { data: fetchedBooking, isFetching }] = useLazyGetBenchBookingByIdQuery();
   const booking = listedBooking ?? fetchedBooking;
@@ -59,8 +59,18 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
 
   const projectName = booking?.project?.name || 'Unknown project';
   const reason = booking?.reason || '';
-  const benchName = booking?.bench?.sku || booking?.bench?.name || 'Unknown Bench';
-  const computerName = booking?.computer?.computer_name;
+  // The list does not carry the SKU or computers of a bench; the cached bench choices do (same list as the filter).
+  const { data: benchChoices } = useGetBookingBenchChoicesQuery();
+  const choice = benchChoices?.find((bench) => bench.id === booking?.bench?.id);
+  const benchLabel = formatBenchLabel(
+    booking?.bench?.sku || choice?.sku,
+    booking?.bench?.name || choice?.name,
+    booking?.computer?.computer_name
+      ? [booking.computer.computer_name]
+      : (choice?.computers ?? []).map((computer) => computer.name || computer.sku),
+  ) || 'Unknown Bench';
+  // Same colour rule as the calendar event: own booking = green, others' = orange.
+  const isMine = !!booking && myUserId != null && booking.creator?.id === myUserId;
 
   return (
     <>
@@ -68,14 +78,15 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
         {booking ? (
           <>
             <div
+              className={isMine ? 'lm-tone-mine' : 'lm-tone-other'}
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 padding: '8px 10px 6px 10px',
                 borderBottom: '1px solid var(--lm-border)',
                 borderRadius: '8px 8px 0 0',
-                backgroundColor: token.colorPrimaryBg,
-                borderColor: token.colorPrimaryBorder,
+                backgroundColor: 'var(--lm-booking-bg)',
+                borderLeft: '4px solid var(--lm-booking-solid)',
               }}
               onClick={(e) => e.stopPropagation()}
             >
@@ -102,7 +113,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
               </Typography.Text>
               <Typography.Text style={{ color: 'var(--lm-text-secondary)', fontSize: '12px' }}>
                 <DesktopOutlined />{' '}
-                {`${benchName}${computerName ? ` (${computerName})` : ''}`}
+                {benchLabel}
               </Typography.Text>
               <Typography.Text style={{ color: 'var(--lm-text-secondary)', fontSize: '12px' }}>
                 <UserOutlined /> {booking.creator?.display_name || booking.creator?.username}

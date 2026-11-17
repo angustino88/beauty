@@ -4,8 +4,10 @@ import { Space, Tag, Tooltip } from "antd";
 import { Link } from "react-router-dom";
 import {
   buildEquipmentInfo,
+  renderImageCell,
   renderOwnerCell,
 } from "@/features/lab-equipment/shared";
+import { pageIcons } from "@/components/layout/pageIcons";
 import type { IBench } from "../types";
 import SpaceStatusBadge from "@/features/spaces/shared/SpaceStatusBadge";
 import { readSpaceStatus } from "@/features/spaces/shared/spaceStatus";
@@ -53,6 +55,13 @@ export const buildBenchColumns = ({
       width: 180,
       fixed: "left",
       render: (name: string, record) => <strong>{name || record.sku}</strong>,
+    },
+    {
+      title: "Image",
+      key: "image",
+      width: 90,
+      align: "center",
+      render: (_: unknown, record) => renderImageCell(record.image, pageIcons.benches),
     },
     {
       title: "Status",

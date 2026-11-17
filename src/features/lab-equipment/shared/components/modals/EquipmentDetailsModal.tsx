@@ -25,6 +25,7 @@ import { equipmentStatusValue } from '../../utils/equipmentStatus';
 import EquipmentStatus from '../status/EquipmentStatus';
 import { useGetEquipmentDetailQuery } from '../../../api/equipmentApi';
 import presentation from './EquipmentDetailsModal.module.css';
+import { resourcePageIcon } from '@/components/layout/pageIcons';
 
 type EquipmentRecord = Record<string, unknown> & { id: number | string };
 
@@ -685,7 +686,7 @@ export default function EquipmentDetailsModal({
             {image ? (
               <Image src={image} alt={name} preview={{ mask: 'View image' }} />
             ) : (
-              <span>{name.charAt(0).toUpperCase()}</span>
+              <span role="img" aria-label="No image">{resourcePageIcon(equipmentType)}</span>
             )}
           </div>
           <div className={styles.detailsIdentity}>

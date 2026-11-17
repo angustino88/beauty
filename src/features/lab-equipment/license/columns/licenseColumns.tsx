@@ -13,6 +13,7 @@ import {
 import LicenseStatus from '../../shared/components/status/LicenseStatus';
 import LicenseInformationCell from './LicenseInformationCell';
 import type { ILicense } from '../types';
+import { pageIcons } from '@/components/layout/pageIcons';
 
 type FilterItem = { text: string; value: string };
 type SelectOption = { label: string; value: number };
@@ -336,7 +337,7 @@ export const buildLicenseColumns = ({
     render: (_: unknown, record: ILicense) => (
       onImageChange
         ? <InlineImageUpload key={record.id} currentImage={record.image} onImageChange={(file) => onImageChange(file, record)} />
-        : renderImageCell(record.image)
+        : renderImageCell(record.image, pageIcons.licenses)
     ),
   },
   {

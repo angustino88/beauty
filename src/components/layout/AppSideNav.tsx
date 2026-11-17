@@ -1,11 +1,5 @@
 import {
-  ApiOutlined, AppstoreOutlined, BankOutlined, BarChartOutlined, BuildOutlined,
-  BugOutlined, CalendarOutlined, CustomerServiceOutlined, DatabaseOutlined,
-  DesktopOutlined, ExperimentOutlined, FileProtectOutlined, HeatMapOutlined,
-  HistoryOutlined, HomeOutlined, InboxOutlined, LaptopOutlined, LayoutOutlined,
-  LeftOutlined, PieChartOutlined, RightOutlined, SafetyOutlined, SearchOutlined,
-  SettingOutlined, ShoppingCartOutlined, SkinOutlined, ThunderboltOutlined,
-  ToolOutlined, TrophyOutlined, WalletOutlined,
+  LeftOutlined, RightOutlined, SearchOutlined,
 } from '@ant-design/icons';
 import { Button, Input, Layout, Menu, Tooltip, type MenuProps } from 'antd';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -16,30 +10,12 @@ import { useAppDispatch } from '@/app/store';
 import styleCss from './layout.module.css';
 import UserAvatarToggle from './UserAvatarToggle';
 import { findNavigationPage, getNavigationSections, searchNavigationPages } from './navigation';
+import { pageIcons, sectionIcons } from './pageIcons';
 
 interface AppSideNavProps {
   collapsed: boolean;
   setCollapsed: (value: boolean) => void;
 }
-
-const sectionIcons: Record<string, React.ReactNode> = {
-  spaces: <BankOutlined />,
-  equipment: <DesktopOutlined />, finance: <WalletOutlined />, insights: <BarChartOutlined />,
-};
-
-const pageIcons: Record<string, React.ReactNode> = {
-  dashboard: <HomeOutlined />, '3d-dashboard': <HeatMapOutlined />, leaderboard: <TrophyOutlined />,
-  'booking-calendar': <CalendarOutlined />, 'my-bookings': <HistoryOutlined />,
-  mapping: <LayoutOutlined />, rooms: <BankOutlined />, stations: <DatabaseOutlined />,
-  benches: <ExperimentOutlined />, computing: <LaptopOutlined />, display: <DesktopOutlined />,
-  debugging: <BugOutlined />, networking: <ApiOutlined />, power: <ThunderboltOutlined />,
-  accessories: <AppstoreOutlined />, samples: <ExperimentOutlined />, furniture: <SkinOutlined />,
-  instruments: <ToolOutlined />, laboratory: <BuildOutlined />, mechanical: <SettingOutlined />,
-  other: <InboxOutlined />, licenses: <FileProtectOutlined />,
-  purchases: <ShoppingCartOutlined />, expenses: <WalletOutlined />, 'finance-report': <PieChartOutlined />,
-  analytics: <BarChartOutlined />, monitoring: <SafetyOutlined />,
-  'support-tickets': <CustomerServiceOutlined />,
-};
 
 const AppSideNav = ({ collapsed, setCollapsed }: AppSideNavProps) => {
   const { pathname } = useLocation();

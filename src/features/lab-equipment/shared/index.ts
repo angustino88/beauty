@@ -89,7 +89,6 @@ export {
   RACK_STATUS_FILTER_OPTIONS,
 } from "./utils/parity";
 export {
-  DEFAULT_IMAGE,
   renderAuditCell,
   LastAuditCell,
   renderImageCell,
