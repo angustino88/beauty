@@ -640,7 +640,7 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
         key: 'monitoring',
         width: 150,
         align: 'center' as const,
-        render: (_value: unknown, record: EquipmentItem) => <MonitoredDevicesPopover computingId={record.id} />,
+        render: (_value: unknown, record: EquipmentItem) => <MonitoredDevicesPopover computingId={record.id} computingName={record.name} />,
       },
       );
     }

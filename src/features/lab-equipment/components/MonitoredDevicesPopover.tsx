@@ -1,101 +1,133 @@
 import { useState } from 'react';
-import { Alert, Button, Empty, Pagination, Popover, Spin, Tag, Tooltip } from 'antd';
+import { Alert, Button, Empty, Popover, Spin } from 'antd';
 import { RadarChartOutlined } from '@ant-design/icons';
-import dayjs from 'dayjs';
-import { useGetDeviceConnectionsQuery } from '../api/deviceConnectionsApi';
-import { clampPage, deviceConnectionPresentation } from '../shared/utils/deviceConnectionPresentation';
-import type { DeviceConnection } from '../types/deviceConnections';
+import { Link } from 'react-router-dom';
+import { useGetDeviceConnectionsQuery } from '../devices/devicesApi';
+import { connectionCounts, deviceConnectionPresentation, formatObserved } from '../devices/devicePresentation';
+import { DeviceDetailDrawer } from '../devices/DeviceDetailDrawer';
+import { DeviceDot } from '../devices/DeviceBits';
+import type { DeviceConnection } from '../devices/types';
 import tableStyles from '../shared/components/layout/InventoryPresentation.module.css';
-import styles from './MonitoredDevicesPopover.module.css';
+import styles from '../devices/Devices.module.css';
 
 const POLLING_INTERVAL_MS = 30_000;
+/** One popover page; the full list lives in Lab Monitoring. */
+const POPOVER_PAGE_SIZE = 20;
 
-function Connection({ connection, isAvailable }: { connection: DeviceConnection; isAvailable: boolean }) {
+function DeviceRow({ connection, isAvailable, onOpen }: { connection: DeviceConnection; isAvailable: boolean; onOpen: () => void }) {
   const presentation = deviceConnectionPresentation(connection, isAvailable);
+  const disconnected = presentation.dot === 'disconnected';
   return (
-    <article className={styles.connection}>
-      <div className={styles.title}>{presentation.title}</div>
-      <div className={styles.tags}>
-        <Tag color={presentation.connectionTone}>{presentation.connectionLabel}</Tag>
-        <Tooltip title={presentation.freshnessDescription}>
-          <Tag color={presentation.freshnessTone}>{presentation.freshnessLabel}</Tag>
-        </Tooltip>
-        <Tooltip title={presentation.matchDescription}>
-          <Tag color={presentation.matchTone}>{connection.match_status.label}</Tag>
-        </Tooltip>
-      </div>
-      <div className={styles.detail}>{presentation.matchDescription}</div>
-      {(!isAvailable || connection.freshness.value !== 'fresh') && <div className={styles.detail}>{presentation.freshnessDescription}</div>}
-      <div className={styles.detail}>Interface: {connection.interface?.name || connection.interface_name || 'Unrecognized'} · Collector: {connection.collector_key}</div>
-      {connection.serial_number && <div className={styles.detail}>Serial: {connection.serial_number}</div>}
-      <div className={styles.detail}>
-        Last observed: <time dateTime={connection.observed_at}>{dayjs(connection.observed_at).format('DD MMM YYYY, HH:mm:ss')}</time>
-      </div>
-    </article>
+    <li>
+      <button type="button" className={styles.row} onClick={onOpen} title={presentation.matchDescription}>
+        <DeviceDot dot={presentation.dot} />
+        <span className={styles.rowText}>
+          <span className={`${styles.rowName} ${disconnected ? styles.rowNameMuted : ''}`}>{presentation.title}</span>
+          <span className={styles.rowMeta}>{presentation.meta || connection.interface_name}</span>
+        </span>
+        {connection.match_status.value !== 'matched' ? (
+          <span className={`${styles.count} ${styles.countWarn}`}>{presentation.canLink ? 'Match' : presentation.matchLabel}</span>
+        ) : (
+          <span className={styles.rowAside}>{formatObserved(connection.observed_at)}</span>
+        )}
+      </button>
+    </li>
   );
 }
 
-export default function MonitoredDevicesPopover({ computingId }: { computingId: number }) {
+export default function MonitoredDevicesPopover({ computingId, computingName }: { computingId: number; computingName?: string }) {
   const [open, setOpen] = useState(false);
-  const [page, setPage] = useState(1);
-  const { currentData, error, isFetching, isError, refetch } = useGetDeviceConnectionsQuery(
-    { computingId, page },
+  const [openId, setOpenId] = useState<number | null>(null);
+  const { currentData, isFetching, isError, refetch } = useGetDeviceConnectionsQuery(
+    { computingId, page: 1, pageSize: POPOVER_PAGE_SIZE },
     { skip: !open, pollingInterval: open ? POLLING_INTERVAL_MS : 0, skipPollingIfUnfocused: true, refetchOnMountOrArgChange: true },
   );
-  const connections = currentData?.data ?? [];
-  const pagination = currentData?.meta.pagination;
+  const rows = currentData?.data ?? [];
+  const total = currentData?.meta.pagination.count ?? 0;
+  const connected = rows.filter((row) => row.state.value === 'connected');
+  const unplugged = rows.filter((row) => row.state.value !== 'connected');
+  const counts = connectionCounts(rows);
+  const isFresh = !isError && rows.some((row) => row.freshness.value === 'fresh');
+  const first = rows[0];
+  const name = first?.computing.name ?? computingName ?? 'Computing unit';
+  const openDetail = (id: number) => { setOpen(false); setOpenId(id); };
 
-  // Rows can disappear between polls (retention, reconciliation). Keep the reader on a page that
-  // exists; adjusting state during render avoids rendering the stale page first.
-  const pageIsOutOfRange = error !== undefined && 'status' in error && error.status === 404 && page > 1;
-  const targetPage = pageIsOutOfRange ? 1 : pagination ? clampPage(page, pagination.count, pagination.page_size) : page;
-  if (targetPage !== page) setPage(targetPage);
-
-  return (
-    <Popover
-      placement="right"
-      trigger="click"
-      title="Monitored devices"
-      open={open}
-      onOpenChange={(nextOpen) => {
-        if (nextOpen) setPage(1);
-        setOpen(nextOpen);
-      }}
-      content={
-        <div className={styles.panel} aria-busy={isFetching} aria-live="polite">
-          {isError && (
-            <Alert
-              type="error"
-              title="Could not load device connections"
-              description={currentData ? 'The displayed observations may be outdated.' : undefined}
-              showIcon
-              action={<Button size="small" onClick={() => void refetch()} loading={isFetching}>Retry</Button>}
-            />
-          )}
-          {isFetching && !currentData && <Spin description="Loading device connections"><div style={{ minHeight: 80 }} /></Spin>}
-          {!isFetching && !isError && connections.length === 0 && <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="No device observations yet" />}
-          {connections.map((connection) => <Connection key={connection.id} connection={connection} isAvailable={!isError} />)}
-          {pagination && pagination.count > 0 && (
-            <div className={styles.footer}>
-              <span>{pagination.count} {pagination.count === 1 ? 'connection' : 'connections'}</span>
-              <Pagination
-                size="small"
-                simple
-                current={pagination.page}
-                pageSize={pagination.page_size}
-                total={pagination.count}
-                showSizeChanger={false}
-                disabled={isFetching}
-                onChange={setPage}
-              />
-            </div>
+  const content = (
+    <div className={styles.popover} aria-busy={isFetching} aria-live="polite">
+      <header className={styles.popHeader}>
+        <div className={styles.popTitleRow}>
+          <div style={{ minWidth: 0 }}>
+            <h2 className={styles.popTitle}>Devices</h2>
+            <span className={styles.popSubtitle}>{[name, first?.bench ? `Bench ${first.bench.name}` : ''].filter(Boolean).join(' · ')}</span>
+          </div>
+          {rows.length > 0 && (
+            <span className={`${styles.live} ${isFresh ? '' : styles.liveStale}`}>
+              <span className={`${styles.dot} ${isFresh ? styles.dotConnected : styles.dotUnconfirmed}`} aria-hidden="true" />
+              {isFresh ? 'Live' : 'Unconfirmed'}
+            </span>
           )}
         </div>
-      }
-    >
-      <button type="button" className={tableStyles.informationButton} aria-label="View monitored devices" title="View monitored devices" onClick={(event) => event.stopPropagation()}>
-        <RadarChartOutlined />
-      </button>
-    </Popover>
+        {rows.length > 0 && (
+          <div className={styles.counts}>
+            <span className={`${styles.count} ${styles.countGood}`}>{counts.connected} connected</span>
+            {counts.toMatch > 0 && <span className={`${styles.count} ${styles.countWarn}`}>{counts.toMatch} to match</span>}
+            {counts.unplugged > 0 && <span className={`${styles.count} ${styles.countMuted}`}>{counts.unplugged} unplugged</span>}
+          </div>
+        )}
+      </header>
+
+      {isError && (
+        <Alert
+          type="error"
+          showIcon
+          style={{ marginTop: 10 }}
+          title="Could not load devices"
+          description={currentData ? 'Showing the last loaded data.' : undefined}
+          action={<Button size="small" onClick={() => void refetch()} loading={isFetching}>Retry</Button>}
+        />
+      )}
+      {isFetching && !currentData && <Spin description="Loading devices"><div style={{ minHeight: 80 }} /></Spin>}
+      {!isFetching && !isError && rows.length === 0 && (
+        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="No devices reported yet" />
+      )}
+
+      {connected.length > 0 && (
+        <ul className={styles.list} aria-label="Connected devices">
+          {connected.map((row) => <DeviceRow key={row.id} connection={row} isAvailable={!isError} onOpen={() => openDetail(row.id)} />)}
+        </ul>
+      )}
+      {unplugged.length > 0 && (
+        <>
+          <div className={styles.section}>Unplugged</div>
+          <ul className={styles.list} aria-label="Unplugged devices">
+            {unplugged.map((row) => <DeviceRow key={row.id} connection={row} isAvailable={!isError} onOpen={() => openDetail(row.id)} />)}
+          </ul>
+        </>
+      )}
+
+      <footer className={styles.popFooter}>
+        <Link to={`/lab-monitoring?tab=events&computing=${computingId}`}>Events</Link>
+        <Link to={`/lab-monitoring?tab=devices&computing=${computingId}`}>
+          {total > rows.length ? `All ${total} in Lab Monitoring` : 'Open in Lab Monitoring'}
+        </Link>
+      </footer>
+    </div>
+  );
+
+  return (
+    <>
+      <Popover placement="right" trigger="click" open={open} onOpenChange={setOpen} content={content}>
+        <button
+          type="button"
+          className={tableStyles.informationButton}
+          aria-label={`Devices of ${computingName ?? 'this computing unit'}`}
+          title="View monitored devices"
+          onClick={(event) => event.stopPropagation()}
+        >
+          <RadarChartOutlined />
+        </button>
+      </Popover>
+      <DeviceDetailDrawer connectionId={openId} onClose={() => setOpenId(null)} />
+    </>
   );
 }

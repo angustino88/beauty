@@ -1255,9 +1255,42 @@ const injectedRtkApi = api.injectEndpoints({
       query: (queryArg) => ({
         url: `/api/labs/device-connections`,
         params: {
+          bench_id: queryArg.benchId,
           computing_id: queryArg.computingId,
+          is_attention_required: queryArg.isAttentionRequired,
           page: queryArg.page,
           page_size: queryArg.pageSize,
+          q: queryArg.q,
+          state: queryArg.state,
+        },
+      }),
+    }),
+    labsDeviceConnectionsRetrieveByConnectionId: build.query<
+      LabsDeviceConnectionsRetrieveByConnectionIdApiResponse,
+      LabsDeviceConnectionsRetrieveByConnectionIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/device-connections/${queryArg.connectionId}`,
+      }),
+    }),
+    labsDeviceConnectionsActionsLinkCreateByConnectionId: build.mutation<
+      LabsDeviceConnectionsActionsLinkCreateByConnectionIdApiResponse,
+      LabsDeviceConnectionsActionsLinkCreateByConnectionIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/device-connections/${queryArg.connectionId}/actions/link`,
+        method: "POST",
+        body: queryArg.linkDeviceConnectionRequest,
+      }),
+    }),
+    labsDeviceConnectionsSummaryRetrieve: build.query<
+      LabsDeviceConnectionsSummaryRetrieveApiResponse,
+      LabsDeviceConnectionsSummaryRetrieveApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/device-connections/summary`,
+        params: {
+          bench_id: queryArg.benchId,
         },
       }),
     }),
@@ -2589,6 +2622,50 @@ const injectedRtkApi = api.injectEndpoints({
         body: queryArg.patchedEquipmentUpdate,
       }),
     }),
+    labsExpectedDevicesRetrieve: build.query<
+      LabsExpectedDevicesRetrieveApiResponse,
+      LabsExpectedDevicesRetrieveApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/expected-devices`,
+        params: {
+          bench_id: queryArg.benchId,
+          computing_id: queryArg.computingId,
+          page: queryArg.page,
+          page_size: queryArg.pageSize,
+          presence: queryArg.presence,
+        },
+      }),
+    }),
+    labsExpectedDevicesCreate: build.mutation<
+      LabsExpectedDevicesCreateApiResponse,
+      LabsExpectedDevicesCreateApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/expected-devices`,
+        method: "POST",
+        body: queryArg.createExpectedDeviceRequest,
+      }),
+    }),
+    labsExpectedDevicesPartialUpdateByExpectedDeviceId: build.mutation<
+      LabsExpectedDevicesPartialUpdateByExpectedDeviceIdApiResponse,
+      LabsExpectedDevicesPartialUpdateByExpectedDeviceIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/expected-devices/${queryArg.expectedDeviceId}`,
+        method: "PATCH",
+        body: queryArg.patchedUpdateExpectedDeviceRequest,
+      }),
+    }),
+    labsExpectedDevicesDestroyByExpectedDeviceId: build.mutation<
+      LabsExpectedDevicesDestroyByExpectedDeviceIdApiResponse,
+      LabsExpectedDevicesDestroyByExpectedDeviceIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/expected-devices/${queryArg.expectedDeviceId}`,
+        method: "DELETE",
+      }),
+    }),
     labsExpensesPaymentsRetrieveByExpenseId: build.query<
       LabsExpensesPaymentsRetrieveByExpenseIdApiResponse,
       LabsExpensesPaymentsRetrieveByExpenseIdApiArg
@@ -3417,8 +3494,19 @@ const injectedRtkApi = api.injectEndpoints({
       query: (queryArg) => ({
         url: `/api/labs/monitoring-events`,
         params: {
+          action: queryArg.action,
+          bench_id: queryArg.benchId,
+          computer_id: queryArg.computerId,
+          computer_sku: queryArg.computerSku,
+          computing_id: queryArg.computingId,
+          from_date: queryArg.fromDate,
+          from_date_time: queryArg.fromDateTime,
+          lab: queryArg.lab,
           page: queryArg.page,
           page_size: queryArg.pageSize,
+          subject_type: queryArg.subjectType,
+          to_date: queryArg.toDate,
+          to_date_time: queryArg.toDateTime,
         },
       }),
     }),
@@ -3451,6 +3539,7 @@ const injectedRtkApi = api.injectEndpoints({
           bench_id: queryArg.benchId,
           computer_id: queryArg.computerId,
           computer_sku: queryArg.computerSku,
+          computing_id: queryArg.computingId,
           from_date: queryArg.fromDate,
           from_date_time: queryArg.fromDateTime,
           lab: queryArg.lab,
@@ -5949,9 +6038,31 @@ export type LabsDepartmentsOptionsRetrieveApiArg = {
 export type LabsDeviceConnectionsRetrieveApiResponse =
   /** status 200  */ DeviceConnectionListConnectionsDeviceConnectionPaginatedResponseRead;
 export type LabsDeviceConnectionsRetrieveApiArg = {
-  computingId: number;
+  benchId?: number;
+  computingId?: number;
+  isAttentionRequired?: boolean | null;
   page?: number;
   pageSize?: number;
+  q?: string;
+  /** * `connected` - Connected
+   * `disconnected` - Disconnected */
+  state?: "connected" | "disconnected";
+};
+export type LabsDeviceConnectionsRetrieveByConnectionIdApiResponse =
+  /** status 200  */ DeviceConnectionDetailConnectionsDeviceConnectionDetailDetailResponseRead;
+export type LabsDeviceConnectionsRetrieveByConnectionIdApiArg = {
+  connectionId: number;
+};
+export type LabsDeviceConnectionsActionsLinkCreateByConnectionIdApiResponse =
+  /** status 200  */ DeviceConnectionLinkActionConnectionsDeviceConnectionDetailResponseRead;
+export type LabsDeviceConnectionsActionsLinkCreateByConnectionIdApiArg = {
+  connectionId: number;
+  linkDeviceConnectionRequest: LinkDeviceConnectionRequest;
+};
+export type LabsDeviceConnectionsSummaryRetrieveApiResponse =
+  /** status 200  */ DeviceConnectionSummaryConnectionsDeviceConnectionSummaryDetailResponse;
+export type LabsDeviceConnectionsSummaryRetrieveApiArg = {
+  benchId?: number;
 };
 export type LabsDowntimesRetrieveApiResponse =
   /** status 200  */ DowntimeListSerializersDowntimePaginatedResponseRead;
@@ -6875,6 +6986,33 @@ export type LabsEquipmentUidPartialUpdateByUidApiArg = {
   uid: string;
   patchedEquipmentUpdate: PatchedEquipmentUpdate;
 };
+export type LabsExpectedDevicesRetrieveApiResponse =
+  /** status 200  */ ExpectedDeviceListConnectionsExpectedDevicePaginatedResponseRead;
+export type LabsExpectedDevicesRetrieveApiArg = {
+  benchId?: number;
+  computingId?: number;
+  page?: number;
+  pageSize?: number;
+  /** * `present` - Present
+   * `missing` - Missing
+   * `unconfirmed` - Unconfirmed */
+  presence?: "present" | "missing" | "unconfirmed";
+};
+export type LabsExpectedDevicesCreateApiResponse =
+  /** status 201  */ ExpectedDeviceCreateConnectionsExpectedDeviceDetailResponseRead;
+export type LabsExpectedDevicesCreateApiArg = {
+  createExpectedDeviceRequest: CreateExpectedDeviceRequest;
+};
+export type LabsExpectedDevicesPartialUpdateByExpectedDeviceIdApiResponse =
+  /** status 200  */ ExpectedDeviceUpdateConnectionsExpectedDeviceDetailResponseRead;
+export type LabsExpectedDevicesPartialUpdateByExpectedDeviceIdApiArg = {
+  expectedDeviceId: number;
+  patchedUpdateExpectedDeviceRequest: PatchedUpdateExpectedDeviceRequest;
+};
+export type LabsExpectedDevicesDestroyByExpectedDeviceIdApiResponse = unknown;
+export type LabsExpectedDevicesDestroyByExpectedDeviceIdApiArg = {
+  expectedDeviceId: number;
+};
 export type LabsExpensesPaymentsRetrieveByExpenseIdApiResponse =
   /** status 200  */ ExpensePaymentListSerializersExpensePaymentPaginatedResponseRead;
 export type LabsExpensesPaymentsRetrieveByExpenseIdApiArg = {
@@ -7376,8 +7514,19 @@ export type LabsLocationsReferenceDataStationTypesRetrieveByReferenceIdApiArg =
 export type LabsMonitoringEventsRetrieveApiResponse =
   /** status 200  */ MonitoringEventListSerializersMonitoringEventPaginatedResponseRead;
 export type LabsMonitoringEventsRetrieveApiArg = {
+  action?: string;
+  benchId?: number;
+  computerId?: number;
+  computerSku?: string;
+  computingId?: number;
+  fromDate?: string;
+  fromDateTime?: string;
+  lab?: number;
   page?: number;
   pageSize?: number;
+  subjectType?: string;
+  toDate?: string;
+  toDateTime?: string;
 };
 export type LabsMonitoringEventsCreateApiResponse =
   /** status 201  */ MonitoringEventSerializersMonitoringEventDetailResponseRead;
@@ -7396,6 +7545,7 @@ export type LabsMonitoringEventsExportRetrieveApiArg = {
   benchId?: number;
   computerId?: number;
   computerSku?: string;
+  computingId?: number;
   fromDate?: string;
   fromDateTime?: string;
   lab?: number;
@@ -10636,12 +10786,13 @@ export type DeviceConnection = {
   observation_key: string;
   name: string;
   serial_number: string;
-  observed_at: string;
-  received_at: string;
+  is_attention_required: boolean;
+  expected_device_id: number | null;
 };
 export type DeviceConnectionRead = {
   id: number;
   computing: LabsUidNamedReferenceRead;
+  bench: LabsNamedReferenceRead | null;
   equipment: LabsUidNamedReferenceRead | null;
   interface: LabsNamedReferenceRead | null;
   interface_name: string;
@@ -10652,6 +10803,8 @@ export type DeviceConnectionRead = {
   state: ChoiceRead;
   match_status: ChoiceRead;
   freshness: ChoiceRead;
+  is_attention_required: boolean;
+  expected_device_id: number | null;
   observed_at: string;
   received_at: string;
 };
@@ -10663,6 +10816,81 @@ export type DeviceConnectionListConnectionsDeviceConnectionPaginatedResponseRead
   {
     meta: DeviceConnectionListConnectionsDeviceConnectionPaginationMeta;
     data: DeviceConnectionRead[];
+  };
+export type DeviceConnectionChange = {
+  sequence: number;
+  is_complete: boolean;
+};
+export type DeviceConnectionChangeRead = {
+  state: ChoiceRead;
+  observed_at: string;
+  sequence: number;
+  is_complete: boolean;
+};
+export type DeviceConnectionDetail = {
+  id: number;
+  computing: LabsUidNamedReference;
+  equipment: LabsUidNamedReference | null;
+  interface: LabsNamedReference | null;
+  interface_name: string;
+  collector_key: string;
+  observation_key: string;
+  name: string;
+  serial_number: string;
+  is_attention_required: boolean;
+  expected_device_id: number | null;
+  history: DeviceConnectionChange[];
+};
+export type DeviceConnectionDetailRead = {
+  id: number;
+  computing: LabsUidNamedReferenceRead;
+  bench: LabsNamedReferenceRead | null;
+  equipment: LabsUidNamedReferenceRead | null;
+  interface: LabsNamedReferenceRead | null;
+  interface_name: string;
+  collector_key: string;
+  observation_key: string;
+  name: string;
+  serial_number: string;
+  state: ChoiceRead;
+  match_status: ChoiceRead;
+  freshness: ChoiceRead;
+  is_attention_required: boolean;
+  expected_device_id: number | null;
+  observed_at: string;
+  received_at: string;
+  first_seen_at: string;
+  history: DeviceConnectionChangeRead[];
+};
+export type DeviceConnectionDetailConnectionsDeviceConnectionDetailDetailResponse =
+  {
+    data: DeviceConnectionDetail;
+  };
+export type DeviceConnectionDetailConnectionsDeviceConnectionDetailDetailResponseRead =
+  {
+    data: DeviceConnectionDetailRead;
+  };
+export type DeviceConnectionLinkActionConnectionsDeviceConnectionDetailResponse =
+  {
+    data: DeviceConnection;
+  };
+export type DeviceConnectionLinkActionConnectionsDeviceConnectionDetailResponseRead =
+  {
+    data: DeviceConnectionRead;
+  };
+export type LinkDeviceConnectionRequest = {
+  equipment_id: number;
+};
+export type DeviceConnectionSummary = {
+  connected: number;
+  needs_matching: number;
+  unconfirmed: number;
+  missing: number;
+  computing_units: number;
+};
+export type DeviceConnectionSummaryConnectionsDeviceConnectionSummaryDetailResponse =
+  {
+    data: DeviceConnectionSummary;
   };
 export type DowntimeListSerializersDowntimePagination = {
   count: number;
@@ -12684,6 +12912,60 @@ export type EquipmentByUidCollectionEquipmentDetailDetailResponse = {
 };
 export type EquipmentByUidCollectionEquipmentDetailDetailResponseRead = {
   data: EquipmentDetailRead;
+};
+export type ExpectedDeviceListConnectionsExpectedDevicePagination = {
+  count: number;
+  page: number;
+  page_size: number;
+  next: string | null;
+  previous: string | null;
+};
+export type ExpectedDeviceListConnectionsExpectedDevicePaginationMeta = {
+  pagination: ExpectedDeviceListConnectionsExpectedDevicePagination;
+};
+export type ExpectedDevice = {
+  id: number;
+  computing: LabsUidNamedReference;
+  equipment: LabsUidNamedReference;
+  is_disconnect_alert_enabled: boolean;
+};
+export type ExpectedDeviceRead = {
+  id: number;
+  computing: LabsUidNamedReferenceRead;
+  bench: LabsNamedReferenceRead | null;
+  equipment: LabsUidNamedReferenceRead;
+  presence: ChoiceRead;
+  last_seen_at: string | null;
+  is_disconnect_alert_enabled: boolean;
+  created_at: string;
+};
+export type ExpectedDeviceListConnectionsExpectedDevicePaginatedResponse = {
+  meta: ExpectedDeviceListConnectionsExpectedDevicePaginationMeta;
+  data: ExpectedDevice[];
+};
+export type ExpectedDeviceListConnectionsExpectedDevicePaginatedResponseRead = {
+  meta: ExpectedDeviceListConnectionsExpectedDevicePaginationMeta;
+  data: ExpectedDeviceRead[];
+};
+export type ExpectedDeviceCreateConnectionsExpectedDeviceDetailResponse = {
+  data: ExpectedDevice;
+};
+export type ExpectedDeviceCreateConnectionsExpectedDeviceDetailResponseRead = {
+  data: ExpectedDeviceRead;
+};
+export type CreateExpectedDeviceRequest = {
+  computing_id: number;
+  equipment_id: number;
+  is_disconnect_alert_enabled?: boolean;
+};
+export type ExpectedDeviceUpdateConnectionsExpectedDeviceDetailResponse = {
+  data: ExpectedDevice;
+};
+export type ExpectedDeviceUpdateConnectionsExpectedDeviceDetailResponseRead = {
+  data: ExpectedDeviceRead;
+};
+export type PatchedUpdateExpectedDeviceRequest = {
+  is_disconnect_alert_enabled?: boolean;
 };
 export type ExpensePaymentListSerializersExpensePaymentPagination = {
   count: number;
@@ -16936,6 +17218,9 @@ export const {
   useLabsDepartmentsRetrieveByDepartmentIdQuery,
   useLabsDepartmentsOptionsRetrieveQuery,
   useLabsDeviceConnectionsRetrieveQuery,
+  useLabsDeviceConnectionsRetrieveByConnectionIdQuery,
+  useLabsDeviceConnectionsActionsLinkCreateByConnectionIdMutation,
+  useLabsDeviceConnectionsSummaryRetrieveQuery,
   useLabsDowntimesRetrieveQuery,
   useLabsDowntimesCreateMutation,
   useLabsDowntimesRetrieveByDowntimeIdQuery,
@@ -17051,6 +17336,10 @@ export const {
   useLabsEquipmentStatusSummaryRetrieveQuery,
   useLabsEquipmentUidRetrieveByUidQuery,
   useLabsEquipmentUidPartialUpdateByUidMutation,
+  useLabsExpectedDevicesRetrieveQuery,
+  useLabsExpectedDevicesCreateMutation,
+  useLabsExpectedDevicesPartialUpdateByExpectedDeviceIdMutation,
+  useLabsExpectedDevicesDestroyByExpectedDeviceIdMutation,
   useLabsExpensesPaymentsRetrieveByExpenseIdQuery,
   useLabsExpensesPaymentsCreateByExpenseIdMutation,
   useLabsExpensesReportRetrieveQuery,
