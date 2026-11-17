@@ -22,35 +22,33 @@ export const UserBookingEfficiencyCard = memo(
     return (
       <ChartCard
         id={5}
-        title="Top Users by Booking Efficiency"
+        title="Booking efficiency by user"
+      description="Active session time as a share of the time the user had booked."
         subtitle={getChartSubtitle(filters)}
         loading={isFetching}
         error={isError}
         onRetry={refetch}
         component={<UserByBookingEfficiencyChart dataSource={data ?? []} />}
-        filters={
+        onExport={
+          data
+            ? () =>
+                void exportRowsToExcel(
+                  data,
+                  analyticsColumnIndex.userByBookingEfficiency,
+                  "Booking_efficiency_by_user",
+                "Booking efficiency by user",
+                )
+            : undefined
+        }
+      filters={
           <OrderRankDateFilter
             filterParams={filters}
             onChange={setFilters}
-            onExport={
-              data
-                ? () =>
-                    void exportRowsToExcel(
-                      data,
-                      analyticsColumnIndex.userByBookingEfficiency,
-                      "Top_Users_by_Booking_Efficiency",
-                      "Top Users by Booking Efficiency",
-                    )
-                : undefined
-            }
           />
         }
         isOpen={isOpen}
         onOpen={onOpen}
-        onClose={() => {
-          onClose();
-          setFilters((f) => ({ ...f, top: 5 }));
-        }}
+        onClose={onClose}
       />
     );
   },

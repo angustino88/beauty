@@ -1,142 +1,138 @@
 import dayjs from 'dayjs';
-import { Tag, Tooltip, Typography } from 'antd';
+import { Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { TagCell } from '@/components/display/TagCell';
+import { StatusBadge } from '@/shared/components/StatusBadge';
+import { SpaceLocationRow } from '@/features/spaces/shared/components/SpaceLocation';
 import type { LabSessionLogEntry } from '../types';
 
-const { Text } = Typography;
-const DATETIME_FORMAT = 'YYYY-MM-DD HH:mm:ss';
+const DATETIME_FORMAT = 'DD MMM YYYY, HH:mm';
 
-function renderText(value: string | null) {
-  return value?.trim() || '—';
+/** 95 → "1 h 35 min"; minutes stay readable at a glance, hours for long sessions. */
+export function formatMinutes(minutes: number | null): string {
+  if (minutes == null) return '—';
+  const total = Math.round(minutes);
+  if (total < 60) return `${total} min`;
+  const hours = Math.floor(total / 60);
+  const rest = total % 60;
+  return rest ? `${hours} h ${rest} min` : `${hours} h`;
 }
 
-function renderEllipsis(value: string | null) {
-  return (
-    <Tooltip title={value}>
-      <span>{renderText(value)}</span>
-    </Tooltip>
-  );
-}
+const ACCESS_TONE: Record<string, 'success' | 'neutral' | 'warning'> = {
+  booked: 'success',
+  ad_hoc: 'neutral',
+  unverified_booking: 'warning',
+};
+const ACCESS_HINT: Record<string, string> = {
+  booked: 'Logged in with a valid booking for this bench.',
+  ad_hoc: 'Logged in without a booking.',
+  unverified_booking: 'A booking code was entered but could not be verified.',
+};
 
-function renderHours(value: number | null) {
-  return value == null ? '—' : <Text strong>{value.toFixed(2)}</Text>;
-}
+const muted = { color: 'var(--lm-text-tertiary)' } as const;
 
+/** Sorting is done by the server; the column keys are its `ordering` fields. */
 export const labSessionLogColumns: ColumnsType<LabSessionLogEntry> = [
   {
-    title: 'ID',
-    dataIndex: 'id',
-    key: 'id',
-    align: 'left',
-    width: 90,
-    fixed: 'left',
-    render: (value: number) => <Text type="secondary">#{value}</Text>,
-  },
-  {
-    title: 'Computer Name',
-    dataIndex: 'computer_name',
-    key: 'computer_name',
-    align: 'left',
-    width: 150,
-    fixed: 'left',
-    ellipsis: { showTitle: false },
-    render: renderEllipsis,
-  },
-  {
-    title: 'Login time',
-    dataIndex: 'login_time',
+    title: 'Login',
+    dataIndex: 'login_at',
     key: 'login_time',
-    align: 'left',
-    width: 164,
-    sorter: { multiple: 1 },
-    render: (value: string | null) => value ? dayjs(value).format(DATETIME_FORMAT) : '—',
+    width: 170,
+    fixed: 'left',
+    sorter: true,
+    defaultSortOrder: 'descend',
+    render: (value: string | null) => (value ? dayjs(value).format(DATETIME_FORMAT) : '—'),
   },
   {
-    title: 'Logout time',
-    dataIndex: 'logout_time',
+    title: 'Logout',
+    dataIndex: 'logout_at',
     key: 'logout_time',
-    align: 'left',
-    width: 164,
-    sorter: { multiple: 2 },
-    render: (value: string | null) => value ? dayjs(value).format(DATETIME_FORMAT) : <Tag color="green">Active</Tag>,
+    width: 170,
+    sorter: true,
+    render: (value: string | null) => (value ? dayjs(value).format(DATETIME_FORMAT) : '—'),
   },
   {
-    title: 'Duration (h)',
-    dataIndex: 'duration_in_hour',
-    key: 'duration',
-    align: 'center',
-    width: 145,
-    sorter: { multiple: 3 },
-    render: renderHours,
+    title: 'User',
+    key: 'user',
+    width: 200,
+    render: (_: unknown, row) => {
+      const name = row.user?.display_name || row.remote_user_display_name || row.remote_user || '—';
+      const login = row.remote_user && row.remote_user !== name ? row.remote_user : null;
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.3, minWidth: 0 }}>
+          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</span>
+          {login ? <span style={{ ...muted, fontSize: 12 }}>{login}</span> : null}
+          {!row.user && row.remote_user ? (
+            <Tooltip title="No Lab Mango account matches this login name.">
+              <span style={{ ...muted, fontSize: 11 }}>No matching account</span>
+            </Tooltip>
+          ) : null}
+        </div>
+      );
+    },
   },
   {
-    title: 'Active Time (h)',
-    dataIndex: 'active_time_in_hour',
-    key: 'active_time',
-    align: 'center',
-    width: 165,
-    sorter: { multiple: 4 },
-    render: renderHours,
+    title: 'Access',
+    key: 'access_type',
+    width: 170,
+    render: (_: unknown, row) => row.access_type
+      ? (
+        <StatusBadge
+          tone={ACCESS_TONE[row.access_type.value] ?? 'neutral'}
+          label={row.access_type.value === 'unverified_booking' ? 'Unverified booking' : row.access_type.label}
+          title={ACCESS_HINT[row.access_type.value] ?? row.access_type.label}
+        />
+      )
+      : <span style={muted}>—</span>,
   },
   {
-    title: 'Remote User',
-    dataIndex: 'remote_user',
-    key: 'remote_user',
-    align: 'left',
-    width: 150,
-    render: (value: LabSessionLogEntry['remote_user']) =>
-      value?.username ? <TagCell item={value} displayKey="username" tooltipKey="displayname" /> : '—',
-  },
-  {
-    title: 'Remote Computer',
-    dataIndex: 'remote_computer',
-    key: 'remote_computer',
-    align: 'left',
-    width: 220,
-    render: renderText,
-  },
-  {
-    title: 'Remote IP',
-    dataIndex: 'remote_ip',
-    key: 'remote_ip',
-    align: 'left',
-    width: 140,
-    render: (value: string | null) => value ? <Text code>{value}</Text> : '—',
-  },
-  {
-    title: 'Booking Code',
+    title: 'Booking code',
     dataIndex: 'booking_code',
     key: 'booking_code',
-    align: 'left',
     width: 140,
-    render: (value: string | null) => value ? <Text code>{value}</Text> : '—',
+    render: (value: string | null) => value || <span style={muted}>—</span>,
   },
   {
-    title: 'Project',
-    dataIndex: ['booking_info', 'project'],
-    key: 'project',
-    align: 'left',
+    title: 'Bench',
+    key: 'bench',
+    width: 170,
+    render: (_: unknown, row) => row.bench
+      ? <SpaceLocationRow kind="bench" label={row.bench.name} refId={row.bench.id} />
+      : <span style={muted}>Not on a bench</span>,
+  },
+  {
+    title: 'Computer',
+    key: 'computer',
+    width: 180,
+    render: (_: unknown, row) => (
+      <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.3 }}>
+        <span>{row.computer?.name || '—'}</span>
+        {row.host_name && row.host_name !== row.computer?.name ? <span style={{ ...muted, fontSize: 12 }}>{row.host_name}</span> : null}
+      </div>
+    ),
+  },
+  {
+    title: 'Session',
+    dataIndex: 'duration_minutes',
+    key: 'duration',
+    width: 120,
+    align: 'right',
+    render: (value: number | null) => <span style={{ fontVariantNumeric: 'tabular-nums' }}>{formatMinutes(value)}</span>,
+  },
+  {
+    title: 'Active',
+    dataIndex: 'active_minutes',
+    key: 'active_duration_seconds',
     width: 150,
-    ellipsis: { showTitle: false },
-    render: renderEllipsis,
-  },
-  {
-    title: 'From Datetime',
-    dataIndex: ['booking_info', 'from_date_time'],
-    key: 'from_date_time',
-    align: 'left',
-    width: 164,
-    sorter: { multiple: 5 },
-    render: (value: string | null) => value ? dayjs(value).format(DATETIME_FORMAT) : '—',
-  },
-  {
-    title: 'To Datetime',
-    dataIndex: ['booking_info', 'to_date_time'],
-    key: 'to_date_time',
-    align: 'left',
-    width: 164,
-    sorter: { multiple: 6 },
-    render: (value: string | null) => value ? dayjs(value).format(DATETIME_FORMAT) : '—',
+    align: 'right',
+    sorter: true,
+    render: (value: number | null, row) => {
+      const share = value != null && row.duration_minutes ? Math.round((value / row.duration_minutes) * 100) : null;
+      return (
+        <span style={{ fontVariantNumeric: 'tabular-nums' }}>
+          {formatMinutes(value)}
+          {share != null ? <span style={{ ...muted, marginLeft: 6, fontSize: 12 }}>{share}%</span> : null}
+        </span>
+      );
+    },
   },
 ];

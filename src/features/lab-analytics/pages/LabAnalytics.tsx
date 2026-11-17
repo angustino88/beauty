@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
+import { useAppSelector } from "@/app/store";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Statistics } from "../components/Statistics";
+import { LabSessionLogTable } from "../components/LabSessionLogTable";
 import { OperationalAnalyticsCards } from "../components/cards/OperationalAnalyticsCards";
 import {
   LabGroupCard,
@@ -16,6 +18,9 @@ import styles from "./LabAnalytics.module.css";
 
 export function LabAnalytics() {
   const [modalOpen, setModalOpen] = useState<number | null>(null);
+  // The session list is for lab coordinators and admins only; the API refuses everyone else.
+  const permissionGroups = useAppSelector((state) => state.me.permissionGroups) as Record<string, unknown> | null;
+  const canSeeSessions = Boolean(permissionGroups?.["admin"] || permissionGroups?.["lab-coordinator"]);
 
   const makeHandlers = useMemo(
     () => (id: number) => ({
@@ -59,6 +64,16 @@ export function LabAnalytics() {
         </div>
         <OperationalAnalyticsCards />
       </section>
+
+      {canSeeSessions && (
+        <section className={styles.section} aria-labelledby="analytics-sessions">
+          <div className={styles.sectionHeader}>
+            <h2 id="analytics-sessions" className={styles.sectionTitle}>Lab sessions</h2>
+            <span className={styles.sectionHint}>Remote logins reported by the computer agents</span>
+          </div>
+          <LabSessionLogTable />
+        </section>
+      )}
     </div>
   );
 }

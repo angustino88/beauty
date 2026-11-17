@@ -116,56 +116,42 @@ const asNullableString = (value: unknown): string | null =>
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
-interface SessionLogRead {
-  id: number;
-  computer_name: string | null;
-  login_time: string | null;
-  logout_time: string | null;
-  duration_in_hour: number | null;
-  active_time_in_hour: number | null;
-  remote_user: unknown;
-  remote_computer: string | null;
-  remote_ip: string | null;
-  booking_code: string | null;
-  booking_info: unknown;
-}
+const asRef = (value: unknown): { id: number; name: string } | null =>
+  isRecord(value) && typeof value.id === 'number' ? { id: value.id, name: asNullableString(value.name) ?? `#${value.id}` } : null;
 
-export function mapSessionLogEntry(dto: SessionLogRead): LabSessionLogEntry {
-  const remoteUser = isRecord(dto.remote_user) ? dto.remote_user : {};
-  const booking = isRecord(dto.booking_info) ? dto.booking_info : null;
+const asNumberOrNull = (value: unknown): number | null =>
+  typeof value === 'number' && Number.isFinite(value) ? value : null;
 
+export function mapSessionLogEntry(dto: Record<string, unknown>): LabSessionLogEntry {
+  const user = isRecord(dto.user) && typeof dto.user.id === 'number'
+    ? { id: dto.user.id, username: asNullableString(dto.user.username) ?? '', display_name: asNullableString(dto.user.display_name) ?? '' }
+    : null;
+  const access = isRecord(dto.access_type) && typeof dto.access_type.value === 'string'
+    ? { value: dto.access_type.value, label: asNullableString(dto.access_type.label) ?? dto.access_type.value }
+    : null;
   return {
-    id: dto.id,
-    computer_name: dto.computer_name,
-    login_time: dto.login_time ?? null,
-    logout_time: dto.logout_time ?? null,
-    duration_in_hour: dto.duration_in_hour,
-    active_time_in_hour: dto.active_time_in_hour,
-    remote_user: {
-      username: asNullableString(remoteUser.username),
-      displayname: asNullableString(remoteUser.displayname),
-    },
-    remote_computer: dto.remote_computer ?? null,
-    remote_ip: dto.remote_ip ?? null,
-    booking_code: dto.booking_code ?? null,
-    booking_info: booking
-      ? {
-          project: asNullableString(booking.project),
-          from_date_time: asNullableString(booking.from_date_time),
-          to_date_time: asNullableString(booking.to_date_time),
-        }
-      : null,
+    id: Number(dto.id),
+    login_at: asNullableString(dto.login_at),
+    logout_at: asNullableString(dto.logout_at),
+    duration_minutes: asNumberOrNull(dto.duration_minutes),
+    active_minutes: asNumberOrNull(dto.active_minutes),
+    computer: asRef(dto.computer),
+    host_name: asNullableString(dto.host_name),
+    bench: asRef(dto.bench),
+    remote_user: asNullableString(dto.remote_user),
+    remote_user_display_name: asNullableString(dto.remote_user_display_name),
+    user,
+    access_type: access,
+    booking_code: asNullableString(dto.booking_code),
+    booking_id: asNumberOrNull(dto.booking_id),
   };
 }
 
+/** Paginated envelope `{data: [...], meta: {pagination: {count}}}`. */
 export function mapSessionLogResponse(response: unknown): LabSessionLogResponse {
   const outer = isRecord(response) ? response : {};
-  const normalized = isRecord(outer.data) ? outer.data : outer;
-  const items = Array.isArray(normalized.data) ? normalized.data : Array.isArray(normalized.results) ? normalized.results : [];
-  const entries = items.filter(isRecord).map((item) => mapSessionLogEntry(item as unknown as SessionLogRead));
-  return {
-    total_count: typeof normalized.total_count === 'number' ? normalized.total_count : entries.length,
-    total_usage_hours: typeof normalized.total_usage_hours === 'number' ? normalized.total_usage_hours : 0,
-    results: entries,
-  };
+  const items = Array.isArray(outer.data) ? outer.data : [];
+  const meta = isRecord(outer.meta) && isRecord(outer.meta.pagination) ? outer.meta.pagination : {};
+  const results = items.filter(isRecord).map((item) => mapSessionLogEntry(item));
+  return { total_count: typeof meta.count === 'number' ? meta.count : results.length, results };
 }

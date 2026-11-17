@@ -24,35 +24,33 @@ export const UserLabUsageCard = memo(function UserLabUsageCard({
   return (
     <ChartCard
       id={4}
-      title="Top Users by Lab Usage"
+      title="Usage hours by user"
+      description="Hours of remote sessions per user in the period."
       subtitle={getChartSubtitle(filters)}
       loading={isFetching}
       error={isError}
       onRetry={refetch}
       component={<UserByLabUsageChart dataSource={data ?? []} />}
+      onExport={
+        data
+          ? () =>
+              void exportRowsToExcel(
+                data,
+                analyticsColumnIndex.userByLabUsage,
+                "Usage_hours_by_user",
+                "Usage hours by user",
+              )
+          : undefined
+      }
       filters={
         <OrderRankDateFilter
           filterParams={filters}
           onChange={setFilters}
-          onExport={
-            data
-              ? () =>
-                  void exportRowsToExcel(
-                    data,
-                    analyticsColumnIndex.userByLabUsage,
-                    "Top_Users_by_Lab_Usage",
-                    "Top Users by Lab Usage",
-                  )
-              : undefined
-          }
         />
       }
       isOpen={isOpen}
       onOpen={onOpen}
-      onClose={() => {
-        onClose();
-        setFilters((f) => ({ ...f, top: 5 }));
-      }}
+      onClose={onClose}
     />
   );
 });
