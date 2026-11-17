@@ -31,6 +31,18 @@
   color: var(--lm-text-tertiary);
 }
 
+/* One source for booking colours: calendar events and the detail popover header both read these. */
+.lm-tone-mine {
+  --lm-booking-solid: var(--lm-success-solid);
+  --lm-booking-bg: color-mix(in srgb, var(--lm-success-solid) 25%, var(--lm-surface));
+}
+.lm-tone-other {
+  --lm-booking-solid: var(--lm-neutral-solid);
+  --lm-booking-bg: color-mix(in srgb, var(--lm-neutral-solid) 25%, var(--lm-surface));
+}
+.fc .lm-event-mine { --lm-booking-solid: var(--lm-success-solid); --lm-booking-bg: color-mix(in srgb, var(--lm-success-solid) 25%, var(--lm-surface)); }
+.fc .lm-event-other { --lm-booking-solid: var(--lm-neutral-solid); --lm-booking-bg: color-mix(in srgb, var(--lm-neutral-solid) 25%, var(--lm-surface)); }
+
 /* Booking events: own = green (the today column is a faint purple tint). Fill vs today is only ~1.2:1 in both themes,
    so the 4px left border carries the distinction (3.2:1 light, 5-6:1 dark against the today tint), others = neutral, downtime = hatched */
 .fc .lm-event {
@@ -44,12 +56,12 @@
   color: var(--lm-text) !important;
 }
 .fc .lm-event-mine {
-  background: color-mix(in srgb, var(--lm-success-solid) 25%, var(--lm-surface)) !important;
-  border-color: var(--lm-success-solid) !important;
+  background: var(--lm-booking-bg) !important;
+  border-color: var(--lm-booking-solid) !important;
 }
 .fc .lm-event-other {
-  background: color-mix(in srgb, var(--lm-neutral-solid) 25%, var(--lm-surface)) !important;
-  border-color: var(--lm-neutral-solid) !important;
+  background: var(--lm-booking-bg) !important;
+  border-color: var(--lm-booking-solid) !important;
 }
 .fc .lm-event-downtime {
   background: repeating-linear-gradient(135deg, var(--lm-surface-muted) 0 6px, var(--lm-surface-subtle) 6px 12px) !important;
