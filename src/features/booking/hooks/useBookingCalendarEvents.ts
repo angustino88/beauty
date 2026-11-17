@@ -3,6 +3,7 @@ import { useCallback, useRef, useState } from 'react';
 import type { EventInput } from '@fullcalendar/core';
 import { useLazyGetBenchBookingsQuery } from '../api';
 import { useLazyGetDowntimesQuery } from '@/features/spaces/shared/downtimeApi';
+import { useLazyGetBenchByIdQuery } from '@/features/spaces/bench/api';
 import { useAuthState } from '@/features/auth/hooks/useAuthState';
 import { benchColor } from '../utils/benchColors';
 
@@ -13,6 +14,7 @@ export function useBookingCalendarEvents() {
   const [bookingEvents, setBookingEvents] = useState<EventInput[]>([]);
   const [fetchBookings, { isFetching: isFetchingBookings }] = useLazyGetBenchBookingsQuery();
   const [fetchDowntimes, { isFetching: isFetchingDowntimes }] = useLazyGetDowntimesQuery();
+  const [fetchBench, { isFetching: isFetchingBenches }] = useLazyGetBenchByIdQuery();
   const lastFetchSeqRef = useRef(0);
 
   const fetchEvents = useCallback(
@@ -51,14 +53,31 @@ export function useBookingCalendarEvents() {
 
       const downtimesPromise = fetchDowntimes({ page_size: 100 }, true).unwrap();
 
-      void Promise.allSettled([bookingsPromise, downtimesPromise]).then(
-        ([bookingsRes, downtimesRes]) => {
+      // A station or room downtime blocks only the benches set up on that station or in that room,
+      // so each selected bench's station and room are needed to pick the windows that apply.
+      const benchesPromise = Promise.allSettled(
+        benchIds.map((benchId) => fetchBench(benchId, true).unwrap()),
+      );
+
+      void Promise.allSettled([bookingsPromise, downtimesPromise, benchesPromise]).then(
+        ([bookingsRes, downtimesRes, benchesRes]) => {
           if (fetchSeq !== lastFetchSeqRef.current) return;
 
           const bookings =
             bookingsRes.status === 'fulfilled' ? bookingsRes.value.data : [];
           const downtimes =
             downtimesRes.status === 'fulfilled' ? downtimesRes.value.data : [];
+          const benches =
+            benchesRes.status === 'fulfilled'
+              ? benchesRes.value.flatMap((res) => (res.status === 'fulfilled' ? [res.value] : []))
+              : [];
+          const stationIds = new Set(
+            benches.flatMap((b) => {
+              const id = b.station?.id ?? b.setup_location_id;
+              return id != null ? [id] : [];
+            }),
+          );
+          const roomIds = new Set(benches.flatMap((b) => (b.room?.id != null ? [b.room.id] : [])));
 
           const mappedBookings: EventInput[] = bookings.flatMap((booking) => {
             const startStr = booking.starts_at;
@@ -99,11 +118,11 @@ export function useBookingCalendarEvents() {
           const mappedDowntimes: EventInput[] = downtimes
             .filter((d) => d.state === 'scheduled' || d.state === 'current')
             .filter((d) => {
-              if (d.resource.type === 'bench') {
-                return benchIds.includes(d.resource.id);
-              }
-              // For room or station downtime, show when active
-              return true;
+              if (d.resource.type === 'bench') return benchIds.includes(d.resource.id);
+              if (d.resource.type === 'station') return stationIds.has(d.resource.id);
+              if (d.resource.type === 'room') return roomIds.has(d.resource.id);
+              // Equipment downtime does not block a bench booking.
+              return false;
             })
             .flatMap((d) => {
               const startStr = d.starts_at;
@@ -150,12 +169,12 @@ export function useBookingCalendarEvents() {
         },
       );
     },
-    [fetchBookings, fetchDowntimes, myUserId],
+    [fetchBookings, fetchDowntimes, fetchBench, myUserId],
   );
 
   return {
     bookingEvents,
-    isFetching: isFetchingBookings || isFetchingDowntimes,
+    isFetching: isFetchingBookings || isFetchingDowntimes || isFetchingBenches,
     fetchEvents,
   };
 }

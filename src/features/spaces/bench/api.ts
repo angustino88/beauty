@@ -159,6 +159,7 @@ export const benchApi = baseApi.injectEndpoints({
 export const {
   useGetBenchesQuery,
   useGetBenchByIdQuery,
+  useLazyGetBenchByIdQuery,
   useCreateBenchMutation,
   useUpdateBenchMutation,
   useDeleteBenchMutation,
