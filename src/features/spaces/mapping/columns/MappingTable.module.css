@@ -386,36 +386,3 @@
     background: var(--asset-soft);
   }
 }
-.imageThumb,
-.imageDefault {
-  display: inline-flex;
-  width: 40px;
-  height: 40px;
-  border-radius: 6px;
-  vertical-align: middle;
-}
-
-.imageThumb {
-  object-fit: cover;
-  background: var(--lm-surface-muted);
-}
-
-.imageDefault {
-  align-items: center;
-  justify-content: center;
-  color: var(--lm-text-secondary);
-  background: var(--lm-surface-muted);
-  font-size: 18px;
-}
-
-.imageStack {
-  display: inline-flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px;
-}
-
-.imageMore {
-  color: var(--lm-text-tertiary);
-  font-size: 12px;
-}

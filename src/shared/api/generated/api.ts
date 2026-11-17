@@ -5637,7 +5637,7 @@ export type LabsBenchesWeeklyUsageRetrieveByIdApiArg = {
   id: number;
 };
 export type LabsBenchesMappingRetrieveByResourceIdApiResponse =
-  /** status 200  */ ResourceMappingResponseRead;
+  /** status 200  */ ResourceMappingResponse;
 export type LabsBenchesMappingRetrieveByResourceIdApiArg = {
   benchesCursor?: string;
   equipmentCursor?: string;
@@ -6257,7 +6257,7 @@ export type LabsEquipmentDestroyByIdApiArg = {
   id: number;
 };
 export type LabsEquipmentMappingRetrieveByResourceIdApiResponse =
-  /** status 200  */ ResourceMappingResponseRead;
+  /** status 200  */ ResourceMappingResponse;
 export type LabsEquipmentMappingRetrieveByResourceIdApiArg = {
   benchesCursor?: string;
   equipmentCursor?: string;
@@ -7405,7 +7405,7 @@ export type LabsPurchasesTransactionsCreateByPurchaseIdApiArg = {
   purchaseTransactionWrite: PurchaseTransactionWrite;
 };
 export type LabsResourceMappingsRetrieveApiResponse =
-  /** status 200  */ BenchMappingListResponseRead;
+  /** status 200  */ BenchMappingListResponse;
 export type LabsResourceMappingsRetrieveApiArg = {
   benchId?: number;
   /** Benches with at least one unit of this equipment category. */
@@ -7517,7 +7517,7 @@ export type LabsRoomsCreateApiArg = {
   roomCreate: RoomCreate;
 };
 export type LabsRoomsMappingRetrieveByResourceIdApiResponse =
-  /** status 200  */ ResourceMappingResponseRead;
+  /** status 200  */ ResourceMappingResponse;
 export type LabsRoomsMappingRetrieveByResourceIdApiArg = {
   benchesCursor?: string;
   equipmentCursor?: string;
@@ -7724,7 +7724,7 @@ export type LabsStationsCreateApiArg = {
   stationCreate: StationCreate;
 };
 export type LabsStationsMappingRetrieveByResourceIdApiResponse =
-  /** status 200  */ ResourceMappingResponseRead;
+  /** status 200  */ ResourceMappingResponse;
 export type LabsStationsMappingRetrieveByResourceIdApiArg = {
   benchesCursor?: string;
   equipmentCursor?: string;
@@ -9790,15 +9790,6 @@ export type MappingRoom = {
   layout_rows: number | null;
   layout_columns: number | null;
 };
-export type MappingRoomRead = {
-  id: number;
-  uid: string;
-  sku: string;
-  name: string;
-  image_url: string | null;
-  layout_rows: number | null;
-  layout_columns: number | null;
-};
 export type MappingRoomSlot = {
   id: number;
   room_id: number;
@@ -9819,15 +9810,6 @@ export type MappingStation = {
   room_id: number | null;
   slot_id: number | null;
 };
-export type MappingStationRead = {
-  id: number;
-  uid: string;
-  sku: string;
-  name: string;
-  image_url: string | null;
-  room_id: number | null;
-  slot_id: number | null;
-};
 export type MappingStationSlot = {
   id: number;
   station_id: number;
@@ -9840,15 +9822,6 @@ export type MappingBench = {
   uid: string;
   sku: string;
   name: string;
-  setup_location_id: number | null;
-  station_slot_id: number | null;
-};
-export type MappingBenchRead = {
-  id: number;
-  uid: string;
-  sku: string;
-  name: string;
-  image_url: string | null;
   setup_location_id: number | null;
   station_slot_id: number | null;
 };
@@ -9868,16 +9841,6 @@ export type MappingEquipment = {
   uid: string;
   sku: string;
   name: string;
-  category: MappingEquipmentCategory | null;
-  bench_id: number | null;
-  bench_assignment: MappingEquipmentAssignment | null;
-};
-export type MappingEquipmentRead = {
-  id: number;
-  uid: string;
-  sku: string;
-  name: string;
-  image_url: string | null;
   category: MappingEquipmentCategory | null;
   bench_id: number | null;
   bench_assignment: MappingEquipmentAssignment | null;
@@ -9909,16 +9872,6 @@ export type ResourceMappingData = {
   licenses: MappingLicense[];
   license_assignments: MappingLicenseAssignment[];
 };
-export type ResourceMappingDataRead = {
-  rooms: MappingRoomRead[];
-  room_slots: MappingRoomSlot[];
-  stations: MappingStationRead[];
-  station_slots: MappingStationSlot[];
-  benches: MappingBenchRead[];
-  equipment: MappingEquipmentRead[];
-  licenses: MappingLicense[];
-  license_assignments: MappingLicenseAssignment[];
-};
 export type MappingPagination = {
   count: number;
   page_size: number;
@@ -9940,10 +9893,6 @@ export type ResourceMappingMeta = {
 };
 export type ResourceMappingResponse = {
   data: ResourceMappingData;
-  meta: ResourceMappingMeta;
-};
-export type ResourceMappingResponseRead = {
-  data: ResourceMappingDataRead;
   meta: ResourceMappingMeta;
 };
 export type BookingBenchChoices = {};
@@ -14164,10 +14113,6 @@ export type BenchMappingListMeta = {
 };
 export type BenchMappingListResponse = {
   data: ResourceMappingData;
-  meta: BenchMappingListMeta;
-};
-export type BenchMappingListResponseRead = {
-  data: ResourceMappingDataRead;
   meta: BenchMappingListMeta;
 };
 export type TypedResourceAuditListSerializersResourceAuditItemPagination = {

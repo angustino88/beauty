@@ -198,7 +198,7 @@ export default function MappingPage() {
             dataSource={table.rows}
             sticky={{ offsetHeader: 0 }}
             tableLayout="fixed"
-            scroll={{ x: columns.reduce((sum, column) => sum + (Number((column as { width?: unknown }).width) || 150), 0) }}
+            scroll={{ x: 1400 }}
             onChange={handleTableChange}
             locale={{
               emptyText: (
