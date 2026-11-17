@@ -1,7 +1,6 @@
 import type { Key, ReactNode } from "react";
 import type { ColumnsType } from "antd/es/table";
-import { Space, Tag, Tooltip } from "antd";
-import { Link } from "react-router-dom";
+import { Tag } from "antd";
 import {
   buildEquipmentInfo,
   renderImageCell,
@@ -11,6 +10,7 @@ import { pageIcons } from "@/components/layout/pageIcons";
 import type { IBench } from "../types";
 import SpaceStatusBadge from "@/features/spaces/shared/SpaceStatusBadge";
 import { readSpaceStatus } from "@/features/spaces/shared/spaceStatus";
+import { BenchLocationCell } from "./BenchLocationCell";
 
 interface BuildBenchColumnsArgs {
   isAdmin: boolean;
@@ -95,31 +95,7 @@ export const buildBenchColumns = ({
       filters: locationFilters,
       filterSearch: true,
       filteredValue: activeFilters.location ?? null,
-      render: (_, record) => (
-        <Space wrap size={[4, 4]}>
-          {record.station ? (
-            <Tooltip title={`Station: ${record.station.name} (${record.station.sku})`}>
-              <Link to={`/spaces/station?search=${encodeURIComponent(record.station.sku)}`}>
-                <Tag color="blue">{record.station.name || record.station.sku}</Tag>
-              </Link>
-            </Tooltip>
-          ) : null}
-          {record.room ? (
-            <Tooltip title={`Room: ${record.room.name} (${record.room.sku})`}>
-              <Link to={`/spaces/room?search=${encodeURIComponent(record.room.sku)}`}>
-                <Tag color="green">{record.room.name || record.room.sku}</Tag>
-              </Link>
-            </Tooltip>
-          ) : null}
-          {!record.room && record.location_path ? (
-            <Tooltip title={`Location: ${record.location_path}`}>
-              <Tag color="green">{record.location_path}</Tag>
-            </Tooltip>
-          ) : null}
-          {record.station_slot_name ? <Tag>{`Slot ${record.station_slot_name}`}</Tag> : null}
-          {!record.station && !record.room && <span style={{ color: "var(--lm-text-tertiary)" }}>Unplaced</span>}
-        </Space>
-      ),
+      render: (_, record) => <BenchLocationCell bench={record} />,
     },
     {
       title: "Bench Group",
@@ -146,7 +122,7 @@ export const buildBenchColumns = ({
       width: 140,
       align: "center",
       render: (count: number) => (
-        <Tag color={count > 0 ? "geekblue" : "default"}>{count} assets</Tag>
+        <Tag color={count > 0 ? "geekblue" : "default"}>{count} {count === 1 ? "asset" : "assets"}</Tag>
       ),
     },
     {
