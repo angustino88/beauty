@@ -14,6 +14,8 @@ import LicenseStatus from '../../shared/components/status/LicenseStatus';
 import LicenseInformationCell from './LicenseInformationCell';
 import type { ILicense } from '../types';
 import { pageIcons } from '@/components/layout/pageIcons';
+import { filterResourceOption } from '@/components/inputs/ResourceOption';
+import type { UserSelectOption } from '@/shared/utils/userOption';
 
 type FilterItem = { text: string; value: string };
 type SelectOption = { label: string; value: number };
@@ -60,7 +62,7 @@ interface BuildColumnsArgs {
   categoryOptions: SelectOption[];
   typeOptions: SelectOption[];
   restrictionOptions: SelectOption[];
-  ownerOptions: SelectOption[];
+  ownerOptions: UserSelectOption[];
   carrierOptions: EquipmentOption[];
   onCarrierSearch: (query: string) => void;
   carrierLoading: boolean;
@@ -298,7 +300,7 @@ export const buildLicenseColumns = ({
     ),
   },
   {
-    title: 'Primary Owner',
+    title: 'Owner',
     key: 'primary_owner',
     width: 150,
     filters: ownerFilters,
@@ -313,7 +315,10 @@ export const buildLicenseColumns = ({
             showSearch
             style={{ width: '100%' }}
             value={editingDraft?.primary_owner ?? undefined}
+            placeholder="Search by name or username"
             options={ownerOptions}
+            optionLabelProp="selectedLabel"
+            filterOption={filterResourceOption}
             onChange={(value) => updateDraftField('primary_owner', typeof value === 'number' ? value : null)}
           />
         )

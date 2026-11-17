@@ -157,11 +157,14 @@ export const bookingApi = baseApi.injectEndpoints({
     }),
 
     // GET /api/labs/benches/booking-choices — in-service benches with the computers on each, so people pick a bench
-    // by the computer name they know. `includeId` keeps the bench of an existing booking selectable.
-    getBookingBenchChoices: build.query<IBookingBenchChoice[], { includeId?: number | null } | void>({
+    // by the computer name they know. `hasComputing` leaves out benches with no computer mapped; `includeId` keeps the bench of an existing booking selectable.
+    getBookingBenchChoices: build.query<IBookingBenchChoice[], { includeId?: number | null; hasComputing?: boolean } | void>({
       query: (arg) => ({
         url: '/api/labs/benches/booking-choices',
-        params: arg && arg.includeId ? { include_ids: String(arg.includeId) } : undefined,
+        params: {
+          ...(arg && arg.includeId ? { include_ids: String(arg.includeId) } : {}),
+          ...(arg && arg.hasComputing ? { has_computing: 'true' } : {}),
+        },
       }),
       transformResponse: (res: unknown): IBookingBenchChoice[] => mapBookingBenchChoices(res),
       providesTags: [{ type: 'LabInfo', id: 'LIST' }],

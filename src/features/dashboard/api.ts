@@ -53,6 +53,8 @@ export const dashboardApi = baseApi.injectEndpoints({
         const searchParams = new URLSearchParams();
         searchParams.set('page', String(params.page));
         searchParams.set('page_size', String(params.page_size));
+        // Only benches with computing equipment assigned are listed; the rest cannot be booked or remoted into.
+        searchParams.set('has_computing', 'true');
         if (params.search) searchParams.set('q', params.search);
         // The list takes one value per filter and rejects repeated or unknown params, so a
         // multi-select sends its first value; sample and license filters are applied on the page.

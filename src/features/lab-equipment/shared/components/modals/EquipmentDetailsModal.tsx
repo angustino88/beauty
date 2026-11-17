@@ -184,7 +184,7 @@ const FIELD_LABELS: Record<string, string> = {
   network_interface_manufacturer: 'Manufacturer',
   network_interface_model: 'Model',
   lab_group: 'Lab group',
-  primary_owner: 'Primary owner',
+  primary_owner: 'Owner',
   computer_class: 'Computer class',
   computer_manufacturer: 'Manufacturer',
   computer_model: 'Model',
@@ -602,7 +602,7 @@ export default function EquipmentDetailsModal({
   const statusType = equipmentStatusValue(displayStatus);
   const statusMeta = LICENSE_STATUS_META[statusType.trim().toLowerCase()];
   const overviewItems = [
-    ['Primary owner', readSummaryValue(record, 'primary_owner') ?? record.owner],
+    ['Owner', readSummaryValue(record, 'primary_owner') ?? record.owner],
     ['Last audited', readSummaryValue(record, 'lab_audit')],
   ] as Array<readonly [string, unknown]>;
   const summaryGroups = (SUMMARY_GROUPS_BY_TYPE[summaryType] ?? DEFAULT_SUMMARY_GROUPS)

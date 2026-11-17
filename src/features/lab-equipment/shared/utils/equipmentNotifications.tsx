@@ -33,9 +33,9 @@ export const notifyEquipmentCreated = (
         <code
           style={{
             padding: '2px 7px',
-            border: '1px solid var(--lm-success-solid)',
+            border: '1px solid var(--lm-success-border)',
             borderRadius: 4,
-            background: 'var(--lm-surface-muted)',
+            background: 'var(--lm-success-bg)',
             color: 'var(--lm-success-fg)',
             fontFamily: 'ui-monospace, SFMono-Regular, Consolas, monospace',
             fontSize: 12,
@@ -70,9 +70,9 @@ export const notifyEquipmentUpdated = (
         <code
           style={{
             padding: '2px 7px',
-            border: '1px solid var(--lm-success-solid)',
+            border: '1px solid var(--lm-success-border)',
             borderRadius: 4,
-            background: 'var(--lm-surface-muted)',
+            background: 'var(--lm-success-bg)',
             color: 'var(--lm-success-fg)',
             fontFamily: 'ui-monospace, SFMono-Regular, Consolas, monospace',
             fontSize: 12,

@@ -1,7 +1,7 @@
 import type { EquipmentCategoryConfig } from '../../categories/registry';
 import type { EquipmentItem } from '../../types/equipment';
 import type { FieldConfig } from '../components/modals/EquipmentFormModal';
-import { userLabel } from '@/shared/utils/userRef';
+import { toUserOption } from '@/shared/utils/userOption';
 
 export function buildEquipmentFormFields({
   config, formMode, refData, departmentOptions, groupOptions, kindFormOptions, typeFormOptions,
@@ -30,7 +30,7 @@ export function buildEquipmentFormFields({
     { name: 'product_model_id', label: 'Product Model', type: 'select', dependsOn: ['type_id', 'manufacturer_id'], options: modelFormOptions },
     { name: 'serial_number', label: 'Serial Number', type: 'text', placeholder: 'Manufacturer serial number' },
     { name: 'log_label', label: 'LOG Label', type: 'text', placeholder: 'Legacy asset or log label' },
-    { name: 'owner_id', label: 'Primary Owner', type: 'select', options: refData?.owners?.map((o) => ({ label: userLabel(o), value: o.id })) ?? [] },
+    { name: 'owner_id', label: 'Owner', type: 'select', placeholder: 'Search by name or username', options: refData?.owners?.map(toUserOption) ?? [] },
     { name: 'department_id', label: 'Department', type: 'select', options: departmentOptions?.map((d) => ({ label: d.name, value: d.id })) ?? [], onSearch: onDepartmentSearch },
     { name: 'group_id', label: 'Group', type: 'select', dependsOn: ['department_id'], options: groupOptions?.map((group) => ({ label: group.name, value: group.id })) ?? [], onSearch: onGroupSearch },
     { name: 'warranty_end_date', label: 'Warranty Until', type: 'date', placeholder: 'Select warranty expiration date' },

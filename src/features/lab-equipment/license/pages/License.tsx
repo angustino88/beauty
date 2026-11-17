@@ -15,6 +15,7 @@ import {
 } from '../../shared';
 import type { FieldConfig } from '../../shared';
 import type { ILicense } from '../types';
+import { WorkbookImportButton } from '@/features/data-import';
 import { useLicenseTable } from '../hooks/useLicenseTable';
 import { useLicenseForm, type LicenseUpsertPayload } from '../hooks/useLicenseForm';
 import EquipmentInventoryOverview from '../../shared/components/cards/EquipmentInventoryOverview';
@@ -74,7 +75,7 @@ export default function LicensePage() {
       },
       { name: 'license_seats', label: 'Seats', type: 'number' },
       { name: 'expiry_date', label: 'Expiry Date', type: 'date' },
-      { name: 'primary_owner', label: 'Primary Owner', type: 'select', options: table.ownerOptions },
+      { name: 'primary_owner', label: 'Owner', type: 'select', options: table.ownerOptions },
       {
         name: 'assigned_equipment_ids',
         label: 'License Carrier',
@@ -248,6 +249,7 @@ export default function LicensePage() {
             ]}
           />
         </>}
+        extraControls={<WorkbookImportButton />}
         showCreate={isAdmin}
         createLabel="New License"
         onCreate={() => setModalOpen(true)}

@@ -26,6 +26,7 @@ import type {
   ILicenseVendor,
 } from '../types';
 import { facetToAntdFilters, getFacetOptions } from '../../shared/facets/filterFacets';
+import { toUserOption } from '@/shared/utils/userOption';
 
 type SelectOption = { label: string; value: number };
 export function useLicenseTable() {
@@ -87,10 +88,7 @@ export function useLicenseTable() {
     [restrictionQuery.data],
   );
   const ownerOptions = useMemo(
-    () => (usersQuery.data ?? []).map((user) => ({
-      label: user.username || user.display_name || String(user.id),
-      value: user.id,
-    })),
+    () => (usersQuery.data ?? []).map(toUserOption),
     [usersQuery.data],
   );
   const productFilters = useMemo(

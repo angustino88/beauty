@@ -140,7 +140,7 @@ export const buildRoomColumns = ({
   },
   { title: "Specs", key: "specs", width: 80, align: "center" as const, render: (_: unknown, record: IRoom) => renderRoomSpecsCell(record) },
   {
-    title: "Primary Owner",
+    title: "Owner",
     key: "primary_owner",
     width: 150,
     filters: filtersMap.primary_owner,

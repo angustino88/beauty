@@ -12,7 +12,7 @@ type BookingFilterProps = {
 };
 
 export const BookingFilter: React.FC<BookingFilterProps> = ({ form, name = 'bench_ids', onFinish }) => {
-  const { data: benchChoices, isFetching } = useGetBookingBenchChoicesQuery();
+  const { data: benchChoices, isFetching } = useGetBookingBenchChoicesQuery({ hasComputing: true });
   const benchOptions = useMemo(() => (benchChoices ?? []).map((bench) => toBenchChoiceOption(bench)), [benchChoices]);
   const submitTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 

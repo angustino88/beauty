@@ -163,7 +163,7 @@ export default function MappingPage() {
               onClick={() => void table.refetch()}>
               Refresh
             </TooltipButton>
-            <WorkbookImportButton />
+            <WorkbookImportButton variant="antd" />
             <Dropdown
               menu={{
                 items: [
