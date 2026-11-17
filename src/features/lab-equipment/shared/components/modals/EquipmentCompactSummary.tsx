@@ -2,8 +2,9 @@ import React from 'react';
 import { Alert, Button, Spin } from 'antd';
 import { Link } from 'react-router-dom';
 import {
-  Activity, Cable, Cpu, IdCard, KeyRound, Monitor, Network, Package, ReceiptText, Users, Waypoints, Wrench, Zap,
+  Activity, IdCard, KeyRound, Network, ReceiptText, Users, Waypoints, Wrench,
 } from 'lucide-react';
+import { resourcePageIcon } from '@/components/layout/pageIcons';
 import { MappingVisualization } from '@/features/spaces/mapping/components/MappingVisualization';
 import type { ResourceMappingRow } from '@/features/spaces/mapping/types';
 import {
@@ -22,11 +23,6 @@ interface EquipmentCompactSummaryProps {
   mappingError?: boolean;
   onRetryMapping?: () => void;
 }
-
-const CATEGORY_ICONS: Record<string, React.ReactNode> = {
-  computing: <Cpu />, display: <Monitor />, networking: <Network />, power: <Zap />, power_supply: <Zap />,
-  instrument: <Wrench />, debugging: <Wrench />, accessory: <Cable />,
-};
 
 const dateOnly = (value: unknown) => {
   if (!value) return null;
@@ -117,7 +113,7 @@ export const EquipmentCompactSummary: React.FC<EquipmentCompactSummaryProps> = (
         tone={status.tone}
         title={status.title}
         description={status.description}
-        icon={image ? <img src={image} alt={name} /> : CATEGORY_ICONS[equipmentType.toLowerCase()] ?? <Package />}
+        icon={image ? <img src={image} alt={name} /> : resourcePageIcon(equipmentType.toLowerCase())}
         facts={status.facts}
       />
 

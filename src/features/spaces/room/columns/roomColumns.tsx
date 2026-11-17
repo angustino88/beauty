@@ -6,6 +6,7 @@ import {
   renderImageCell,
   renderOwnerCell,
 } from "@/features/lab-equipment/shared";
+import { pageIcons } from "@/components/layout/pageIcons";
 import type { IRoom } from "../types";
 import { readField } from "./roomConfig";
 import {
@@ -50,6 +51,7 @@ export const buildRoomColumns = ({
   { title: "ID", dataIndex: "id", key: "id", width: 70, fixed: "left" as const },
   { title: "SKU", dataIndex: "sku", key: "sku", width: 120, fixed: "left" as const },
   { title: "Name", key: "name", width: 180, fixed: "left" as const, render: text("name") },
+  { title: "Image", key: "image", width: 90, align: "center" as const, render: (_: unknown, record: IRoom) => renderImageCell(record.image, pageIcons.rooms) },
   {
     title: "Status",
     key: "status",
@@ -154,7 +156,6 @@ export const buildRoomColumns = ({
     align: "center" as const,
     render: (_: unknown, record: IRoom) => <LastAuditCell resourceType="room" resourceId={record.id} />,
   },
-  { title: "Image", key: "image", width: 150, align: "center" as const, render: (_: unknown, record: IRoom) => renderImageCell(record.image) },
   {
     title: "Information",
     key: "information",

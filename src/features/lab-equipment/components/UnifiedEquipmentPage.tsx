@@ -40,8 +40,10 @@ import EquipmentFormModal, {
 import EquipmentStatus, { UpdateEquipmentStatusModal, type EquipmentStatusAction } from '../shared/components/status/EquipmentStatus';
 import {
   createActionsRenderer,
+  renderImageCell,
   renderOwnerCell,
 } from '../shared/columns/sharedColumns';
+import { resourcePageIcon } from '@/components/layout/pageIcons';
 import type { IPrimaryOwner } from '../shared/types/equipment.types';
 import { facetToAntdFilters, getFacetOptions } from '../shared/facets/filterFacets';
 import { buildEquipmentFacetParams, resetDependentFilters, selectedFilterCsv } from '../shared/facets/equipmentFacetParams';
@@ -441,6 +443,13 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
         render: (name: string) => <Tooltip title={name}><strong style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</strong></Tooltip>,
       },
       {
+        title: 'Image',
+        key: 'image',
+        width: 90,
+        align: 'center' as const,
+        render: (_: unknown, record: EquipmentItem) => renderImageCell(record.image, resourcePageIcon(config.key)),
+      },
+      {
         title: 'Kind',
         key: 'kind',
         width: 140,
@@ -752,7 +761,7 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
       },
     );
 
-    const priorityKeys = ['id', 'sku', 'name', 'status', 'placement', 'owner', 'kind', 'type', 'manufacturer', 'product_model', 'serial_number'];
+    const priorityKeys = ['id', 'sku', 'name', 'image', 'status', 'placement', 'owner', 'kind', 'type', 'manufacturer', 'product_model', 'serial_number'];
     const priorityColumns = priorityKeys.flatMap((key) => cols.filter((column) => column.key === key));
     return [...priorityColumns, ...cols.filter((column) => !priorityKeys.includes(String(column.key)))];
   }, [config, refData, facets, filters, kindFacetQuery, typeFacetQuery, manufacturerFacetQuery, modelFacetQuery, departmentFacetQuery, groupFacetQuery, actionsRenderer, handleOpenStatus]);

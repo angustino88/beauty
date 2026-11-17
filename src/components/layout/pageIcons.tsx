@@ -29,6 +29,17 @@ export const pageIcons: Record<string, React.ReactNode> = {
   'support-tickets': <CustomerServiceOutlined />,
 };
 
+/** The symbol of the page a resource lives on: `room`, `station`, `bench`, `license`, or an equipment category key. */
+export function resourcePageIcon(type: string): React.ReactNode {
+  switch (type) {
+    case 'room': return pageIcons.rooms;
+    case 'station': return pageIcons.stations;
+    case 'bench': return pageIcons.benches;
+    case 'license': return pageIcons.licenses;
+    default: return equipmentPageIcon(type);
+  }
+}
+
 /** The page symbol of an equipment category (its `/lab-equipment/<key>` page), or the Other symbol. */
 export function equipmentPageIcon(categoryKey: string): React.ReactNode {
   const path = `/lab-equipment/${categoryKey}`;
