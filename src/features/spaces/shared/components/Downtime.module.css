@@ -2,7 +2,58 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+  min-width: 0;
+  max-width: 100%;
 }
+
+/* Table: scrolls inside its own frame so the drawer never scrolls sideways. */
+.table {
+  min-width: 0;
+  max-width: 100%;
+  border: 1px solid var(--lm-border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.table :global(.ant-table) { background: transparent; }
+.table :global(.ant-table-thead > tr > th) {
+  color: var(--lm-text-tertiary);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.table :global(.ant-table-tbody > tr > td) { vertical-align: middle; }
+.table :global(.ant-table-pagination) { padding: 0 12px; }
+.table :global(.ant-table-cell-fix-right) { background: var(--lm-surface); }
+.table :global(.ant-table-thead .ant-table-cell-fix-right) { background: var(--lm-surface-subtle); }
+
+.cellStack { display: flex; flex-direction: column; gap: 2px; min-width: 0; line-height: 18px; }
+.cellMain { color: var(--lm-text); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.cellSub { color: var(--lm-text-tertiary); font-size: 12px; white-space: nowrap; }
+
+.conditionChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  align-self: flex-start;
+  padding: 0 7px;
+  height: 22px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--lm-warning-fg);
+  background: var(--lm-warning-bg);
+  border: 1px solid var(--lm-warning-border);
+}
+.conditionChipDanger {
+  color: var(--lm-danger-fg);
+  background: var(--lm-danger-bg);
+  border-color: var(--lm-danger-border);
+}
+
+.actorCell { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; color: var(--lm-text-secondary); }
+.actorIcon { flex: 0 0 auto; font-size: 11px; color: var(--lm-text-tertiary); }
+.actorName { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* Header */
 .tabHeader {
@@ -28,7 +79,7 @@
 /* Active Downtime Banner */
 .activeDowntimeCard {
   background: var(--lm-warning-bg);
-  border: 1px solid var(--lm-warning-solid);
+  border: 1px solid var(--lm-warning-border);
   border-left: 4px solid var(--lm-warning-solid);
   border-radius: 8px;
   padding: 14px 18px;
@@ -39,6 +90,8 @@
   gap: 14px;
   box-shadow: 0 1px 3px rgba(245, 158, 11, 0.08);
 }
+
+.activeOutOfService .activeTitle { color: var(--lm-danger-fg); }
 
 .activeOutOfService {
   background: var(--lm-danger-bg);
@@ -109,7 +162,7 @@
 .activeTitle {
   font-size: 14px;
   font-weight: 700;
-  color: var(--lm-info-fg);
+  color: var(--lm-warning-fg);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -188,7 +241,10 @@
 .durationOngoing {
   color: var(--lm-warning-fg);
   font-weight: 600;
+  white-space: nowrap;
 }
+
+.notesCell { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* Schedule Modal Enhancements */
 .conditionCards {
@@ -247,9 +303,21 @@
   margin-bottom: 8px;
 }
 
+.presetLabel {
+  margin-right: 4px;
+  font-size: 11px;
+  color: var(--lm-text-tertiary);
+}
+
 .presetBtn {
   font-size: 11px;
   padding: 1px 8px;
   height: 24px;
   border-radius: 4px;
+}
+
+.presetBtn.presetBtnActive {
+  color: var(--lm-primary-fg);
+  background: var(--lm-primary-bg);
+  border-color: var(--lm-primary);
 }

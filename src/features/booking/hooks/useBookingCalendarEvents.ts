@@ -4,6 +4,7 @@ import type { EventInput } from '@fullcalendar/core';
 import { useLazyGetBenchBookingsQuery } from '../api';
 import { useLazyGetDowntimesQuery } from '@/features/spaces/shared/downtimeApi';
 import { useAuthState } from '@/features/auth/hooks/useAuthState';
+import { benchColor } from '../utils/benchColors';
 
 const CALENDAR_DATETIME_FORMAT = 'YYYY-MM-DDTHH:mm:ss';
 
@@ -87,6 +88,9 @@ export function useBookingCalendarEvents() {
                 allDay: diffHours >= 23,
                 stick: true,
                 booking,
+                // With several benches on screen, each booking carries its bench's colour and SKU.
+                benchColor: benchIds.length > 1 ? benchColor(benchIds, booking.bench?.id) : undefined,
+                benchSku: benchIds.length > 1 ? booking.bench?.sku || booking.bench?.name : undefined,
               },
             ];
           });
@@ -116,18 +120,27 @@ export function useBookingCalendarEvents() {
               return [
                 {
                   id: `downtime-${d.id}`,
-                  title: `[Unavailable] ${condLabel} (${reasonLabel})`,
+                  title: condLabel,
                   start: startStr,
                   end: endStr,
-                  classNames: ['lm-event', 'lm-event-downtime'],
+                  classNames: [
+                    'lm-event',
+                    'lm-event-downtime',
+                    d.condition.value === 'out_of_service' ? 'lm-event-downtime-oos' : 'lm-event-downtime-maint',
+                  ],
                   allDay: false,
                   editable: false,
                   extendedProps: {
                     isDowntime: true,
                     downtimeId: d.id,
                     condition: condLabel,
+                    conditionValue: d.condition.value,
                     reason: reasonLabel,
                     notes: d.notes,
+                    openEnded: !d.ends_at,
+                    state: d.state,
+                    resourceType: d.resource.type,
+                    resourceId: d.resource.id,
                   },
                 },
               ];

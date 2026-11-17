@@ -3,6 +3,18 @@
 .dialog :global(.ant-modal-body) { max-height: 68vh; overflow-y: auto; padding-top: 4px; }
 .dialog :global(.ant-modal-footer) { margin-top: 0; padding-top: 14px; border-top: 1px solid var(--lm-border-subtle); }
 
+/* Raised surface: a lighter panel, a visible edge and a deeper shadow so the dialog separates from the page. */
+.dialog :global(.ant-modal-content) {
+  background: var(--lm-surface-raised);
+  border: 1px solid var(--lm-border-strong);
+  border-radius: 12px;
+  box-shadow: var(--lm-shadow-lg);
+}
+.dialog :global(.ant-modal-header) { background: transparent; }
+html[data-theme='dark'] .dialog :global(.ant-modal-content) { background: var(--lm-surface-muted); }
+html[data-theme='dark'] .strip { background: var(--lm-surface-raised); }
+html[data-theme='dark'] .dialog :global(.ant-modal-mask) { background: rgba(5, 4, 9, 0.72); }
+
 /* Header */
 .header { display: flex; align-items: center; gap: 12px; padding-right: 28px; }
 .headerIcon {
@@ -19,7 +31,7 @@
 
 .strip {
   display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0;
-  border: 1px solid var(--lm-border); border-radius: 8px;
+  background: var(--lm-surface-subtle); border: 1px solid var(--lm-border); border-radius: 8px;
 }
 .strip > div { padding: 10px 14px; min-width: 0; }
 .strip > div + div { border-left: 1px solid var(--lm-border-subtle); }
@@ -30,12 +42,22 @@
 
 .rows { margin: 0; }
 .rows > div {
-  display: grid; grid-template-columns: 140px minmax(0, 1fr); gap: 12px; align-items: baseline;
-  padding: 8px 0; border-bottom: 1px solid var(--lm-border-subtle); font-size: 13px;
+  display: grid; grid-template-columns: 140px minmax(0, 1fr); gap: 12px; align-items: center;
+  padding: 8px 0; border-bottom: 1px solid var(--lm-border); font-size: 13px; line-height: 22px;
 }
 .rows > div:last-child { border-bottom: 0; }
 .rows dt { color: var(--lm-text-secondary); }
 .rows dd { margin: 0; min-width: 0; color: var(--lm-text); }
+.rows dd :global(.ant-typography) { margin: 0; color: inherit; }
+.rows dd :global(.ant-typography-copy) { margin-left: 6px; color: var(--lm-text-tertiary) !important; }
+.rows dd :global(.ant-typography-copy:hover) { color: var(--lm-primary-fg) !important; }
+.keyValue { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.chip {
+  display: inline-flex; align-items: center; height: 22px; padding: 0 8px;
+  color: var(--lm-text-secondary); font-size: 12px; font-weight: 500;
+  background: var(--lm-neutral-bg); border: 1px solid var(--lm-neutral-border); border-radius: 6px;
+}
+html[data-theme='dark'] .chip { background: var(--lm-surface-raised); }
 
 .activity { margin: 0; padding: 0; list-style: none; }
 .activity li { display: flex; align-items: center; gap: 10px; padding: 7px 0; font-size: 13px; }
@@ -92,10 +114,36 @@
 .footerRight { display: inline-flex; gap: 8px; }
 .progress { display: inline-flex; align-items: center; gap: 8px; min-width: 0; margin-right: auto; color: var(--lm-text); font-size: 13px; text-align: left; }
 .countdown { font-family: var(--lm-font-mono); font-variant-numeric: tabular-nums; }
+/* Footer actions */
+.removeButton.removeButton {
+  color: var(--lm-danger-fg); background: transparent; border-color: var(--lm-danger-border); font-weight: 500;
+}
+.removeButton.removeButton:hover,
+.removeButton.removeButton:global(.ant-dropdown-open) {
+  color: var(--lm-danger-fg); background: var(--lm-danger-bg); border-color: var(--lm-danger-solid);
+}
+.caret { font-size: 10px; opacity: 0.8; }
+
+.reenrollButton.reenrollButton {
+  color: var(--lm-primary-fg); background: var(--lm-primary-bg); border-color: var(--lm-primary-border); font-weight: 500;
+}
+.reenrollButton.reenrollButton:hover {
+  color: var(--lm-primary-fg); background: var(--lm-primary-bg); border-color: var(--lm-primary);
+}
+
+/* Remove agent menu: two-line choices, danger tinted only on hover. */
+.removeMenu :global(.ant-dropdown-menu) { min-width: 240px; padding: 4px; border: 1px solid var(--lm-border); box-shadow: var(--lm-shadow-md); }
+.removeMenu :global(.ant-dropdown-menu-item) { align-items: flex-start !important; padding: 8px 10px !important; }
+.removeMenu :global(.ant-dropdown-menu-item-icon) { margin-top: 3px; color: var(--lm-danger-fg); font-size: 14px; }
+.removeMenu :global(.ant-dropdown-menu-item:hover) { background: var(--lm-danger-bg) !important; }
+.menuChoice { display: flex; flex-direction: column; gap: 1px; line-height: 18px; }
+.menuTitle { color: var(--lm-danger-fg); font-size: 13px; font-weight: 500; }
+.menuHint { color: var(--lm-text-tertiary); font-size: 12px; }
+
 .successIcon { color: var(--lm-success-solid); }
 .warningIcon { color: var(--lm-warning-solid); }
 
-.mono { font-family: var(--lm-font-mono); font-size: 12px; overflow-wrap: anywhere; }
+.mono { font-family: var(--lm-font-mono); font-size: 12.5px; overflow-wrap: anywhere; }
 .muted { color: var(--lm-text-secondary); }
 
 /* Inventory cell */

@@ -4,13 +4,35 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import listPlugin from '@fullcalendar/list';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
-import { type Dispatch, type RefObject, type SetStateAction } from 'react';
+import { type CSSProperties, type Dispatch, type RefObject, type SetStateAction } from 'react';
 import styles from './Calendar.module.css';
 import dayjs, { type Dayjs } from 'dayjs';
 import { Popover } from 'antd';
 import { EventDetailModal } from './EventDetailModal';
+import { DowntimeEventDetail, type DowntimeEventInfo } from './DowntimeEventDetail';
+import { ExclamationCircleOutlined, ToolOutlined } from '@ant-design/icons';
 import { DATE_FORMAT } from '@/shared/utils/booking';
 import type { BenchBookingItem } from '../../types';
+
+// Tinted pairs from the theme. Green and orange are left out: they are the "mine" and "others'" booking fills.
+const INITIAL_TONES = ['primary', 'info', 'reserved', 'danger', 'neutral'] as const;
+
+function creatorInitialStyle(name: string): CSSProperties {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  const tone = INITIAL_TONES[Math.abs(hash) % INITIAL_TONES.length];
+  return {
+    color: `var(--lm-${tone}-fg)`,
+    background: `var(--lm-${tone}-bg)`,
+    borderColor: `var(--lm-${tone}-border)`,
+  };
+}
+
+const CreatorInitial = ({ name, className }: { name: string; className: string }) => (
+  <span className={className} style={creatorInitialStyle(name)} aria-hidden="true">
+    {name.trim().charAt(0).toUpperCase() || '?'}
+  </span>
+);
 
 type CalendarEventContentProps = {
   arg: EventContentArg;
@@ -29,64 +51,87 @@ const CalendarEventContent = ({ arg, refetchBooking }: CalendarEventContentProps
   const isCompactEvent = !event.allDay && durationMinutes <= 45;
   const compactTimeText = event.start ? dayjs(event.start).format('h:mm A') : timeText;
   const showCreator = durationMinutes >= 90;
+  const benchColor = event.extendedProps?.benchColor as string | undefined;
+  const benchSku = event.extendedProps?.benchSku as string | undefined;
+  const benchDot = benchColor
+    ? <i className={styles.benchDot} style={{ background: benchColor }} title={benchSku} aria-label={benchSku} />
+    : null;
 
   const content = isMonthView ? (
     <div className={styles.monthEvent}>
+      {benchDot}
       {timeText && <span className={styles.monthEventTime}>{timeText}</span>}
       <span className={styles.monthEventTitle}>{event.title}</span>
     </div>
   ) : isListView ? (
     <div className={styles.listEventContent}>
-      <span className={styles.listEventTitle}>{event.title}</span>
+      <span className={styles.listEventTitle}>
+        {benchDot && <>{benchDot}{' '}<span className={styles.listBench}>{benchSku}</span>{' · '}</>}
+        {event.title}
+      </span>
       {creator && (
         <span className={styles.creatorBadge} title={creator}>
-          <span className={styles.creatorInitial} aria-hidden="true">{creator.charAt(0).toUpperCase()}</span>
+          <CreatorInitial name={creator} className={styles.creatorInitial} />
           <span className={styles.creatorName}>{creator}</span>
         </span>
       )}
     </div>
   ) : isCompactEvent ? (
-    <div className={styles.compactTimeGridEvent} title={`${timeText} ${hoverTitle}`}>
+    <div className={styles.compactTimeGridEvent} title={`${benchSku ? `${benchSku} · ` : ''}${timeText} ${hoverTitle}`}>
+      {benchDot}
       {compactTimeText && <span className={styles.compactEventTime}>{compactTimeText}</span>}
       <span className={styles.compactEventTitle}>{event.title}</span>
     </div>
   ) : (
     <div className={styles.timeGridEvent}>
+      {benchColor && benchSku && (
+        <span className={styles.benchLabel} style={{ color: benchColor }}>
+          <i className={styles.benchDot} style={{ background: benchColor }} aria-hidden="true" />
+          {benchSku}
+        </span>
+      )}
       {timeText && <span className={styles.timeGridEventTime}>{timeText}</span>}
       <span className={styles.timeGridEventTitle} title={hoverTitle}>{event.title}</span>
       {creator && showCreator && (
         <span className={styles.timeGridEventCreator} title={creator}>
-          <span aria-hidden="true">{creator.charAt(0).toUpperCase()}</span>
-          {creator}
+          <CreatorInitial name={creator} className={styles.creatorMark} />
+          <span className={styles.creatorText}>{creator}</span>
         </span>
       )}
     </div>
   );
 
   if (event.extendedProps?.isDowntime) {
-    const condition = event.extendedProps.condition as string | undefined;
-    const reason = event.extendedProps.reason as string | undefined;
-    const notes = event.extendedProps.notes as string | undefined;
+    const props = event.extendedProps as DowntimeEventInfo;
+    const outOfService = props.conditionValue === 'out_of_service';
+    const icon = outOfService ? <ExclamationCircleOutlined /> : <ToolOutlined />;
+    const timeLabel = props.openEnded
+      ? `${compactTimeText} · until resolved`
+      : timeText;
+    const downtimeContent = isMonthView || isListView || isCompactEvent ? (
+      <div className={styles.downtimeEventCompact}>
+        <span className={styles.downtimeIcon}>{icon}</span>
+        <span className={styles.downtimeTitle}>{event.title}</span>
+        {!isListView && <span className={styles.downtimeTime}>{compactTimeText}</span>}
+      </div>
+    ) : (
+      <div className={styles.downtimeEvent}>
+        <span className={styles.downtimeTitleRow}>
+          <span className={styles.downtimeIcon}>{icon}</span>
+          <span className={styles.downtimeTitle}>{event.title}</span>
+        </span>
+        {props.reason && <span className={styles.downtimeReason}>{props.reason}</span>}
+        <span className={styles.downtimeTime}>{timeLabel}</span>
+      </div>
+    );
 
     return (
       <Popover
         placement="right"
-        title="Downtime / Maintenance"
-        content={(
-          <div style={{ maxWidth: 280, padding: 4 }}>
-            <div><strong>Condition:</strong> {condition || 'Unavailable'}</div>
-            <div><strong>Reason:</strong> {reason || 'Maintenance'}</div>
-            {event.start && (
-              <div><strong>Starts:</strong> {dayjs(event.start).format('YYYY-MM-DD HH:mm')}</div>
-            )}
-            {event.end && (
-              <div><strong>Ends:</strong> {dayjs(event.end).format('YYYY-MM-DD HH:mm')}</div>
-            )}
-            {notes && <div style={{ marginTop: 4 }}><strong>Notes:</strong> {notes}</div>}
-          </div>
-        )}
+        styles={{ container: { padding: 0 } }}
+        content={<DowntimeEventDetail info={{ ...props, start: event.start, end: event.end }} />}
       >
-        {content}
+        {downtimeContent}
       </Popover>
     );
   }

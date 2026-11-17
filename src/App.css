@@ -63,13 +63,28 @@
   background: var(--lm-booking-bg) !important;
   border-color: var(--lm-booking-solid) !important;
 }
+/* Downtime: hatched in the condition colour (maintenance = amber, out of service = red), with a solid left edge. */
+.lm-tone-downtime-maint,
+.fc .lm-event-downtime-maint {
+  --lm-downtime-solid: var(--lm-warning-solid);
+  --lm-downtime-fg: var(--lm-warning-fg);
+  --lm-downtime-bg: var(--lm-warning-bg);
+}
+.lm-tone-downtime-oos,
+.fc .lm-event-downtime-oos {
+  --lm-downtime-solid: var(--lm-danger-solid);
+  --lm-downtime-fg: var(--lm-danger-fg);
+  --lm-downtime-bg: var(--lm-danger-bg);
+}
 .fc .lm-event-downtime {
-  background: repeating-linear-gradient(135deg, var(--lm-surface-muted) 0 6px, var(--lm-surface-subtle) 6px 12px) !important;
-  border-color: var(--lm-border-strong) !important;
+  background:
+    repeating-linear-gradient(135deg, transparent 0 7px, color-mix(in srgb, var(--lm-downtime-solid, var(--lm-border-strong)) 10%, transparent) 7px 14px),
+    var(--lm-downtime-bg, var(--lm-surface-muted)) !important;
+  border-color: var(--lm-downtime-solid, var(--lm-border-strong)) !important;
 }
 .fc .lm-event-downtime,
 .fc .lm-event-downtime .fc-event-main {
-  color: var(--lm-text-secondary) !important;
+  color: var(--lm-text) !important;
 }
 
 .fc-timegrid-event {

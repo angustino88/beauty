@@ -8,6 +8,8 @@ import { Calendar } from '../components/calendar/Calendar';
 import { BenchBookingCreate } from '../components/BenchBookingCreate';
 import { useBookingCalendarEvents } from '../hooks/useBookingCalendarEvents';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { useAuthState } from '@/features/auth/hooks/useAuthState';
+import { benchSelectionStorageKey, readBenchSelection, writeBenchSelection } from '../utils/benchColors';
 import styles from './BookingCalendar.module.css';
 
 const parseBenchIds = (searchParams: URLSearchParams): number[] => {
@@ -31,16 +33,18 @@ const BookingCalendar = () => {
   const visibleDateRangeRef = useRef<{ start: string; end: string } | null>(null);
 
   const { bookingEvents, isFetching, fetchEvents } = useBookingCalendarEvents();
+  const { id: myUserId, username } = useAuthState();
+  const storageKey = benchSelectionStorageKey(myUserId ?? username);
+
 
   useEffect(() => {
     const benchIds = parseBenchIds(searchParams);
-    if (benchIds.length > 0) {
-      formInstance.setFieldsValue({ bench_ids: benchIds });
-      fetchEvents(benchIds, visibleDateRangeRef.current ?? undefined);
-    }
+    formInstance.setFieldsValue({ bench_ids: benchIds });
+    fetchEvents(benchIds, visibleDateRangeRef.current ?? undefined);
   }, [searchParams, formInstance, fetchEvents]);
 
   const updateBenchParams = (benchIds?: number[]) => {
+    writeBenchSelection(storageKey, benchIds ?? []);
     setSearchParams(
       (prev) => {
         const next = new URLSearchParams(prev);
@@ -54,6 +58,15 @@ const BookingCalendar = () => {
       { replace: true },
     );
   };
+
+  // A link with bench_ids wins; otherwise reopen the benches this person had selected last time.
+  useEffect(() => {
+    if (searchParams.has('bench_ids')) return;
+    const remembered = readBenchSelection(storageKey);
+    if (remembered.length) updateBenchParams(remembered);
+    // Only on first load for this person.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storageKey]);
 
   const handleFilterFinish = (values: { bench_ids?: number[] }) => {
     const benchIds = values.bench_ids;

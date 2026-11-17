@@ -1,0 +1,28 @@
+/* Bench filter on the booking calendar. Tokens only. */
+
+.quickPicks {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+  margin: 0 0 4px; padding: 4px 8px 8px; border-bottom: 1px solid var(--lm-border-subtle);
+}
+.quickLabel { margin-right: 2px; color: var(--lm-text-tertiary); font-size: 11px; font-weight: 500; }
+.quickPick {
+  height: 24px; padding: 0 10px; font: inherit; font-size: 12px; font-weight: 500; cursor: pointer;
+  color: var(--lm-text-secondary); background: var(--lm-surface-subtle); border: 1px solid var(--lm-border); border-radius: 999px;
+}
+.quickPick:hover:not(:disabled) { color: var(--lm-text); border-color: var(--lm-border-strong); }
+.quickPick:focus-visible { outline: none; box-shadow: var(--lm-focus-ring); }
+.quickPick:disabled { cursor: not-allowed; opacity: 0.5; }
+.quickPick.quickPickActive { color: var(--lm-primary-fg); background: var(--lm-primary-bg); border-color: var(--lm-primary-border); }
+
+.tag {
+  display: inline-flex; align-items: center; gap: 6px; max-width: 100%; height: 24px;
+  margin: 2px 4px 2px 0; padding: 0 4px 0 8px; font-size: 13px;
+  color: var(--lm-text); background: var(--lm-surface-muted); border-radius: 6px;
+}
+.tagDot { flex: 0 0 auto; width: 8px; height: 8px; border-radius: 50%; }
+.tagText { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tagClose {
+  display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; padding: 0;
+  color: var(--lm-text-tertiary); font-size: 10px; cursor: pointer; background: none; border: 0; border-radius: 4px;
+}
+.tagClose:hover { color: var(--lm-text); background: var(--lm-border); }

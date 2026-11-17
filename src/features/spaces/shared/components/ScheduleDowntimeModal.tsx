@@ -34,6 +34,20 @@ interface ScheduleDowntimeModalProps {
   onSuccess?: () => void;
 }
 
+interface DurationPreset {
+  label: string;
+  hours: number | 'eod' | null;
+}
+
+const DURATION_PRESETS: DurationPreset[] = [
+  { label: '+1 Hour', hours: 1 },
+  { label: '+4 Hours', hours: 4 },
+  { label: 'End of Day', hours: 'eod' },
+  { label: '24 Hours', hours: 24 },
+  { label: '48 Hours', hours: 48 },
+  { label: 'Open-ended', hours: null },
+];
+
 interface FormValues {
   condition: 'in_maintenance' | 'out_of_service';
   reason: DowntimeReason;
@@ -75,6 +89,7 @@ export const ScheduleDowntimeModal: React.FC<ScheduleDowntimeModalProps> = ({
   const [conflicts, setConflicts] = useState<DowntimeConflictBooking[] | null>(null);
   const [conflictMessage, setConflictMessage] = useState<string>('');
   const [lastPayload, setLastPayload] = useState<ScheduleDowntimeRequest | null>(null);
+  const [activePreset, setActivePreset] = useState<string | null>(null);
 
   const watchedCondition = Form.useWatch('condition', form) ?? 'in_maintenance';
   const watchedStartsAt = Form.useWatch('starts_at', form);
@@ -84,6 +99,7 @@ export const ScheduleDowntimeModal: React.FC<ScheduleDowntimeModalProps> = ({
     setConflicts(null);
     setConflictMessage('');
     setLastPayload(null);
+    setActivePreset(null);
   };
 
   const handleCancel = () => {
@@ -91,15 +107,12 @@ export const ScheduleDowntimeModal: React.FC<ScheduleDowntimeModalProps> = ({
     onClose();
   };
 
-  const applyDurationPreset = (hours: number | 'eod' | null) => {
-    const base = watchedStartsAt || dayjs();
-    if (hours === null) {
-      form.setFieldValue('ends_at', null);
-    } else if (hours === 'eod') {
-      form.setFieldValue('ends_at', base.endOf('day'));
-    } else {
-      form.setFieldValue('ends_at', base.add(hours, 'hour'));
-    }
+  const applyDurationPreset = (preset: DurationPreset) => {
+    const base: Dayjs = watchedStartsAt || dayjs();
+    const end = preset.hours === null ? null : preset.hours === 'eod' ? base.endOf('day').startOf('minute') : base.add(preset.hours, 'hour');
+    form.setFieldValue('ends_at', end);
+    setActivePreset(preset.label);
+    void form.validateFields(['ends_at']).catch(() => undefined);
   };
 
   const handleSubmit = async (values: FormValues) => {
@@ -199,7 +212,7 @@ export const ScheduleDowntimeModal: React.FC<ScheduleDowntimeModalProps> = ({
     <>
       <FormDialog
         open={open && !conflicts}
-        title={`Schedule Downtime: ${resourceType.toUpperCase()} ${resourceName || `#${resourceId}`}`}
+        title={`Schedule downtime · ${resourceName || `${resourceType} #${resourceId}`}`}
         description="Plan maintenance or an out-of-service window. Overlapping bookings require confirmation."
         submitLabel="Schedule downtime"
         busy={isLoading}
@@ -286,39 +299,49 @@ export const ScheduleDowntimeModal: React.FC<ScheduleDowntimeModalProps> = ({
           </Form.Item>
 
           <Form.Item
-            name="ends_at"
             label="Ends At (Estimated End / Duration)"
-            tooltip="Leave blank for open-ended outage until manually resolved"
+            tooltip="Leave blank for an open-ended outage that lasts until it is resolved manually"
           >
             <div className={styles.presetRow}>
-              <span style={{ fontSize: 11, color: 'var(--lm-text-tertiary)', marginRight: 4 }}>Quick presets:</span>
-              <Button size="small" className={styles.presetBtn} onClick={() => applyDurationPreset(1)}>
-                +1 Hour
-              </Button>
-              <Button size="small" className={styles.presetBtn} onClick={() => applyDurationPreset(4)}>
-                +4 Hours
-              </Button>
-              <Button size="small" className={styles.presetBtn} onClick={() => applyDurationPreset('eod')}>
-                End of Day
-              </Button>
-              <Button size="small" className={styles.presetBtn} onClick={() => applyDurationPreset(24)}>
-                24 Hours
-              </Button>
-              <Button size="small" className={styles.presetBtn} onClick={() => applyDurationPreset(48)}>
-                48 Hours
-              </Button>
-              <Button size="small" className={styles.presetBtn} onClick={() => applyDurationPreset(null)}>
-                Open-ended
-              </Button>
+              <span className={styles.presetLabel}>Quick presets:</span>
+              {DURATION_PRESETS.map((preset) => (
+                <Button
+                  key={preset.label}
+                  size="small"
+                  className={`${styles.presetBtn} ${activePreset === preset.label ? styles.presetBtnActive : ''}`}
+                  onClick={() => applyDurationPreset(preset)}
+                >
+                  {preset.label}
+                </Button>
+              ))}
             </div>
-            <DatePicker
-              showTime
-              format="YYYY-MM-DD HH:mm"
-              style={{ width: '100%' }}
-              disabledDate={(current) =>
-                watchedStartsAt ? current && current.isBefore(watchedStartsAt, 'day') : false
-              }
-            />
+            {/* Only the picker is bound to the field; the presets above write to it through the form. */}
+            <Form.Item
+              name="ends_at"
+              noStyle
+              dependencies={['starts_at']}
+              rules={[
+                ({ getFieldValue }) => ({
+                  validator: (_, value?: Dayjs | null) => {
+                    const start = getFieldValue('starts_at') as Dayjs | undefined;
+                    return !value || !start || value.isAfter(start)
+                      ? Promise.resolve()
+                      : Promise.reject(new Error('The end must be after the start'));
+                  },
+                }),
+              ]}
+            >
+              <DatePicker
+                showTime
+                format="YYYY-MM-DD HH:mm"
+                placeholder="Open-ended (until resolved)"
+                style={{ width: '100%' }}
+                onChange={() => setActivePreset(null)}
+                disabledDate={(current) =>
+                  watchedStartsAt ? current && current.isBefore(watchedStartsAt, 'day') : false
+                }
+              />
+            </Form.Item>
           </Form.Item>
 
           <Form.Item name="notes" label="Technician Notes / Context">
