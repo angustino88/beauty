@@ -236,7 +236,7 @@ export function buildColumns({
           />
           <TooltipButton
             placement="top"
-            tooltip="Book this bench"
+            tooltip={bench.computing || bench.computer ? "Book this bench" : "No computing resource mapped to this bench"}
             overlayInnerStyle={{ maxWidth: 100, textAlign: 'center' }}
             disabled={!bench.computing && !bench.computer}
             icon={<CalendarOutlined />}

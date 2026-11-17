@@ -9,6 +9,7 @@ import { EQUIPMENT_FILTER_RULES } from '@/features/lab-equipment/shared/utils/eq
 import type { IRoom } from '../types';
 import { ROOM_OPTIONS_CONFIG } from '../columns/roomConfig';
 import { facetToAntdFilters, getFacetOptions } from '@/features/lab-equipment/shared/facets/filterFacets';
+import { toUserOption } from '@/shared/utils/userOption';
 
 type FilterItem   = { text: string; value: string };
 type SelectOption = { label: string; value: number };
@@ -81,6 +82,7 @@ export function useRoomTable() {
         return { text: label, value: String(id ?? label) };
       });
     }
+    optionsMap.primary_owner = (usersQuery.data ?? []).map(toUserOption) as unknown as SelectOption[];
     for (const key of ['country', 'city', 'building', 'primary_owner']) {
       const facetKey = key === 'primary_owner' ? ['primary_owner', 'owner', 'owner_id'] : [key, `${key}_id`];
       const facetItems = facetToAntdFilters(getFacetOptions(facetsQuery.data, ...facetKey));
@@ -94,7 +96,7 @@ export function useRoomTable() {
       }
     }
     return { optionsMap, filtersMap };
-  }, [rawSources, facetsQuery.data]);
+  }, [rawSources, facetsQuery.data, usersQuery.data]);
 
   const statusFacetFilters = facetToAntdFilters(getFacetOptions(facetsQuery.data, 'status', 'status_type'));
   const statusFilters = useMemo(

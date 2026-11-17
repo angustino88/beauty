@@ -161,7 +161,7 @@ function properties(kind: SpaceKind, record: Record<string, unknown>) {
       ['City', text(record, 'location_info.city', 'city')],
       ['Country', text(record, 'country', 'location_info.country')],
       ['Floor area', length && width ? `${length} × ${width} m` : text(record, 'size')],
-      ['Primary owner', text(record, 'primary_owner')],
+      ['Owner', text(record, 'primary_owner')],
     ] as const;
   }
   if (kind === 'station') {
@@ -174,14 +174,14 @@ function properties(kind: SpaceKind, record: Record<string, unknown>) {
       ['Room', text(record, 'room_name', 'room')],
       ['Slot', text(record, 'slot_code', 'slot_id')],
       ['Dimensions (H × W × D)', h && w && d ? `${h} × ${w} × ${d} mm` : null],
-      ['Primary owner', text(record, 'primary_owner')],
+      ['Owner', text(record, 'primary_owner')],
     ] as const;
   }
   return [
     ['SKU', sku && <Code>{sku}</Code>],
     ['Group', text(record, 'group_name', 'bench_group')],
     ['Type', text(record, 'type_name', 'bench_type')],
-    ['Primary owner', text(record, 'primary_owner', 'owner')],
+    ['Owner', text(record, 'primary_owner', 'owner')],
     ['Department', text(record, 'department')],
     ['Location note', text(record, 'location_name')],
   ] as const;

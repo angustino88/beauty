@@ -19,7 +19,7 @@ import { useMemo, useState } from 'react';
 import { filterResourceOption } from '@/components/inputs/ResourceOption';
 import type { IBenchBookingFormValues } from '../types';
 import { useGetBenchBookingsQuery, useGetBookingBenchChoicesQuery, useGetProjectOptionsQuery } from '../api';
-import { toBenchChoiceOption } from '../utils/benchChoiceOption';
+import { selectBookableBenches, toBenchChoiceOption } from '../utils/benchChoiceOption';
 import { useRecommendedSlots } from '../hooks/useRecommendedSlots';
 import { useAuthState } from '@/features/auth/hooks/useAuthState';
 import { DATETIMEFORMAT, TIME_FORMAT, disabledRangeTime } from '@/shared/utils/booking';
@@ -57,7 +57,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({ form, formProps }) => 
   // The bench of the booking being edited stays selectable even when it is no longer in service.
   const initialBenchId = (formProps.initialValues as Partial<IBenchBookingFormValues> | undefined)?.bench_id;
   const { data: benchChoices } = useGetBookingBenchChoicesQuery({ includeId: initialBenchId ?? null });
-  const benchOptions = useMemo(() => (benchChoices ?? []).map((bench) => toBenchChoiceOption(bench, { show: 'computer' })), [benchChoices]);
+  const benchOptions = useMemo(() => selectBookableBenches(benchChoices, initialBenchId).map((bench) => toBenchChoiceOption(bench)), [benchChoices, initialBenchId]);
   const { data: projectOptions } = useGetProjectOptionsQuery();
   const sortedProjectOptions = [...(projectOptions ?? [])].sort((first, second) =>
     String(first.label).localeCompare(String(second.label), undefined, { sensitivity: 'base' }),
@@ -204,7 +204,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({ form, formProps }) => 
               <Form.Item label="Bench" name="bench_id" rules={[{ required: true, message: 'Please select a bench' }]}>
                 <Select
                   showSearch
-                  placeholder="Search by computer or bench"
+                  placeholder="Search by bench SKU or computing name"
                   options={benchOptions}
                   optionLabelProp="selectedLabel"
                   filterOption={filterResourceOption}

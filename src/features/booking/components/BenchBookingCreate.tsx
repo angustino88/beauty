@@ -12,6 +12,7 @@ import type { IBenchBookingFormValues } from '../types';
 import type { BenchBookingCreateRequest } from '../mapper';
 import { BookingForm } from './BookingForm';
 import { useCreateBenchBookingMutation, useGetBookingBenchChoicesQuery } from '../api';
+import { selectBookableBenches } from '../utils/benchChoiceOption';
 import styles from './BookingModal.module.css';
 
 export type CustomModalProps = {
@@ -56,7 +57,7 @@ export const BenchBookingCreate: React.FC<CustomModalProps> = ({
     const rawIds = searchParams.get('bench_ids');
     const res = rawIds?.split(',') || [];
     const targetId = parseInt(res[0], 10);
-    if (!Number.isNaN(targetId) && benchChoices?.some((bench) => bench.id === targetId)) {
+    if (!Number.isNaN(targetId) && selectBookableBenches(benchChoices).some((bench) => bench.id === targetId)) {
       formInstance.setFieldValue('bench_id', targetId);
     }
   }, [benchChoices, searchParams, formInstance]);
@@ -80,9 +81,9 @@ export const BenchBookingCreate: React.FC<CustomModalProps> = ({
                   <code
                     style={{
                       padding: '2px 7px',
-                      border: '1px solid var(--lm-success-solid)',
+                      border: '1px solid var(--lm-success-border)',
                       borderRadius: 4,
-                      background: 'var(--lm-surface-muted)',
+                      background: 'var(--lm-success-bg)',
                       color: 'var(--lm-success-fg)',
                       fontFamily: 'ui-monospace, SFMono-Regular, Consolas, monospace',
                       fontSize: 12,

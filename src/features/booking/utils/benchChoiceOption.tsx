@@ -11,27 +11,41 @@ export function formatBenchLabel(sku?: string | null, name?: string | null, comp
   return computers ? `${bench} (${computers})` : bench;
 }
 
+/** A bench can be booked only when a computing resource is mapped to it. */
+export const isBookableBench = (bench: IBookingBenchChoice): boolean =>
+  bench.computers.some((computer) => computer.name || computer.sku);
+
 /**
- * A bench option for booking. `show: 'bench'` (calendar filter) reads `<Bench SKU> (<Computing Name>)`;
- * `show: 'computer'` (create / edit booking) reads the computing name, because people book the machine they
- * remote into. A bench with no computer falls back to its SKU. Search matches SKU, name and the computers'
+ * Benches offered for a new booking: only those with a computing resource mapped. `keepId` is the bench of a booking
+ * being edited, which stays selectable so the form can still show it.
+ */
+export const selectBookableBenches = (benches: IBookingBenchChoice[] | undefined, keepId?: number | null): IBookingBenchChoice[] =>
+  (benches ?? []).filter((bench) => isBookableBench(bench) || (keepId != null && bench.id === keepId));
+
+/**
+ * A bench option for booking, always `<Bench SKU> (<Computing Name>)`. Search matches SKU, name and the computers'
  * names, SKUs and hostnames. No hover tooltip: the text is already the whole label.
  */
-export function toBenchChoiceOption(
-  bench: IBookingBenchChoice,
-  { show = 'bench' }: { show?: 'bench' | 'computer' } = {},
-): ResourceSelectOption {
+export function toBenchChoiceOption(bench: IBookingBenchChoice): ResourceSelectOption {
   const computers = bench.computers.filter((computer) => computer.name || computer.sku);
   const computerNames = computers.map(computerLabel);
-  const text = show === 'computer' && computerNames.length
-    ? computerNames.join(', ')
-    : formatBenchLabel(bench.sku, bench.name, computerNames);
+  const benchText = bench.sku || bench.name || '';
+  const text = formatBenchLabel(bench.sku, bench.name, computerNames);
   return {
     value: bench.id,
     label: (
       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
-        {show === 'computer' && computerNames.length > 0 && <DesktopOutlined />}
-        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{text}</span>
+        <span style={{ fontWeight: 600, whiteSpace: 'nowrap' }}>{benchText}</span>
+        {computerNames.length > 0 && (
+          <span
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 4, minWidth: 0, color: 'var(--lm-text-secondary)',
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            }}
+          >
+            <DesktopOutlined />({computerNames.join(', ')})
+          </span>
+        )}
       </span>
     ),
     title: '',

@@ -3,7 +3,7 @@ import { Form, type FormInstance, Select, Spin } from 'antd';
 import { useEffect, useMemo, useRef } from 'react';
 import { filterResourceOption } from '@/components/inputs/ResourceOption';
 import { useGetBookingBenchChoicesQuery } from '../api';
-import { toBenchChoiceOption } from '../utils/benchChoiceOption';
+import { selectBookableBenches, toBenchChoiceOption } from '../utils/benchChoiceOption';
 
 type BookingFilterProps = {
   form: FormInstance;
@@ -13,7 +13,7 @@ type BookingFilterProps = {
 
 export const BookingFilter: React.FC<BookingFilterProps> = ({ form, name = 'bench_ids', onFinish }) => {
   const { data: benchChoices, isFetching } = useGetBookingBenchChoicesQuery();
-  const benchOptions = useMemo(() => (benchChoices ?? []).map((bench) => toBenchChoiceOption(bench)), [benchChoices]);
+  const benchOptions = useMemo(() => selectBookableBenches(benchChoices).map((bench) => toBenchChoiceOption(bench)), [benchChoices]);
   const submitTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {

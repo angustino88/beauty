@@ -22,7 +22,7 @@ export const ROOM_FIELD_CONFIG: RoomFieldConfig[] = [
   { key: "name", label: "Name", type: "text", reader: (r) => r.name ?? "" },
   {
     key: "primary_owner",
-    label: "Primary Owner",
+    label: "Owner",
     type: "select",
     labelField: "username",
     valueField: "id",
@@ -96,7 +96,7 @@ export const buildRoomFormFields = (optionsMap: Record<string, SelectOption[]>):
   { name: "sku", label: "SKU", type: "text", required: true, maxLength: 255, disabledInEdit: true, section: "Identification" },
   { name: "name", label: "Name", type: "text", required: true, maxLength: 255, section: "Identification" },
   { name: "label", label: "Short label", type: "text", essential: true, placeholder: "e.g. A101", section: "Identification" },
-  { name: "primary_owner", label: "Primary Owner", type: "select", essential: true, options: optionsMap.primary_owner, section: "Identification" },
+  { name: "primary_owner", label: "Owner", type: "select", essential: true, options: optionsMap.primary_owner, section: "Identification" },
   { name: "rows", label: "Grid rows", type: "number", required: true, section: "Layout" },
   { name: "cols", label: "Grid columns", type: "number", required: true, section: "Layout" },
   {
