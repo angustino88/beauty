@@ -1,13 +1,14 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Button, Collapse, Dropdown, Modal, Popconfirm, Radio, Space, Table, Tooltip, Typography, message } from 'antd';
-import type { ColumnsType } from 'antd/es/table';
-import { CloudServerOutlined, MoreOutlined, PlusOutlined, ReloadOutlined, SyncOutlined } from '@ant-design/icons';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { Button, Dropdown, Modal, Popconfirm, Spin, Tooltip, Typography, message } from 'antd';
+import { CheckCircleFilled, DownOutlined, ExclamationCircleFilled, LaptopOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
-import type { AgentIdentityRead, EnrollmentGrantRead } from '@/shared/api/generated/api';
+import type { EnrollmentGrantRead } from '@/shared/api/generated/api';
 import { StatusBadge } from '@/shared/components/StatusBadge';
 import { userLabel } from '@/shared/utils/userRef';
+import { useAppDispatch } from '@/app/store';
 import {
+  agentApi,
   agentErrorMessage,
   useGetAgentGrantsQuery,
   useGetComputingAgentsQuery,
@@ -16,8 +17,9 @@ import {
   useRetireAgentMutation,
   useRevokeAgentGrantMutation,
 } from './agentApi';
-import { GRANT_TONE, agentHealthHint, agentHealthTone, currentAgent, isLive, shortUid } from './agentModel';
-import { AgentEnrollmentPanel, type IssuedGrant } from './AgentEnrollmentPanel';
+import { agentStatus, currentAgent, formatCountdown, isLive, setupPhase, shortUid, type AgentTone } from './agentModel';
+import { AgentSetup, type IssuedGrant, type SetupMode } from './AgentSetup';
+import { useCountdown } from './useCountdown';
 import styles from './ComputingAgent.module.css';
 
 dayjs.extend(relativeTime);
@@ -30,16 +32,18 @@ export interface AgentComputer {
 }
 
 const formatTime = (value: string | null | undefined) => (value ? dayjs(value).format('MMM D, YYYY HH:mm') : '—');
-const Relative = ({ value }: { value: string | null | undefined }) =>
-  value ? <Tooltip title={formatTime(value)}><span>{dayjs(value).fromNow()}</span></Tooltip> : <span>—</span>;
+const Ago = ({ value, never = 'Never' }: { value: string | null | undefined; never?: string }) =>
+  value ? <Tooltip title={formatTime(value)}><span>{dayjs(value).fromNow()}</span></Tooltip> : <span>{never}</span>;
+const Mono = ({ value }: { value: string }) => (
+  <Typography.Text className={styles.mono} copyable={{ text: value, tooltips: ['Copy', 'Copied'] }}>{value}</Typography.Text>
+);
 
-const TTL_OPTIONS = [5, 15, 30, 60];
-type GrantDialog = null | 'setup' | 'reissue' | 'recover';
+interface ActivityItem { key: string; at: string; tone: AgentTone; text: ReactNode; meta?: string; action?: ReactNode }
 
 /**
- * Compact agent dialog for one computing unit: health, identity, enrollment and history, with the
- * coordinator actions. Render with `key={computer?.id}` so the in-memory grant is forgotten when
- * the dialog closes or moves to another computer.
+ * Agent of one computing unit. The info view reads like a CI runner page (status, details,
+ * activity); the setup view walks through Download, Configure and Verify while the footer reports
+ * progress live. Render with `key={computer?.id}` so the in-memory grant is forgotten on close.
  */
 export function ComputingAgentDialog({ computer, canManage, onClose }: {
   computer: AgentComputer | null;
@@ -48,14 +52,16 @@ export function ComputingAgentDialog({ computer, canManage, onClose }: {
 }) {
   const open = computer !== null;
   const [issued, setIssued] = useState<IssuedGrant | null>(null);
-  const [grantDialog, setGrantDialog] = useState<GrantDialog>(null);
-  const [ttl, setTtl] = useState(15);
+  const [view, setView] = useState<'auto' | 'info' | 'setup'>('auto');
+  const [recovering, setRecovering] = useState(false);
+  const [showAllActivity, setShowAllActivity] = useState(false);
 
   const agentsArgs = { equipmentIds: computer ? [computer.id] : [] };
   const agentsQuery = useGetComputingAgentsQuery(agentsArgs, { skip: !open, pollingInterval: 20000, skipPollingIfUnfocused: true });
   const agents = useMemo(() => agentsQuery.data?.data ?? [], [agentsQuery.data]);
   const agent = currentAgent(agents);
-  const previous = agents.filter((row) => row.id !== agent?.id);
+  const live = agent && isLive(agent) ? agent : undefined;
+  const state = live?.state.value;
   const grantsQuery = useGetAgentGrantsQuery({ agentId: agent?.id ?? 0 }, { skip: !open || !agent });
 
   const [issueGrant, issueState] = useIssueAgentGrantMutation();
@@ -63,40 +69,52 @@ export function ComputingAgentDialog({ computer, canManage, onClose }: {
   const [revokeGrant] = useRevokeAgentGrantMutation();
   const [retireAgent] = useRetireAgentMutation();
 
-  const state = agent?.state.value;
-  const enrolling = state === 'pending' || (state === 'active' && !agent?.last_seen_at)
-    || (issued !== null && agent?.agent_uid === issued.agentUid);
-  // A second subscription to the same cache entry polls quickly while an enrollment is in flight, so
-  // the checklist advances on its own (RTK Query polls at the shortest interval of its subscribers).
-  useGetComputingAgentsQuery(agentsArgs, { skip: !open || !enrolling, pollingInterval: 4000, skipPollingIfUnfocused: true });
+  const grant = issued && live && issued.agentUid === live.agent_uid ? issued : null;
+  const remaining = useCountdown(grant?.expiresAt);
+  const phase = setupPhase(live, { hasGrant: Boolean(grant), grantExpired: Boolean(grant) && remaining === 0 });
+  const resolvedView = view !== 'auto' ? view : state === 'active' || !canManage ? 'info' : 'setup';
+  const settingUp = resolvedView === 'setup' && (phase === 'waiting' || phase === 'enrolled');
+
+  // A second subscription polls quickly while a setup is in flight, so the footer advances on its
+  // own (RTK Query polls at the shortest interval of its subscribers).
+  useGetComputingAgentsQuery(agentsArgs, { skip: !open || !settingUp, pollingInterval: 4000, skipPollingIfUnfocused: true });
   // Grant statuses change when the device redeems a grant; refresh them whenever the agent moves on.
   const { refetch: refetchGrants } = grantsQuery;
-  const grantsKey = agent ? `${agent.id}:${agent.state.value}:${agent.enrolled_at ?? ''}:${agent.last_seen_at ? 1 : 0}` : '';
-  useEffect(() => { if (grantsKey) refetchGrants(); }, [grantsKey, refetchGrants]);
+  const grantsKey = agent ? `${agent.id}:${agent.state.value}:${agent.last_seen_at ? 1 : 0}` : '';
+  // The inventory column caches its own agent list; refresh it when this agent changes state too.
+  const dispatch = useAppDispatch();
+  useEffect(() => {
+    if (!grantsKey) return;
+    refetchGrants();
+    dispatch(agentApi.util.invalidateTags([{ type: 'Agent', id: 'LIST' }]));
+  }, [grantsKey, refetchGrants, dispatch]);
 
-  const submitGrant = async () => {
+  const setupMode: SetupMode = recovering && state === 'active' ? 'recover' : state === 'pending' ? 'reissue' : 'setup';
+  const generate = async (ttlMinutes: number) => {
     try {
-      const response = grantDialog === 'setup'
-        ? await issueGrant({ equipmentUid: computer?.uid ?? '', ttlMinutes: ttl }).unwrap()
-        : await reissueGrant({ agentId: agent?.id ?? 0, ttlMinutes: ttl }).unwrap();
+      const response = setupMode === 'setup'
+        ? await issueGrant({ equipmentUid: computer?.uid ?? '', ttlMinutes }).unwrap()
+        : await reissueGrant({ agentId: live?.id ?? 0, ttlMinutes }).unwrap();
       setIssued({ agentUid: response.data.agent_uid, grant: response.data.grant, expiresAt: response.data.expires_at });
-      setGrantDialog(null);
-      message.success('Enrollment grant issued');
+      setRecovering(false);
+      setView('setup');
     } catch (error) {
       message.error(agentErrorMessage(error, 'Unable to issue an enrollment grant'));
     }
   };
 
-  const confirmRetire = (action: 'revoke' | 'decommission') => {
-    if (!agent) return;
+  const retire = (action: 'revoke' | 'decommission') => {
+    if (!live) return;
     Modal.confirm({
-      title: action === 'revoke' ? 'Revoke agent?' : 'Decommission agent?',
-      content: action === 'revoke' ? 'Its key stops working immediately.' : 'Use when the computer leaves service.',
-      okText: action === 'revoke' ? 'Revoke' : 'Decommission',
+      title: action === 'revoke' ? `Revoke the agent on ${computer?.sku ?? 'this computer'}?` : `Decommission the agent on ${computer?.sku ?? 'this computer'}?`,
+      content: action === 'revoke'
+        ? 'Its key stops working at the next request. Use this when the computer or its key may be compromised.'
+        : 'Use this when the computer leaves service or the agent is uninstalled.',
+      okText: action === 'revoke' ? 'Revoke agent' : 'Decommission agent',
       okButtonProps: { danger: true },
       onOk: async () => {
         try {
-          await retireAgent({ agentId: agent.id, action }).unwrap();
+          await retireAgent({ agentId: live.id, action }).unwrap();
           message.success(action === 'revoke' ? 'Agent revoked' : 'Agent decommissioned');
         } catch (error) {
           message.error(agentErrorMessage(error, `Unable to ${action} the agent`));
@@ -105,153 +123,177 @@ export function ComputingAgentDialog({ computer, canManage, onClose }: {
     });
   };
 
-  const grantColumns: ColumnsType<EnrollmentGrantRead> = [
-    { title: 'Grant', key: 'status', width: 110, render: (_, row) => <StatusBadge tone={GRANT_TONE[row.status.value] ?? 'neutral'} label={row.status.label} fit /> },
-    { title: 'Issued', key: 'created_at', render: (_, row) => <Tooltip title={userLabel(row.created_by) || undefined}><span><Relative value={row.created_at} /></span></Tooltip> },
-    { title: 'Closed', key: 'closed', render: (_, row) => <Relative value={row.used_at ?? row.revoked_at ?? row.expires_at} /> },
-    ...(canManage ? [{
-      title: '',
-      key: 'actions',
-      width: 64,
-      render: (_: unknown, row: EnrollmentGrantRead) => row.status.value === 'usable' && agent ? (
-        <Popconfirm
-          title="Revoke this grant?"
-          onConfirm={async () => {
-            try {
-              await revokeGrant({ agentId: agent.id, grantId: row.id }).unwrap();
-              if (issued?.agentUid === agent.agent_uid) setIssued(null);
-              message.success('Grant revoked');
-            } catch (error) {
-              message.error(agentErrorMessage(error, 'Unable to revoke the grant'));
-            }
+  const activity = useMemo<ActivityItem[]>(() => {
+    const grants = (grantsQuery.data?.data ?? []).map((row: EnrollmentGrantRead): ActivityItem => {
+      const by = userLabel(row.created_by);
+      const base = { key: `grant-${row.id}`, meta: by ? `by ${by}` : undefined };
+      switch (row.status.value) {
+        case 'redeemed': return { ...base, at: row.used_at ?? row.created_at, tone: 'success', text: 'Enrolled with a one-time grant' };
+        case 'revoked': return { ...base, at: row.revoked_at ?? row.created_at, tone: 'neutral', text: 'Enrollment grant revoked' };
+        case 'expired': return { ...base, at: row.expires_at, tone: 'neutral', text: 'Enrollment grant expired unused' };
+        default: return {
+          ...base,
+          at: row.created_at,
+          tone: 'info',
+          text: <>Enrollment grant issued · expires <Ago value={row.expires_at} /></>,
+          action: canManage && live ? (
+            <Popconfirm
+              title="Revoke this grant?"
+              okButtonProps={{ danger: true }}
+              onConfirm={async () => {
+                try {
+                  await revokeGrant({ agentId: live.id, grantId: row.id }).unwrap();
+                  setIssued(null);
+                  message.success('Grant revoked');
+                } catch (error) {
+                  message.error(agentErrorMessage(error, 'Unable to revoke the grant'));
+                }
+              }}
+            >
+              <Button type="link" size="small" danger className={styles.inlineAction}>Revoke</Button>
+            </Popconfirm>
+          ) : undefined,
+        };
+      }
+    });
+    const previous = agents.filter((row) => row.id !== agent?.id).map((row): ActivityItem => ({
+      key: `agent-${row.id}`,
+      at: row.updated_at,
+      tone: 'neutral',
+      text: <>Agent <span className={styles.mono}>{shortUid(row.agent_uid)}</span> {row.state.label.toLowerCase()}</>,
+    }));
+    return [...grants, ...previous].sort((a, b) => b.at.localeCompare(a.at));
+  }, [grantsQuery.data, agents, agent?.id, canManage, live, revokeGrant]);
+
+  const status = agentStatus(live);
+  const title = computer?.sku || computer?.name || (computer ? `Computer #${computer.id}` : '');
+  const subtitle = computer?.sku && computer.name ? computer.name : undefined;
+  const visibleActivity = showAllActivity ? activity : activity.slice(0, 4);
+
+  const header = (
+    <div className={styles.header}>
+      <span className={styles.headerIcon} aria-hidden="true"><LaptopOutlined /></span>
+      <div className={styles.headerText}>
+        <div className={styles.headerTitle}>{resolvedView === 'setup' ? `Set up agent on ${title}` : title}</div>
+        <div className={styles.headerSub}>{resolvedView === 'setup' ? subtitle ?? 'LabMango agent' : subtitle ?? 'LabMango agent'}</div>
+      </div>
+    </div>
+  );
+
+  const infoView = (
+    <div className={styles.info}>
+      <dl className={styles.strip}>
+        <div>
+          <dt>Status</dt>
+          <dd><StatusBadge tone={agentsQuery.isError ? 'danger' : status.tone} label={agentsQuery.isError ? 'Unavailable' : status.label} title={status.hint} fit /></dd>
+        </div>
+        <div>
+          <dt>Last heartbeat</dt>
+          <dd><Ago value={live?.last_seen_at} never={live ? 'Never' : '—'} /></dd>
+        </div>
+        <div>
+          <dt>Version</dt>
+          <dd>{live?.agent_version || '—'}</dd>
+        </div>
+      </dl>
+
+      {!live && !agentsQuery.isLoading && (
+        <div className={styles.empty}>
+          <p>No agent is installed on this computer.</p>
+          <span>{canManage ? 'Set one up to report health, sessions and booking check-ins.' : 'A lab coordinator can set one up.'}</span>
+        </div>
+      )}
+
+      {live && (
+        <section>
+          <h4 className={styles.sectionTitle}>Details</h4>
+          <dl className={styles.rows}>
+            <div><dt>Agent ID</dt><dd><Mono value={live.agent_uid} /></dd></div>
+            <div><dt>State</dt><dd>{live.state.label}</dd></div>
+            {live.key_algorithm && <div><dt>Key</dt><dd>{live.key_algorithm.label}{live.key_storage ? ` in ${live.key_storage.label}` : ''}</dd></div>}
+            {live.fingerprint && <div><dt>Device fingerprint</dt><dd><Mono value={live.fingerprint} /></dd></div>}
+            {live.enrolled_at && <div><dt>Enrolled</dt><dd>{formatTime(live.enrolled_at)}</dd></div>}
+          </dl>
+        </section>
+      )}
+
+      {activity.length > 0 && (
+        <section>
+          <h4 className={styles.sectionTitle}>Activity</h4>
+          <ul className={styles.activity}>
+            {visibleActivity.map((item) => (
+              <li key={item.key}>
+                <i className={`${styles.activityDot} ${styles[item.tone]}`} aria-hidden="true" />
+                <span className={styles.activityText}>{item.text}{item.meta && <span className={styles.activityMeta}> {item.meta}</span>}</span>
+                {item.action}
+                <span className={styles.activityTime}><Ago value={item.at} /></span>
+              </li>
+            ))}
+          </ul>
+          {activity.length > 4 && (
+            <Button type="link" size="small" className={styles.inlineAction} onClick={() => setShowAllActivity((value) => !value)}>
+              {showAllActivity ? 'Show less' : `Show all ${activity.length}`}
+            </Button>
+          )}
+        </section>
+      )}
+    </div>
+  );
+
+  const progress: Record<string, ReactNode> = {
+    configure: <span className={styles.muted}>Not connected yet</span>,
+    waiting: <><Spin size="small" /> Waiting for the agent to enroll<span className={styles.muted}> · grant expires in <span className={styles.countdown}>{formatCountdown(remaining)}</span></span></>,
+    expired: <><ExclamationCircleFilled className={styles.warningIcon} /> The grant expired. Generate a new command.</>,
+    enrolled: <><Spin size="small" /> Enrolled. Waiting for the first heartbeat…</>,
+    connected: <><CheckCircleFilled className={styles.successIcon} /> Agent connected</>,
+  };
+
+  const footer = resolvedView === 'setup' ? (
+    <div className={styles.footer}>
+      <span className={styles.progress} role="status" aria-live="polite">{progress[phase]}</span>
+      {phase === 'expired' && <Button onClick={() => setIssued(null)}>New command</Button>}
+      {live && state === 'active' && (
+        <Button type={phase === 'connected' ? 'primary' : 'default'} onClick={() => { setRecovering(false); setView('info'); }}>
+          {phase === 'connected' ? 'View agent' : 'Back'}
+        </Button>
+      )}
+    </div>
+  ) : canManage ? (
+    <div className={styles.footer}>
+      {live && state === 'active' ? (
+        <Dropdown
+          trigger={['click']}
+          menu={{
+            items: [
+              { key: 'revoke', danger: true, label: 'Revoke', extra: 'Key may be compromised', onClick: () => retire('revoke') },
+              { key: 'decommission', danger: true, label: 'Decommission', extra: 'Computer leaves service', onClick: () => retire('decommission') },
+            ],
           }}
         >
-          <Button size="small" type="link" danger style={{ padding: 0 }}>Revoke</Button>
-        </Popconfirm>
-      ) : null,
-    }] : []),
-  ];
-
-  const previousColumns: ColumnsType<AgentIdentityRead> = [
-    { title: 'Previous agent', key: 'uid', render: (_, row) => <Tooltip title={row.agent_uid}><span className={styles.mono}>{shortUid(row.agent_uid)}</span></Tooltip> },
-    { title: 'State', key: 'state', width: 130, render: (_, row) => <StatusBadge status={row.state.value} label={row.state.label} fit /> },
-    { title: 'Retired', key: 'updated', render: (_, row) => <Relative value={row.updated_at} /> },
-  ];
-
-  const title = computer ? computer.sku || computer.name || `Computer #${computer.id}` : '';
-  const live = agent ? isLive(agent) : false;
-  const primaryAction = !canManage ? null : !live ? (
-    <Button type="primary" size="small" icon={<PlusOutlined />} disabled={!computer?.uid} onClick={() => setGrantDialog('setup')}>Set up</Button>
-  ) : state === 'pending' ? (
-    <Button size="small" icon={<SyncOutlined />} onClick={() => setGrantDialog('reissue')}>New grant</Button>
+          <Button danger type="text">Remove agent <DownOutlined /></Button>
+        </Dropdown>
+      ) : <span />}
+      <span className={styles.footerRight}>
+        {live && state === 'active'
+          ? <Button onClick={() => { setRecovering(true); setIssued(null); setView('setup'); }}>Re-enroll</Button>
+          : <Button type="primary" disabled={!computer?.uid} onClick={() => setView('setup')}>{state === 'pending' ? 'Continue setup' : 'Set up agent'}</Button>}
+      </span>
+    </div>
   ) : null;
-  const menuItems = canManage && state === 'active' ? [
-    { key: 'recover', label: 'Re-enroll…', onClick: () => setGrantDialog('recover') },
-    { type: 'divider' as const },
-    { key: 'revoke', label: 'Revoke…', danger: true, onClick: () => confirmRetire('revoke') },
-    { key: 'decommission', label: 'Decommission…', danger: true, onClick: () => confirmRetire('decommission') },
-  ] : [];
-
-  const historyCount = (grantsQuery.data?.data.length ?? 0) + previous.length;
-  const statusLabel = agentsQuery.isError ? 'Unavailable' : agent?.health?.label ?? (agentsQuery.isLoading ? 'Loading' : 'No agent');
 
   return (
     <Modal
       open={open}
       onCancel={onClose}
-      footer={null}
-      width={480}
+      width={resolvedView === 'setup' ? 680 : 560}
       destroyOnHidden
       rootClassName={styles.dialog}
-      title={(
-        <Space size={6}>
-          <CloudServerOutlined />
-          {title}
-          <Tooltip title="Refresh">
-            <Button size="small" type="text" aria-label="Refresh" icon={<ReloadOutlined />} loading={agentsQuery.isFetching} onClick={() => { agentsQuery.refetch(); if (agent) grantsQuery.refetch(); }} />
-          </Tooltip>
-        </Space>
-      )}
+      title={header}
+      footer={footer}
     >
-      <div className={styles.stack}>
-        <div className={styles.summary}>
-          <Tooltip title={agent ? agentHealthHint(agent.health?.value) : undefined}>
-            <span>
-              <StatusBadge tone={agentsQuery.isError ? 'danger' : agent ? agentHealthTone(agent.health?.value) : 'neutral'} label={statusLabel} fit />
-            </span>
-          </Tooltip>
-          <span className={styles.summaryMeta}>
-            {agent?.last_seen_at ? <>Seen <Relative value={agent.last_seen_at} /></> : null}
-            {agent?.agent_version ? <> · v{agent.agent_version}</> : null}
-            {!agent && !agentsQuery.isLoading && !agentsQuery.isError ? (canManage ? 'Not set up yet' : 'Ask a coordinator to set it up') : null}
-          </span>
-          {primaryAction}
-          {menuItems.length > 0 && (
-            <Dropdown menu={{ items: menuItems }} trigger={['click']} placement="bottomRight">
-              <Button size="small" icon={<MoreOutlined />} aria-label="Agent actions" />
-            </Dropdown>
-          )}
-        </div>
-
-        {agent && enrolling && (
-          <AgentEnrollmentPanel agent={agent} issued={issued} canManage={canManage} onNewGrant={() => setGrantDialog('reissue')} />
-        )}
-
-        {agent && (
-          <dl className={styles.facts}>
-            <dt>Agent UID</dt>
-            <dd><Typography.Text className={styles.mono} copyable={{ text: agent.agent_uid }}>{agent.agent_uid}</Typography.Text></dd>
-            <dt>State</dt>
-            <dd>{agent.state.label}</dd>
-            {agent.key_algorithm && (<><dt>Key</dt><dd>{agent.key_algorithm.label}{agent.key_storage ? ` · ${agent.key_storage.label}` : ''}</dd></>)}
-            {agent.fingerprint && (<><dt>Fingerprint</dt><dd><Typography.Text className={styles.mono} copyable={{ text: agent.fingerprint }}>{agent.fingerprint}</Typography.Text></dd></>)}
-            {agent.enrolled_at && (<><dt>Enrolled</dt><dd>{formatTime(agent.enrolled_at)}</dd></>)}
-          </dl>
-        )}
-
-        {agent && historyCount > 0 && (
-          <Collapse
-            ghost
-            size="small"
-            className={styles.history}
-            items={[{
-              key: 'history',
-              label: `History (${historyCount})`,
-              children: (
-                <Space direction="vertical" size={12} style={{ width: '100%' }}>
-                  <Table<EnrollmentGrantRead> size="small" rowKey="id" pagination={false} columns={grantColumns} dataSource={grantsQuery.data?.data ?? []} />
-                  {previous.length > 0 && (
-                    <Table<AgentIdentityRead> size="small" rowKey="id" pagination={false} columns={previousColumns} dataSource={previous} />
-                  )}
-                </Space>
-              ),
-            }]}
-          />
-        )}
-      </div>
-
-      <Modal
-        open={grantDialog !== null}
-        width={400}
-        title={grantDialog === 'setup' ? 'Set up agent' : grantDialog === 'recover' ? 'Re-enroll agent' : 'New enrollment grant'}
-        okText="Issue grant"
-        okButtonProps={{ danger: grantDialog === 'recover' }}
-        confirmLoading={issueState.isLoading || reissueState.isLoading}
-        onOk={submitGrant}
-        onCancel={() => setGrantDialog(null)}
-        destroyOnHidden
-      >
-        {grantDialog === 'recover' && (
-          <Typography.Paragraph type="danger">The current agent stops working until the computer enrolls again.</Typography.Paragraph>
-        )}
-        <Typography.Text type="secondary" style={{ display: 'block', marginBottom: 8 }}>Grant valid for</Typography.Text>
-        <Radio.Group
-          optionType="button"
-          value={ttl}
-          onChange={(event) => setTtl(event.target.value as number)}
-          options={TTL_OPTIONS.map((minutes) => ({ value: minutes, label: `${minutes} min` }))}
-        />
-      </Modal>
+      {resolvedView === 'setup'
+        ? <AgentSetup agent={live} grant={grant} mode={setupMode} generating={issueState.isLoading || reissueState.isLoading} onGenerate={generate} />
+        : infoView}
     </Modal>
   );
 }

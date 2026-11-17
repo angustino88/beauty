@@ -8598,8 +8598,8 @@ export type AgentIdentityRead = {
   agent_uid: string;
   equipment: LabsNamedReferenceRead | null;
   state: ChoiceRead;
-  /** Derived liveness for display: online, stale or offline from last_seen_at for an active agent; never_seen before the first heartbeat; awaiting_enrollment while pending; retired once revoked or decommissioned. */
-  health: ChoiceRead;
+  /** Liveness of an active agent from last_seen_at: online, delayed or offline (also offline before the first heartbeat). Null while pending and once revoked or decommissioned; read state then. */
+  health: ChoiceRead | null;
   key_algorithm: ChoiceRead | null;
   key_storage: ChoiceRead | null;
   fingerprint: string;

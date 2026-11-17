@@ -1,13 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  agentHealthTone,
+  agentStatus,
   currentAgent,
-  enrollmentProgress,
   formatCountdown,
   liveAgentsByEquipment,
   secondsUntil,
-  setupBlocks,
+  sectionCommands,
+  setupPhase,
+  setupScript,
   type AgentLike,
 } from './agentModel.ts';
 
@@ -15,21 +16,22 @@ const agent = (id: number, state: string, extra: Partial<AgentLike> = {}): Agent
   id,
   agent_uid: `00000000-0000-0000-0000-00000000000${id}`,
   state: { value: state, label: state },
+  health: null,
   last_seen_at: null,
   enrolled_at: null,
   created_at: `2026-11-1${id}T00:00:00Z`,
-  equipment: { id: 10 + (extra.equipment?.id ?? 0), name: 'PC' },
+  equipment: { id: 10, name: 'PC' },
   ...extra,
 });
 
-test('health tones follow the status colour language; unknown values are neutral', () => {
-  assert.equal(agentHealthTone('online'), 'success');
-  assert.equal(agentHealthTone('stale'), 'warning');
-  assert.equal(agentHealthTone('offline'), 'danger');
-  assert.equal(agentHealthTone('awaiting_enrollment'), 'info');
-  assert.equal(agentHealthTone('retired'), 'neutral');
-  assert.equal(agentHealthTone('something_new'), 'neutral');
-  assert.equal(agentHealthTone(undefined), 'neutral');
+test('status shows three health values for an enrolled agent, else the lifecycle', () => {
+  const active = (value: string) => agent(1, 'active', { health: { value, label: value } });
+  assert.deepEqual([active('online'), active('delayed'), active('offline')].map((a) => [agentStatus(a).label, agentStatus(a).tone]), [
+    ['Online', 'success'], ['Delayed', 'warning'], ['Offline', 'danger'],
+  ]);
+  assert.equal(agentStatus(agent(1, 'pending')).label, 'Pending');
+  assert.equal(agentStatus(agent(1, 'revoked')).label, 'Not installed');
+  assert.equal(agentStatus(undefined).tone, 'neutral');
 });
 
 test('the live identity represents the computer, else the newest retired one', () => {
@@ -48,13 +50,15 @@ test('live agents are indexed by equipment id; retired ones are skipped', () => 
   assert.equal(map.has(6), false);
 });
 
-test('enrollment progress follows state and the first heartbeat', () => {
-  assert.deepEqual(enrollmentProgress(undefined), { current: 0, failed: false });
-  assert.deepEqual(enrollmentProgress(agent(1, 'pending')), { current: 1, failed: false });
-  assert.deepEqual(enrollmentProgress(agent(1, 'pending'), { grantExpired: true }), { current: 1, failed: true });
-  assert.deepEqual(enrollmentProgress(agent(1, 'active')), { current: 2, failed: false });
-  assert.deepEqual(enrollmentProgress(agent(1, 'active', { last_seen_at: '2026-11-17T00:00:00Z' })), { current: 3, failed: false });
-  assert.deepEqual(enrollmentProgress(agent(1, 'revoked')), { current: 1, failed: true });
+test('setup phase follows grant, state and first heartbeat', () => {
+  const noGrant = { hasGrant: false, grantExpired: false };
+  const fresh = { hasGrant: true, grantExpired: false };
+  assert.equal(setupPhase(undefined, noGrant), 'configure');
+  assert.equal(setupPhase(agent(1, 'pending'), noGrant), 'configure');
+  assert.equal(setupPhase(agent(1, 'pending'), fresh), 'waiting');
+  assert.equal(setupPhase(agent(1, 'pending'), { hasGrant: true, grantExpired: true }), 'expired');
+  assert.equal(setupPhase(agent(1, 'active'), fresh), 'enrolled');
+  assert.equal(setupPhase(agent(1, 'active', { last_seen_at: '2026-11-17T00:00:00Z' }), fresh), 'connected');
 });
 
 test('countdown never goes negative', () => {
@@ -64,13 +68,24 @@ test('countdown never goes negative', () => {
   assert.equal(formatCountdown(65), '1:05');
 });
 
-test('production commands never carry the grant; only the dev stub does', () => {
-  const ctx = { backendUrl: 'https://lab.example/', agentUid: 'uid-1', cli: 'labmango-agent', grant: 'eg_secret' };
-  for (const platform of ['windows', 'linux', 'macos'] as const) {
-    const text = setupBlocks(platform, ctx).map((block) => block.code).join('\n');
-    assert.ok(!text.includes('eg_secret'), platform);
-    assert.ok(text.includes('--url https://lab.example --agent-uid uid-1'), platform);
-  }
-  assert.ok(setupBlocks('windows', ctx)[0].code.startsWith('.\\labmango-agent.exe enroll'));
-  assert.ok(setupBlocks('stub', ctx)[0].code.includes('--grant eg_secret'));
+const ctx = { backendUrl: 'https://lab.example/', agentUid: 'uid-1', cli: 'labmango-agent', grant: 'eg_secret' };
+
+test('script: download only with a package URL, configure only with a grant', () => {
+  assert.deepEqual(setupScript({ ...ctx, os: 'linux', arch: 'x64', grant: undefined }).map((s) => s.key), ['verify']);
+  const full = setupScript({ ...ctx, os: 'linux', arch: 'arm64', downloadUrl: 'https://dl.example/1.4.2/' });
+  assert.deepEqual(full.map((s) => s.key), ['download', 'configure', 'verify']);
+  assert.ok(sectionCommands(full[0]).includes('https://dl.example/1.4.2/labmango-agent-linux-arm64.tar.gz'));
+  assert.equal(
+    sectionCommands(full[1]),
+    'sudo ./labmango-agent enroll \\\n    --url https://lab.example \\\n    --agent-uid uid-1 \\\n    --grant eg_secret\n'
+      + 'sudo ./labmango-agent service install --start',
+  );
+});
+
+test('script: Windows uses PowerShell, the .exe and a zip package', () => {
+  const [download, configure] = setupScript({ ...ctx, os: 'windows', arch: 'x64', downloadUrl: 'https://dl.example/v1' });
+  assert.equal(download.prompt, 'PS>');
+  assert.ok(sectionCommands(download).includes('labmango-agent-win-x64.zip'));
+  assert.ok(sectionCommands(configure).startsWith('.\\labmango-agent.exe enroll `\n    --url https://lab.example `\n'));
+  assert.ok(!sectionCommands(configure).includes('# '));
 });
