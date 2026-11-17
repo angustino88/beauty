@@ -198,7 +198,7 @@ export default function MappingPage() {
             dataSource={table.rows}
             sticky={{ offsetHeader: 0 }}
             tableLayout="fixed"
-            scroll={{ x: 1400 }}
+            scroll={{ x: 2000 }}
             onChange={handleTableChange}
             locale={{
               emptyText: (

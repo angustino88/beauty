@@ -7,11 +7,15 @@ import { resourceText } from "@/components/inputs/ResourceOption";
 import type { MappingFilterOptions, MappingOptionItem, MappingState, ResourceMappingRow } from "../types";
 import { MAPPING_STATE_LABELS } from "../utils/mappingExportConfig";
 import {
+  renderBenchImage,
   renderBenchTag,
   renderEquipmentCategories,
+  renderEquipmentImages,
   renderLicenses,
   renderMappingStatus,
+  renderRoomImage,
   renderRoomTag,
+  renderStationImage,
   renderStationTag,
 } from "./mappingColumnRenderers";
 
@@ -61,6 +65,13 @@ export const buildMappingColumns = ({
     render: (_v, row) => renderBenchTag(row),
   },
   {
+    title: "Bench image",
+    key: "bench_image",
+    width: 96,
+    align: "center",
+    render: (_v, row) => renderBenchImage(row),
+  },
+  {
     title: "Mapping",
     key: "state",
     width: 170,
@@ -75,6 +86,13 @@ export const buildMappingColumns = ({
     render: (_v, row) => renderStationTag(row),
   },
   {
+    title: "Station image",
+    key: "station_image",
+    width: 96,
+    align: "center",
+    render: (_v, row) => renderStationImage(row),
+  },
+  {
     title: "Room",
     key: "room",
     width: 220,
@@ -82,10 +100,23 @@ export const buildMappingColumns = ({
     render: (_v, row) => renderRoomTag(row),
   },
   {
+    title: "Room image",
+    key: "room_image",
+    width: 96,
+    align: "center",
+    render: (_v, row) => renderRoomImage(row),
+  },
+  {
     title: "Equipment",
     key: "category",
     ...serverFilter("category", choices(filterOptions.categories), filters),
     render: (_v, row) => renderEquipmentCategories(row.equipment),
+  },
+  {
+    title: "Equipment image",
+    key: "equipment_image",
+    width: 150,
+    render: (_v, row) => renderEquipmentImages(row.equipment),
   },
   {
     title: "Licenses",
