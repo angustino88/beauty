@@ -95,8 +95,11 @@ const injectedRtkApi = api.injectEndpoints({
       query: (queryArg) => ({
         url: `/api/agents`,
         params: {
+          equipment: queryArg.equipment,
+          equipment_uid: queryArg.equipmentUid,
           page: queryArg.page,
           page_size: queryArg.pageSize,
+          state: queryArg.state,
         },
       }),
     }),
@@ -133,6 +136,18 @@ const injectedRtkApi = api.injectEndpoints({
         body: queryArg.body,
       }),
     }),
+    listAgentGrants: build.query<
+      ListAgentGrantsApiResponse,
+      ListAgentGrantsApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/agents/${queryArg.id}/enrollment-grants`,
+        params: {
+          page: queryArg.page,
+          page_size: queryArg.pageSize,
+        },
+      }),
+    }),
     createAgentRecoveryGrant: build.mutation<
       CreateAgentRecoveryGrantApiResponse,
       CreateAgentRecoveryGrantApiArg
@@ -141,6 +156,15 @@ const injectedRtkApi = api.injectEndpoints({
         url: `/api/agents/${queryArg.id}/enrollment-grants`,
         method: "POST",
         body: queryArg.createGrantForAgentRequest,
+      }),
+    }),
+    revokeAgentGrant: build.mutation<
+      RevokeAgentGrantApiResponse,
+      RevokeAgentGrantApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/agents/${queryArg.id}/enrollment-grants/${queryArg.grantId}/actions/revoke`,
+        method: "POST",
       }),
     }),
     csrfTokenRetrieve: build.query<
@@ -5106,10 +5130,16 @@ export type AadLoginCreateApiArg = {
 export type ListAgentsApiResponse =
   /** status 200 Page of agents */ AgentListResponseRead;
 export type ListAgentsApiArg = {
+  /** Comma-separated computing equipment ids (1..100); returns only their agents. */
+  equipment?: string;
+  /** Computing equipment UID; returns only its agents. */
+  equipmentUid?: string;
   /** Page number (>= 1) */
   page?: number;
   /** Page size (1..100, default 25) */
   pageSize?: number;
+  /** Comma-separated agent states: pending, active, revoked, decommissioned. */
+  state?: string;
 };
 export type CreateAgentGrantApiResponse =
   /** status 201 Enrollment grant issued */ EnrollmentGrantIssuedResponse;
@@ -5133,11 +5163,26 @@ export type RevokeAgentApiArg = {
   id: number;
   body: any;
 };
+export type ListAgentGrantsApiResponse =
+  /** status 200 Page of grants */ EnrollmentGrantListResponseRead;
+export type ListAgentGrantsApiArg = {
+  id: number;
+  /** Page number (>= 1) */
+  page?: number;
+  /** Page size (1..100, default 25) */
+  pageSize?: number;
+};
 export type CreateAgentRecoveryGrantApiResponse =
   /** status 201 Grant issued */ EnrollmentGrantIssuedResponse;
 export type CreateAgentRecoveryGrantApiArg = {
   id: number;
   createGrantForAgentRequest: CreateGrantForAgentRequest;
+};
+export type RevokeAgentGrantApiResponse =
+  /** status 200 Grant revoked */ EnrollmentGrantResponseRead;
+export type RevokeAgentGrantApiArg = {
+  grantId: number;
+  id: number;
 };
 export type CsrfTokenRetrieveApiResponse =
   /** status 200  */ CsrfTokenSerializerCsrfTokenResponseDetailResponse;
@@ -8553,6 +8598,8 @@ export type AgentIdentityRead = {
   agent_uid: string;
   equipment: LabsNamedReferenceRead | null;
   state: ChoiceRead;
+  /** Derived liveness for display: online, stale or offline from last_seen_at for an active agent; never_seen before the first heartbeat; awaiting_enrollment while pending; retired once revoked or decommissioned. */
+  health: ChoiceRead;
   key_algorithm: ChoiceRead | null;
   key_storage: ChoiceRead | null;
   fingerprint: string;
@@ -8728,8 +8775,45 @@ export type CreateAgentGrantRequest = {
   equipment_uid: string;
   ttl_minutes?: number;
 };
+export type UserReference = {};
+export type UserReferenceRead = {
+  id: number;
+  username: string;
+  display_name: string;
+};
+export type EnrollmentGrant = {
+  id: number;
+  expires_at: string;
+  used_at: string | null;
+  revoked_at: string | null;
+  created_at: string;
+  created_by: UserReference | null;
+};
+export type EnrollmentGrantRead = {
+  id: number;
+  status: ChoiceRead;
+  expires_at: string;
+  used_at: string | null;
+  revoked_at: string | null;
+  created_at: string;
+  created_by: UserReferenceRead | null;
+};
+export type EnrollmentGrantListResponse = {
+  data: EnrollmentGrant[];
+  meta: AgentListMeta;
+};
+export type EnrollmentGrantListResponseRead = {
+  data: EnrollmentGrantRead[];
+  meta: AgentListMeta;
+};
 export type CreateGrantForAgentRequest = {
   ttl_minutes?: number;
+};
+export type EnrollmentGrantResponse = {
+  data: EnrollmentGrant;
+};
+export type EnrollmentGrantResponseRead = {
+  data: EnrollmentGrantRead;
 };
 export type CsrfTokenResponse = {
   csrf_token: string;
@@ -9126,12 +9210,6 @@ export type AuditedResourceRead = {
   id: number;
   name: string;
   type: AuditedResourceTypeEnum;
-};
-export type UserReference = {};
-export type UserReferenceRead = {
-  id: number;
-  username: string;
-  display_name: string;
 };
 export type ResourceAuditItemRead = {
   id: number;
@@ -16611,7 +16689,9 @@ export const {
   useGetAgentDetailQuery,
   useDecommissionAgentMutation,
   useRevokeAgentMutation,
+  useListAgentGrantsQuery,
   useCreateAgentRecoveryGrantMutation,
+  useRevokeAgentGrantMutation,
   useCsrfTokenRetrieveQuery,
   useLabsAnalyticsBenchGroupRetrieveQuery,
   useLabsAnalyticsBookedVsUsedRetrieveQuery,
