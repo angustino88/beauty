@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Button, Dropdown, Modal, Popconfirm, Spin, Tooltip, Typography, message } from 'antd';
-import { CheckCircleFilled, DownOutlined, ExclamationCircleFilled, LaptopOutlined } from '@ant-design/icons';
+import { CheckCircleFilled, DownOutlined, ExclamationCircleFilled, LaptopOutlined, PoweroffOutlined, StopOutlined, SyncOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import type { EnrollmentGrantRead } from '@/shared/api/generated/api';
@@ -36,6 +36,10 @@ const Ago = ({ value, never = 'Never' }: { value: string | null | undefined; nev
   value ? <Tooltip title={formatTime(value)}><span>{dayjs(value).fromNow()}</span></Tooltip> : <span>{never}</span>;
 const Mono = ({ value }: { value: string }) => (
   <Typography.Text className={styles.mono} copyable={{ text: value, tooltips: ['Copy', 'Copied'] }}>{value}</Typography.Text>
+);
+
+const MenuChoice = ({ title, hint }: { title: string; hint: string }) => (
+  <span className={styles.menuChoice}><span className={styles.menuTitle}>{title}</span><span className={styles.menuHint}>{hint}</span></span>
 );
 
 interface ActivityItem { key: string; at: string; tone: AgentTone; text: ReactNode; meta?: string; action?: ReactNode }
@@ -210,7 +214,8 @@ export function ComputingAgentDialog({ computer, canManage, onClose }: {
           <dl className={styles.rows}>
             <div><dt>Agent ID</dt><dd><Mono value={live.agent_uid} /></dd></div>
             <div><dt>State</dt><dd>{live.state.label}</dd></div>
-            {live.key_algorithm && <div><dt>Key</dt><dd>{live.key_algorithm.label}{live.key_storage ? ` in ${live.key_storage.label}` : ''}</dd></div>}
+            {live.key_algorithm && <div><dt>Key</dt><dd>{live.key_algorithm.label}</dd></div>}
+            {live.key_storage && <div><dt>Key storage</dt><dd>{live.key_storage.label}</dd></div>}
             {live.fingerprint && <div><dt>Device fingerprint</dt><dd><Mono value={live.fingerprint} /></dd></div>}
             {live.enrolled_at && <div><dt>Enrolled</dt><dd>{formatTime(live.enrolled_at)}</dd></div>}
           </dl>
@@ -263,19 +268,21 @@ export function ComputingAgentDialog({ computer, canManage, onClose }: {
       {live && state === 'active' ? (
         <Dropdown
           trigger={['click']}
+          placement="topLeft"
+          rootClassName={styles.removeMenu}
           menu={{
             items: [
-              { key: 'revoke', danger: true, label: 'Revoke', extra: 'Key may be compromised', onClick: () => retire('revoke') },
-              { key: 'decommission', danger: true, label: 'Decommission', extra: 'Computer leaves service', onClick: () => retire('decommission') },
+              { key: 'revoke', icon: <StopOutlined />, label: <MenuChoice title="Revoke" hint="Key may be compromised" />, onClick: () => retire('revoke') },
+              { key: 'decommission', icon: <PoweroffOutlined />, label: <MenuChoice title="Decommission" hint="Computer leaves service" />, onClick: () => retire('decommission') },
             ],
           }}
         >
-          <Button danger type="text">Remove agent <DownOutlined /></Button>
+          <Button className={styles.removeButton}>Remove agent <DownOutlined className={styles.caret} /></Button>
         </Dropdown>
       ) : <span />}
       <span className={styles.footerRight}>
         {live && state === 'active'
-          ? <Button onClick={() => { setRecovering(true); setIssued(null); setView('setup'); }}>Re-enroll</Button>
+          ? <Button className={styles.reenrollButton} icon={<SyncOutlined />} onClick={() => { setRecovering(true); setIssued(null); setView('setup'); }}>Re-enroll</Button>
           : <Button type="primary" disabled={!computer?.uid} onClick={() => setView('setup')}>{state === 'pending' ? 'Continue setup' : 'Set up agent'}</Button>}
       </span>
     </div>
