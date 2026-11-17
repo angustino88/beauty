@@ -3,7 +3,7 @@ import type {
   DeviceConnectionRead,
 } from '@/shared/api/generated/api';
 
-/** One observed device on a computer, as served by `GET /api/labs/device-connections`. */
+/** One observed device on a computing equipment, as served by `GET /api/labs/device-connections`. */
 export type DeviceConnection = DeviceConnectionRead;
 
 /** One page of device connections with the standard pagination envelope. */

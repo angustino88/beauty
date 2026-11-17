@@ -35,11 +35,11 @@ function Connection({ connection, isAvailable }: { connection: DeviceConnection;
   );
 }
 
-export default function MonitoredDevicesPopover({ computerId }: { computerId: number }) {
+export default function MonitoredDevicesPopover({ computingId }: { computingId: number }) {
   const [open, setOpen] = useState(false);
   const [page, setPage] = useState(1);
   const { currentData, error, isFetching, isError, refetch } = useGetDeviceConnectionsQuery(
-    { computerId, page },
+    { computingId, page },
     { skip: !open, pollingInterval: open ? POLLING_INTERVAL_MS : 0, skipPollingIfUnfocused: true, refetchOnMountOrArgChange: true },
   );
   const connections = currentData?.data ?? [];

@@ -5,7 +5,7 @@ import { clampPage, deviceConnectionPresentation } from './deviceConnectionPrese
 
 const connection: DeviceConnection = {
   id: 1,
-  computer: { id: 10, uid: '00000000-0000-4000-8000-000000000010', name: 'Lab PC' },
+  computing: { id: 10, uid: '00000000-0000-4000-8000-000000000010', name: 'Lab PC' },
   equipment: { id: 20, uid: '00000000-0000-4000-8000-000000000020', name: 'Oscilloscope' },
   interface: { id: 3, name: 'USB' },
   interface_name: 'USB',

@@ -1255,7 +1255,7 @@ const injectedRtkApi = api.injectEndpoints({
       query: (queryArg) => ({
         url: `/api/labs/device-connections`,
         params: {
-          computer_id: queryArg.computerId,
+          computing_id: queryArg.computingId,
           page: queryArg.page,
           page_size: queryArg.pageSize,
         },
@@ -5949,7 +5949,7 @@ export type LabsDepartmentsOptionsRetrieveApiArg = {
 export type LabsDeviceConnectionsRetrieveApiResponse =
   /** status 200  */ DeviceConnectionListConnectionsDeviceConnectionPaginatedResponseRead;
 export type LabsDeviceConnectionsRetrieveApiArg = {
-  computerId: number;
+  computingId: number;
   page?: number;
   pageSize?: number;
 };
@@ -10628,7 +10628,7 @@ export type DeviceConnectionListConnectionsDeviceConnectionPaginationMeta = {
 };
 export type DeviceConnection = {
   id: number;
-  computer: LabsUidNamedReference;
+  computing: LabsUidNamedReference;
   equipment: LabsUidNamedReference | null;
   interface: LabsNamedReference | null;
   interface_name: string;
@@ -10641,7 +10641,7 @@ export type DeviceConnection = {
 };
 export type DeviceConnectionRead = {
   id: number;
-  computer: LabsUidNamedReferenceRead;
+  computing: LabsUidNamedReferenceRead;
   equipment: LabsUidNamedReferenceRead | null;
   interface: LabsNamedReferenceRead | null;
   interface_name: string;
