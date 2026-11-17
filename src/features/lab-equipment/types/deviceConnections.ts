@@ -1,32 +1,15 @@
-type Reference = { id: number; uid?: string; name: string };
-type Choice<Value extends string> = { value: Value; label: string };
+import type {
+  DeviceConnectionListConnectionsDeviceConnectionPaginatedResponseRead,
+  DeviceConnectionRead,
+} from '@/shared/api/generated/api';
 
-export interface DeviceConnection {
-  id: number;
-  computer: Reference;
-  equipment: Reference | null;
-  interface: Reference | null;
-  interface_name: string;
-  collector_key: string;
-  observation_key: string;
-  name: string;
-  serial_number: string;
-  state: Choice<'connected' | 'disconnected'>;
-  match_status: Choice<'matched' | 'unmatched' | 'ambiguous' | 'interface_mismatch'>;
-  freshness: Choice<'fresh' | 'stale' | 'unknown'>;
-  observed_at: string;
-  received_at: string;
-}
+/** One observed device on a computer, as served by `GET /api/labs/device-connections`. */
+export type DeviceConnection = DeviceConnectionRead;
 
-export interface DeviceConnectionPage {
-  data: DeviceConnection[];
-  meta: {
-    pagination: {
-      count: number;
-      page: number;
-      page_size: number;
-      next: string | null;
-      previous: string | null;
-    };
-  };
-}
+/** One page of device connections with the standard pagination envelope. */
+export type DeviceConnectionPage = DeviceConnectionListConnectionsDeviceConnectionPaginatedResponseRead;
+
+/** Enum values the UI knows how to describe. The server may add more; unknown values get a neutral fallback. */
+export type KnownConnectionState = 'connected' | 'disconnected';
+export type KnownMatchStatus = 'matched' | 'unmatched' | 'ambiguous' | 'interface_mismatch';
+export type KnownFreshness = 'fresh' | 'stale' | 'unknown';

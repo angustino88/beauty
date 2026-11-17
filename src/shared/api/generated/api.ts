@@ -41,6 +41,19 @@ const injectedRtkApi = api.injectEndpoints({
         body: queryArg.agentBookingValidationRequest,
       }),
     }),
+    agentDeviceObservationsActionsReportCreate: build.mutation<
+      AgentDeviceObservationsActionsReportCreateApiResponse,
+      AgentDeviceObservationsActionsReportCreateApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/agent/device-observations/actions/report`,
+        method: "POST",
+        body: queryArg.deviceObservationReport,
+        headers: {
+          "Idempotency-Key": queryArg["Idempotency-Key"],
+        },
+      }),
+    }),
     enrollAgent: build.mutation<EnrollAgentApiResponse, EnrollAgentApiArg>({
       query: (queryArg) => ({
         url: `/agent/enrollments`,
@@ -70,6 +83,12 @@ const injectedRtkApi = api.injectEndpoints({
     }),
     getAgentInfo: build.query<GetAgentInfoApiResponse, GetAgentInfoApiArg>({
       query: () => ({ url: `/agent/info` }),
+    }),
+    agentMonitoringPolicyRetrieve: build.query<
+      AgentMonitoringPolicyRetrieveApiResponse,
+      AgentMonitoringPolicyRetrieveApiArg
+    >({
+      query: () => ({ url: `/agent/monitoring-policy` }),
     }),
     agentRecordSessionLog: build.mutation<
       AgentRecordSessionLogApiResponse,
@@ -943,6 +962,7 @@ const injectedRtkApi = api.injectEndpoints({
       query: (queryArg) => ({
         url: `/api/labs/benches/booking-choices`,
         params: {
+          has_computing: queryArg.hasComputing,
           include_ids: queryArg.includeIds,
           q: queryArg.q,
         },
@@ -1225,6 +1245,19 @@ const injectedRtkApi = api.injectEndpoints({
         params: {
           include_ids: queryArg.includeIds,
           q: queryArg.q,
+        },
+      }),
+    }),
+    labsDeviceConnectionsRetrieve: build.query<
+      LabsDeviceConnectionsRetrieveApiResponse,
+      LabsDeviceConnectionsRetrieveApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/device-connections`,
+        params: {
+          computer_id: queryArg.computerId,
+          page: queryArg.page,
+          page_size: queryArg.pageSize,
         },
       }),
     }),
@@ -5098,6 +5131,13 @@ export type AgentValidateBookingApiResponse =
 export type AgentValidateBookingApiArg = {
   agentBookingValidationRequest: AgentBookingValidationRequest;
 };
+export type AgentDeviceObservationsActionsReportCreateApiResponse =
+  /** status 200  */ AgentDeviceObservationsObservationSerializersObservationAcknowledgmentDetailResponseRead;
+export type AgentDeviceObservationsActionsReportCreateApiArg = {
+  /** Durable UUID batch key; reuse on retry with the same content. */
+  "Idempotency-Key": string;
+  deviceObservationReport: DeviceObservationReport;
+};
 export type EnrollAgentApiResponse =
   /** status 201 Agent successfully enrolled */ AgentDetailResponseRead;
 export type EnrollAgentApiArg = {
@@ -5116,6 +5156,9 @@ export type AgentHeartbeatApiArg = {
 export type GetAgentInfoApiResponse =
   /** status 200 Server agent metadata */ AgentInfoResponse;
 export type GetAgentInfoApiArg = void;
+export type AgentMonitoringPolicyRetrieveApiResponse =
+  /** status 200  */ AgentMonitoringPolicyObservationSerializersMonitoringPolicyDetailResponse;
+export type AgentMonitoringPolicyRetrieveApiArg = void;
 export type AgentRecordSessionLogApiResponse =
   | /** status 200 Same event already stored; no change */ AgentSessionLogResponseRead
   | /** status 201 Session stored */ AgentSessionLogResponseRead;
@@ -5698,6 +5741,8 @@ export type LabsBenchesMappingRetrieveByResourceIdApiArg = {
 export type LabsBenchesBookingChoicesRetrieveApiResponse =
   /** status 200  */ BookingBenchChoicesRead;
 export type LabsBenchesBookingChoicesRetrieveApiArg = {
+  /** When true, only benches with a computer (monitored equipment) placed on them. Benches named in include_ids are still returned. */
+  hasComputing?: boolean | null;
   /** Comma-separated positive integers (at most 50) of retired rows to include. */
   includeIds?: number[];
   /** Search text (1 to 100 characters). */
@@ -5900,6 +5945,13 @@ export type LabsDepartmentsOptionsRetrieveApiArg = {
   includeIds?: number[];
   /** Search text (1 to 100 characters). */
   q?: string;
+};
+export type LabsDeviceConnectionsRetrieveApiResponse =
+  /** status 200  */ DeviceConnectionListConnectionsDeviceConnectionPaginatedResponseRead;
+export type LabsDeviceConnectionsRetrieveApiArg = {
+  computerId: number;
+  page?: number;
+  pageSize?: number;
 };
 export type LabsDowntimesRetrieveApiResponse =
   /** status 200  */ DowntimeListSerializersDowntimePaginatedResponseRead;
@@ -8582,16 +8634,62 @@ export type AgentBookingValidationData = {
 export type AgentBookingValidationResponse = {
   data: AgentBookingValidationData;
 };
-export type AgentIdentity = {};
-export type LabsNamedReference = {};
-export type LabsNamedReferenceRead = {
-  id: number;
-  name: string;
+export type ObservationAcknowledgment = {
+  batch_key: string;
+  sequence: number;
+  received_at: string;
 };
 export type Choice = {};
 export type ChoiceRead = {
   value: string;
   label: string;
+};
+export type ObservationAcknowledgmentRead = {
+  batch_key: string;
+  sequence: number;
+  disposition: ChoiceRead;
+  received_at: string;
+};
+export type AgentDeviceObservationsObservationSerializersObservationAcknowledgmentDetailResponse =
+  {
+    data: ObservationAcknowledgment;
+  };
+export type AgentDeviceObservationsObservationSerializersObservationAcknowledgmentDetailResponseRead =
+  {
+    data: ObservationAcknowledgmentRead;
+  };
+export type ProblemDetail = {
+  code: string;
+  message: string;
+  details: {
+    [key: string]: any;
+  }[];
+  request_id: string;
+};
+export type ProblemResponseEnvelope = {
+  error: ProblemDetail;
+};
+export type StateEnum = "connected" | "disconnected";
+export type DeviceObservation = {
+  observation_key: string;
+  interface_name: string;
+  state: StateEnum;
+  name?: string;
+  serial_number?: string;
+};
+export type DeviceObservationReport = {
+  generation_key: string;
+  collector_key: string;
+  sequence: number;
+  collected_at: string;
+  is_complete: boolean;
+  devices: DeviceObservation[];
+};
+export type AgentIdentity = {};
+export type LabsNamedReference = {};
+export type LabsNamedReferenceRead = {
+  id: number;
+  name: string;
 };
 export type AgentIdentityRead = {
   id: number;
@@ -8684,6 +8782,17 @@ export type AgentInfoResponseData = {
 export type AgentInfoResponse = {
   data: AgentInfoResponseData;
 };
+export type MonitoringPolicy = {
+  generation_key: string;
+  max_devices: number;
+  max_body_bytes: number;
+  freshness_seconds: number;
+  interface_names: string[];
+};
+export type AgentMonitoringPolicyObservationSerializersMonitoringPolicyDetailResponse =
+  {
+    data: MonitoringPolicy;
+  };
 export type AgentSessionLogData = {
   id: number;
   event_key: string;
@@ -8726,17 +8835,6 @@ export type AadLoginResponse = {
 };
 export type AadLoginSerializerAadLoginResponseDetailResponse = {
   data: AadLoginResponse;
-};
-export type ProblemDetail = {
-  code: string;
-  message: string;
-  details: {
-    [key: string]: any;
-  }[];
-  request_id: string;
-};
-export type ProblemResponseEnvelope = {
-  error: ProblemDetail;
 };
 export type AadLogin = {};
 export type AadLoginWrite = {
@@ -10518,6 +10616,54 @@ export type DepartmentCatalogDetailSerializersDepartmentDetailResponse = {
 export type DepartmentCatalogDetailSerializersDepartmentDetailResponseRead = {
   data: DepartmentCatalogItemRead;
 };
+export type DeviceConnectionListConnectionsDeviceConnectionPagination = {
+  count: number;
+  page: number;
+  page_size: number;
+  next: string | null;
+  previous: string | null;
+};
+export type DeviceConnectionListConnectionsDeviceConnectionPaginationMeta = {
+  pagination: DeviceConnectionListConnectionsDeviceConnectionPagination;
+};
+export type DeviceConnection = {
+  id: number;
+  computer: LabsUidNamedReference;
+  equipment: LabsUidNamedReference | null;
+  interface: LabsNamedReference | null;
+  interface_name: string;
+  collector_key: string;
+  observation_key: string;
+  name: string;
+  serial_number: string;
+  observed_at: string;
+  received_at: string;
+};
+export type DeviceConnectionRead = {
+  id: number;
+  computer: LabsUidNamedReferenceRead;
+  equipment: LabsUidNamedReferenceRead | null;
+  interface: LabsNamedReferenceRead | null;
+  interface_name: string;
+  collector_key: string;
+  observation_key: string;
+  name: string;
+  serial_number: string;
+  state: ChoiceRead;
+  match_status: ChoiceRead;
+  freshness: ChoiceRead;
+  observed_at: string;
+  received_at: string;
+};
+export type DeviceConnectionListConnectionsDeviceConnectionPaginatedResponse = {
+  meta: DeviceConnectionListConnectionsDeviceConnectionPaginationMeta;
+  data: DeviceConnection[];
+};
+export type DeviceConnectionListConnectionsDeviceConnectionPaginatedResponseRead =
+  {
+    meta: DeviceConnectionListConnectionsDeviceConnectionPaginationMeta;
+    data: DeviceConnectionRead[];
+  };
 export type DowntimeListSerializersDowntimePagination = {
   count: number;
   page: number;
@@ -16678,10 +16824,12 @@ export const {
   useAgentCompleteBookingMutation,
   useAgentExtendBookingMutation,
   useAgentValidateBookingMutation,
+  useAgentDeviceObservationsActionsReportCreateMutation,
   useEnrollAgentMutation,
   useAgentReportActivityMutation,
   useAgentHeartbeatMutation,
   useGetAgentInfoQuery,
+  useAgentMonitoringPolicyRetrieveQuery,
   useAgentRecordSessionLogMutation,
   useAadLoginCreateMutation,
   useListAgentsQuery,
@@ -16787,6 +16935,7 @@ export const {
   useLabsDepartmentsRetrieveQuery,
   useLabsDepartmentsRetrieveByDepartmentIdQuery,
   useLabsDepartmentsOptionsRetrieveQuery,
+  useLabsDeviceConnectionsRetrieveQuery,
   useLabsDowntimesRetrieveQuery,
   useLabsDowntimesCreateMutation,
   useLabsDowntimesRetrieveByDowntimeIdQuery,

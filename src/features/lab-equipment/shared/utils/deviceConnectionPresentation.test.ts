@@ -1,12 +1,12 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import type { DeviceConnection } from '../../types/deviceConnections.ts';
-import { deviceConnectionPresentation } from './deviceConnectionPresentation.ts';
+import { clampPage, deviceConnectionPresentation } from './deviceConnectionPresentation.ts';
 
 const connection: DeviceConnection = {
   id: 1,
-  computer: { id: 10, name: 'Lab PC' },
-  equipment: { id: 20, name: 'Oscilloscope' },
+  computer: { id: 10, uid: '00000000-0000-4000-8000-000000000010', name: 'Lab PC' },
+  equipment: { id: 20, uid: '00000000-0000-4000-8000-000000000020', name: 'Oscilloscope' },
   interface: { id: 3, name: 'USB' },
   interface_name: 'USB',
   collector_key: 'usb',
@@ -73,4 +73,27 @@ test('unresolved observations preserve detected identity and explain each match 
 
 test('missing device and inventory names have a clear fallback', () => {
   assert.equal(deviceConnectionPresentation({ ...connection, equipment: null, name: '' }).title, 'Unidentified device');
+});
+
+test('stale and unknown explain why the connection is unconfirmed', () => {
+  assert.match(deviceConnectionPresentation({ ...connection, freshness: { value: 'stale', label: 'Stale' } }).freshnessDescription, /No recent report/);
+  assert.match(deviceConnectionPresentation({ ...connection, freshness: { value: 'unknown', label: 'Unknown' } }).freshnessDescription, /re-enrolled or retired/);
+});
+
+test('enum values added by the server later get a neutral fallback', () => {
+  const result = deviceConnectionPresentation({
+    ...connection,
+    match_status: { value: 'quarantined', label: 'Quarantined' },
+    freshness: { value: 'pending', label: 'Pending' },
+  });
+  assert.equal(result.matchTone, 'default');
+  assert.equal(result.matchDescription, 'Match status: Quarantined');
+  assert.match(result.freshnessDescription, /unconfirmed/);
+});
+
+test('page is clamped to the last page that still exists', () => {
+  assert.equal(clampPage(3, 45, 20), 3);
+  assert.equal(clampPage(3, 21, 20), 2);
+  assert.equal(clampPage(2, 0, 20), 1);
+  assert.equal(clampPage(0, 10, 20), 1);
 });

@@ -3,10 +3,12 @@ import { Alert, Button, Empty, Pagination, Popover, Spin, Tag, Tooltip } from 'a
 import { RadarChartOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { useGetDeviceConnectionsQuery } from '../api/deviceConnectionsApi';
-import { deviceConnectionPresentation } from '../shared/utils/deviceConnectionPresentation';
+import { clampPage, deviceConnectionPresentation } from '../shared/utils/deviceConnectionPresentation';
 import type { DeviceConnection } from '../types/deviceConnections';
 import tableStyles from '../shared/components/layout/InventoryPresentation.module.css';
 import styles from './MonitoredDevicesPopover.module.css';
+
+const POLLING_INTERVAL_MS = 30_000;
 
 function Connection({ connection, isAvailable }: { connection: DeviceConnection; isAvailable: boolean }) {
   const presentation = deviceConnectionPresentation(connection, isAvailable);
@@ -36,12 +38,18 @@ function Connection({ connection, isAvailable }: { connection: DeviceConnection;
 export default function MonitoredDevicesPopover({ computerId }: { computerId: number }) {
   const [open, setOpen] = useState(false);
   const [page, setPage] = useState(1);
-  const { currentData, isFetching, isError, refetch } = useGetDeviceConnectionsQuery(
+  const { currentData, error, isFetching, isError, refetch } = useGetDeviceConnectionsQuery(
     { computerId, page },
-    { skip: !open, pollingInterval: open ? 30_000 : 0, skipPollingIfUnfocused: true, refetchOnMountOrArgChange: true },
+    { skip: !open, pollingInterval: open ? POLLING_INTERVAL_MS : 0, skipPollingIfUnfocused: true, refetchOnMountOrArgChange: true },
   );
   const connections = currentData?.data ?? [];
   const pagination = currentData?.meta.pagination;
+
+  // Rows can disappear between polls (retention, reconciliation). Keep the reader on a page that
+  // exists; adjusting state during render avoids rendering the stale page first.
+  const pageIsOutOfRange = error !== undefined && 'status' in error && error.status === 404 && page > 1;
+  const targetPage = pageIsOutOfRange ? 1 : pagination ? clampPage(page, pagination.count, pagination.page_size) : page;
+  if (targetPage !== page) setPage(targetPage);
 
   return (
     <Popover
