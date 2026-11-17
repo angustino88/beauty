@@ -26,6 +26,13 @@ import {
   type LicenseInlineDraft,
 } from '../columns/licenseColumns';
 
+/** Product, vendor, category, type and restriction identify a license, so they are always shown. */
+const LICENSE_REQUIRED_COLUMNS = ['license_product', 'license_vendor', 'license_category', 'license_type', 'license_restriction'];
+const LICENSE_DEFAULT_COLUMNS = [
+  'id', 'sku', 'name', ...LICENSE_REQUIRED_COLUMNS,
+  'assigned_equipment', 'expiry_date', 'primary_owner', 'status', 'actions',
+];
+
 const isAdminGroupMap = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
@@ -82,8 +89,11 @@ export default function LicensePage() {
         type: 'multi-select',
         options: equipmentSearch.options,
         onSearch: equipmentSearch.onSearch,
-        placeholder: 'Type a SKU or name to search equipment',
-        searchHint: 'Type a SKU or name to find equipment (the catalog is too large to list).',
+        onOpenChange: equipmentSearch.onOpenChange,
+        loading: equipmentSearch.loading,
+        popupHint: equipmentSearch.moreHint,
+        placeholder: 'Pick equipment, or type a SKU or name',
+        searchHint: equipmentSearch.emptyText,
         help: 'Optional. A license can be assigned to as many equipment items as it has seats.',
       },
       { name: 'remark', label: 'Remark', type: 'textarea' },
@@ -98,6 +108,10 @@ export default function LicensePage() {
       table.ownerOptions,
       equipmentSearch.options,
       equipmentSearch.onSearch,
+      equipmentSearch.onOpenChange,
+      equipmentSearch.loading,
+      equipmentSearch.moreHint,
+      equipmentSearch.emptyText,
     ],
   );
 
@@ -197,7 +211,9 @@ export default function LicensePage() {
     ownerOptions: table.ownerOptions,
     carrierOptions: equipmentSearch.options,
     onCarrierSearch: equipmentSearch.onSearch,
+    onCarrierOpenChange: equipmentSearch.onOpenChange,
     carrierLoading: equipmentSearch.loading,
+    carrierEmptyText: equipmentSearch.emptyText,
     isEditing,
     editingDraft,
     updateDraftField,
@@ -213,6 +229,10 @@ export default function LicensePage() {
         title="License"
         equipmentType="license"
         isLicense
+        itemNoun="license"
+        // The fields every license must have stay on screen; the rest can be toggled in View options.
+        requiredColumnKeys={LICENSE_REQUIRED_COLUMNS}
+        defaultVisibleColumnKeys={LICENSE_DEFAULT_COLUMNS}
         columns={columns}
         rows={table.rows}
         totalRecords={table.totalRecords}

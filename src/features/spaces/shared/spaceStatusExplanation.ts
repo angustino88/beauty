@@ -59,7 +59,7 @@ export function explainSpaceStatus(
     return { tone: 'success', title: 'Operational', description: `In service and ready for ${kind === 'room' ? 'stations and equipment' : 'benches and equipment'}.` };
   }
   const activity = state.activity_status?.value;
-  if (activity === 'active') return { tone: badge.tone, title: badge.text, description: 'Someone is working on this bench right now.' };
-  if (activity === 'scheduled') return { tone: badge.tone, title: badge.text, description: 'Free now, with a booking later today.' };
+  if (activity === 'active') return { tone: badge.tone, title: badge.text, description: 'Ready to use, and someone is working on it right now.' };
+  if (activity === 'scheduled') return { tone: badge.tone, title: badge.text, description: 'Ready to use. It has an approved booking later today.' };
   return { tone: badge.tone, title: badge.text, description: 'Free and ready to book.' };
 }

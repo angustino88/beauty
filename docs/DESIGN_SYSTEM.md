@@ -38,14 +38,19 @@ The mapping lives in `src/shared/status/statusTone.ts`; render statuses with
 
 | Token            | Light     | Dark      |
 |------------------|-----------|-----------|
-| `--lm-bg`        | `#f6f5f9` | `#0e0d13` |
-| `--lm-surface`   | `#ffffff` | `#16151d` |
-| `--lm-border`    | `#e4e1ec` | `#2c2a3a` |
-| `--lm-text`      | `#1a1723` | `#ecebf2` |
-| `--lm-primary`   | `#6d3fd6` | `#7c5ce6` |
+| `--lm-bg`        | `#f6f5f9` | `#121317` |
+| `--lm-surface`   | `#ffffff` | `#1c1d23` |
+| `--lm-border`    | `#e4e1ec` | `#30323a` |
+| `--lm-text`      | `#1a1723` | `#dcdde4` |
+| `--lm-primary`   | `#6d3fd6` | `#7458e0` |
 
-Surfaces are neutrals tinted slightly towards violet in both themes, so the
-accent sits on its own ground. Text on the primary is white in both themes. In
+Light surfaces are neutrals tinted slightly towards violet, so the accent sits
+on its own ground. Dark mode is tuned for comfort rather than maximum contrast:
+a graphite page instead of near-black, softened text (body text about 12:1, not
+16:1, which avoids letters glowing on long sessions), almost-grey neutrals so
+the violet accent is the only purple on screen, and clearly stepped elevations
+(page → card → header/hover → popover) so fewer borders are needed. Status
+colours are slightly less saturated in dark mode so badges do not glare. Text on the primary is white in both themes. In
 dark mode, buttons use `--lm-primary` and text/links use the lighter
 `--lm-primary-fg`. Type is Inter (self-hosted variable font) in weights 400, 500
 and 600; numbers that line up use `tabular-nums`.

@@ -5,11 +5,12 @@ export function getVisibleInventoryColumns<T extends { key?: unknown }>(
   columns: T[],
   enabledKeys?: string[],
   filters: Record<string, readonly unknown[] | null> = {},
+  requiredKeys: readonly string[] = REQUIRED_INVENTORY_COLUMN_KEYS,
 ): T[] {
   const visible = columns.filter((column) => {
     const key = String(column.key);
     return !enabledKeys || enabledKeys.includes(key) || Boolean(filters[key]?.length)
-      || REQUIRED_INVENTORY_COLUMN_KEYS.includes(key);
+      || requiredKeys.includes(key);
   });
   return [...visible.filter((column) => column.key === 'id'), ...visible.filter((column) => column.key !== 'id')];
 }

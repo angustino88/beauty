@@ -1,4 +1,5 @@
-import { Space, Tag, Tooltip } from 'antd';
+import { Tooltip } from 'antd';
+import { SpaceLocationEmpty, SpaceLocationRow, SpaceLocationStack } from '@/features/spaces/shared/components/SpaceLocation';
 import { SpecDetailsPopover } from '@/features/lab-equipment/shared/components/status/SpecDetailsPopover';
 import type { IRoom, IRoomRackItem } from '../types';
 import { ROOM_SPECS_FIELDS } from './roomConfig';
@@ -30,17 +31,25 @@ export const renderRoomLocationCell = (room: IRoom) => {
     );
 };
 
+const VISIBLE_STATIONS = 3;
+
+/** The room's stations as linked rows (same look as the station and bench location cells). */
 export const renderRoomRacksCell = (room: IRoom) => {
     const racks = readRoomRacks(room);
-    if (!racks.length) return '';
+    if (!racks.length) return <SpaceLocationEmpty label="No stations" />;
+    const shown = racks.slice(0, VISIBLE_STATIONS);
+    const hidden = racks.slice(VISIBLE_STATIONS);
     return (
-        <Space wrap size={[4, 4]}>
-            {racks.map((rack) => (
-                <Tooltip key={rack.id} title={rack.name}>
-                    <Tag>{rack.sku}</Tag>
-                </Tooltip>
+        <SpaceLocationStack>
+            {shown.map((rack) => (
+                <SpaceLocationRow key={rack.id} kind="station" label={rack.name || rack.sku} searchKey={rack.sku} />
             ))}
-        </Space>
+            {hidden.length > 0 && (
+                <Tooltip title={hidden.map((rack) => rack.name || rack.sku).join(', ')}>
+                    <span style={{ fontSize: 12, color: 'var(--lm-text-tertiary)' }}>+{hidden.length} more</span>
+                </Tooltip>
+            )}
+        </SpaceLocationStack>
     );
 };
 

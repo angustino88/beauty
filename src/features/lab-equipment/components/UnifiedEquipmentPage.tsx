@@ -1,3 +1,4 @@
+import { SpaceLocationRow } from '@/features/spaces/shared/components/SpaceLocation';
 import React, { useState, useMemo, useCallback, type Key } from 'react';
 import { WorkbookImportButton } from '@/features/data-import';
 import { Tag, Tooltip, message, Popover, Progress, Modal, Form, Select, Input, InputNumber, Button } from 'antd';
@@ -50,7 +51,6 @@ import { buildEquipmentFacetParams, resetDependentFilters, selectedFilterCsv } f
 import { equipmentFacetColumnFilter, equipmentStaticColumnFilter } from '../shared/facets/EquipmentFacetDropdown';
 import {
   EQUIPMENT_STATUS_FILTER_OPTIONS,
-  buildEquipmentInfo,
   sortRowsByIdAsc,
 } from '../shared/utils/parity';
 import { printDeviceLabel } from '../shared/utils/printLabel';
@@ -736,8 +736,15 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
       {
         title: 'Placement',
         key: 'placement',
-        width: 150,
-        render: (_: unknown, record: EquipmentItem) => record.placement?.room?.name ?? record.placement?.station?.name ?? record.placement?.bench?.name ?? record.placement?.location_note ?? '—',
+        width: 190,
+        render: (_: unknown, record: EquipmentItem) => {
+          const placement = record.placement;
+          // Most specific place first, drawn like the space tables' location cells.
+          if (placement?.bench) return <SpaceLocationRow kind="bench" primary label={placement.bench.name} />;
+          if (placement?.station) return <SpaceLocationRow kind="station" primary label={placement.station.name} />;
+          if (placement?.room) return <SpaceLocationRow kind="room" primary label={placement.room.name} />;
+          return placement?.location_note?.trim() || '—';
+        },
       },
       {
         title: 'Owner',
@@ -773,15 +780,6 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
               </button>
             </Tooltip>
           );
-        },
-      },
-      {
-        title: 'Information',
-        key: 'information',
-        width: 180,
-        render: (_: unknown, record: EquipmentItem) => {
-          const info = buildEquipmentInfo(record);
-          return <Tooltip title={<span style={{ whiteSpace: 'pre-line' }}>{info}</span>}><span className={tableStyles.textPreview}>{info || '—'}</span></Tooltip>;
         },
       },
       {

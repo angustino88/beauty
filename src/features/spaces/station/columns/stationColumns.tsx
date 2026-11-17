@@ -1,14 +1,13 @@
 import type { Key, ReactNode } from "react";
 import type { ColumnsType } from "antd/es/table";
-import { Space, Tag, Tooltip } from "antd";
-import { Link } from "react-router-dom";
+import { Tooltip } from "antd";
 import {
-  buildEquipmentInfo,
   renderImageCell,
   renderOwnerCell,
 } from "@/features/lab-equipment/shared";
 import { pageIcons } from "@/components/layout/pageIcons";
 import type { IStation } from "../types";
+import { SpaceLocationEmpty, SpaceLocationRow, SpaceLocationStack } from "@/features/spaces/shared/components/SpaceLocation";
 import SpaceStatusBadge from "@/features/spaces/shared/SpaceStatusBadge";
 import { readSpaceStatus } from "@/features/spaces/shared/spaceStatus";
 
@@ -93,16 +92,19 @@ export const buildStationColumns = ({
       filterSearch: true,
       filteredValue: activeFilters.room ?? null,
       render: (_, record) => {
-        if (!record.room) return <span style={{ color: "var(--lm-text-tertiary)" }}>Not placed</span>;
+        if (!record.room) return <SpaceLocationEmpty label="Not placed" />;
         return (
-          <Space>
-            <Tooltip title={`Room SKU: ${record.room.sku}`}>
-              <Link to={`/spaces/room?search=${encodeURIComponent(record.room.sku)}`}>
-                <Tag color="green">{record.room.name || record.room.sku}</Tag>
-              </Link>
-            </Tooltip>
-            {record.slot_code && <Tag color="default">{record.slot_code}</Tag>}
-          </Space>
+          <Tooltip title={record.location_string || record.location || `Room SKU: ${record.room.sku}`} placement="topLeft">
+            <SpaceLocationStack>
+              <SpaceLocationRow
+                kind="room"
+                primary
+                label={record.room.name || record.room.sku}
+                searchKey={record.room.sku}
+                slot={record.slot_code}
+              />
+            </SpaceLocationStack>
+          </Tooltip>
         );
       },
     },
@@ -165,14 +167,6 @@ export const buildStationColumns = ({
       filteredValue: activeFilters.owner ?? null,
       render: (_, record) =>
         renderOwnerCell(record.primary_owner),
-    },
-    {
-      title: "Information",
-      key: "information",
-      width: 180,
-      render: (_, record) => (
-        <span style={{ whiteSpace: "pre-line" }}>{buildEquipmentInfo(record)}</span>
-      ),
     },
     {
       title: "Remark",

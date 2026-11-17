@@ -6,7 +6,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
     Form, Input, InputNumber, Select, Collapse,
-    DatePicker, Upload, Row, Col, message,
+    DatePicker, Upload, Row, Col, Spin, message,
 } from 'antd';
 import { InboxOutlined } from '@ant-design/icons';
 import { FormDialog } from '@/components/ui/form-dialog';
@@ -51,6 +51,12 @@ export interface FieldConfig {
     /** Shown in an empty server-searched select, e.g. "Type to search". */
     searchHint?:     React.ReactNode;
     onSearch?:       (query: string) => void;
+    /** Server-searched selects: called when the dropdown opens (e.g. to load the first page). */
+    onOpenChange?:   (open: boolean) => void;
+    /** Server-searched selects: a request is in flight. */
+    loading?:        boolean;
+    /** Shown under the options, e.g. "Showing 20 of 340. Type to narrow the list." */
+    popupHint?:      React.ReactNode;
     placeholder?:    string;
     disabled?:       boolean;
     disabledInEdit?: boolean;
@@ -131,7 +137,14 @@ function FormFields({ fields, form, mode, professionalForm }: FormFieldsProps) {
             case 'multi-select':
                 return <Select mode="multiple" showSearch allowClear placeholder={field.placeholder ?? `Select ${field.label}`}
                     disabled={disabled} options={field.options} onSearch={field.onSearch}
-                    notFoundContent={field.searchHint}
+                    onOpenChange={field.onOpenChange} loading={field.loading}
+                    notFoundContent={field.loading ? <Spin size="small" /> : field.searchHint}
+                    popupRender={field.popupHint ? (menu) => (
+                        <>
+                            {menu}
+                            <div className={styles.popupHint}>{field.popupHint}</div>
+                        </>
+                    ) : undefined}
                     {...resourceSelectProps(field.options)}
                     // With a search callback the options come from the server, so do not filter them again here.
                     filterOption={field.onSearch ? false : filterResourceOption}

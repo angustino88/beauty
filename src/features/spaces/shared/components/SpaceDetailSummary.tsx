@@ -91,7 +91,7 @@ function facetsOf(kind: SpaceKind, state: Partial<ResourceState & LocationState>
     const activity = state.activity_status.value;
     facets.push({
       label: 'Booking activity',
-      value: activity === 'active' ? 'In use now' : activity === 'scheduled' ? 'Booked today' : 'Idle',
+      value: activity === 'active' ? 'In use now' : activity === 'scheduled' ? 'Booked later today' : 'Idle',
       tone: activity === 'active' ? 'info' : activity === 'scheduled' ? 'reserved' : 'neutral',
       icon: <Activity />,
     });

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
+  resourceActivityMarker,
   resourceBadge,
   parseDowntimeBookingConflicts,
   getAllowedLifecycleTransitions,
@@ -66,7 +67,7 @@ test('resourceBadge shows unavailable blocked_by parent resource when blocked', 
   });
 });
 
-test('resourceBadge shows in use and booked today when operational and available', () => {
+test('resourceBadge keeps booking activity out of the status badge', () => {
   const active: ResourceState = {
     lifecycle_status: { value: 'in_service', label: 'In Service' },
     condition: { value: 'operational', label: 'Operational' },
@@ -74,7 +75,8 @@ test('resourceBadge shows in use and booked today when operational and available
     activity_status: { value: 'active', label: 'Active' },
     status: null,
   };
-  assert.deepEqual(resourceBadge(active), { text: 'In use', tone: 'info' });
+  assert.deepEqual(resourceBadge(active), { text: 'Available', tone: 'success' });
+  assert.equal(resourceActivityMarker(active)?.text, 'In use');
 
   const scheduled: ResourceState = {
     lifecycle_status: { value: 'in_service', label: 'In Service' },
@@ -83,7 +85,11 @@ test('resourceBadge shows in use and booked today when operational and available
     activity_status: { value: 'scheduled', label: 'Scheduled' },
     status: null,
   };
-  assert.deepEqual(resourceBadge(scheduled), { text: 'Booked today', tone: 'reserved' });
+  assert.deepEqual(resourceBadge(scheduled), { text: 'Available', tone: 'success' });
+  assert.deepEqual(
+    { text: resourceActivityMarker(scheduled)?.text, tone: resourceActivityMarker(scheduled)?.tone },
+    { text: 'Booked', tone: 'reserved' },
+  );
 
   const idle: ResourceState = {
     lifecycle_status: { value: 'in_service', label: 'In Service' },
@@ -95,6 +101,7 @@ test('resourceBadge shows in use and booked today when operational and available
   assert.deepEqual(resourceBadge(idle), { text: 'Available', tone: 'success' });
   assert.deepEqual(resourceBadge(idle, 'station'), { text: 'Operational', tone: 'success' });
   assert.deepEqual(resourceBadge(idle, 'room'), { text: 'Operational', tone: 'success' });
+  assert.equal(resourceActivityMarker(idle), null);
 });
 
 test('parseDowntimeBookingConflicts extracts booking details', () => {

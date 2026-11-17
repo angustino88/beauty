@@ -2,7 +2,6 @@ import type { Key, ReactNode } from "react";
 import type { ColumnsType } from "antd/es/table";
 import { Tag } from "antd";
 import {
-  buildEquipmentInfo,
   renderImageCell,
   renderOwnerCell,
 } from "@/features/lab-equipment/shared";
@@ -66,7 +65,7 @@ export const buildBenchColumns = ({
     {
       title: "Status",
       key: "status",
-      width: 172,
+      width: 230,
       align: "left",
       filters: statusFilters,
       filteredValue: activeFilters.status ?? null,
@@ -134,14 +133,6 @@ export const buildBenchColumns = ({
       filteredValue: activeFilters.owner ?? null,
       render: (_, record) =>
         renderOwnerCell(record.primary_owner),
-    },
-    {
-      title: "Information",
-      key: "information",
-      width: 180,
-      render: (_, record) => (
-        <span style={{ whiteSpace: "pre-line" }}>{buildEquipmentInfo(record)}</span>
-      ),
     },
     {
       title: "Remark",

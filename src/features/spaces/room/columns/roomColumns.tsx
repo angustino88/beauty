@@ -1,7 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import type { Key, ReactNode } from "react";
 import {
-  buildEquipmentInfo,
   LastAuditCell,
   renderImageCell,
   renderOwnerCell,
@@ -155,12 +154,6 @@ export const buildRoomColumns = ({
     width: 140,
     align: "center" as const,
     render: (_: unknown, record: IRoom) => <LastAuditCell resourceType="room" resourceId={record.id} />,
-  },
-  {
-    title: "Information",
-    key: "information",
-    width: 180,
-    render: (_: unknown, r: IRoom) => <span style={{ whiteSpace: "pre-line" }}>{buildEquipmentInfo(r)}</span>,
   },
   { title: "Remark", key: "remark", width: 150, render: text("remark") },
   { title: "Actions", key: "actions", fixed: "right" as const, width: 165, align: "center" as const, render: actionsRenderer },

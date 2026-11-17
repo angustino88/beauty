@@ -1,4 +1,4 @@
-import { Select } from 'antd';
+import { Select, Spin } from 'antd';
 import type { EquipmentOption } from '../hooks/useEquipmentSearchOptions';
 import type { IAssignedEquipment } from '../types';
 
@@ -23,11 +23,13 @@ interface CarrierCellProps {
   seats?: number | null;
   options: EquipmentOption[];
   onSearch: (query: string) => void;
+  onOpenChange: (open: boolean) => void;
   loading: boolean;
+  emptyText: string;
 }
 
 /** License carrier: the equipment holding the license's seats; while editing, a searchable multi-select. */
-export function CarrierCell({ assigned, editing, value, onChange, seats, options, onSearch, loading }: CarrierCellProps) {
+export function CarrierCell({ assigned, editing, value, onChange, seats, options, onSearch, onOpenChange, loading, emptyText }: CarrierCellProps) {
   if (editing) {
     return (
       <Select
@@ -36,9 +38,10 @@ export function CarrierCell({ assigned, editing, value, onChange, seats, options
         showSearch
         filterOption={false}
         style={{ width: '100%' }}
-        placeholder="Type to search equipment"
-        notFoundContent="Type a SKU or name to find equipment"
+        placeholder="Pick or search equipment"
+        notFoundContent={loading ? <Spin size="small" /> : emptyText}
         loading={loading}
+        onOpenChange={onOpenChange}
         value={value}
         options={options}
         // Picked items show the SKU; the dropdown rows show SKU with the name beneath.

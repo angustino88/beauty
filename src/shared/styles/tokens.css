@@ -133,64 +133,72 @@
 }
 
 html[data-theme='dark'] {
-  --lm-bg: #0e0d13;
-  --lm-surface: #16151d;
-  --lm-surface-subtle: #1b1a24;
-  --lm-surface-muted: #23222e;
-  --lm-surface-raised: #1e1d28;
-  --lm-surface-inverse: #ecebf2;
+  /* Comfort-first dark theme. Not black-on-white inverted: a graphite page
+     (#121317) with softened text (#dcdde4) keeps body text around 12:1
+     instead of 16:1, which stops letters "glowing" (halation) on long
+     sessions. Neutrals are almost grey (only a hint of the brand hue) so
+     the violet accent is the only purple on screen, and each elevation step
+     (page → card → header/hover → popover) is a visible lift, so fewer
+     borders are needed to separate areas. Status colours are a little less
+     saturated than in light mode so badges do not glare. */
+  --lm-bg: #121317;
+  --lm-surface: #1c1d23;
+  --lm-surface-subtle: #212228;
+  --lm-surface-muted: #282930;
+  --lm-surface-raised: #24252c;
+  --lm-surface-inverse: #e6e7ec;
 
-  --lm-text: #ecebf2;
-  --lm-text-secondary: #b9b6c9;
-  --lm-text-tertiary: #8c889e;
-  --lm-text-disabled: #5d5a6e;
-  --lm-text-inverse: #0e0d13;
+  --lm-text: #dcdde4;
+  --lm-text-secondary: #a9abb7;
+  --lm-text-tertiary: #8f919e;
+  --lm-text-disabled: #5d5f6a;
+  --lm-text-inverse: #121317;
 
-  --lm-border: #2c2a3a;
-  --lm-border-subtle: #211f2c;
-  --lm-border-strong: #3f3c52;
+  --lm-border: #30323a;
+  --lm-border-subtle: #27282f;
+  --lm-border-strong: #43454f;
 
-  --lm-primary: #7c5ce6;
-  --lm-primary-hover: #8d70ee;
-  --lm-primary-fg: #b9a6ff;
-  --lm-primary-bg: #211a3d;
-  --lm-primary-border: #3d2f75;
+  --lm-primary: #7458e0;
+  --lm-primary-hover: #8369e8;
+  --lm-primary-fg: #b3a3f5;
+  --lm-primary-bg: #231d3d;
+  --lm-primary-border: #3d3370;
   --lm-on-primary: #ffffff;
 
-  --lm-success-fg: #63d394;
-  --lm-success-solid: #2fae69;
-  --lm-success-bg: #10271b;
-  --lm-success-border: #1e4a32;
+  --lm-success-fg: #5cbf88;
+  --lm-success-solid: #2f9e63;
+  --lm-success-bg: #14271d;
+  --lm-success-border: #22432f;
 
-  --lm-info-fg: #8ab8f7;
-  --lm-info-solid: #4a8cf0;
-  --lm-info-bg: #11213a;
-  --lm-info-border: #213c63;
+  --lm-info-fg: #8bb0e6;
+  --lm-info-solid: #4a84de;
+  --lm-info-bg: #16233a;
+  --lm-info-border: #263c5e;
 
-  --lm-warning-fg: #f0c36a;
-  --lm-warning-solid: #e0a23a;
-  --lm-warning-bg: #2a200d;
-  --lm-warning-border: #55401a;
+  --lm-warning-fg: #e0b661;
+  --lm-warning-solid: #d39a37;
+  --lm-warning-bg: #2a2213;
+  --lm-warning-border: #4f3f1f;
 
-  --lm-danger-fg: #f4959a;
-  --lm-danger-solid: #e85c64;
-  --lm-danger-bg: #32151a;
-  --lm-danger-border: #5d252b;
+  --lm-danger-fg: #ea8f94;
+  --lm-danger-solid: #d9575f;
+  --lm-danger-bg: #31191d;
+  --lm-danger-border: #57282e;
 
-  --lm-reserved-fg: #6fd3e8;
-  --lm-reserved-solid: #22a9c6;
-  --lm-reserved-bg: #0c2730;
-  --lm-reserved-border: #17485a;
+  --lm-reserved-fg: #67c3d6;
+  --lm-reserved-solid: #229fbb;
+  --lm-reserved-bg: #12272e;
+  --lm-reserved-border: #1f4552;
 
-  --lm-neutral-fg: #b9b6c9;
-  --lm-neutral-solid: #8c889e;
-  --lm-neutral-bg: #23222e;
-  --lm-neutral-border: #36334a;
+  --lm-neutral-fg: #a9abb7;
+  --lm-neutral-solid: #8f919e;
+  --lm-neutral-bg: #26272e;
+  --lm-neutral-border: #393b45;
 
   --lm-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
   --lm-shadow-md: 0 4px 14px rgba(0, 0, 0, 0.45);
   --lm-shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.6);
-  --lm-focus-ring: 0 0 0 3px rgba(124, 92, 230, 0.45);
+  --lm-focus-ring: 0 0 0 3px rgba(116, 88, 224, 0.45);
   --lm-overlay: rgba(0, 0, 0, 0.6);
 
   --lm-logo-outline: #4a3a22;
@@ -202,9 +210,9 @@ html[data-theme='dark'] {
   --lm-chart-5: #5fa4f2;
   --lm-chart-6: #86c75a;
   --lm-chart-7: #f59a5a;
-  --lm-chart-8: #9d99ad;
-  --lm-chart-grid: #252330;
-  --lm-chart-axis: #8c889e;
+  --lm-chart-8: #9c9eaa;
+  --lm-chart-grid: #2a2b32;
+  --lm-chart-axis: #8f919e;
 
   --lm-cat-room: #9a7df5;
   --lm-cat-station: #2bb3a3;
@@ -220,7 +228,7 @@ html[data-theme='dark'] {
   --lm-cat-instrument: #d77fcb;
   --lm-cat-laboratory: #3ecf8e;
   --lm-cat-mechanical: #93a7bf;
-  --lm-cat-other: #9d99ad;
+  --lm-cat-other: #9c9eaa;
   --lm-cat-license: #c9baff;
 }
 

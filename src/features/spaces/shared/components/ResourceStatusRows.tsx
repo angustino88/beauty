@@ -88,11 +88,11 @@ export const ResourceStatusRows: React.FC<ResourceStatusRowsProps> = ({
   const getActivityTag = () => {
     switch (activity?.value) {
       case 'active':
-        return <Tag color="success">In Use (Active)</Tag>;
+        return <Tag color="processing">In use now</Tag>;
       case 'scheduled':
-        return <Tag color="processing">Booked Today</Tag>;
+        return <Tag color="cyan">Booked later today</Tag>;
       case 'idle':
-        return <Tag color="default">Idle</Tag>;
+        return <Tag color="default">No booking today</Tag>;
       default:
         return <Tag>{activity?.label || activity?.value || '—'}</Tag>;
     }

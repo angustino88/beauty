@@ -24,19 +24,19 @@
   font-size: 11px;
 }
 
-.stationIcon {
+.primaryIcon {
   color: var(--lm-primary-fg);
   background: var(--lm-primary-bg);
   border: 1px solid var(--lm-primary-border);
 }
 
-.roomIcon {
+.secondaryIcon {
   color: var(--lm-text-tertiary);
   background: var(--lm-surface-muted);
   border: 1px solid var(--lm-border);
 }
 
-.station {
+.primary {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -45,7 +45,7 @@
   color: var(--lm-text);
 }
 
-.room {
+.secondary {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -53,13 +53,13 @@
   color: var(--lm-text-secondary);
 }
 
-a.station,
-a.room {
+a.primary,
+a.secondary {
   text-decoration: none;
 }
 
-a.station:hover,
-a.room:hover {
+a.primary:hover,
+a.secondary:hover {
   color: var(--lm-primary-fg);
   text-decoration: underline;
   text-underline-offset: 2px;
