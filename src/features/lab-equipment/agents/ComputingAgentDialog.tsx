@@ -214,8 +214,9 @@ export function ComputingAgentDialog({ computer, canManage, onClose }: {
           <dl className={styles.rows}>
             <div><dt>Agent ID</dt><dd><Mono value={live.agent_uid} /></dd></div>
             <div><dt>State</dt><dd>{live.state.label}</dd></div>
-            {live.key_algorithm && <div><dt>Key</dt><dd>{live.key_algorithm.label}</dd></div>}
-            {live.key_storage && <div><dt>Key storage</dt><dd>{live.key_storage.label}</dd></div>}
+            {live.key_algorithm && (
+              <div><dt>Key</dt><dd>{live.key_algorithm.label}{live.key_storage && <span className={styles.muted}> · {live.key_storage.label}</span>}</dd></div>
+            )}
             {live.fingerprint && <div><dt>Device fingerprint</dt><dd><Mono value={live.fingerprint} /></dd></div>}
             {live.enrolled_at && <div><dt>Enrolled</dt><dd>{formatTime(live.enrolled_at)}</dd></div>}
           </dl>
