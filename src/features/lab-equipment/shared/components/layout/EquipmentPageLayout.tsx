@@ -143,11 +143,11 @@ export default function EquipmentPageLayout<T extends { id: number | string }>({
   const [selectedRecord, setSelectedRecord] = useState<T | null>(null);
   const [visibleKeys, setVisibleKeys] = useState<string[] | undefined>(undefined);
   const inventoryDefaultKeys = spaceKind === 'room'
-    ? ['id', 'sku', 'name', 'image', 'status', 'availability', 'activity', 'location', 'country', 'building', 'capacity', 'primary_owner', 'actions']
+    ? ['id', 'sku', 'name', 'image', 'status', 'availability', 'location', 'country', 'building', 'capacity', 'primary_owner', 'actions']
     : spaceKind === 'station'
-      ? ['id', 'sku', 'name', 'image', 'status', 'availability', 'activity', 'room', 'bench_capacity', 'available_power_w', 'owner', 'actions']
+      ? ['id', 'sku', 'name', 'image', 'status', 'availability', 'room', 'bench_capacity', 'available_power_w', 'owner', 'actions']
       : spaceKind === 'bench'
-        ? ['id', 'sku', 'name', 'image', 'status', 'availability', 'activity', 'location', 'group', 'type', 'equipment_count', 'actions']
+        ? ['id', 'sku', 'name', 'image', 'status', 'availability', 'location', 'group', 'type', 'equipment_count', 'actions']
         : professionalTable ? ['id', 'sku', 'name', 'image', 'status', 'placement', 'owner', 'kind', 'type', 'manufacturer', 'product_model', 'actions'] : undefined;
   const enabledKeys = visibleKeys ?? defaultVisibleColumnKeys ?? inventoryDefaultKeys;
   const fixedColumnKeys = REQUIRED_INVENTORY_COLUMN_KEYS;
