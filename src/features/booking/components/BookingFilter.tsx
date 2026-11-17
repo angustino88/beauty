@@ -1,5 +1,5 @@
 import { SearchOutlined } from '@ant-design/icons';
-import { Form, type FormInstance, Select, Spin } from 'antd';
+import { Form, type FormInstance, Select, Spin, Tooltip } from 'antd';
 import { useEffect, useMemo, useRef } from 'react';
 import { filterResourceOption } from '@/components/inputs/ResourceOption';
 import { useGetBookingBenchChoicesQuery } from '../api';
@@ -14,6 +14,10 @@ type BookingFilterProps = {
 export const BookingFilter: React.FC<BookingFilterProps> = ({ form, name = 'bench_ids', onFinish }) => {
   const { data: benchChoices, isFetching } = useGetBookingBenchChoicesQuery({ hasComputing: true });
   const benchOptions = useMemo(() => (benchChoices ?? []).map((bench) => toBenchChoiceOption(bench)), [benchChoices]);
+  const benchLabelById = useMemo(
+    () => new Map(benchOptions.map((option) => [Number(option.value), String(option.selectedLabel)])),
+    [benchOptions],
+  );
   const submitTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -40,7 +44,17 @@ export const BookingFilter: React.FC<BookingFilterProps> = ({ form, name = 'benc
           placeholder="Search benches by SKU, name or computer"
           prefix={<SearchOutlined style={{ color: 'var(--lm-text-tertiary)', marginRight: 4 }} />}
           options={benchOptions}
-          maxTagPlaceholder={(omitted) => `+${omitted.length} benches`}
+          maxTagPlaceholder={(omitted) => (
+            <Tooltip
+              title={(
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  {omitted.map((item) => <span key={String(item.value)}>{benchLabelById.get(Number(item.value)) ?? item.label}</span>)}
+                </div>
+              )}
+            >
+              <span>+{omitted.length} {omitted.length === 1 ? 'bench' : 'benches'}</span>
+            </Tooltip>
+          )}
           notFoundContent={isFetching ? <Spin size="small" /> : 'No benches found'}
           optionLabelProp="selectedLabel"
           filterOption={filterResourceOption}

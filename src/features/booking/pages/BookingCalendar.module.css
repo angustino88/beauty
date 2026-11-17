@@ -23,9 +23,9 @@
 }
 
 .filterControl {
-    flex: 1;
-    max-width: 440px;
-    min-width: 220px;
+    flex: 1 1 560px;
+    max-width: 720px;
+    min-width: 260px;
 }
 
 .calendarContainer {
@@ -38,7 +38,7 @@
     }
 
     .filterControl {
-        max-width: 320px;
+        max-width: 480px;
     }
 }
 
