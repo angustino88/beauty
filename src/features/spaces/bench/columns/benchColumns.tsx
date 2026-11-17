@@ -7,26 +7,9 @@ import {
 } from "@/features/lab-equipment/shared";
 import { pageIcons } from "@/components/layout/pageIcons";
 import type { IBench } from "../types";
-import { ActivityBadge, AvailabilityBadge, LifecycleBadge } from "@/features/spaces/shared/components/ResourceStatusBadges";
+import { ResourceStatusCell } from "@/features/spaces/shared/components/ResourceStatusCell";
+import { RESOURCE_STATUS_FILTERS } from "@/features/spaces/shared/resourceStatusFilter";
 import { BenchLocationCell } from "./BenchLocationCell";
-
-// Filtered on the server (lifecycle_status, condition, activity_status). Availability itself has no
-// filter; it follows from condition and parent downtime, so the Availability column filters condition.
-const LIFECYCLE_FILTERS = [
-  { text: "Planned", value: "planned" },
-  { text: "In service", value: "in_service" },
-  { text: "Retired", value: "retired" },
-];
-const CONDITION_FILTERS = [
-  { text: "Operational", value: "operational" },
-  { text: "In maintenance", value: "in_maintenance" },
-  { text: "Out of service", value: "out_of_service" },
-];
-const ACTIVITY_FILTERS = [
-  { text: "No booking today", value: "idle" },
-  { text: "Booked (later today)", value: "scheduled" },
-  { text: "In use now", value: "active" },
-];
 
 interface BuildBenchColumnsArgs {
   isAdmin: boolean;
@@ -78,29 +61,15 @@ export const buildBenchColumns = ({
       render: (_: unknown, record) => renderImageCell(record.image, pageIcons.benches),
     },
     {
-      // Three independent states, three columns (lifecycle, availability, booking activity).
-      title: "Lifecycle",
+      // Availability, booking activity and lifecycle are separate API fields with separate filters;
+      // one cell shows all three (pill, marker, quiet line) and the hover card spells them out.
+      title: "Status",
       key: "status",
-      width: 150,
-      filters: LIFECYCLE_FILTERS,
+      width: 210,
+      filters: RESOURCE_STATUS_FILTERS,
+      filterMode: "tree",
       filteredValue: activeFilters.status ?? null,
-      render: (_, record) => <LifecycleBadge value={record.lifecycle_status} />,
-    },
-    {
-      title: "Availability",
-      key: "condition",
-      width: 175,
-      filters: CONDITION_FILTERS,
-      filteredValue: activeFilters.condition ?? null,
-      render: (_, record) => <AvailabilityBadge state={record} />,
-    },
-    {
-      title: "Activity",
-      key: "activity",
-      width: 160,
-      filters: ACTIVITY_FILTERS,
-      filteredValue: activeFilters.activity ?? null,
-      render: (_, record) => <ActivityBadge value={record.activity_status} />,
+      render: (_, record) => <ResourceStatusCell state={record} />,
     },
     {
       title: "Station & Room",
