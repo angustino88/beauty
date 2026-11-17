@@ -1,0 +1,9 @@
+.anchor { display: inline-flex; max-width: 100%; }
+.quiet {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--lm-text-tertiary);
+  font-size: 12.5px;
+  white-space: nowrap;
+}

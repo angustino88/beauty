@@ -1,58 +1,47 @@
 /*
- * The bench Status column shows availability, booking activity and lifecycle in one cell, with one
- * grouped filter. Each filter value is `<group>:<value>`; the groups map to the three separate
- * server filters, so the states stay separate on the wire.
+ * Benches show their three independent states in three columns. Each column has its own filter,
+ * mapped to its own server filter, and a header hint that says what the state means.
+ *
+ *   column key    server filter       state
+ *   status        condition           availability (can it be used now)
+ *   activity      activity_status     booking activity today
+ *   lifecycle     lifecycle_status    planned → in service → retired
  */
 
-const LIFECYCLE_KEY = "lifecycle";
-const AVAILABILITY_KEY = "condition";
-const ACTIVITY_KEY = "activity";
+type Filter = { text: string; value: string };
+type FilterValues = readonly (string | number)[] | null | undefined;
 
-/**
- * Grouped filter for the single Status column. Each value is `<group>:<value>` so the table hook
- * can send the three server filters (lifecycle_status, condition, activity_status) separately.
- */
-export const RESOURCE_STATUS_FILTERS = [
-  {
-    text: "Availability",
-    value: `${AVAILABILITY_KEY}:*`,
-    children: [
-      { text: "Operational (available)", value: `${AVAILABILITY_KEY}:operational` },
-      { text: "In maintenance", value: `${AVAILABILITY_KEY}:in_maintenance` },
-      { text: "Out of service", value: `${AVAILABILITY_KEY}:out_of_service` },
-    ],
-  },
-  {
-    text: "Activity today",
-    value: `${ACTIVITY_KEY}:*`,
-    children: [
-      { text: "No booking", value: `${ACTIVITY_KEY}:idle` },
-      { text: "Booked", value: `${ACTIVITY_KEY}:scheduled` },
-      { text: "In use now", value: `${ACTIVITY_KEY}:active` },
-    ],
-  },
-  {
-    text: "Lifecycle",
-    value: `${LIFECYCLE_KEY}:*`,
-    children: [
-      { text: "Planned", value: `${LIFECYCLE_KEY}:planned` },
-      { text: "In service", value: `${LIFECYCLE_KEY}:in_service` },
-      { text: "Retired", value: `${LIFECYCLE_KEY}:retired` },
-    ],
-  },
+export const AVAILABILITY_FILTERS: Filter[] = [
+  { text: "Operational", value: "operational" },
+  { text: "In maintenance", value: "in_maintenance" },
+  { text: "Out of service", value: "out_of_service" },
 ];
 
-/** Split the grouped Status filter into the three server parameters (comma-separated, OR within each). */
-export function splitStatusFilter(values: readonly (string | number)[] | null | undefined) {
-  const groups: Record<string, string[]> = { [LIFECYCLE_KEY]: [], [AVAILABILITY_KEY]: [], [ACTIVITY_KEY]: [] };
-  for (const raw of values ?? []) {
-    const [group, value] = String(raw).split(":");
-    if (value && value !== "*" && groups[group]) groups[group].push(value);
-  }
-  const csv = (list: string[]) => (list.length ? list.join(",") : undefined);
+export const ACTIVITY_FILTERS: Filter[] = [
+  { text: "No booking today", value: "idle" },
+  { text: "Booked (later today)", value: "scheduled" },
+  { text: "In use now", value: "active" },
+];
+
+export const LIFECYCLE_FILTERS: Filter[] = [
+  { text: "Planned", value: "planned" },
+  { text: "In service", value: "in_service" },
+  { text: "Retired", value: "retired" },
+];
+
+export const STATE_COLUMN_HINTS = {
+  availability: "Can it be used now? Set by its own condition and by downtime of its station or room.",
+  activity: "Bookings today: in use now, booked for later today, or none.",
+  lifecycle: "Stage in its life: planned, in service, or retired.",
+} as const;
+
+const csv = (values: FilterValues) => (values?.length ? values.map(String).join(",") : undefined);
+
+/** Column filters → server query parameters (comma-separated, OR within each filter). */
+export function stateFilterParams(filters: { status?: FilterValues; activity?: FilterValues; lifecycle?: FilterValues }) {
   return {
-    lifecycle_status: csv(groups[LIFECYCLE_KEY]),
-    condition: csv(groups[AVAILABILITY_KEY]),
-    activity_status: csv(groups[ACTIVITY_KEY]),
+    condition: csv(filters.status),
+    activity_status: csv(filters.activity),
+    lifecycle_status: csv(filters.lifecycle),
   };
 }

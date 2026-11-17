@@ -1,4 +1,4 @@
-import { splitStatusFilter } from "@/features/spaces/shared/resourceStatusFilter";
+import { stateFilterParams } from "@/features/spaces/shared/resourceStatusFilter";
 import { useUrlSearch } from '@/shared/hooks/useUrlSearch';
 import { useCallback, useMemo, useState } from "react";
 import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
@@ -22,8 +22,8 @@ export function useBenchTable() {
       type_id: filters.type?.length ? filters.type.join(',') : undefined,
       setup_location_id: filters.location?.length ? filters.location.join(',') : undefined,
       owner_id: filters.owner?.length ? filters.owner.join(',') : undefined,
-      // The Status column's grouped filter becomes the three server filters.
-      ...splitStatusFilter(filters.status),
+      // Availability, Activity and Lifecycle columns → condition, activity_status, lifecycle_status.
+      ...stateFilterParams(filters),
     };
   }, [page, pageSize, debouncedSearch, filters]);
 

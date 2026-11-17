@@ -7,8 +7,13 @@ import {
 } from "@/features/lab-equipment/shared";
 import { pageIcons } from "@/components/layout/pageIcons";
 import type { IBench } from "../types";
-import { ResourceStatusCell } from "@/features/spaces/shared/components/ResourceStatusCell";
-import { RESOURCE_STATUS_FILTERS } from "@/features/spaces/shared/resourceStatusFilter";
+import { ActivityCell, AvailabilityCell, LifecycleCell } from "@/features/spaces/shared/components/ResourceStateCells";
+import {
+  ACTIVITY_FILTERS,
+  AVAILABILITY_FILTERS,
+  LIFECYCLE_FILTERS,
+  STATE_COLUMN_HINTS,
+} from "@/features/spaces/shared/resourceStatusFilter";
 import { BenchLocationCell } from "./BenchLocationCell";
 
 interface BuildBenchColumnsArgs {
@@ -60,16 +65,33 @@ export const buildBenchColumns = ({
       align: "center",
       render: (_: unknown, record) => renderImageCell(record.image, pageIcons.benches),
     },
+    // Three independent states, three columns, three server filters (see resourceStatusFilter.ts).
     {
-      // Availability, booking activity and lifecycle are separate API fields with separate filters;
-      // one cell shows all three (pill, marker, quiet line) and the hover card spells them out.
-      title: "Status",
+      title: "Availability",
       key: "status",
-      width: 210,
-      filters: RESOURCE_STATUS_FILTERS,
-      filterMode: "tree",
+      width: 170,
+      filters: AVAILABILITY_FILTERS,
       filteredValue: activeFilters.status ?? null,
-      render: (_, record) => <ResourceStatusCell state={record} />,
+      onHeaderCell: () => ({ title: STATE_COLUMN_HINTS.availability }),
+      render: (_, record) => <AvailabilityCell state={record} />,
+    },
+    {
+      title: "Activity",
+      key: "activity",
+      width: 150,
+      filters: ACTIVITY_FILTERS,
+      filteredValue: activeFilters.activity ?? null,
+      onHeaderCell: () => ({ title: STATE_COLUMN_HINTS.activity }),
+      render: (_, record) => <ActivityCell state={record} />,
+    },
+    {
+      title: "Lifecycle",
+      key: "lifecycle",
+      width: 140,
+      filters: LIFECYCLE_FILTERS,
+      filteredValue: activeFilters.lifecycle ?? null,
+      onHeaderCell: () => ({ title: STATE_COLUMN_HINTS.lifecycle }),
+      render: (_, record) => <LifecycleCell state={record} />,
     },
     {
       title: "Station & Room",
