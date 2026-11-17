@@ -41,6 +41,8 @@ export interface EquipmentCategoryConfig {
   extraFields?: CategoryExtraField[];
   extraColumns?: CategoryExtraColumn[];
   supportsTelemetry?: boolean;
+  /** Units can run the LabMango agent: shows the Agent column, menu item and drawer. */
+  supportsAgent?: boolean;
 }
 
 export const EQUIPMENT_CATEGORIES: Record<EquipmentCategoryKey, EquipmentCategoryConfig> = {
@@ -51,6 +53,7 @@ export const EQUIPMENT_CATEGORIES: Record<EquipmentCategoryKey, EquipmentCategor
     description: 'Workstations, servers, mini PCs, and virtual instances',
     icon: React.createElement(LaptopOutlined),
     supportsTelemetry: true,
+    supportsAgent: true,
     extraFields: [
       { name: 'hostname', label: 'Hostname', type: 'text', placeholder: 'lab-svr-01', createOnly: true },
     ],

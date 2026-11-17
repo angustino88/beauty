@@ -2,7 +2,7 @@ import React, { useState, useMemo, useCallback, type Key } from 'react';
 import { WorkbookImportButton } from '@/features/data-import';
 import { Tag, Tooltip, message, Popover, Progress, Modal, Form, Select, Input, InputNumber, Button } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { DesktopOutlined, RadarChartOutlined, SwapOutlined } from '@ant-design/icons';
+import { CloudServerOutlined, DesktopOutlined, RadarChartOutlined, SwapOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { useAuthState } from '@/features/auth/hooks/useAuthState';
 import type { EquipmentCategoryConfig } from '../categories/registry';
@@ -58,6 +58,7 @@ import { buildEquipmentFormFields, equipmentFormInitialValues } from '../shared/
 import { notifyEquipmentCreated, notifyEquipmentDeleted, notifyEquipmentUpdated } from '../shared/utils/equipmentNotifications';
 import { equipmentStatusTone } from '../shared/utils/equipmentStatus';
 import { userLabel } from '@/shared/utils/userRef';
+import { AgentHealthCell, ComputingAgentDialog, liveAgentsByEquipment, useGetComputingAgentsQuery, type AgentComputer } from '../agents';
 
 export interface UnifiedEquipmentPageProps {
   config: EquipmentCategoryConfig;
@@ -195,6 +196,21 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
 
   // Sorted rows
   const rows = useMemo(() => sortRowsByIdAsc(listData?.data ?? []), [listData?.data]);
+
+  // Agents of the computers on the visible page: one bounded request, refreshed every minute.
+  const [agentComputer, setAgentComputer] = useState<AgentComputer | null>(null);
+  const visibleEquipmentIds = useMemo(
+    () => (config.supportsAgent ? rows.slice((page - 1) * pageSize, page * pageSize).map((row) => row.id).slice(0, 100) : []),
+    [config.supportsAgent, rows, page, pageSize],
+  );
+  const { data: agentsData, isFetching: agentsLoading } = useGetComputingAgentsQuery(
+    { equipmentIds: visibleEquipmentIds, liveOnly: true },
+    { skip: visibleEquipmentIds.length === 0, pollingInterval: 60000, skipPollingIfUnfocused: true },
+  );
+  const agentsByEquipment = useMemo(() => liveAgentsByEquipment(agentsData?.data ?? []), [agentsData]);
+  const openAgent = useCallback((record: EquipmentItem) => {
+    setAgentComputer({ id: record.id, uid: record.uid, name: record.name, sku: record.sku });
+  }, []);
 
   // Equipment status history is separate from resource-audit history.
   const [updatePlacement, { isLoading: updatingPlacement }] = useLabsEquipmentPlacementUpdateByEquipmentIdMutation();
@@ -384,6 +400,12 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
       },
       onPrint: (record) => printDeviceLabel(record),
       extraMenuItems: (record) => [
+        ...(config.supportsAgent ? [{
+          key: 'agent',
+          label: 'Agent',
+          icon: <CloudServerOutlined />,
+          onClick: () => openAgent(record),
+        }] : []),
         {
           key: 'change-placement',
           label: 'Change placement',
@@ -410,7 +432,7 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
         },
       ],
     });
-  }, [isCoordinator, isDeleting, handleOpenEdit, handleDelete, handleOpenStatus, placementForm, setHistoryPage, setHistoryPageSize, setHistoryId]);
+  }, [isCoordinator, isDeleting, handleOpenEdit, handleDelete, handleOpenStatus, placementForm, setHistoryPage, setHistoryPageSize, setHistoryId, config.supportsAgent, openAgent]);
 
   // Columns definition matching complete field parity with all equipment fields
   const columns = useMemo<ColumnsType<EquipmentItem>>(() => {
@@ -517,6 +539,17 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
           render: (val: unknown) => (extra.render ? extra.render(val) : String(val ?? '—')),
         });
       }
+    }
+
+    if (config.supportsAgent) {
+      cols.push({
+        title: 'Agent',
+        key: 'agent',
+        width: 150,
+        render: (_: unknown, record: EquipmentItem) => (
+          <AgentHealthCell agent={agentsByEquipment.get(record.id)} loading={agentsLoading && !agentsData} onOpen={() => openAgent(record)} />
+        ),
+      });
     }
 
     cols.push(
@@ -761,15 +794,16 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
       },
     );
 
-    const priorityKeys = ['id', 'sku', 'name', 'image', 'status', 'placement', 'owner', 'kind', 'type', 'manufacturer', 'product_model', 'serial_number'];
+    const priorityKeys = ['id', 'sku', 'name', 'image', 'status', 'agent', 'placement', 'owner', 'kind', 'type', 'manufacturer', 'product_model', 'serial_number'];
     const priorityColumns = priorityKeys.flatMap((key) => cols.filter((column) => column.key === key));
     return [...priorityColumns, ...cols.filter((column) => !priorityKeys.includes(String(column.key)))];
-  }, [config, refData, facets, filters, kindFacetQuery, typeFacetQuery, manufacturerFacetQuery, modelFacetQuery, departmentFacetQuery, groupFacetQuery, actionsRenderer, handleOpenStatus]);
+  }, [config, refData, facets, filters, kindFacetQuery, typeFacetQuery, manufacturerFacetQuery, modelFacetQuery, departmentFacetQuery, groupFacetQuery, actionsRenderer, handleOpenStatus, agentsByEquipment, agentsLoading, agentsData, openAgent]);
 
   return (
     <>
       <EquipmentPageLayout<EquipmentItem>
         professionalTable
+        defaultVisibleColumnKeys={config.supportsAgent ? ['id', 'sku', 'name', 'image', 'status', 'agent', 'placement', 'owner', 'kind', 'type', 'manufacturer', 'product_model', 'actions'] : undefined}
         customSummary={<EquipmentInventoryOverview total={categorySummary?.total_count} statuses={categorySummary?.statuses} unknownCount={categorySummary?.unknown_status_count} loading={summaryLoading} statusTone={equipmentStatusTone} showAllOtherStatuses />}
         title={config.label}
         description={config.description}
@@ -882,6 +916,10 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
         }}
         loading={isCreating || isUpdating}
       />
+
+      {config.supportsAgent && (
+        <ComputingAgentDialog key={agentComputer?.id ?? 'closed'} computer={agentComputer} canManage={isCoordinator} onClose={() => setAgentComputer(null)} />
+      )}
 
       {/* Equipment lifecycle change-status action */}
       {statusItem && statusModalOpen && (

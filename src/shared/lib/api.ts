@@ -141,6 +141,8 @@ export const baseApi = createApi({
     'Computer', 'Monitor', 'Accessory', 'NetworkInterface',
     'PowerSupply', 'DebugHardware', 'License', 'Sample', 'Rack', 'Room',
     'EquipmentSelectList', 'ChangeLog',
+    // Computing agents
+    'Agent', 'AgentGrant',
     // Lab management
     'LabInfo', 'LabEquipment', 'LabDevice', 'DashboardStats',
     // Booking
