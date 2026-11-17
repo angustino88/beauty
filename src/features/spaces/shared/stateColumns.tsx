@@ -8,7 +8,7 @@ import type { AccessPolicy, Choice, ResourceState } from "./resourceStatus";
 type Row = Partial<ResourceState> & { access_policy?: Choice<AccessPolicy> | null };
 
 /**
- * Status (lifecycle), Availability and Activity columns, identical on the room, station and bench
+ * Lifecycle (main status), Availability and Activity columns, identical on the room, station and bench
  * tables. The lifecycle is the main status: first, a filled pill, always visible (key `status`).
  * Availability and activity follow as dot-and-text, coloured only when something needs attention.
  * Map the column filters to the server with stateFilterParams.
@@ -16,7 +16,7 @@ type Row = Partial<ResourceState> & { access_policy?: Choice<AccessPolicy> | nul
 export function buildStateColumns<T extends Row>(kind: SpaceKind, activeFilters: Record<string, Key[] | null>): ColumnType<T>[] {
   return [
     {
-      title: "Status",
+      title: "Lifecycle",
       key: "status",
       width: 132,
       filters: LIFECYCLE_FILTERS,

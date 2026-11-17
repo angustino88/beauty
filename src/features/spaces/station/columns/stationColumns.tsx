@@ -54,7 +54,7 @@ export const buildStationColumns = ({
       align: "center",
       render: (_: unknown, record) => renderImageCell(record.image, pageIcons.stations),
     },
-    // Status (lifecycle), Availability and Activity: the same three columns as rooms and benches.
+    // Lifecycle (main status), Availability and Activity: the same three columns as rooms and benches.
     ...buildStateColumns<IStation>("station", activeFilters),
     {
       title: "Room & Slot",
