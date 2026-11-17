@@ -26,10 +26,9 @@ import {
   type LicenseInlineDraft,
 } from '../columns/licenseColumns';
 
-/** Product, vendor, category, type and restriction identify a license, so they are always shown. */
-const LICENSE_REQUIRED_COLUMNS = ['license_product', 'license_vendor', 'license_category', 'license_type', 'license_restriction'];
+/** Shown until the user changes View options; every one of these can be hidden there. */
 const LICENSE_DEFAULT_COLUMNS = [
-  'id', 'sku', 'name', ...LICENSE_REQUIRED_COLUMNS,
+  'id', 'sku', 'name', 'license_product', 'license_vendor', 'license_category', 'license_type', 'license_restriction',
   'assigned_equipment', 'expiry_date', 'primary_owner', 'status', 'actions',
 ];
 
@@ -230,8 +229,6 @@ export default function LicensePage() {
         equipmentType="license"
         isLicense
         itemNoun="license"
-        // The fields every license must have stay on screen; the rest can be toggled in View options.
-        requiredColumnKeys={LICENSE_REQUIRED_COLUMNS}
         defaultVisibleColumnKeys={LICENSE_DEFAULT_COLUMNS}
         columns={columns}
         rows={table.rows}

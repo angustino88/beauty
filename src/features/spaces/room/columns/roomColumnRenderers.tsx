@@ -42,7 +42,7 @@ export const renderRoomRacksCell = (room: IRoom) => {
     return (
         <SpaceLocationStack>
             {shown.map((rack) => (
-                <SpaceLocationRow key={rack.id} kind="station" label={rack.name || rack.sku} searchKey={rack.sku} />
+                <SpaceLocationRow key={rack.id} kind="station" label={rack.name || rack.sku} searchKey={rack.sku} refId={rack.id} />
             ))}
             {hidden.length > 0 && (
                 <Tooltip title={hidden.map((rack) => rack.name || rack.sku).join(', ')}>

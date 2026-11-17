@@ -20,7 +20,10 @@ export function useBenchTable() {
       type_id: filters.type?.length ? filters.type.join(',') : undefined,
       setup_location_id: filters.location?.length ? filters.location.join(',') : undefined,
       owner_id: filters.owner?.length ? filters.owner.join(',') : undefined,
-      status: filters.status?.length ? filters.status.join(',') : undefined,
+      // One server filter per state: the Lifecycle, Availability and Activity columns.
+      lifecycle_status: filters.status?.length ? filters.status.join(',') : undefined,
+      condition: filters.condition?.length ? filters.condition.join(',') : undefined,
+      activity_status: filters.activity?.length ? filters.activity.join(',') : undefined,
     };
   }, [page, pageSize, debouncedSearch, filters]);
 

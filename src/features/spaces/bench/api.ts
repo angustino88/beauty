@@ -57,6 +57,9 @@ export const benchApi = baseApi.injectEndpoints({
         if (params.type_id != null) queryParams.set("type_id", String(params.type_id));
         if (params.setup_location_id != null) queryParams.set("setup_location_id", String(params.setup_location_id));
         if (params.owner_id != null) queryParams.set("owner_id", String(params.owner_id));
+        if (params.lifecycle_status) queryParams.set("lifecycle_status", params.lifecycle_status);
+        if (params.condition) queryParams.set("condition", params.condition);
+        if (params.activity_status) queryParams.set("activity_status", params.activity_status);
         if (params.status) queryParams.set("status", params.status);
         if (params.favorite) queryParams.set("favorite", "true");
 

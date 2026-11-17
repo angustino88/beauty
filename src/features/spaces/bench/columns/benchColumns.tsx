@@ -7,9 +7,26 @@ import {
 } from "@/features/lab-equipment/shared";
 import { pageIcons } from "@/components/layout/pageIcons";
 import type { IBench } from "../types";
-import SpaceStatusBadge from "@/features/spaces/shared/SpaceStatusBadge";
-import { readSpaceStatus } from "@/features/spaces/shared/spaceStatus";
+import { ActivityBadge, AvailabilityBadge, LifecycleBadge } from "@/features/spaces/shared/components/ResourceStatusBadges";
 import { BenchLocationCell } from "./BenchLocationCell";
+
+// Filtered on the server (lifecycle_status, condition, activity_status). Availability itself has no
+// filter; it follows from condition and parent downtime, so the Availability column filters condition.
+const LIFECYCLE_FILTERS = [
+  { text: "Planned", value: "planned" },
+  { text: "In service", value: "in_service" },
+  { text: "Retired", value: "retired" },
+];
+const CONDITION_FILTERS = [
+  { text: "Operational", value: "operational" },
+  { text: "In maintenance", value: "in_maintenance" },
+  { text: "Out of service", value: "out_of_service" },
+];
+const ACTIVITY_FILTERS = [
+  { text: "No booking today", value: "idle" },
+  { text: "Booked (later today)", value: "scheduled" },
+  { text: "In use now", value: "active" },
+];
 
 interface BuildBenchColumnsArgs {
   isAdmin: boolean;
@@ -18,7 +35,6 @@ interface BuildBenchColumnsArgs {
   typeFilters: Array<{ text: string; value: string }>;
   locationFilters: Array<{ text: string; value: string }>;
   ownerFilters: Array<{ text: string; value: string }>;
-  statusFilters: Array<{ text: string; value: string }>;
   actionsRenderer: (_: unknown, record: IBench) => ReactNode;
 }
 
@@ -28,7 +44,6 @@ export const buildBenchColumns = ({
   typeFilters,
   locationFilters,
   ownerFilters,
-  statusFilters,
   actionsRenderer,
 }: BuildBenchColumnsArgs): ColumnsType<IBench> => {
   return [
@@ -63,29 +78,29 @@ export const buildBenchColumns = ({
       render: (_: unknown, record) => renderImageCell(record.image, pageIcons.benches),
     },
     {
-      title: "Status",
+      // Three independent states, three columns (lifecycle, availability, booking activity).
+      title: "Lifecycle",
       key: "status",
-      width: 230,
-      align: "left",
-      filters: statusFilters,
+      width: 150,
+      filters: LIFECYCLE_FILTERS,
       filteredValue: activeFilters.status ?? null,
-      onFilter: (value: boolean | Key, record: IBench) => {
-        const val = String(value);
-        return (
-          record.lifecycle_status?.value === val ||
-          record.condition?.value === val ||
-          record.activity_status?.value === val ||
-          readSpaceStatus(record) === val
-        );
-      },
-      render: (_, record) => (
-        <SpaceStatusBadge
-          spaceKind="bench"
-          resourceState={record}
-          status={readSpaceStatus(record)}
-          label={record.status_label ?? undefined}
-        />
-      ),
+      render: (_, record) => <LifecycleBadge value={record.lifecycle_status} />,
+    },
+    {
+      title: "Availability",
+      key: "condition",
+      width: 175,
+      filters: CONDITION_FILTERS,
+      filteredValue: activeFilters.condition ?? null,
+      render: (_, record) => <AvailabilityBadge state={record} />,
+    },
+    {
+      title: "Activity",
+      key: "activity",
+      width: 160,
+      filters: ACTIVITY_FILTERS,
+      filteredValue: activeFilters.activity ?? null,
+      render: (_, record) => <ActivityBadge value={record.activity_status} />,
     },
     {
       title: "Station & Room",

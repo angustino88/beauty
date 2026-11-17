@@ -740,9 +740,9 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
         render: (_: unknown, record: EquipmentItem) => {
           const placement = record.placement;
           // Most specific place first, drawn like the space tables' location cells.
-          if (placement?.bench) return <SpaceLocationRow kind="bench" primary label={placement.bench.name} />;
-          if (placement?.station) return <SpaceLocationRow kind="station" primary label={placement.station.name} />;
-          if (placement?.room) return <SpaceLocationRow kind="room" primary label={placement.room.name} />;
+          if (placement?.bench) return <SpaceLocationRow kind="bench" primary label={placement.bench.name} refId={placement.bench.id} />;
+          if (placement?.station) return <SpaceLocationRow kind="station" primary label={placement.station.name} refId={placement.station.id} />;
+          if (placement?.room) return <SpaceLocationRow kind="room" primary label={placement.room.name} refId={placement.room.id} />;
           return placement?.location_note?.trim() || '—';
         },
       },

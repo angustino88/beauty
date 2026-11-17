@@ -104,6 +104,8 @@ export interface IStationPayload {
   max_load_kg?: number | null;
   power_capacity_w?: number | null;
   network_port_capacity?: number | null;
+  /** Number of bench positions; the station's slots S1..Sn follow it. */
+  bench_capacity?: number | null;
   department?: number | null;
   group?: number | null;
   owner?: number | null;

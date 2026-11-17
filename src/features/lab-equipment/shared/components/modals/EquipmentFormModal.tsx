@@ -131,6 +131,8 @@ function FormFields({ fields, form, mode, professionalForm }: FormFieldsProps) {
                 return <Select showSearch allowClear placeholder={field.placeholder ?? `Select ${field.label}`}
                     disabled={disabled} onSearch={field.onSearch}
                     filterOption={field.onSearch ? false : filterResourceOption}
+                    loading={field.loading}
+                    notFoundContent={field.loading ? <Spin size="small" /> : field.searchHint}
                     options={field.options} {...resourceSelectProps(field.options)}
                     {...(field.creatable ? { mode: 'tags', tokenSeparators: [','] } : {})}
                 />;
@@ -340,7 +342,10 @@ export default function EquipmentFormModal({
             || changed.has('type_id')
             || changed.has('manufacturer_id')
             || changed.has('product_model_id')
-            || changed.has('department_id');
+            || changed.has('department_id')
+            // Any parent of a dependent field (e.g. room_id → slot_id, setup_location_id → station_slot_id):
+            // the page loads the child's options from it, so it must hear about the change.
+            || fields.some((field) => field.dependsOn?.some((parent) => changed.has(parent)));
         let expanded = true;
         while (expanded) {
             expanded = false;

@@ -1,9 +1,7 @@
 import { LockOutlined } from '@ant-design/icons';
 import { Tooltip } from 'antd';
-import { CalendarCheck2, UserRound } from 'lucide-react';
 import { normalizeSpaceStatus, spaceStatusLabel, spaceStatusTone } from './spaceStatus';
 import {
-  resourceActivityMarker,
   resourceBadge,
   type AccessPolicy,
   type Choice,
@@ -48,10 +46,6 @@ export default function SpaceStatusBadge({
     // "Unavailable (Room X)" is too long for the shared badge width: show the
     // short state and keep the blocker in the tooltip.
     const shortText = badge.text.replace(/\s*\(.*\)$/, '');
-    // Booking activity is its own fact (dashboard style): a marker beside the
-    // badge, never a replacement for the bench's status.
-    const marker = spaceKind === 'bench' ? resourceActivityMarker(state) : null;
-    const MarkerIcon = marker?.value === 'active' ? UserRound : CalendarCheck2;
 
     return (
       <span className={styles.wrap}>
@@ -63,14 +57,6 @@ export default function SpaceStatusBadge({
             </Tooltip>
           )}
         </span>
-        {marker && (
-          <Tooltip title={marker.description}>
-            <span className={`${styles.activity} ${styles[marker.tone]}`} aria-label={marker.description}>
-              <MarkerIcon size={13} strokeWidth={2.25} aria-hidden="true" />
-              {marker.text}
-            </span>
-          </Tooltip>
-        )}
       </span>
     );
   }

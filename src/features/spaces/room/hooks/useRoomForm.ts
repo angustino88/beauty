@@ -5,7 +5,10 @@ import {
     useUpdateRoomImageMutation,
     useDeleteRoomImageMutation,
 } from '../api';
+import { message } from 'antd';
+import { useLabsRoomsActionsGenerateSlotsCreateByRoomIdMutation } from '@/shared/api/generated/api';
 import { notifyEquipmentCreated, notifyEquipmentError, useEquipmentCrudActions } from '@/features/lab-equipment/shared';
+import { parseFormApiError } from '@/features/lab-equipment/shared/utils/formApiError';
 import type { IRoomPayload } from '../types';
 
 // ── helpers ───────────────────────────────────────────────────────────────────
@@ -16,6 +19,11 @@ const toNumber = (value: unknown): number | undefined => {
     return Number.isNaN(n) ? undefined : n;
 };
 
+const slotErrorText = (err: unknown): string => {
+    const parsed = parseFormApiError(err);
+    return parsed?.message || parsed?.nonFieldErrors[0] || Object.values(parsed?.fieldErrors ?? {})[0]?.[0] || 'the slot grid could not be generated';
+};
+
 // ── hook ──────────────────────────────────────────────────────────────────────
 
 export function useRoomForm() {
@@ -24,6 +32,23 @@ export function useRoomForm() {
     const [deleteRoom,          { isLoading: deleting }] = useDeleteRoomMutation();
     const [updateRoomImageMutation]                       = useUpdateRoomImageMutation();
     const [deleteRoomImageMutation]                       = useDeleteRoomImageMutation();
+    const [generateSlotsMutation]                         = useLabsRoomsActionsGenerateSlotsCreateByRoomIdMutation();
+
+    /**
+     * Stations are placed on room slots, and the backend creates those slots only when asked
+     * (generate-slots), one per cell of the layout grid (R1C1, R1C2, ...). Run it after every save
+     * that has a layout so the "Room Slot" picker in the station form always has the grid.
+     * Idempotent: existing slots are kept; cells removed from the grid are pruned unless a station
+     * stands on them, in which case the backend refuses and we say why.
+     */
+    const syncSlots = async (roomId: number, values: Record<string, unknown>) => {
+        if (toNumber(values.rows) == null || toNumber(values.cols) == null) return;
+        try {
+            await generateSlotsMutation({ roomId }).unwrap();
+        } catch (err) {
+            message.warning(`Room saved, but its slots were not updated: ${slotErrorText(err)}.`);
+        }
+    };
 
     const actions = useEquipmentCrudActions<IRoomPayload>({
         updateMutation:      updateRoom,
@@ -58,6 +83,7 @@ export function useRoomForm() {
 
         try {
             const created = await createRoom(payload).unwrap();
+            await syncSlots(created.id, values);
             if (imageFile) {
                 await updateRoomImageMutation({ id: created.id, image: imageFile }).unwrap();
             }
@@ -70,6 +96,7 @@ export function useRoomForm() {
 
     return {
         createFromValues,
+        syncSlots,
         ...actions,   // updateInline, updateImage, updateStatus, deleteById
         creating,
         updating,

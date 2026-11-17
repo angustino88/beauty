@@ -85,8 +85,6 @@ export interface EquipmentPageLayoutProps<T extends { id: number | string }> {
   /** Lookup labels for reference IDs shown in the details drawer */
   detailValueLabels?: Record<string, Record<string, string>>;
   defaultVisibleColumnKeys?: string[];
-  /** Extra columns that are always shown and cannot be hidden (ID, SKU, name, status and actions always are). */
-  requiredColumnKeys?: string[];
   /** Singular noun for the record count, e.g. "license"; defaults from spaceKind, else "device". */
   itemNoun?: string;
   onEditRecord?: (id: number) => void;
@@ -136,7 +134,6 @@ export default function EquipmentPageLayout<T extends { id: number | string }>({
   customSummary,
   detailValueLabels,
   defaultVisibleColumnKeys,
-  requiredColumnKeys,
   itemNoun,
   onEditRecord,
   professionalTable = false,
@@ -150,14 +147,11 @@ export default function EquipmentPageLayout<T extends { id: number | string }>({
     : spaceKind === 'station'
       ? ['id', 'sku', 'name', 'image', 'status', 'room', 'bench_capacity', 'available_power_w', 'owner', 'actions']
       : spaceKind === 'bench'
-        ? ['id', 'sku', 'name', 'image', 'status', 'location', 'group', 'type', 'equipment_count', 'actions']
+        ? ['id', 'sku', 'name', 'image', 'status', 'condition', 'activity', 'location', 'group', 'type', 'equipment_count', 'actions']
         : professionalTable ? ['id', 'sku', 'name', 'image', 'status', 'placement', 'owner', 'kind', 'type', 'manufacturer', 'product_model', 'actions'] : undefined;
   const enabledKeys = visibleKeys ?? defaultVisibleColumnKeys ?? inventoryDefaultKeys;
-  const fixedColumnKeys = useMemo(
-    () => [...REQUIRED_INVENTORY_COLUMN_KEYS, ...(requiredColumnKeys ?? [])],
-    [requiredColumnKeys],
-  );
-  const displayedColumns = useMemo(() => getVisibleInventoryColumns(columns, enabledKeys, filters, fixedColumnKeys)
+  const fixedColumnKeys = REQUIRED_INVENTORY_COLUMN_KEYS;
+  const displayedColumns = useMemo(() => getVisibleInventoryColumns(columns, enabledKeys, filters)
     .map((column) => column.key === 'name' && !spaceKind ? {
       ...column,
       render: (value: unknown, record: T, index: number) => (
@@ -182,7 +176,7 @@ export default function EquipmentPageLayout<T extends { id: number | string }>({
           )}
         </span>
       ),
-    } : column), [columns, enabledKeys, filters, fixedColumnKeys, professionalTable, spaceKind]);
+    } : column), [columns, enabledKeys, filters, professionalTable, spaceKind]);
   const visibleWidth = defaultVisibleColumnKeys || professionalTable
     ? displayedColumns.reduce((total, column) => total + (typeof column.width === 'number' ? column.width : 160), 0)
     : scrollX;
