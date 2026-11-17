@@ -59,7 +59,7 @@ export const buildBenchColumns = ({
       align: "center",
       render: (_: unknown, record) => renderImageCell(record.image, pageIcons.benches),
     },
-    // Availability, Activity and Lifecycle: the same three columns as rooms and stations.
+    // Status (lifecycle), Availability and Activity: the same three columns as rooms and stations.
     ...buildStateColumns<IBench>("bench", activeFilters),
     {
       title: "Station & Room",

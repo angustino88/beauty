@@ -28,11 +28,11 @@ export function useRoomTable() {
       skipPollingIfUnfocused: true,
     },
   );
-  // The state columns (status = availability, activity, lifecycle) filter on the server's
-  // condition, activity_status and lifecycle_status parameters.
+  // The state columns (status = lifecycle, availability, activity) filter on the server's
+  // lifecycle_status, condition and activity_status parameters.
   const serverFilters = useMemo(() => {
-    const { status, activity, lifecycle, ...rest } = filters;
-    return { ...rest, condition: status ?? null, activity_status: activity ?? null, lifecycle_status: lifecycle ?? null };
+    const { status, availability, activity, ...rest } = filters;
+    return { ...rest, lifecycle_status: status ?? null, condition: availability ?? null, activity_status: activity ?? null };
   }, [filters]);
   const serverFilter = useServerEquipmentFilter<IRoom>({ filters: serverFilters, filterKey: 'Room', filterRules: EQUIPMENT_FILTER_RULES.Room, page, mapItem: mapRoomApiItem });
   const dropdownQuery = useGetRoomDropdownQuery();

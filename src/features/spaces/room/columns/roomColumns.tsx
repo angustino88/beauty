@@ -48,7 +48,7 @@ export const buildRoomColumns = ({
   { title: "SKU", dataIndex: "sku", key: "sku", width: 120, fixed: "left" as const },
   { title: "Name", key: "name", width: 180, fixed: "left" as const, render: text("name") },
   { title: "Image", key: "image", width: 90, align: "center" as const, render: (_: unknown, record: IRoom) => renderImageCell(record.image, pageIcons.rooms) },
-  // Availability, Activity and Lifecycle: the same three columns as stations and benches.
+  // Status (lifecycle), Availability and Activity: the same three columns as stations and benches.
   ...buildStateColumns<IRoom>("room", activeFilters),
   { title: "Location", key: "location", width: 220, render: (_: unknown, record: IRoom) => renderRoomLocationCell(record) },
   {
