@@ -1,0 +1,38 @@
+.panel {
+  width: min(420px, calc(100vw - 64px));
+  max-height: 520px;
+  overflow-y: auto;
+}
+
+.connection {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--lm-border, #e5e7eb);
+}
+
+.title {
+  margin-bottom: 6px;
+  overflow-wrap: anywhere;
+  font-weight: 600;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.detail {
+  margin-top: 4px;
+  color: var(--lm-text-secondary, #64748b);
+  overflow-wrap: anywhere;
+  font-size: 12px;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 12px;
+}

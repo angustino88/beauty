@@ -2,7 +2,7 @@ import React, { useState, useMemo, useCallback, type Key } from 'react';
 import { WorkbookImportButton } from '@/features/data-import';
 import { Tag, Tooltip, message, Popover, Progress, Modal, Form, Select, Input, InputNumber, Button } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { CloudServerOutlined, DesktopOutlined, RadarChartOutlined, SwapOutlined } from '@ant-design/icons';
+import { CloudServerOutlined, DesktopOutlined, SwapOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { useAuthState } from '@/features/auth/hooks/useAuthState';
 import type { EquipmentCategoryConfig } from '../categories/registry';
@@ -59,6 +59,7 @@ import { notifyEquipmentCreated, notifyEquipmentDeleted, notifyEquipmentUpdated 
 import { equipmentStatusTone } from '../shared/utils/equipmentStatus';
 import { userLabel } from '@/shared/utils/userRef';
 import { AgentHealthCell, ComputingAgentDialog, liveAgentsByEquipment, useGetComputingAgentsQuery, type AgentComputer } from '../agents';
+import MonitoredDevicesPopover from './MonitoredDevicesPopover';
 
 export interface UnifiedEquipmentPageProps {
   config: EquipmentCategoryConfig;
@@ -636,47 +637,10 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
       },
       {
         title: 'Monitored Devices',
-        dataIndex: 'monitoring',
         key: 'monitoring',
         width: 150,
         align: 'center' as const,
-        render: (_value: EquipmentItem['monitoring'], record: EquipmentItem) => {
-          const value = record.monitoring ?? record.monitored_devices;
-          const entries: Record<string, unknown>[] = Array.isArray(value)
-            ? value.filter((v): v is Record<string, unknown> => typeof v === 'object' && v !== null)
-            : typeof value === 'boolean'
-              ? [{ Status: value ? 'Enabled' : 'Disabled' }]
-              : [];
-          return (
-            <Popover
-              placement="right"
-              trigger="click"
-              title="Monitored devices"
-              content={
-                entries.length > 0 ? (
-                  <div className={tableStyles.informationContent}>
-                    {entries.map((entry, idx) => (
-                      <div key={String(entry.name ?? idx)} style={{ marginBottom: 4 }}>
-                        {Object.entries(entry).map(([k, v]) => (
-                          <div key={k} style={{ padding: '2px 0' }}>
-                            <strong>{k}:</strong>{' '}
-                            <span>{String(v ?? '')}</span>
-                          </div>
-                        ))}
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <span style={{ color: 'var(--lm-text-tertiary)' }}>No monitored devices</span>
-                )
-              }
-            >
-              <button type="button" className={tableStyles.informationButton} aria-label="View monitored devices" title="View monitored devices" onClick={(event) => event.stopPropagation()}>
-                <RadarChartOutlined />
-              </button>
-            </Popover>
-          );
-        },
+        render: (_value: unknown, record: EquipmentItem) => <MonitoredDevicesPopover computingId={record.id} computingName={record.name} />,
       },
       );
     }

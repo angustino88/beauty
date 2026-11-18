@@ -4,6 +4,8 @@ export type ILabMonitoring = MonitoringEventRead;
 
 export interface ILabMonitoringParams {
   lab?: number;
+  /** Computing unit (equipment id). */
+  computing_id?: number;
   from_date_time?: string;
   to_date_time?: string;
   page?: number;

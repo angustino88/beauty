@@ -51,6 +51,8 @@ export const agentApi = baseApi.injectEndpoints({
         { type: 'Agent', id: 'LIST' },
         { type: 'Agent', id: agentId },
         { type: 'AgentGrant', id: agentId },
+        // Recovery and retirement make the computer's device observations unconfirmed on the server.
+        'Monitoring',
       ],
     }),
     revokeAgentGrant: build.mutation<EnrollmentGrantResponseRead, { agentId: number; grantId: number }>({
@@ -70,6 +72,8 @@ export const agentApi = baseApi.injectEndpoints({
         { type: 'Agent', id: 'LIST' },
         { type: 'Agent', id: agentId },
         { type: 'AgentGrant', id: agentId },
+        // Recovery and retirement make the computer's device observations unconfirmed on the server.
+        'Monitoring',
       ],
     }),
   }),
