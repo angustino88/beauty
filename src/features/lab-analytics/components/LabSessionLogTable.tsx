@@ -35,6 +35,8 @@ const RANGE_PRESETS: { label: string; value: [Dayjs, Dayjs] }[] = [
  * Completed remote sessions reported by the computer agents (GET /api/labs/lab-sessions).
  * The server filters, sorts and pages; the login-day range is always sent (the API requires it).
  */
+const SESSION_RELOAD_TYPES = ["SESSION_RELOAD"] as const;
+
 export function LabSessionLogTable() {
   const [range, setRange] = useState<[Dayjs, Dayjs]>(() => [dayjs().subtract(6, "day"), dayjs()]);
   const [benchId, setBenchId] = useState<number | undefined>();
@@ -56,9 +58,12 @@ export function LabSessionLogTable() {
   }), [range, benchId, accessType, q, ordering]);
 
   const { data: benchOptions = [] } = useGetBenchOptionsQuery();
-  const { data, isFetching, isError, refetch } = useGetLabSessionLogsQuery({ ...filters, page, page_size: pageSize });
+  const { data, currentData, isFetching, isError, refetch } = useGetLabSessionLogsQuery({ ...filters, page, page_size: pageSize });
   const [fetchPage] = useLazyGetLabSessionLogsQuery();
-  useMonitoringReload({ onReload: refetch });
+  // Live: the server pushes SESSION_RELOAD when an agent stores a session; refetch in place.
+  useMonitoringReload({ onReload: refetch, reloadTypes: SESSION_RELOAD_TYPES });
+  // Spinner only while the shown rows are for other filters/page; a live or manual refetch swaps rows silently.
+  const isLoadingNewQuery = isFetching && currentData === undefined;
 
   const resetPage = <T,>(setter: (value: T) => void) => (value: T) => { setter(value); setPage(1); };
 
@@ -149,7 +154,7 @@ export function LabSessionLogTable() {
         tableLayout="fixed"
         rowKey="id"
         size="middle"
-        loading={isFetching}
+        loading={isLoadingNewQuery}
         columns={labSessionLogColumns}
         dataSource={data?.results ?? []}
         onChange={handleTableChange}
