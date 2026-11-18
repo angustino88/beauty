@@ -52,6 +52,12 @@ export const BenchTable = memo(function BenchTable({
   const navigate = useNavigate();
 
   const { data: filterOptions } = useGetBenchFilterOptionsQuery();
+  const { columnFilters } = state;
+  const hasFilters = Boolean(
+    state.search.trim() || state.summaryStatus || state.showFavoritesOnly
+      || columnFilters.status.length || columnFilters.lab_group_ids.length
+      || columnFilters.sample_filter_values.length || columnFilters.license_filter_values.length,
+  );
   const [isManualRefreshing, setIsManualRefreshing] = useState(false);
   const { makeFilterDropdownHandler, isAnyFilterOpen } =
     useFilterDropdownGuard();
@@ -135,7 +141,7 @@ export const BenchTable = memo(function BenchTable({
           <FullTextSearch
             value={state.search}
             onSearch={state.setSearch}
-            placeholder="Search by Bench Group, Bench Name, Computer, etc."
+            placeholder="Search benches, groups, computers or users"
           />
         </Col>
         <Col
@@ -147,7 +153,7 @@ export const BenchTable = memo(function BenchTable({
             tooltip={
               state.showFavoritesOnly
                 ? "Show all benches"
-                : "Show only favorite benches"
+                : "Show only your favorite benches"
             }
             icon={
               state.showFavoritesOnly ? (
@@ -162,16 +168,18 @@ export const BenchTable = memo(function BenchTable({
           </TooltipButton>
           <TooltipButton
             responsive
-            tooltip="Clear all filters"
+            tooltip="Clear search and filters"
+            disabledReason="No search or filter is applied"
+            disabled={!hasFilters}
             icon={<ClearOutlined />}
             onClick={state.clearAllFilters}
           >
-            Clear All Filters
+            Clear filters
           </TooltipButton>
           <TooltipButton
             loading={isManualRefreshing}
             responsive
-            tooltip="Re-fetch data"
+            tooltip="Reload now (the table also updates live)"
             icon={<UndoOutlined />}
             onClick={() => void handleManualRefetch()}
           >
@@ -189,7 +197,7 @@ export const BenchTable = memo(function BenchTable({
         rowKey="id"
         sticky={{ offsetHeader: 0 }}
         dataSource={Array.isArray(data) ? data : []}
-        locale={{ emptyText: "No benches found — try adjusting filters" }}
+        locale={{ emptyText: hasFilters ? "No benches match the search or filters. Clear them to see all benches." : "No benches yet." }}
         onChange={state.handleTableChange}
         pagination={{
           total: totalCount,
@@ -198,7 +206,7 @@ export const BenchTable = memo(function BenchTable({
           pageSizeOptions: [5, 10, 25, 50],
           showQuickJumper: true,
           showSizeChanger: true,
-          showTotal: (total) => `Total ${total} items`,
+          showTotal: (total, [from, to]) => `${from}–${to} of ${total} ${total === 1 ? "bench" : "benches"}`,
         }}
         scroll={{ x: 1000, y: "calc(100vh - 280px)" }}
       />

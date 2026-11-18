@@ -184,6 +184,8 @@ export const ChatWidget: React.FC = () => {
         <Button
           type="primary"
           icon={<SendOutlined />}
+          aria-label="Send message"
+          title={status !== 'connected' ? 'Connecting to the assistant…' : 'Send message'}
           onClick={handleSend}
           disabled={inputLocked || status !== 'connected' || !inputValue.trim()}
           className={styles.sendButton}

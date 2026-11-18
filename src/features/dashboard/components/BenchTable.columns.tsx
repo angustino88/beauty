@@ -14,14 +14,19 @@ import { LabStatus } from '@/components/display/LabStatus';
 import { MultipleTagCell } from '@/components/display/MultipleTagCell';
 import { TooltipButton } from '@/components/layout/TooltipButton';
 import { isCurrentlyBooked } from '../types';
+import { BENCH_ACTIVITY_META } from '@/shared/status/statusTone';
 import type { DashboardState } from '../hooks/useDashboardState';
 import { SUMMARY_STATUS_VALUES } from '../types';
 import type { DashboardBench, BenchFilterOptions } from '../types';
 
 const STATUS_FILTER_OPTIONS = SUMMARY_STATUS_VALUES.map((s) => ({
   value: s,
-  text: s.charAt(0).toUpperCase() + s.slice(1),
+  text: BENCH_ACTIVITY_META[s]?.label ?? s,
 }));
+
+/** One look for "nothing here" in every cell. */
+const EMPTY = <span style={{ color: 'var(--lm-text-disabled)' }} aria-label="None">–</span>;
+const benchLabel = (bench: DashboardBench) => bench.name || bench.lab_name || bench.sku || `bench #${bench.id}`;
 
 export interface BuildColumnsParams {
   state: DashboardState;
@@ -60,8 +65,8 @@ export function buildColumns({
       dataIndex: 'bench_group',
       key: 'bench_group',
       align: 'left' as const,
-      minWidth: 120,
-      render: (g: DashboardBench['bench_group']) => g?.name ?? '–',
+      minWidth: 140,
+      render: (g: DashboardBench['bench_group']) => g?.name || EMPTY,
       filters: benchGroupFilters,
       filterSearch: true,
       filterMultiple: true,
@@ -104,7 +109,7 @@ export function buildColumns({
       key: 'name',
       align: 'left' as const,
       minWidth: 120,
-      render: (_: unknown, record: DashboardBench) => record.name || record.lab_name || '–',
+      render: (_: unknown, record: DashboardBench) => record.name || record.lab_name || EMPTY,
     },
     {
       title: 'Computer Name',
@@ -112,7 +117,7 @@ export function buildColumns({
       align: 'left' as const,
       minWidth: 150,
       render: (_: unknown, record: DashboardBench) =>
-        record.computing?.name ?? record.computer?.computer_name ?? '–',
+        record.computing?.name || record.computer?.computer_name || EMPTY,
     },
     {
       title: 'Computer IP',
@@ -120,7 +125,7 @@ export function buildColumns({
       align: 'left' as const,
       minWidth: 130,
       render: (_: unknown, record: DashboardBench) =>
-        record.computing?.ip_address ?? record.computer?.computer_ip ?? '–',
+        record.computing?.ip_address || record.computer?.computer_ip || EMPTY,
     },
     {
       title: 'Remote User',
@@ -135,7 +140,7 @@ export function buildColumns({
           username;
         return username ? (
           <AvatarRenderer username={username} displayname={displayName} />
-        ) : null;
+        ) : EMPTY;
       },
     },
     {
@@ -152,7 +157,7 @@ export function buildColumns({
               displayKey="name"
             />
           </div>
-        ) : null;
+        ) : EMPTY;
       },
       filters: sampleFilters,
       filterSearch: true,
@@ -175,7 +180,7 @@ export function buildColumns({
               displayKey="name"
             />
           </div>
-        ) : null;
+        ) : EMPTY;
       },
       filters: licenseFilters,
       filterSearch: true,
@@ -197,9 +202,11 @@ export function buildColumns({
             : `${import.meta.env.VITE_APP_URL || ''}${rdpFilePath.startsWith('/') ? rdpFilePath.slice(1) : rdpFilePath}`
           : undefined;
 
+        const computerName = record.computing?.name || record.computer?.computer_name;
         return (
           <TooltipButton
-            tooltip="Download device RDP"
+            tooltip={`Download the remote desktop (.rdp) file for ${computerName || benchLabel(record)}`}
+            disabledReason={computerName ? `No remote desktop file for ${computerName}` : 'No computer is mapped to this bench'}
             icon={<LaptopOutlined />}
             href={href}
             target="_blank"
@@ -220,7 +227,7 @@ export function buildColumns({
         <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
           <TooltipButton
             placement="top"
-            tooltip={bench.is_favorite ? 'Remove from favorites' : 'Add to favorites'}
+            tooltip={bench.is_favorite ? `Remove ${benchLabel(bench)} from favorites` : `Add ${benchLabel(bench)} to favorites`}
             type="text"
             size="small"
             icon={
@@ -236,8 +243,8 @@ export function buildColumns({
           />
           <TooltipButton
             placement="top"
-            tooltip={bench.computing || bench.computer ? "Book this bench" : "No computing resource mapped to this bench"}
-            overlayInnerStyle={{ maxWidth: 100, textAlign: 'center' }}
+            tooltip={`Book ${benchLabel(bench)}`}
+            disabledReason="Can't book: no computer is mapped to this bench"
             disabled={!bench.computing && !bench.computer}
             icon={<CalendarOutlined />}
             onClick={(e) => {

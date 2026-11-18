@@ -768,7 +768,7 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
         render: (_: unknown, record: EquipmentItem) => {
           const rawStatus = record.display_status?.value;
           return (
-            <Tooltip title="Click to change status">
+            <Tooltip title="Change status">
               <button
                 type="button"
                 className={tableStyles.statusButton}

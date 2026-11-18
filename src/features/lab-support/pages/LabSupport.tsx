@@ -120,12 +120,13 @@ export default function SupportTickets() {
             />
           </Col>
           <Col flex="auto" className={tableStyles.actions}>
-            <TooltipButton responsive tooltip="Refresh" icon={<UndoOutlined />} onClick={() => refetch()}>
+            <TooltipButton responsive tooltip="Reload tickets" icon={<UndoOutlined />} onClick={() => refetch()}>
               Refresh
             </TooltipButton>
             <TooltipButton
               responsive
-              tooltip="Export"
+              tooltip="Export tickets to Excel"
+              disabledReason="No tickets to export"
               icon={<ExportOutlined />}
               loading={exportLoading}
               disabled={total === 0}
@@ -135,7 +136,7 @@ export default function SupportTickets() {
             </TooltipButton>
             <TooltipButton
               responsive
-              tooltip="Create a New Ticket"
+              tooltip="Open a support ticket"
               type="primary"
               icon={<PlusOutlined />}
               onClick={() => setIsCreateModalOpen(true)}

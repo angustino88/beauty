@@ -182,7 +182,7 @@ export function buildMyBookingColumns({
         <Space align="center" size={4}>
           <Typography.Text style={{ fontSize: 'inherit', color: 'inherit' }}>Creator</Typography.Text>
           <Space size={6}>
-            <Tooltip title="Show All">
+            <Tooltip title="Show bookings from every creator">
               <span
                 className={styles.creatorSwitch}
                 onClick={(event) => event.stopPropagation()}
@@ -381,12 +381,16 @@ export function buildMyBookingColumns({
           record.approval_status === 'pending' &&
           (record.status === 'reserved' || record.status === 'available') &&
           (!!permissionGroups['lab-coordinator'] || !!permissionGroups['admin']);
+        const approvalBlockedReason = !(permissionGroups['lab-coordinator'] || permissionGroups['admin'])
+          ? 'Only lab coordinators and admins can approve or reject bookings'
+          : 'Only pending, upcoming bookings can be approved or rejected';
 
         return (
           <Space size="small">
             <TooltipButton
               placement="top"
-              tooltip="Edit"
+              tooltip="Edit booking"
+              disabledReason="Completed, expired or cancelled bookings can't be edited"
               icon={<EditOutlined />}
               disabled={
                 record.status == null ||
@@ -396,8 +400,8 @@ export function buildMyBookingColumns({
             />
             <TooltipButton
               placement="top"
-              tooltip="Approve"
-              aria-label="Approve booking"
+              tooltip="Approve booking"
+              disabledReason={approvalBlockedReason}
               className={styles.approveButton}
               icon={<CheckCircleFilled />}
               disabled={!canApprove}
@@ -405,8 +409,8 @@ export function buildMyBookingColumns({
             />
             <TooltipButton
               placement="top"
-              tooltip="Reject"
-              aria-label="Reject booking"
+              tooltip="Reject booking"
+              disabledReason={approvalBlockedReason}
               className={styles.rejectButton}
               icon={<CloseCircleFilled />}
               disabled={!canApprove}

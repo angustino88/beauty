@@ -1,6 +1,6 @@
 import { Tooltip } from 'antd';
 import { CalendarCheck2, CircleCheck, CircleHelp, Moon, PowerOff, UserRound, Wrench, type LucideIcon } from 'lucide-react';
-import { benchActivityTone, normalizeStatusKey } from '@/shared/status/statusTone';
+import { BENCH_ACTIVITY_META, benchActivityTone, normalizeStatusKey } from '@/shared/status/statusTone';
 import styles from './LabStatus.module.css';
 
 type LabStatusProps = {
@@ -36,7 +36,8 @@ export function LabStatus({ labStatus, isBooked, bookingDetail, fit }: LabStatus
       : '';
 
   const key = normalizeStatusKey(statusStr);
-  const label = key ? key.charAt(0).toUpperCase() + key.slice(1).replaceAll('_', ' ') : 'Unknown';
+  const meta = BENCH_ACTIVITY_META[key === 'maintenance' ? 'maintaining' : key];
+  const label = meta?.label ?? (key ? key.charAt(0).toUpperCase() + key.slice(1).replaceAll('_', ' ') : 'Unknown');
   const Glyph = GLYPHS[key] ?? CircleHelp;
   const bookedText = bookingDetail ? `Booked now · ${bookingDetail}` : 'Booked now';
 
@@ -44,6 +45,7 @@ export function LabStatus({ labStatus, isBooked, bookingDetail, fit }: LabStatus
     <span
       className={[styles.badge, styles[benchActivityTone(key)], fit ? styles.fit : ''].filter(Boolean).join(' ')}
       aria-label={isBooked ? `${label}, booked now` : label}
+      title={meta?.meaning}
     >
       <span className={styles.main}>
         <Glyph className={styles.glyph} size={14} strokeWidth={2.25} aria-hidden="true" />

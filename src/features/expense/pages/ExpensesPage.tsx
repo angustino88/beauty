@@ -174,7 +174,7 @@ export const ExpensesPage: React.FC = () => {
       width: 160,
       render: (_: unknown, record: IExpense) => (
         <Space size={6}>
-          <Tooltip title="View Expense Details & History">
+          <Tooltip title="View expense details and payment history">
             <Button
               size="small"
               icon={<EyeOutlined />}
@@ -183,7 +183,7 @@ export const ExpensesPage: React.FC = () => {
               Details
             </Button>
           </Tooltip>
-          <Tooltip title="Record Payment">
+          <Tooltip title={`Record a payment for ${record.name}`}>
             <Button
               size="small"
               icon={<DollarOutlined />}

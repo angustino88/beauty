@@ -355,10 +355,10 @@ export default function EquipmentPageLayout<T extends { id: number | string }>({
                 <Button aria-label={professionalTable ? 'Choose visible columns' : 'Columns'} icon={<SettingOutlined />}>{professionalTable ? 'View options' : 'Columns'}</Button>
               </Dropdown>
             )}
-            {(!professionalTable || activeFilterCount > 0 || search) && <TooltipButton responsive tooltip="Clear all filters" aria-label="Clear search and filters" icon={<ClearOutlined />} onClick={handleClearAll}>
-              {professionalTable ? 'Clear filters' : 'Clear All Filters'}
+            {(!professionalTable || activeFilterCount > 0 || search) && <TooltipButton responsive tooltip="Clear search and filters" icon={<ClearOutlined />} onClick={handleClearAll}>
+              Clear filters
             </TooltipButton>}
-            <TooltipButton responsive tooltip="Re-fetch data" aria-label={`Refresh ${spaceKind ? `${spaceKind}s` : 'equipment'}`} icon={<ReloadOutlined spin={professionalTable && loading} />} onClick={onRefetch}>
+            <TooltipButton responsive tooltip={`Reload ${itemPlural}`} icon={<ReloadOutlined spin={professionalTable && loading} />} onClick={onRefetch}>
               Refresh
             </TooltipButton>
             {professionalTable && showCreate && onCreate && (
@@ -369,7 +369,7 @@ export default function EquipmentPageLayout<T extends { id: number | string }>({
             {!professionalTable && showCreate && onCreate && (
               <TooltipButton
                 responsive
-                tooltip={createLabel ?? `Create new ${title.toLowerCase()}`}
+                tooltip={`Add a new ${itemLabel}`}
                 type="primary"
                 icon={<PlusOutlined />}
                 onClick={onCreate}

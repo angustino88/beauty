@@ -102,12 +102,12 @@ export const buildMappingColumns = ({
     render: (_v, row) => (
       <Space size={4}>
         {canEdit && (
-          <TooltipButton tooltip="Place on a station" icon={<EnvironmentOutlined />} onClick={() => onPlace(row)} />
+          <TooltipButton tooltip={`Place ${row.bench.name || row.bench.sku} on a station`} icon={<EnvironmentOutlined />} onClick={() => onPlace(row)} />
         )}
         {canEdit && (
-          <TooltipButton tooltip="Manage equipment" icon={<AppstoreAddOutlined />} onClick={() => onAssignEquipment(row)} />
+          <TooltipButton tooltip={`Assign equipment to ${row.bench.name || row.bench.sku}`} icon={<AppstoreAddOutlined />} onClick={() => onAssignEquipment(row)} />
         )}
-        <TooltipButton tooltip="Print labels" icon={<PrinterOutlined />} onClick={() => onPrintLabels(row)} />
+        <TooltipButton tooltip={`Print labels for ${row.bench.name || row.bench.sku}`} icon={<PrinterOutlined />} onClick={() => onPrintLabels(row)} />
       </Space>
     ),
   },

@@ -231,6 +231,9 @@ export function createActionsRenderer<TRecord extends { id: number }>(options: {
   extraMenuItems?: (record: TRecord) => Array<{ key: string; label: string; onClick: () => void }>;
 }) {
   return (_: unknown, record: TRecord) => {
+    // Name the row in every action, so the tooltip and screen reader say which item it affects.
+    const named = record as TRecord & { sku?: string | null; name?: string | null };
+    const label = named.sku || named.name || `#${record.id}`;
     const menuItems: NonNullable<MenuProps['items']> = [];
     if (options.onHistory) {
       const onHistory = options.onHistory;
@@ -245,7 +248,7 @@ export function createActionsRenderer<TRecord extends { id: number }>(options: {
       const onPrint = options.onPrint;
       menuItems.push({
         key: 'print',
-        label: 'Print equipment label',
+        label: 'Print label',
         icon: <PrinterOutlined />,
         onClick: () => onPrint(record),
       });
@@ -254,9 +257,9 @@ export function createActionsRenderer<TRecord extends { id: number }>(options: {
 
     return (
       <Space size={4} onClick={(event) => event.stopPropagation()}>
-        <Tooltip title="Edit record">
+        <Tooltip title={`Edit ${label}`}>
           <Button
-            aria-label="Edit record"
+            aria-label={`Edit ${label}`}
             size="small"
             icon={<EditOutlined />}
             onClick={(event) => {
@@ -267,13 +270,16 @@ export function createActionsRenderer<TRecord extends { id: number }>(options: {
         </Tooltip>
         {options.isAdmin && (
           <Popconfirm
-            title={options.deleteConfirmText ?? 'Delete this item?'}
+            title={options.deleteConfirmText ?? `Delete ${label}?`}
+            description="This cannot be undone."
+            okText="Delete"
+            okButtonProps={{ danger: true }}
             placement="topRight"
             onConfirm={() => options.onDelete(record.id)}
           >
-            <Tooltip title="Delete record">
+            <Tooltip title={`Delete ${label}`}>
               <Button
-                aria-label="Delete record"
+                aria-label={`Delete ${label}`}
                 size="small"
                 icon={<DeleteOutlined />}
                 danger
@@ -291,8 +297,8 @@ export function createActionsRenderer<TRecord extends { id: number }>(options: {
             onClick: ({ domEvent }) => domEvent.stopPropagation(),
           }}
         >
-          <Tooltip title="More actions">
-            <Button aria-label="More actions" size="small" icon={<MoreOutlined />} />
+          <Tooltip title={`More actions for ${label}`}>
+            <Button aria-label={`More actions for ${label}`} size="small" icon={<MoreOutlined />} />
           </Tooltip>
         </Dropdown>
       </Space>

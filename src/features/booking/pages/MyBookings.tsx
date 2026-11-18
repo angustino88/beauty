@@ -48,7 +48,7 @@ export const MyBookings = () => {
           <Col flex="auto" className={tableStyles.actions}>
             <TooltipButton
               responsive
-              tooltip="Reset all filters and sort"
+              tooltip="Clear filters and sorting"
               icon={<ClearOutlined />}
               onClick={handleClearFilters}
             >
@@ -56,7 +56,7 @@ export const MyBookings = () => {
             </TooltipButton>
             <TooltipButton
               responsive
-              tooltip="Refresh"
+              tooltip="Reload bookings"
               icon={<UndoOutlined />}
               onClick={refetchData}
             >
@@ -64,7 +64,7 @@ export const MyBookings = () => {
             </TooltipButton>
             <TooltipButton
               responsive
-              tooltip="Create a new Booking"
+              tooltip="Book a bench"
               type="primary"
               icon={<PlusOutlined />}
               onClick={() => setIsModalOpen(true)}
