@@ -1,6 +1,8 @@
 import { useEquipmentSearchOptions } from '../hooks/useEquipmentSearchOptions';
 import { useMemo, useState } from 'react';
-import { Alert } from 'antd';
+import { Alert, Tabs } from 'antd';
+import { useSearchParams } from 'react-router-dom';
+import { FoundLicensesPanel, LicenseChecksPanel } from '@/features/lab-equipment/license-checks';
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useSelector } from 'react-redux';
 import type { RootState } from '@/app/store';
@@ -35,7 +37,7 @@ const LICENSE_DEFAULT_COLUMNS = [
 const isAdminGroupMap = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
-export default function LicensePage() {
+function LicenseInventory() {
   const permissionGroups = useSelector((state: RootState) => state.me.permissionGroups);
   const isAdmin = isAdminGroupMap(permissionGroups) && ('admin' in permissionGroups || 'lab-coordinator' in permissionGroups);
 
@@ -290,5 +292,57 @@ export default function LicensePage() {
         loading={form.creating}
       />
     </>
+  );
+}
+
+type LicenseTab = 'inventory' | 'checks' | 'found';
+const LICENSE_TABS: readonly LicenseTab[] = ['inventory', 'checks', 'found'];
+
+/** Licenses: the inventory, the license checks agents run, and what they found on lab hardware. */
+export default function LicensePage() {
+  const permissionGroups = useSelector((state: RootState) => state.me.permissionGroups);
+  const isLabsAdmin = isAdminGroupMap(permissionGroups) && 'admin' in permissionGroups;
+  const isStaff = isAdminGroupMap(permissionGroups) && ('admin' in permissionGroups || 'lab-coordinator' in permissionGroups);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requested = searchParams.get('tab') as LicenseTab | null;
+  const tab: LicenseTab = requested && LICENSE_TABS.includes(requested) && (requested === 'inventory' || isStaff) ? requested : 'inventory';
+  const checkParam = Number(searchParams.get('check'));
+  const checkId = Number.isInteger(checkParam) && checkParam > 0 ? checkParam : undefined;
+
+  const update = (changes: Record<string, string | undefined>) => {
+    const next = new URLSearchParams(searchParams);
+    Object.entries(changes).forEach(([key, value]) => (value ? next.set(key, value) : next.delete(key)));
+    setSearchParams(next, { replace: true });
+  };
+
+  if (!isStaff) return <LicenseInventory />;
+  return (
+    <Tabs
+      activeKey={tab}
+      onChange={(key) => update({ tab: key === 'inventory' ? undefined : key, check: undefined })}
+      destroyOnHidden
+      tabBarStyle={{ marginBottom: 0, paddingInline: 16 }}
+      items={[
+        { key: 'inventory', label: 'Inventory', children: <LicenseInventory /> },
+        {
+          key: 'checks',
+          label: 'License checks',
+          children: (
+            <div style={{ padding: 16 }}>
+              <LicenseChecksPanel isAdmin={isLabsAdmin} onShowFound={(id) => update({ tab: 'found', check: String(id) })} />
+            </div>
+          ),
+        },
+        {
+          key: 'found',
+          label: 'Found on lab hardware',
+          children: (
+            <div style={{ padding: 16 }}>
+              <FoundLicensesPanel checkId={checkId} onClearCheck={() => update({ check: undefined })} />
+            </div>
+          ),
+        },
+      ]}
+    />
   );
 }

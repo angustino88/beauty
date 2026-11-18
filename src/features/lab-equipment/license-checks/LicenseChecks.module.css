@@ -1,0 +1,15 @@
+.panel { display: flex; flex-direction: column; gap: 12px; }
+.toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.toolbarGroup { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.mono { font-family: var(--lm-font-mono, ui-monospace, Menlo, Consolas, monospace); font-size: 12px; overflow-wrap: break-word; }
+.muted { color: var(--lm-text-tertiary, #6b6679); font-size: 12px; }
+.stack { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.tags { display: flex; flex-wrap: wrap; gap: 4px; }
+.targetRow { display: flex; flex-wrap: wrap; gap: 8px; }
+.targetRow > :last-child { flex: 1 1 220px; min-width: 0; }
+.form { display: flex; flex-direction: column; gap: 12px; }
+.field { display: flex; flex-direction: column; gap: 4px; }
+.fieldLabel { font-size: 13px; font-weight: 600; }
+.json { font-family: var(--lm-font-mono, ui-monospace, Menlo, Consolas, monospace); font-size: 12px; }
+.differs { color: var(--lm-warning-fg, #ad6800); font-weight: 600; }
+.intro { margin: 0; font-size: 13px; color: var(--lm-text-secondary, #4f4a5c); max-width: 860px; }
