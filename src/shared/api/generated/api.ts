@@ -2693,6 +2693,17 @@ const injectedRtkApi = api.injectEndpoints({
         method: "DELETE",
       }),
     }),
+    labsExpectedDevicesLegacySuggestionsRetrieve: build.query<
+      LabsExpectedDevicesLegacySuggestionsRetrieveApiResponse,
+      LabsExpectedDevicesLegacySuggestionsRetrieveApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/expected-devices/legacy-suggestions`,
+        params: {
+          computing_id: queryArg.computingId,
+        },
+      }),
+    }),
     labsExpensesPaymentsRetrieveByExpenseId: build.query<
       LabsExpensesPaymentsRetrieveByExpenseIdApiResponse,
       LabsExpensesPaymentsRetrieveByExpenseIdApiArg
@@ -7076,6 +7087,11 @@ export type LabsExpectedDevicesPartialUpdateByExpectedDeviceIdApiArg = {
 export type LabsExpectedDevicesDestroyByExpectedDeviceIdApiResponse = unknown;
 export type LabsExpectedDevicesDestroyByExpectedDeviceIdApiArg = {
   expectedDeviceId: number;
+};
+export type LabsExpectedDevicesLegacySuggestionsRetrieveApiResponse =
+  /** status 200  */ LegacyDeviceSuggestionListConnectionsLegacyDeviceSuggestionListDetailResponseRead;
+export type LabsExpectedDevicesLegacySuggestionsRetrieveApiArg = {
+  computingId: number;
 };
 export type LabsExpensesPaymentsRetrieveByExpenseIdApiResponse =
   /** status 200  */ ExpensePaymentListSerializersExpensePaymentPaginatedResponseRead;
@@ -13156,6 +13172,43 @@ export type ExpectedDeviceUpdateConnectionsExpectedDeviceDetailResponseRead = {
 export type PatchedUpdateExpectedDeviceRequest = {
   is_disconnect_alert_enabled?: boolean;
 };
+export type LegacyDeviceSuggestion = {
+  /** Windows PnP device instance ID from the legacy list (normalised). */
+  pnp_id: string;
+  /** Label a coordinator gave the entry in the legacy list. */
+  label: string;
+  /** Read from a USB port: register it for this computer only. */
+  is_port_bound: boolean;
+  /** Unit the ID is registered on, if any. */
+  equipment: LabsUidNamedReference | null;
+  expected_device_id: number | null;
+};
+export type LegacyDeviceSuggestionRead = {
+  /** Windows PnP device instance ID from the legacy list (normalised). */
+  pnp_id: string;
+  /** Label a coordinator gave the entry in the legacy list. */
+  label: string;
+  /** Read from a USB port: register it for this computer only. */
+  is_port_bound: boolean;
+  status: ChoiceRead;
+  /** Unit the ID is registered on, if any. */
+  equipment: LabsUidNamedReferenceRead | null;
+  expected_device_id: number | null;
+};
+export type LegacyDeviceSuggestionList = {
+  items: LegacyDeviceSuggestion[];
+};
+export type LegacyDeviceSuggestionListRead = {
+  items: LegacyDeviceSuggestionRead[];
+};
+export type LegacyDeviceSuggestionListConnectionsLegacyDeviceSuggestionListDetailResponse =
+  {
+    data: LegacyDeviceSuggestionList;
+  };
+export type LegacyDeviceSuggestionListConnectionsLegacyDeviceSuggestionListDetailResponseRead =
+  {
+    data: LegacyDeviceSuggestionListRead;
+  };
 export type ExpensePaymentListSerializersExpensePaymentPagination = {
   count: number;
   page: number;
@@ -17575,6 +17628,7 @@ export const {
   useLabsExpectedDevicesCreateMutation,
   useLabsExpectedDevicesPartialUpdateByExpectedDeviceIdMutation,
   useLabsExpectedDevicesDestroyByExpectedDeviceIdMutation,
+  useLabsExpectedDevicesLegacySuggestionsRetrieveQuery,
   useLabsExpensesPaymentsRetrieveByExpenseIdQuery,
   useLabsExpensesPaymentsCreateByExpenseIdMutation,
   useLabsExpensesReportRetrieveQuery,

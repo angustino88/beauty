@@ -14,6 +14,7 @@ import {
 } from './devicesApi';
 import { clampPage, computingRowSpans, deviceConnectionPresentation, formatObserved } from './devicePresentation';
 import { DeviceDetailDrawer } from './DeviceDetailDrawer';
+import { LegacyDeviceSuggestions } from './LegacyDeviceSuggestions';
 import { DeviceDot, ToneBadge } from './DeviceBits';
 import type { DeviceConnection } from './types';
 import styles from './Devices.module.css';
@@ -218,6 +219,7 @@ export function DevicesPanel({ benchId, computingId, onClearComputing, onViewEve
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <SummaryTiles benchId={benchId} />
       <MissingDevices benchId={benchId} computingId={computingId} />
+      {computingId !== undefined && <LegacyDeviceSuggestions computingId={computingId} />}
       <div className={styles.toolbar}>
         <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
           <Segmented<FilterKey>
