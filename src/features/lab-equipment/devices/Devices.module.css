@@ -127,3 +127,8 @@
 }
 .switchRow { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; font-size: 13px; }
 .footnote { font-size: 12px; color: var(--lm-text-tertiary, #6b6679); }
+
+.workflow { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin: 0; padding: 0; list-style: none; counter-reset: step; }
+.workflow li { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; border: 1px solid var(--lm-border); border-radius: 8px; background: var(--lm-surface-subtle); counter-increment: step; font-size: 12px; line-height: 1.45; color: var(--lm-text-secondary); }
+.workflow li strong { color: var(--lm-text); font-size: 13px; }
+.workflow li strong::before { content: counter(step) ". "; color: var(--lm-primary); }

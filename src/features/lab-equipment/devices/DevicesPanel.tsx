@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Alert, Button, Input, Segmented, Table, Tag, Tooltip, message } from 'antd';
+import { Alert, Button, Collapse, Input, Segmented, Table, Tag, Tooltip, message } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import { useGetComputingAgentsQuery, liveAgentsByEquipment } from '../agents';
@@ -35,6 +35,37 @@ export interface DevicesPanelProps {
   computingId?: number;
   onClearComputing?: () => void;
   onViewEvents?: (computing: { id: number; name: string }) => void;
+}
+
+const WORKFLOW_STEPS: { title: string; body: string }[] = [
+  { title: 'Agent reports', body: 'The Lab Mango agent installed on a computing unit sends the USB/peripheral devices it sees (serial number, interface) every time something changes.' },
+  { title: 'Match to inventory', body: 'Each device is matched by serial number to an equipment record. Matched means it is known; Not in inventory, Ambiguous or Wrong interface need a fix.' },
+  { title: 'Link or fix', body: 'For an unknown serial press Link to attach it to an equipment record. For duplicates or a missing interface, correct the equipment; it re-matches on the next report.' },
+  { title: 'Expect and alert', body: 'Linked devices become expected on that computing unit. If the agent keeps reporting but the device is gone it shows as Missing, and Alert on can notify you.' },
+];
+
+function WorkflowGuide() {
+  return (
+    <Collapse
+      size="small"
+      items={[{
+        key: 'how',
+        label: 'How device monitoring works',
+        children: (
+          <>
+            <ol className={styles.workflow}>
+              {WORKFLOW_STEPS.map((step) => (
+                <li key={step.title}><strong>{step.title}</strong><span>{step.body}</span></li>
+              ))}
+            </ol>
+            <p className={styles.footnote} style={{ margin: '8px 0 0' }}>
+              Nothing listed? No agent has reported yet. Enrol an agent on a computing unit (Equipment → Computing → Edit → Agent), then devices appear within a minute.
+            </p>
+          </>
+        ),
+      }]}
+    />
+  );
 }
 
 function SummaryTiles({ benchId }: { benchId?: number }) {
@@ -216,6 +247,7 @@ export function DevicesPanel({ benchId, computingId, onClearComputing, onViewEve
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <WorkflowGuide />
       <SummaryTiles benchId={benchId} />
       <MissingDevices benchId={benchId} computingId={computingId} />
       <div className={styles.toolbar}>

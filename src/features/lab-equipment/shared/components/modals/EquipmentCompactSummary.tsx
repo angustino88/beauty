@@ -65,7 +65,8 @@ function facetsOf(record: Record<string, unknown>): Facet[] {
     facets.push({ label: 'Condition', value: label, tone, icon: condition.value === 'operational' ? undefined : <Wrench /> });
   }
   const placement = record.placement as Record<string, unknown> | null | undefined;
-  const target = placement?.target_type as string | undefined;
+  const targetType = placement?.target_type as { value?: string } | string | null | undefined;
+  const target = typeof targetType === 'string' ? targetType : targetType?.value;
   facets.push({
     label: 'Placement',
     value: target === 'bench' ? 'On a bench' : target === 'station' ? 'At a station' : target === 'room' ? 'In a room' : target === 'note' ? 'Noted location' : 'Not placed',

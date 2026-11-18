@@ -1,28 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="100%" height="100%">
-      <!-- Full light pink circular background -->
-      <circle cx="250" cy="250" r="250" fill="#fce4e7" />
-  
-  <!-- Lock Shackle (Arch) -->
-  <path d="M 207 220 V 175 A 43 43 0 0 1 293 175 V 220" 
-        fill="none" 
-        stroke="#db0012" 
-        stroke-width="13.5" />
-  
-  <!-- Lock Body -->
-  <rect x="175" y="220" width="150" height="102" rx="18" 
-        fill="none" 
-        stroke="#db0012" 
-        stroke-width="13.5" />
-  
-  <!-- Mask/Cutout for the 'X' Circle (Matches pink background to create a gap) -->
-  <circle cx="317" cy="315" r="54.5" fill="#fce4e7" />
-  
-  <!-- Red 'X' Circle -->
-  <circle cx="317" cy="315" r="46" fill="#db0012" />
-  
-  <!-- White 'X' Icon -->
-  <path d="M 296 294 L 338 336 M 338 294 L 296 336" 
-        stroke="#ffffff" 
-        stroke-width="11" 
-        stroke-linecap="round" />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" width="100%" height="100%" role="img" aria-label="Sign-in failed">
+  <circle cx="80" cy="80" r="78" fill="#fce4e7" opacity=".55"/>
+  <circle cx="80" cy="80" r="62" fill="#fce4e7"/>
+  <path d="M62 74V59a18 18 0 0 1 36 0v15" fill="none" stroke="#db0012" stroke-width="6" stroke-linecap="round"/>
+  <rect x="50" y="72" width="60" height="42" rx="9" fill="#fff" stroke="#db0012" stroke-width="6"/>
+  <circle cx="80" cy="91" r="5" fill="#db0012"/>
+  <path d="M80 95v10" stroke="#db0012" stroke-width="5" stroke-linecap="round"/>
+  <circle cx="112" cy="112" r="19" fill="#db0012" stroke="#fce4e7" stroke-width="5"/>
+  <path d="M105 105l14 14M119 105l-14 14" stroke="#fff" stroke-width="5" stroke-linecap="round"/>
 </svg>

@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { Card, Select, Tabs } from "antd";
 import { useSearchParams } from "react-router-dom";
-import { PageHeader } from "@/components/layout/PageHeader";
+import { Activity } from "lucide-react";
 import { useGetBenchOptionsQuery } from "@/features/booking/api";
 import { DevicesPanel } from "@/features/lab-equipment/devices";
 import { MonitoringEventsPanel } from "../components/MonitoringEventsPanel";
 import tableStyles from "@/components/tables/AppTable.module.css";
+import heading from "@/features/lab-equipment/shared/components/layout/InventoryPresentation.module.css";
 
 type TabKey = "devices" | "events";
 
@@ -41,8 +42,19 @@ export default function LabMonitoring() {
   };
 
   return (
-    <div className={tableStyles.registerPage}>
-      <PageHeader title="Lab Monitoring" />
+    <div className={`${tableStyles.registerPage} ${heading.page}`}>
+      <header className={heading.pageHeading}>
+        <div className={heading.headingCopy}>
+          <div className={heading.breadcrumb}>Insights <span aria-hidden="true">/</span> Monitoring</div>
+          <div className="tw:flex tw:items-center tw:gap-3">
+            <span className="tw:flex tw:size-10 tw:items-center tw:justify-center tw:rounded-xl tw:bg-secondary tw:text-primary">
+              <Activity aria-hidden="true" className="tw:size-5" />
+            </span>
+            <h1>Lab Monitoring</h1>
+          </div>
+          <p>Watch what the agent on each computing unit reports: devices plugged in, missing, or not yet matched to inventory.</p>
+        </div>
+      </header>
       <Card className={`${tableStyles.tableCard} ${tableStyles.registerCard}`}>
         <Tabs
           destroyOnHidden
