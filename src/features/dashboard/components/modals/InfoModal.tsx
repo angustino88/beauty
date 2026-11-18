@@ -11,11 +11,8 @@ import {
 import { useState, useEffect } from 'react';
 import { isCurrentlyBooked } from '../../types';
 import type { LabDetail } from '../../types';
-import { useMemo } from 'react';
 import { MappingVisualization } from '@/features/spaces/mapping/components/MappingVisualization';
-import { useGetLicenseOptionsQuery } from '@/features/lab-equipment/license/api';
-import type { MappingEquipmentItem, MappingLicenseItem, ResourceMappingRow } from '@/features/spaces/mapping/types';
-import { mappingState } from '@/features/spaces/mapping/mapper';
+import { useGetBenchMappingQuery } from '@/features/spaces/mapping/api';
 import dayjs from 'dayjs';
 import { LabStatus } from '@/components/display/LabStatus';
 import { useInfoModalStyles } from './InfoModal.styles';
@@ -73,114 +70,9 @@ export default function InfoModal({ data }: InfoModalProps) {
   }, [data?.computer?.status, data?.current_activity?.offline_time, data?.current_activity?.inactive_time]);
 
   const booked = isCurrentlyBooked(data?.booking_status);
-  const equipment = data.lab_equipment;
-  const licensesQuery = useGetLicenseOptionsQuery(undefined, {
-    skip: !equipment,
-  });
-
-  const mappingRow: ResourceMappingRow | null = useMemo(() => {
-    if (!data) return null;
-    const bench = {
-      id: data.id,
-      sku: data.sku,
-      name: data.lab_name ?? data.name,
-    };
-    const room = data.location_name ? {
-      id: 0,
-      sku: data.location_name,
-      name: data.location_name,
-    } : null;
-    const station = equipment?.rack ? {
-      id: equipment.rack.id ?? 0,
-      sku: equipment.rack.sku ?? "ST",
-      name: equipment.rack.name ?? "Station",
-    } : null;
-
-    const equipmentList: MappingEquipmentItem[] = [];
-    if (equipment?.computer) {
-      equipmentList.push({
-        id: equipment.computer.id,
-        sku: equipment.computer.sku ?? "",
-        name: equipment.computer.computer_name ?? "Computer",
-        category: { id: 1, name: "Computing" },
-        role: "host",
-      });
-    }
-    equipment?.samples_list?.forEach((s) => {
-      equipmentList.push({
-        id: s.id,
-        sku: s.sku ?? "",
-        name: s.name ?? "Sample",
-        category: { id: 2, name: "Sample" },
-      });
-    });
-    equipment?.network_interface_list?.forEach((n) => {
-      equipmentList.push({
-        id: n.id,
-        sku: n.sku ?? "",
-        name: n.network_interface_name ?? "Networking",
-        category: { id: 3, name: "Networking" },
-      });
-    });
-    equipment?.debug_hardware_list?.forEach((d) => {
-      equipmentList.push({
-        id: d.id,
-        sku: d.sku ?? "",
-        name: d.debug_hardware_name ?? "Debugging",
-        category: { id: 4, name: "Debugging" },
-      });
-    });
-    equipment?.powersupply_list?.forEach((p) => {
-      equipmentList.push({
-        id: p.id,
-        sku: p.sku ?? "",
-        name: p.powersupply_name ?? "Power",
-        category: { id: 5, name: "Power" },
-      });
-    });
-    equipment?.monitor_list?.forEach((m) => {
-      equipmentList.push({
-        id: m.id,
-        sku: m.sku ?? "",
-        name: m.monitor_name ?? "Display",
-        category: { id: 6, name: "Display" },
-      });
-    });
-    equipment?.accessory_list?.forEach((a) => {
-      equipmentList.push({
-        id: a.id,
-        sku: a.sku ?? "",
-        name: a.accessory_name ?? "Accessory",
-        category: { id: 7, name: "Accessory" },
-      });
-    });
-
-    const licenseList: MappingLicenseItem[] = (licensesQuery.data ?? []).map((lic) => ({
-      id: lic.value,
-      sku: lic.label,
-      name: lic.label,
-      equipment_id: equipment?.computer?.id ?? 0,
-    }));
-
-    return {
-      id: data.id,
-      bench,
-      station,
-      station_slot: null,
-      room,
-      room_slot: null,
-      equipment: equipmentList,
-      licenses: licenseList,
-      status: {
-        state: mappingState(Boolean(room), equipmentList.length),
-        is_fully_mapped: Boolean(station && room && equipmentList.length > 0),
-        has_station: Boolean(station),
-        has_room: Boolean(room),
-        equipment_count: equipmentList.length,
-        license_count: licenseList.length,
-      },
-    };
-  }, [data, equipment, licensesQuery.data]);
+  // The same mapping the Mapping page shows (room, station, bench, equipment with their real
+  // categories, licenses on the equipment that holds them), not one rebuilt from dashboard fields.
+  const { data: mappingRow, isFetching: mappingLoading } = useGetBenchMappingQuery(data.id, { skip: !data.id });
   const duration = data.computer?.status === 'offline' ? offlineDuration
     : data.computer?.status === 'inactive' ? inactiveDuration
       : '–';
@@ -248,7 +140,7 @@ export default function InfoModal({ data }: InfoModalProps) {
         </div>
         <MappingVisualization
           rows={mappingRow ? [mappingRow] : []}
-          loading={false}
+          loading={mappingLoading && !mappingRow}
           page={1}
           pageSize={1}
           total={mappingRow ? 1 : 0}
