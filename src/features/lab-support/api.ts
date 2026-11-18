@@ -9,6 +9,7 @@ import {
   type SupportTicketsCreateApiArg,
   type SupportTicketsCreateApiResponse,
   type SupportTicketsRetrieveApiArg,
+  type TicketAttachmentRead,
 } from '@/shared/api/generated/api';
 import type {
   SupportTicketListResponse,
@@ -43,6 +44,63 @@ export function useCreateSupportTicketMutation() {
 
 export const useGetSupportCategoriesQuery = useSupportCategoriesOptionsRetrieveQuery;
 export const useGetSupportPrioritiesQuery = useSupportPrioritiesOptionsRetrieveQuery;
+
+export interface SupportAttachmentUpload {
+  key: string;
+  file: File;
+  /** Attach to a reply rather than the ticket itself. */
+  commentId?: number;
+  /** Staff only: hide the file from the requester. */
+  isRestricted?: boolean;
+}
+
+/**
+ * Upload and download need a multipart body and a binary response, which the generated JSON
+ * endpoints cannot send or read; deletion uses the generated hook.
+ */
+const supportAttachmentApi = baseApi.injectEndpoints({
+  endpoints: (build) => ({
+    uploadSupportAttachment: build.mutation<TicketAttachmentRead, SupportAttachmentUpload>({
+      query: ({ key, file, commentId, isRestricted }) => {
+        const body = new FormData();
+        body.append('file', file, file.name);
+        if (commentId !== undefined) body.append('comment_id', String(commentId));
+        if (isRestricted) body.append('is_restricted', 'true');
+        return { url: `/api/support/tickets/${encodeURIComponent(key)}/attachments`, method: 'POST', body };
+      },
+      transformResponse: (response: { data: TicketAttachmentRead }) => response.data,
+    }),
+    downloadSupportAttachment: build.mutation<null, { attachmentId: number; filename: string }>({
+      query: ({ attachmentId, filename }) => ({
+        url: `/api/support/attachments/${attachmentId}/download`,
+        method: 'GET',
+        responseHandler: async (response: Response) => {
+          if (!response.ok) return response.json().catch(() => null);
+          saveBlob(await response.blob(), filename);
+          return null;
+        },
+      }),
+    }),
+  }),
+});
+
+export const {
+  useUploadSupportAttachmentMutation,
+  useDownloadSupportAttachmentMutation,
+} = supportAttachmentApi;
+
+function saveBlob(blob: Blob, fileName: string) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  setTimeout(() => {
+    link.remove();
+    URL.revokeObjectURL(url);
+  }, 100);
+}
 
 export const supportTicketApi = baseApi;
 export const labSupportApi = supportTicketApi;

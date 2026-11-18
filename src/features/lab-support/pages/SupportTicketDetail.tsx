@@ -1,7 +1,9 @@
 import { StatusBadge } from '@/shared/components/StatusBadge';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { Alert, Button, Card, Descriptions, Empty, Form, Input, Select, Space, Spin, Timeline, Typography, message } from 'antd';
+import { Alert, Button, Card, Descriptions, Empty, Form, Input, Select, Space, Spin, Timeline, Typography, Upload, message } from 'antd';
+import type { UploadFile } from 'antd';
+import { PaperClipOutlined } from '@ant-design/icons';
 import { useAuthState } from '@/features/auth/hooks/useAuthState';
 import {
   useSupportStatusesOptionsRetrieveQuery,
@@ -15,19 +17,13 @@ import {
   type TicketActivityRead,
 } from '@/shared/api/generated/api';
 import { userLabel } from '@/shared/utils/userRef';
+import { useUploadSupportAttachmentMutation } from '../api';
+import { SUPPORT_ATTACHMENT_ACCEPT, apiErrorMessage, toSupportAttachments } from '../attachments';
+import { TicketAttachments } from '../components/TicketAttachments';
 
 const formatDate = (value?: string | null) => value ? new Date(value).toLocaleString() : '–';
 
-function errorMessage(error: unknown): string {
-  if (typeof error === 'object' && error !== null && 'data' in error) {
-    const data = error.data;
-    if (typeof data === 'object' && data !== null) {
-      if ('detail' in data && typeof data.detail === 'string') return data.detail;
-      if ('message' in data && typeof data.message === 'string') return data.message;
-    }
-  }
-  return error instanceof Error ? error.message : 'Please try again.';
-}
+const errorMessage = (error: unknown) => apiErrorMessage(error);
 
 function isConflict(error: unknown): boolean {
   return typeof error === 'object' && error !== null && 'status' in error && error.status === 409;
@@ -41,9 +37,10 @@ const UNASSIGN = 0;
 
 export default function SupportTicketDetail() {
   const { key } = useParams<{ key: string }>();
-  const { isCoordinator, permissionGroups } = useAuthState();
+  const { id: currentUserId, isCoordinator, permissionGroups } = useAuthState();
   const canManage = isCoordinator || Boolean(permissionGroups['support-agent'] || permissionGroups['support_agent']);
   const [comment, setComment] = useState('');
+  const [replyFiles, setReplyFiles] = useState<UploadFile[]>([]);
   const [assigneeId, setAssigneeId] = useState<number | undefined>();  // 0 = unassign (antd select values cannot be null)
   const [statusId, setStatusId] = useState<number>();
   const [reason, setReason] = useState('');
@@ -55,6 +52,7 @@ export default function SupportTicketDetail() {
   const { data: statuses } = useSupportStatusesOptionsRetrieveQuery({ includeIds: detail?.data.status?.id ? [detail.data.status.id] : undefined }, { skip: !canManage || skip });
   const { data: users } = useUsersRetrieveQuery({}, { skip: !canManage || skip });
   const [postComment, { isLoading: posting }] = useSupportTicketsCommentsCreateByKeyMutation();
+  const [uploadAttachment, { isLoading: uploadingReplyFiles }] = useUploadSupportAttachmentMutation();
   const [assign, { isLoading: assigning }] = useSupportTicketsActionsAssignCreateByKeyMutation();
   const [transition, { isLoading: transitioning }] = useSupportTicketsActionsTransitionCreateByKeyMutation();
   const ticket = detail?.data;
@@ -66,10 +64,21 @@ export default function SupportTicketDetail() {
   const submitComment = async () => {
     if (!key || !comment.trim()) return;
     try {
-      await postComment({ key, commentCreateRequest: { body: comment.trim(), visibility: 'public' } }).unwrap();
+      const posted = await postComment({ key, commentCreateRequest: { body: comment.trim(), visibility: 'public' } }).unwrap();
       setComment('');
+      const files = replyFiles.flatMap((entry) => (entry.originFileObj ? [entry.originFileObj] : []));
+      const failed: string[] = [];
+      for (const file of files) {
+        try {
+          await uploadAttachment({ key, file, commentId: posted.data.id }).unwrap();
+        } catch (error) {
+          failed.push(`${file.name}: ${errorMessage(error)}`);
+        }
+      }
+      setReplyFiles([]);
       await refresh();
-      void message.success('Reply posted');
+      if (failed.length) void message.warning(`Reply posted, but some files were not attached. ${failed.join(' ')}`, 8);
+      else void message.success(files.length ? 'Reply posted with attachments' : 'Reply posted');
     } catch (error) {
       void message.error(errorMessage(error));
     }
@@ -164,6 +173,16 @@ export default function SupportTicketDetail() {
           </Card>
         )}
 
+        <Card title={`Attachments (${toSupportAttachments(ticket.attachments).length})`}>
+          <TicketAttachments
+            ticketKey={key}
+            attachments={toSupportAttachments(ticket.attachments)}
+            currentUserId={currentUserId}
+            canManage={canManage}
+            onChanged={refetchDetail}
+          />
+        </Card>
+
         <Card title="Conversation">
           {commentsError && <Alert type="error" showIcon message="Comments could not be loaded" action={<Button onClick={() => refetchComments()}>Retry</Button>} />}
           {!commentsError && (comments?.data.length ? comments.data.map((entry) => (
@@ -174,7 +193,18 @@ export default function SupportTicketDetail() {
           )) : <Empty description="No replies yet" />)}
           <Form onFinish={() => void submitComment()} layout="vertical" style={{ marginTop: 16 }}>
             <Form.Item label="Public reply"><Input.TextArea rows={4} value={comment} onChange={(event) => setComment(event.target.value)} placeholder="Write a reply visible to the requester" /></Form.Item>
-            <Button type="primary" htmlType="submit" disabled={!comment.trim()} loading={posting}>Post reply</Button>
+            <Form.Item>
+              <Upload
+                multiple
+                accept={SUPPORT_ATTACHMENT_ACCEPT}
+                fileList={replyFiles}
+                beforeUpload={() => false}
+                onChange={({ fileList }) => setReplyFiles(fileList)}
+              >
+                <Button icon={<PaperClipOutlined />}>Attach files to reply</Button>
+              </Upload>
+            </Form.Item>
+            <Button type="primary" htmlType="submit" disabled={!comment.trim()} loading={posting || uploadingReplyFiles}>Post reply</Button>
           </Form>
         </Card>
 
