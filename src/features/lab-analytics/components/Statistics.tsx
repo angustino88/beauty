@@ -1,5 +1,6 @@
 import { Alert, Button, Col, Modal, Row } from 'antd';
 import { useMemo, useState } from 'react';
+import { ExportOutlined } from '@ant-design/icons';
 import { MiniBars, StatTriplet, TrendChip, useChartTheme } from '@/shared/charts';
 import { Skeleton } from '@/components/ui/skeleton';
 import styles from './Statistics.module.css';
@@ -128,7 +129,11 @@ export function Statistics() {
               title={entry.title}
               open={modalOpen === entry.key}
               onCancel={() => setModalOpen('')}
-              footer={null}
+              footer={entry.data.length ? [
+                <Button key="export" icon={<ExportOutlined />} onClick={() => void exportRowsToExcel(entry.data, analyticsColumnIndex.statistics, entry.title.replace(/\s+/g, '_'), entry.title)}>
+                  Export
+                </Button>,
+              ] : null}
               style={{ top: '10%' }}
             >
               {entry.error && <Alert type="error" showIcon message="Unable to load metrics" action={<Button size="small" onClick={entry.retry}>Retry</Button>} />}
@@ -138,8 +143,8 @@ export function Statistics() {
                   const unit = params.unit ?? 'day';
                   setUnitByKey((old) => ({ ...old, [entry.key]: unit }));
                 }}
-                onExport={entry.data.length ? () => void exportRowsToExcel(entry.data, analyticsColumnIndex.statistics, entry.title.replace(/\s+/g, '_'), entry.title) : undefined}
               />
+              <div style={{ height: 12 }} />
               <StatisticsChart dataSource={entry.data} unit={entry.unit} bucketUnit={unitByKey[entry.key]} color={chartTheme.series[entry.colorIndex]} />
             </Modal>
           </Col>

@@ -85,6 +85,16 @@ const BENCH_ACTIVITY_TONES: Record<string, StatusTone> = {
   offline: 'neutral',
 };
 
+/** Label and plain-language meaning of each bench activity, for badges, summary chips and filters. */
+export const BENCH_ACTIVITY_META: Record<string, { label: string; meaning: string }> = {
+  free: { label: 'Free', meaning: 'The computer is online and nobody is logged in.' },
+  active: { label: 'Active', meaning: 'Someone is logged in and working.' },
+  inactive: { label: 'Inactive', meaning: 'Someone is logged in but has been idle.' },
+  maintaining: { label: 'Maintenance', meaning: 'Being serviced; not for use.' },
+  offline: { label: 'Offline', meaning: "The computer isn't reporting: switched off or its agent isn't running." },
+  unknown: { label: 'Unknown', meaning: 'No computer on this bench has reported a status yet.' },
+};
+
 export const benchActivityTone = (status: unknown): StatusTone => BENCH_ACTIVITY_TONES[normalizeStatusKey(status)] ?? 'neutral';
 
 /** Older call sites pass colour names or legacy class names; map them onto tones. */

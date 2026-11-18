@@ -79,7 +79,6 @@ export default function RoomPage() {
   const columns = buildRoomColumns({
     activeFilters: table.filters,
     filtersMap: table.filtersMap,
-    statusFilters: table.statusFilters,
     actionsRenderer,
   });
 
@@ -156,6 +155,7 @@ export default function RoomPage() {
         onSubmit={async (values, imageFile) => {
           if (!editingRoom) return;
           await form.updateInline(editingRoom.id, toRoomUpdatePayload(values));
+          await form.syncSlots(editingRoom.id, values);
           if (imageFile) await form.updateImage(editingRoom.id, imageFile);
           else if (imageFile === null) await form.removeImage(editingRoom.id);
           setEditingRoom(null);

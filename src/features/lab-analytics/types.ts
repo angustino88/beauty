@@ -112,34 +112,28 @@ export interface StatisticsChartEntry {
   [key: string]: string | number;
 }
 
-export interface LabSessionLogRemoteUser {
-  username: string | null;
-  displayname: string | null;
-}
+export type SessionAccessType = 'booked' | 'ad_hoc' | 'unverified_booking';
 
-export interface LabSessionLogBookingInfo {
-  project: string | null;
-  from_date_time: string | null;
-  to_date_time: string | null;
-}
-
+/** One completed remote session (GET /api/labs/lab-sessions). */
 export interface LabSessionLogEntry {
   id: number;
-  computer_name: string | null;
-  login_time: string | null;
-  logout_time: string | null;
-  duration_in_hour: number | null;
-  active_time_in_hour: number | null;
-  remote_user: LabSessionLogRemoteUser;
-  remote_computer: string | null;
-  remote_ip: string | null;
+  login_at: string | null;
+  logout_at: string | null;
+  duration_minutes: number | null;
+  active_minutes: number | null;
+  computer: { id: number; name: string } | null;
+  host_name: string | null;
+  bench: { id: number; name: string } | null;
+  remote_user: string | null;
+  remote_user_display_name: string | null;
+  user: { id: number; username: string; display_name: string } | null;
+  access_type: { value: SessionAccessType | string; label: string } | null;
   booking_code: string | null;
-  booking_info: LabSessionLogBookingInfo | null;
+  booking_id: number | null;
 }
 
 export interface LabSessionLogResponse {
   total_count: number;
-  total_usage_hours: number;
   results: LabSessionLogEntry[];
 }
 

@@ -16,14 +16,14 @@ export default function InlineEditActions({
 }: InlineEditActionsProps) {
   return (
     <Space size={8}>
-      <Tooltip title="Save">
-        <Button type="primary" icon={<SaveOutlined />} loading={saving} onClick={onSave} />
+      <Tooltip title="Save changes">
+        <Button type="primary" aria-label="Save changes" icon={<SaveOutlined />} loading={saving} onClick={onSave} />
       </Tooltip>
-      <Tooltip title="Clear All">
-        <Button icon={<ClearOutlined />} onClick={onClear} />
+      <Tooltip title="Clear the fields in this row">
+        <Button aria-label="Clear the fields in this row" icon={<ClearOutlined />} onClick={onClear} />
       </Tooltip>
-      <Tooltip title="Cancel">
-        <Button icon={<CloseOutlined />} danger onClick={onCancel} />
+      <Tooltip title="Discard changes">
+        <Button aria-label="Discard changes" icon={<CloseOutlined />} danger onClick={onCancel} />
       </Tooltip>
     </Space>
   );

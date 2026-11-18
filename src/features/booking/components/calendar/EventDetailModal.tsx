@@ -5,7 +5,7 @@ import {
   UserOutlined,
   LockOutlined,
 } from '@ant-design/icons';
-import { Space, Spin, Typography, Button } from 'antd';
+import { Space, Spin, Typography, Button, Tooltip } from 'antd';
 import dayjs from 'dayjs';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useGetBookingBenchChoicesQuery, useLazyGetBenchBookingByIdQuery } from '../../api';
@@ -95,13 +95,16 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
               </Typography.Text>
               {hasPermission &&
                 !['completed', 'expired', 'cancelled', 'done'].includes(booking.status || '') && (
-                <Button
-                  size="small"
-                  type="text"
-                  onClick={() => setIsEditModalVisible(true)}
-                  icon={<EditOutlined />}
-                  style={{ color: 'var(--lm-text-tertiary)' }}
-                />
+                <Tooltip title="Edit booking">
+                  <Button
+                    size="small"
+                    type="text"
+                    aria-label="Edit booking"
+                    onClick={() => setIsEditModalVisible(true)}
+                    icon={<EditOutlined />}
+                    style={{ color: 'var(--lm-text-tertiary)' }}
+                  />
+                </Tooltip>
               )}
             </div>
             <Space direction="vertical" style={{ padding: '0px 10px 6px' }}>

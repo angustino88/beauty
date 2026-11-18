@@ -2,14 +2,12 @@ import type { Key, ReactNode } from "react";
 import type { ColumnsType } from "antd/es/table";
 import { Tag } from "antd";
 import {
-  buildEquipmentInfo,
   renderImageCell,
   renderOwnerCell,
 } from "@/features/lab-equipment/shared";
 import { pageIcons } from "@/components/layout/pageIcons";
 import type { IBench } from "../types";
-import SpaceStatusBadge from "@/features/spaces/shared/SpaceStatusBadge";
-import { readSpaceStatus } from "@/features/spaces/shared/spaceStatus";
+import { buildStateColumns } from "@/features/spaces/shared/stateColumns";
 import { BenchLocationCell } from "./BenchLocationCell";
 
 interface BuildBenchColumnsArgs {
@@ -19,7 +17,6 @@ interface BuildBenchColumnsArgs {
   typeFilters: Array<{ text: string; value: string }>;
   locationFilters: Array<{ text: string; value: string }>;
   ownerFilters: Array<{ text: string; value: string }>;
-  statusFilters: Array<{ text: string; value: string }>;
   actionsRenderer: (_: unknown, record: IBench) => ReactNode;
 }
 
@@ -29,7 +26,6 @@ export const buildBenchColumns = ({
   typeFilters,
   locationFilters,
   ownerFilters,
-  statusFilters,
   actionsRenderer,
 }: BuildBenchColumnsArgs): ColumnsType<IBench> => {
   return [
@@ -63,31 +59,8 @@ export const buildBenchColumns = ({
       align: "center",
       render: (_: unknown, record) => renderImageCell(record.image, pageIcons.benches),
     },
-    {
-      title: "Status",
-      key: "status",
-      width: 172,
-      align: "left",
-      filters: statusFilters,
-      filteredValue: activeFilters.status ?? null,
-      onFilter: (value: boolean | Key, record: IBench) => {
-        const val = String(value);
-        return (
-          record.lifecycle_status?.value === val ||
-          record.condition?.value === val ||
-          record.activity_status?.value === val ||
-          readSpaceStatus(record) === val
-        );
-      },
-      render: (_, record) => (
-        <SpaceStatusBadge
-          spaceKind="bench"
-          resourceState={record}
-          status={readSpaceStatus(record)}
-          label={record.status_label ?? undefined}
-        />
-      ),
-    },
+    // Lifecycle (main status), Availability and Activity: the same three columns as rooms and stations.
+    ...buildStateColumns<IBench>("bench", activeFilters),
     {
       title: "Station & Room",
       key: "location",
@@ -134,14 +107,6 @@ export const buildBenchColumns = ({
       filteredValue: activeFilters.owner ?? null,
       render: (_, record) =>
         renderOwnerCell(record.primary_owner),
-    },
-    {
-      title: "Information",
-      key: "information",
-      width: 180,
-      render: (_, record) => (
-        <span style={{ whiteSpace: "pre-line" }}>{buildEquipmentInfo(record)}</span>
-      ),
     },
     {
       title: "Remark",

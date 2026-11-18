@@ -46,8 +46,10 @@ export default function BenchPage() {
 
   // The slot list follows the station chosen in whichever form is open.
   const [formStationId, setFormStationId] = useState<number | null>(null);
-  const { data: slotsData } = useLabsStationsSlotsRetrieveByStationIdQuery(
+  const { data: slotsData, isFetching: slotsLoading, isSuccess: slotsLoaded } = useLabsStationsSlotsRetrieveByStationIdQuery(
     formStationId == null ? skipToken : { stationId: formStationId, pageSize: 100 },
+    // Slots are created from the Stations page at any time; never trust an older cached list.
+    { refetchOnMountOrArgChange: true },
   );
   const slotOptions = useMemo(
     () => (slotsData?.data ?? [])
@@ -55,6 +57,14 @@ export default function BenchPage() {
       .map((slot) => toResourceOption({ id: slot.id, sku: slot.slot_code, name: slot.label })),
     [slotsData],
   );
+  // Why the slot list is empty, in words the user can act on.
+  const slotsHint = formStationId == null || !slotsLoaded
+    ? undefined
+    : (slotsData?.data ?? []).length === 0
+      ? "This station has no bench slots yet. Edit the station, set its Bench Capacity and save: slots S1, S2, … are created."
+      : slotOptions.length === 0
+        ? "All slots of this station are out of service."
+        : undefined;
   const handleFormValues = useCallback((values: Record<string, unknown>) => {
     setFormStationId(values.setup_location_id == null || values.setup_location_id === '' ? null : Number(values.setup_location_id));
   }, []);
@@ -82,7 +92,6 @@ export default function BenchPage() {
   const typeFilters = useMemo(() => facetFilters(['type', 'type_id', 'bench_type'], typeFallback), [facetFilters, typeFallback]);
   const locationFilters = useMemo(() => facetFilters(['setup_location', 'setup_location_id', 'location', 'room'], stationFallback), [facetFilters, stationFallback]);
   const ownerFilters = useMemo(() => facetFilters(['owner', 'owner_id', 'primary_owner'], ownerFallback), [facetFilters, ownerFallback]);
-  const statusFilters = useMemo(() => facetFilters(['status', 'status_type']), [facetFilters]);
 
   const formFields: FieldConfig[] = useMemo(
     () => [
@@ -91,11 +100,21 @@ export default function BenchPage() {
       { name: "name", label: "Name", type: "text", required: true },
       { name: "bench_group_id", label: "Bench Group", type: "select", options: groupOptions },
       { name: "setup_location_id", label: "Station", type: "select", options: stationOptions },
-      { name: "station_slot_id", label: "Station Slot", type: "select", dependsOn: ["setup_location_id"], options: slotOptions },
+      {
+        name: "station_slot_id",
+        label: "Station Slot",
+        type: "select",
+        dependsOn: ["setup_location_id"],
+        options: slotOptions,
+        loading: slotsLoading,
+        placeholder: formStationId == null ? "Select a station first" : "Select a slot (optional)",
+        searchHint: slotsHint,
+        help: slotsHint && !slotsLoading ? slotsHint : undefined,
+      },
       { name: "remark", label: "Remark", type: "textarea" },
       { name: "image", label: "Image", type: "image" as const },
     ],
-    [groupOptions, stationOptions, slotOptions],
+    [groupOptions, stationOptions, slotOptions, formStationId, slotsLoading, slotsHint],
   );
 
   const actionsRenderer = createActionsRenderer<IBench>({
@@ -113,7 +132,6 @@ export default function BenchPage() {
     typeFilters,
     locationFilters,
     ownerFilters,
-    statusFilters,
     actionsRenderer,
   });
 

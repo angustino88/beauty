@@ -159,7 +159,7 @@ export default function MappingPage() {
               onClick={resetFilters} disabled={!hasFilters}>
               Reset
             </TooltipButton>
-            <TooltipButton responsive tooltip="Reload" icon={<ReloadOutlined />} loading={table.loading}
+            <TooltipButton responsive tooltip="Reload mapping" icon={<ReloadOutlined />} loading={table.loading}
               onClick={() => void table.refetch()}>
               Refresh
             </TooltipButton>

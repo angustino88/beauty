@@ -24,27 +24,28 @@ export const LabUsageTimeFrameCard = memo(function LabUsageTimeFrameCard({
   return (
     <ChartCard
       id={6}
-      title="Lab Usage by Time Frame"
+      title="Usage by time of day"
+      description="Session hours in each time slot of the day across the period."
       subtitle={getChartSubtitle(filters, false)}
       loading={isFetching}
       error={isError}
       onRetry={refetch}
       component={<LabUsageByTimeFrameChart dataSource={data ?? []} />}
+      onExport={
+        data
+          ? () =>
+              void exportRowsToExcel(
+                data,
+                analyticsColumnIndex.labUsageByTimeframe,
+                "Usage_by_time_of_day",
+                "Usage by time of day",
+              )
+          : undefined
+      }
       filters={
         <DatePeriodFilter
           filterParams={filters}
           onChange={setFilters}
-          onExport={
-            data
-              ? () =>
-                  void exportRowsToExcel(
-                    data,
-                    analyticsColumnIndex.labUsageByTimeframe,
-                    "Lab_Usage_by_Time_Frame",
-                    "Lab Usage by Time Frame",
-                  )
-              : undefined
-          }
         />
       }
       isOpen={isOpen}

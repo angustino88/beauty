@@ -6,3 +6,9 @@
 .body { display: flex; min-height: 0; flex: 1; flex-direction: column; padding: 6px 20px 18px; overflow-y: auto; scrollbar-width: thin; }
 /* Centre short content vertically without clipping long lists (auto margins collapse when it overflows). */
 .body > * { margin-block: auto; }
+.tools { display: flex; flex: none; gap: 2px; }
+.filters { padding: 0 20px 6px; }
+.modalTitle { display: flex; flex-direction: column; gap: 2px; }
+.modalTitle small { color: var(--lm-text-tertiary); font-size: 12px; font-weight: 400; }
+.modalFilters { margin-bottom: 16px; }
+.description { margin: 0 0 12px; color: var(--lm-text-secondary); font-size: 13px; }

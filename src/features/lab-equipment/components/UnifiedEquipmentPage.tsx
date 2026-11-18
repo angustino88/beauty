@@ -1,3 +1,5 @@
+import { useUrlSearch } from '@/shared/hooks/useUrlSearch';
+import { SpaceLocationRow } from '@/features/spaces/shared/components/SpaceLocation';
 import React, { useState, useMemo, useCallback, type Key } from 'react';
 import { WorkbookImportButton } from '@/features/data-import';
 import { Tag, Tooltip, message, Popover, Progress, Modal, Form, Select, Input, InputNumber, Button } from 'antd';
@@ -50,7 +52,6 @@ import { buildEquipmentFacetParams, resetDependentFilters, selectedFilterCsv } f
 import { equipmentFacetColumnFilter, equipmentStaticColumnFilter } from '../shared/facets/EquipmentFacetDropdown';
 import {
   EQUIPMENT_STATUS_FILTER_OPTIONS,
-  buildEquipmentInfo,
   sortRowsByIdAsc,
 } from '../shared/utils/parity';
 import { printDeviceLabel } from '../shared/utils/printLabel';
@@ -76,7 +77,8 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
   // Table state: pagination, search, column filters
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [search, setSearch] = useState('');
+  // Seeded from ?q= so links from mapping, placement and the graph open the list filtered.
+  const [search, setSearch] = useUrlSearch();
   const [filters, setFilters] = useState<Record<string, Key[] | null>>({});
 
   // Modals state
@@ -700,8 +702,15 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
       {
         title: 'Placement',
         key: 'placement',
-        width: 150,
-        render: (_: unknown, record: EquipmentItem) => record.placement?.room?.name ?? record.placement?.station?.name ?? record.placement?.bench?.name ?? record.placement?.location_note ?? '—',
+        width: 190,
+        render: (_: unknown, record: EquipmentItem) => {
+          const placement = record.placement;
+          // Most specific place first, drawn like the space tables' location cells.
+          if (placement?.bench) return <SpaceLocationRow kind="bench" primary label={placement.bench.name} refId={placement.bench.id} />;
+          if (placement?.station) return <SpaceLocationRow kind="station" primary label={placement.station.name} refId={placement.station.id} />;
+          if (placement?.room) return <SpaceLocationRow kind="room" primary label={placement.room.name} refId={placement.room.id} />;
+          return placement?.location_note?.trim() || '—';
+        },
       },
       {
         title: 'Owner',
@@ -723,7 +732,7 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
         render: (_: unknown, record: EquipmentItem) => {
           const rawStatus = record.display_status?.value;
           return (
-            <Tooltip title="Click to change status">
+            <Tooltip title="Change status">
               <button
                 type="button"
                 className={tableStyles.statusButton}
@@ -737,15 +746,6 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
               </button>
             </Tooltip>
           );
-        },
-      },
-      {
-        title: 'Information',
-        key: 'information',
-        width: 180,
-        render: (_: unknown, record: EquipmentItem) => {
-          const info = buildEquipmentInfo(record);
-          return <Tooltip title={<span style={{ whiteSpace: 'pre-line' }}>{info}</span>}><span className={tableStyles.textPreview}>{info || '—'}</span></Tooltip>;
         },
       },
       {

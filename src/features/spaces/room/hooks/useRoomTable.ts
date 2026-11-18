@@ -1,5 +1,5 @@
-﻿import { useMemo, useState, type Key } from 'react';
-import { useSearchParams } from 'react-router-dom';
+﻿import { useUrlSearch } from '@/shared/hooks/useUrlSearch';
+import { useMemo, useState, type Key } from 'react';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 import { useGetRoomsQuery, useGetRoomDropdownQuery, useGetRoomFiltersQuery } from '../api';
 import { useGetStationsQuery } from '../../station/api';
@@ -15,8 +15,7 @@ type FilterItem   = { text: string; value: string };
 type SelectOption = { label: string; value: number };
 
 export function useRoomTable() {
-  const [searchParams] = useSearchParams();
-  const [search,   setSearch]   = useState(() => searchParams.get('search') ?? '');
+  const [search,   setSearch]   = useUrlSearch();
   const [page,     setPage]     = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [filters,  setFilters]  = useState<Record<string, Key[] | null>>({});
@@ -29,7 +28,13 @@ export function useRoomTable() {
       skipPollingIfUnfocused: true,
     },
   );
-  const serverFilter = useServerEquipmentFilter<IRoom>({ filters, filterKey: 'Room', filterRules: EQUIPMENT_FILTER_RULES.Room, page, mapItem: mapRoomApiItem });
+  // The state columns (status = lifecycle, availability, activity) filter on the server's
+  // lifecycle_status, condition and activity_status parameters.
+  const serverFilters = useMemo(() => {
+    const { status, availability, activity, ...rest } = filters;
+    return { ...rest, lifecycle_status: status ?? null, condition: availability ?? null, activity_status: activity ?? null };
+  }, [filters]);
+  const serverFilter = useServerEquipmentFilter<IRoom>({ filters: serverFilters, filterKey: 'Room', filterRules: EQUIPMENT_FILTER_RULES.Room, page, mapItem: mapRoomApiItem });
   const dropdownQuery = useGetRoomDropdownQuery();
   const facetsQuery = useGetRoomFiltersQuery();
   const usersQuery    = useGetUsersQuery();

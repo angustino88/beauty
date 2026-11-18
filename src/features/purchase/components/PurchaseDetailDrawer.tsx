@@ -284,7 +284,7 @@ export const PurchaseDetailDrawer: React.FC<PurchaseDetailDrawerProps> = ({
       align: 'center' as const,
       render: (_: unknown, record: IPurchaseItem) => (
         <Space size={4}>
-          <Tooltip title="Edit Item">
+          <Tooltip title="Edit line item">
             <Button
               size="small"
               icon={<EditOutlined />}
@@ -293,13 +293,13 @@ export const PurchaseDetailDrawer: React.FC<PurchaseDetailDrawerProps> = ({
             />
           </Tooltip>
           <Popconfirm
-            title="Delete Line Item"
-            description="Are you sure you want to delete this line item?"
+            title="Delete this line item?"
+            description="It is removed from the order. This cannot be undone."
             onConfirm={() => handleDeleteItem(record)}
             okText="Delete"
             okButtonProps={{ danger: true }}
           >
-            <Tooltip title="Delete Item">
+            <Tooltip title="Delete line item">
               <Button size="small" danger icon={<DeleteOutlined />} aria-label={`Delete ${record.description}`} />
             </Tooltip>
           </Popconfirm>

@@ -57,6 +57,9 @@ export const stationApi = baseApi.injectEndpoints({
         if (params.ordering) queryParams.set("ordering", params.ordering);
         if (params.room_id) queryParams.set("room_id", String(params.room_id));
         if (params.owner_id) queryParams.set("owner_id", String(params.owner_id));
+        if (params.condition) queryParams.set("condition", params.condition);
+        if (params.activity_status) queryParams.set("activity_status", params.activity_status);
+        if (params.lifecycle_status) queryParams.set("lifecycle_status", params.lifecycle_status);
         if (params.status) queryParams.set("status", params.status);
         const qs = queryParams.toString();
         return { url: `${ENDPOINTS.LIST}${qs ? `?${qs}` : ""}` };

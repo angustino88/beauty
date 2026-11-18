@@ -1,0 +1,12 @@
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.period { width: 252px; }
+.top { width: 92px; }
+.label {
+  color: var(--lm-text-tertiary);
+  font-size: 12px;
+}

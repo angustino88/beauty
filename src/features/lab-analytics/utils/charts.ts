@@ -84,27 +84,32 @@ export const getFloatTick = (
   return range(largestTick, step);
 };
 
+/**
+ * The line under a chart title: which slice of the ranking and which period, e.g.
+ * "Top 5, highest first · 10 – 16 Nov 2026" or "Snapshot · 11 Nov 2026".
+ */
 export const getChartSubtitle = (
   filters:
-    | { from_date_time?: string; to_date_time?: string; log_date?: string }
+    | { from_date_time?: string; to_date_time?: string; log_date?: string; top?: number; order?: "asc" | "desc" }
     | undefined,
   rank = true,
 ): string => {
-  let duration = "";
-
+  const parts: string[] = [];
+  if (rank) {
+    const top = filters?.top ?? 5;
+    parts.push(`Top ${top}, ${filters?.order === "asc" ? "lowest" : "highest"} first`);
+  }
   if (filters?.log_date) {
-    const thisWeek = dayjs(filters.log_date);
-    const lastWeek = thisWeek.subtract(1, "week");
-    duration = `Week: ${lastWeek.format("DD MMM")} - ${thisWeek.format("DD MMM YYYY")}`;
+    parts.push(`Snapshot · ${dayjs(filters.log_date).format("D MMM YYYY")}`);
+  } else if (filters?.from_date_time && filters?.to_date_time) {
+    const from = dayjs(filters.from_date_time).tz(DEFAULT_TIMEZONE);
+    const to = dayjs(filters.to_date_time).tz(DEFAULT_TIMEZONE);
+    const sameYear = from.year() === to.year();
+    const sameMonth = sameYear && from.month() === to.month();
+    const start = from.format(sameMonth ? "D" : sameYear ? "D MMM" : "D MMM YYYY");
+    parts.push(from.isSame(to, "day") ? to.format("D MMM YYYY") : `${start} – ${to.format("D MMM YYYY")}`);
   }
-
-  if (filters?.from_date_time && filters?.to_date_time) {
-    const fromDate = dayjs(filters.from_date_time).tz(DEFAULT_TIMEZONE);
-    const toDate = dayjs(filters.to_date_time).tz(DEFAULT_TIMEZONE);
-    duration = `Custom: ${fromDate.format("DD MMM YYYY")} - ${toDate.format("DD MMM YYYY")}`;
-  }
-
-  return `${rank ? "Top 5 | " : ""}${duration}`;
+  return parts.join(" · ");
 };
 
 export const getChartHeight = (entries: number) => {

@@ -23,8 +23,9 @@ export const LabEquipmentStatusCard = memo(function LabEquipmentStatusCard({
   return (
     <ChartCard
       id={1}
-      title="Lab Equipment Status"
-      subtitle={`Today, ${dayjs().format("DD MMM YYYY")}`}
+      title="Equipment by status"
+      description="Current status of every equipment unit."
+      subtitle={`Right now · ${dayjs().format("D MMM YYYY")}`}
       loading={isFetching}
       error={isError}
       onRetry={refetch}
@@ -35,8 +36,8 @@ export const LabEquipmentStatusCard = memo(function LabEquipmentStatusCard({
               void exportRowsToExcel(
                 data,
                 analyticsColumnIndex.labEquipmentStatus,
-                "Lab_Equipment_Status",
-                "Lab Equipment Status",
+                "Equipment_by_status",
+                "Equipment by status",
               )
           : undefined
       }

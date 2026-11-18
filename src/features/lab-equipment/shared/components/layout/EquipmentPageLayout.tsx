@@ -85,6 +85,8 @@ export interface EquipmentPageLayoutProps<T extends { id: number | string }> {
   /** Lookup labels for reference IDs shown in the details drawer */
   detailValueLabels?: Record<string, Record<string, string>>;
   defaultVisibleColumnKeys?: string[];
+  /** Singular noun for the record count, e.g. "license"; defaults from spaceKind, else "device". */
+  itemNoun?: string;
   onEditRecord?: (id: number) => void;
   /** Opt-in presentation for the unified equipment inventory. */
   professionalTable?: boolean;
@@ -132,6 +134,7 @@ export default function EquipmentPageLayout<T extends { id: number | string }>({
   customSummary,
   detailValueLabels,
   defaultVisibleColumnKeys,
+  itemNoun,
   onEditRecord,
   professionalTable = false,
   description,
@@ -140,11 +143,11 @@ export default function EquipmentPageLayout<T extends { id: number | string }>({
   const [selectedRecord, setSelectedRecord] = useState<T | null>(null);
   const [visibleKeys, setVisibleKeys] = useState<string[] | undefined>(undefined);
   const inventoryDefaultKeys = spaceKind === 'room'
-    ? ['id', 'sku', 'name', 'image', 'status', 'location', 'country', 'building', 'capacity', 'primary_owner', 'actions']
+    ? ['id', 'sku', 'name', 'image', 'status', 'availability', 'location', 'country', 'building', 'capacity', 'primary_owner', 'actions']
     : spaceKind === 'station'
-      ? ['id', 'sku', 'name', 'image', 'status', 'room', 'bench_capacity', 'available_power_w', 'owner', 'actions']
+      ? ['id', 'sku', 'name', 'image', 'status', 'availability', 'room', 'bench_capacity', 'available_power_w', 'owner', 'actions']
       : spaceKind === 'bench'
-        ? ['id', 'sku', 'name', 'image', 'status', 'location', 'group', 'type', 'equipment_count', 'actions']
+        ? ['id', 'sku', 'name', 'image', 'status', 'availability', 'location', 'group', 'type', 'equipment_count', 'actions']
         : professionalTable ? ['id', 'sku', 'name', 'image', 'status', 'placement', 'owner', 'kind', 'type', 'manufacturer', 'product_model', 'actions'] : undefined;
   const enabledKeys = visibleKeys ?? defaultVisibleColumnKeys ?? inventoryDefaultKeys;
   const fixedColumnKeys = REQUIRED_INVENTORY_COLUMN_KEYS;
@@ -180,7 +183,8 @@ export default function EquipmentPageLayout<T extends { id: number | string }>({
   const activeFilterCount = Object.values(filters).filter((values) => values?.length).length;
   const selectableColumns = columns.filter((column) => !fixedColumnKeys.includes(String(column.key)));
   const selectedColumnCount = selectableColumns.filter((column) => !enabledKeys || enabledKeys.includes(String(column.key)) || filters[String(column.key)]?.length).length;
-  const itemLabel = spaceKind === 'room' ? 'room' : spaceKind === 'station' ? 'station' : spaceKind === 'bench' ? 'bench' : 'device';
+  const itemLabel = itemNoun ?? (spaceKind === 'room' ? 'room' : spaceKind === 'station' ? 'station' : spaceKind === 'bench' ? 'bench' : 'device');
+  const itemPlural = /(s|x|ch|sh)$/.test(itemLabel) ? `${itemLabel}es` : `${itemLabel}s`;
 
   const readPath = (record: Record<string, unknown>, path: string): unknown =>
     path.split('.').reduce<unknown>((acc, key) => (
@@ -270,9 +274,9 @@ export default function EquipmentPageLayout<T extends { id: number | string }>({
         {professionalTable && <div className={professional.inventoryHeading}>
           <div>
             <h2>{spaceKind ? title : `${title} inventory`}</h2>
-            <span>{loading ? `Loading ${title.toLowerCase()}…` : `${totalRecords} ${totalRecords === 1 ? itemLabel : `${itemLabel}s`} in this view`}</span>
+            <span>{loading ? `Loading ${title.toLowerCase()}…` : `${totalRecords} ${totalRecords === 1 ? itemLabel : itemPlural} in this view`}</span>
           </div>
-          <Badge>{loading ? 'Loading…' : `${totalRecords.toLocaleString()} records`}</Badge>
+          <Badge>{loading ? 'Loading…' : `${totalRecords.toLocaleString()} ${totalRecords === 1 ? 'record' : 'records'}`}</Badge>
         </div>}
         {professionalTable && <div className="tw:flex tw:flex-wrap tw:items-center tw:gap-3 tw:border-0 tw:border-b tw:border-solid tw:border-border tw:px-5 tw:pb-4 tw:pt-3">
           <div className="tw:min-w-0 tw:flex-[1_1_320px] tw:max-w-xl">
@@ -330,7 +334,7 @@ export default function EquipmentPageLayout<T extends { id: number | string }>({
             {activeFilterCount > 0 && <Tag className={professional.activeFilters}>{activeFilterCount} active {activeFilterCount === 1 ? 'filter' : 'filters'}</Tag>}
             {(defaultVisibleColumnKeys || professionalTable) && (
               <Dropdown trigger={['click']} popupRender={() => (
-                <div className={professionalTable ? professional.columnMenu : undefined} style={{ padding: 12, background: 'white', boxShadow: '0 6px 24px #0002', borderRadius: 8, maxHeight: 400, overflowY: 'auto', minWidth: 220 }}>
+                <div className={professionalTable ? professional.columnMenu : undefined} style={{ padding: 12, background: 'var(--lm-surface-raised)', boxShadow: 'var(--lm-shadow-md)', border: '1px solid var(--lm-border)', borderRadius: 8, maxHeight: 400, overflowY: 'auto', minWidth: 220 }}>
                   {professionalTable && <strong className={professional.menuTitle}>Visible columns</strong>}
                   <div style={{ padding: '4px 4px 10px', borderBottom: '1px solid var(--lm-border)', marginBottom: 6 }}>
                     <Checkbox checked={selectedColumnCount === selectableColumns.length} indeterminate={selectedColumnCount > 0 && selectedColumnCount < selectableColumns.length} onChange={(event) => {
@@ -351,10 +355,10 @@ export default function EquipmentPageLayout<T extends { id: number | string }>({
                 <Button aria-label={professionalTable ? 'Choose visible columns' : 'Columns'} icon={<SettingOutlined />}>{professionalTable ? 'View options' : 'Columns'}</Button>
               </Dropdown>
             )}
-            {(!professionalTable || activeFilterCount > 0 || search) && <TooltipButton responsive tooltip="Clear all filters" aria-label="Clear search and filters" icon={<ClearOutlined />} onClick={handleClearAll}>
-              {professionalTable ? 'Clear filters' : 'Clear All Filters'}
+            {(!professionalTable || activeFilterCount > 0 || search) && <TooltipButton responsive tooltip="Clear search and filters" icon={<ClearOutlined />} onClick={handleClearAll}>
+              Clear filters
             </TooltipButton>}
-            <TooltipButton responsive tooltip="Re-fetch data" aria-label={`Refresh ${spaceKind ? `${spaceKind}s` : 'equipment'}`} icon={<ReloadOutlined spin={professionalTable && loading} />} onClick={onRefetch}>
+            <TooltipButton responsive tooltip={`Reload ${itemPlural}`} icon={<ReloadOutlined spin={professionalTable && loading} />} onClick={onRefetch}>
               Refresh
             </TooltipButton>
             {professionalTable && showCreate && onCreate && (
@@ -365,7 +369,7 @@ export default function EquipmentPageLayout<T extends { id: number | string }>({
             {!professionalTable && showCreate && onCreate && (
               <TooltipButton
                 responsive
-                tooltip={createLabel ?? `Create new ${title.toLowerCase()}`}
+                tooltip={`Add a new ${itemLabel}`}
                 type="primary"
                 icon={<PlusOutlined />}
                 onClick={onCreate}
@@ -395,7 +399,7 @@ export default function EquipmentPageLayout<T extends { id: number | string }>({
           locale={{ emptyText: loading ? <span style={{ display: 'none' }} /> : professionalTable ? (
             <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={
               <div className={professional.emptyState}>
-                <strong>{search || activeFilterCount ? `No matching ${itemLabel}s` : `No ${itemLabel}s registered`}</strong>
+                <strong>{search || activeFilterCount ? `No matching ${itemPlural}` : `No ${itemPlural} registered`}</strong>
                 <span>{search || activeFilterCount ? 'Try a different search or clear the active filters.' : `${title} will appear here once added.`}</span>
                 {(search || activeFilterCount > 0) && <Button onClick={handleClearAll}>Clear search and filters</Button>}
               </div>

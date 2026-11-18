@@ -55,6 +55,8 @@ export default function StationPage() {
   // Slots arrive 100 per page; read up to three pages so large rooms stay selectable.
   const roomSlotsPage1 = useLabsRoomsSlotsRetrieveByRoomIdQuery(
     formRoomId == null ? skipToken : { roomId: formRoomId, pageSize: 100, page: 1 },
+    // Slots can be generated from the Rooms page at any time; never trust an older cached list.
+    { refetchOnMountOrArgChange: true },
   );
   const roomSlotsPage2 = useLabsRoomsSlotsRetrieveByRoomIdQuery(
     formRoomId == null || !roomSlotsPage1.data?.meta.pagination.next ? skipToken : { roomId: formRoomId, pageSize: 100, page: 2 },
@@ -73,6 +75,14 @@ export default function StationPage() {
       .map((slot) => ({ label: slot.slot_code, value: slot.id })),
     [roomSlots, currentSlotId, formSlotId],
   );
+  // Why the slot list is empty, in words the user can act on.
+  const roomSlotsHint = formRoomId == null || !roomSlotsPage1.isSuccess
+    ? undefined
+    : roomSlots.length === 0
+      ? "This room has no slots yet. Edit the room, set its layout (rows × columns) and save: one slot is created per cell."
+      : slotOptions.length === 0
+        ? "Every slot in this room already holds a station. Enlarge the room layout or move a station."
+        : undefined;
   const handleFormValues = useCallback((values: Record<string, unknown>) => {
     setFormRoomId(values.room_id == null || values.room_id === '' ? null : Number(values.room_id));
     setFormSlotId(values.slot_id == null || values.slot_id === '' ? null : Number(values.slot_id));
@@ -86,7 +96,6 @@ export default function StationPage() {
   const { data: users } = useGetUsersQuery();
   const ownerFallback = useMemo(() => (users ?? []).map((u) => ({ text: u.display_name || u.username || String(u.id), value: String(u.id) })), [users]);
   const ownerFilters = useMemo(() => facetToAntdFilters(getFacetOptions(facets, 'owner', 'owner_id', 'primary_owner'))?.map(({ text, value }) => ({ text, value: String(value) })) ?? ownerFallback, [facets, ownerFallback]);
-  const statusFilters = useMemo(() => facetToAntdFilters(getFacetOptions(facets, 'status', 'status_type'))?.map(({ text, value }) => ({ text, value: String(value) })) ?? [], [facets]);
 
   const formFields: FieldConfig[] = useMemo(
     () => [
@@ -94,18 +103,34 @@ export default function StationPage() {
       { name: "sku", label: "SKU", type: "text", required: true, disabledInEdit: true },
       { name: "name", label: "Name", type: "text", required: true },
       { name: "room_id", label: "Target Room", type: "select", options: roomOptions },
-      { name: "slot_id", label: "Room Slot", type: "select", dependsOn: ["room_id"], options: slotOptions },
+      {
+        name: "slot_id",
+        label: "Room Slot",
+        type: "select",
+        dependsOn: ["room_id"],
+        options: slotOptions,
+        loading: roomSlotsPage1.isFetching,
+        placeholder: formRoomId == null ? "Select a room first" : "Select a slot (optional)",
+        searchHint: roomSlotsHint,
+        help: roomSlotsHint && !roomSlotsPage1.isFetching ? roomSlotsHint : undefined,
+      },
       { name: "height_mm", label: "Height (mm)", type: "number" },
       { name: "width_mm", label: "Width (mm)", type: "number" },
       { name: "depth_mm", label: "Depth (mm)", type: "number" },
       { name: "power_capacity_w", label: "Power Capacity (W)", type: "number" },
       { name: "max_load_kg", label: "Max Load (kg)", type: "number" },
       { name: "network_port_capacity", label: "Network Ports", type: "number" },
+      {
+        name: "bench_capacity",
+        label: "Bench Capacity",
+        type: "number",
+        help: "How many benches the station holds. Saving creates the bench slots S1, S2, … that benches are placed on.",
+      },
       { name: "label", label: "Position Label", type: "text" },
       { name: "remark", label: "Remark", type: "textarea" },
       { name: "image", label: "Image", type: "image" as const },
     ],
-    [roomOptions, slotOptions],
+    [roomOptions, slotOptions, formRoomId, roomSlotsPage1.isFetching, roomSlotsHint],
   );
 
   const actionsRenderer = createActionsRenderer<IStation>({
@@ -126,7 +151,6 @@ export default function StationPage() {
     activeFilters: table.filters,
     roomFilters,
     ownerFilters,
-    statusFilters,
     actionsRenderer,
   });
 
@@ -210,10 +234,12 @@ export default function StationPage() {
             power_capacity_w: values.power_capacity_w == null ? null : Number(values.power_capacity_w),
             max_load_kg: values.max_load_kg == null ? null : Number(values.max_load_kg),
             network_port_capacity: values.network_port_capacity == null ? null : Number(values.network_port_capacity),
+            bench_capacity: values.bench_capacity == null || values.bench_capacity === '' ? null : Number(values.bench_capacity),
             label: String(values.label ?? ''),
             remark: values.remark == null ? (editingStation.remark ?? "") : String(values.remark),
           };
           await form.updateInline(editingStation.id, payload);
+          await form.syncSlots(editingStation.id, values.bench_capacity);
           if (imageFile) await form.updateImage(editingStation.id, imageFile);
           else if (imageFile === null) await form.removeImage(editingStation.id);
           setEditingStation(null);

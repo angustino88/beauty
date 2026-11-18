@@ -23,8 +23,9 @@ export const LabGroupCard = memo(function LabGroupCard({
   return (
     <ChartCard
       id={0}
-      title="Benches by Group"
-      subtitle={`Today, ${dayjs().format("DD MMM YYYY")}`}
+      title="Benches per group"
+      description="How many benches each bench group holds right now."
+      subtitle={`Right now · ${dayjs().format("D MMM YYYY")}`}
       loading={isFetching}
       error={isError}
       onRetry={refetch}
@@ -35,8 +36,8 @@ export const LabGroupCard = memo(function LabGroupCard({
               void exportRowsToExcel(
                 data,
                 analyticsColumnIndex.labGroup,
-                "Benches_by_Group",
-                "Benches by Group",
+                "Benches_per_group",
+                "Benches per group",
               )
           : undefined
       }

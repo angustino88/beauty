@@ -26,6 +26,9 @@ import {
 } from "@/features/lab-equipment/shared/components/EquipmentIcons";
 import { MAPPING_STATE_LABELS } from "../utils/mappingExportConfig";
 import styles from "./MappingVisualization.module.css";
+import { EQUIPMENT_CATEGORIES } from "@/features/lab-equipment/categories/registry";
+import { useCategoryKeyById } from "../hooks/useCategoryKeyById";
+import { resolveCategoryKey } from "../utils/categoryKey";
 
 let rememberedZoom = 1;
 
@@ -91,21 +94,6 @@ const CATEGORY_ICON_MAP: Record<string, ReactNode> = {
   other: <AccessoriesIcon />,
 };
 
-const CATEGORY_PATH_MAP: Record<string, string> = {
-  computing: "/lab-equipment/computing",
-  display: "/lab-equipment/display",
-  debugging: "/lab-equipment/debugging",
-  networking: "/lab-equipment/networking",
-  power: "/lab-equipment/power",
-  accessory: "/lab-equipment/accessory",
-  sample: "/lab-equipment/sample",
-  furniture: "/lab-equipment/furniture",
-  instrument: "/lab-equipment/instrument",
-  laboratory: "/lab-equipment/laboratory",
-  mechanical: "/lab-equipment/mechanical",
-  other: "/lab-equipment/other",
-};
-
 const Node = ({
   icon,
   type,
@@ -122,7 +110,8 @@ const Node = ({
   type: string;
   name: string | null;
   sku: string | null;
-  path: string;
+  /** Page to open on click; no path renders a plain node (no link to a wrong page). */
+  path?: string | null;
   tone: AssetTone;
   subLabel?: string | null;
   muted?: boolean;
@@ -143,7 +132,7 @@ const Node = ({
   const className = `${styles.node} ${muted ? styles.mutedNode : ""} ${compact ? styles.compactNode : ""} ${selected ? styles.selectedNode : ""}`;
   const ariaLabel = `${type}: ${name || "Not mapped"}${sku ? `, ${sku}` : ""}`;
 
-  if (muted) {
+  if (muted || !path) {
     return (
       <div className={className} data-tone={tone} aria-label={ariaLabel} aria-current={selected ? "true" : undefined}>
         {content}
@@ -157,7 +146,7 @@ const Node = ({
       data-tone={tone}
       aria-label={`View ${ariaLabel}`}
       aria-current={selected ? "true" : undefined}
-      to={`${path}?search=${encodeURIComponent(sku || name || "")}`}
+      to={`${path}?q=${encodeURIComponent(sku || name || "")}`}
     >
       {content}
     </Link>
@@ -166,11 +155,13 @@ const Node = ({
 
 const MappingLane = ({
   row,
+  categoryKeyById,
   compact = false,
   selectedDeviceType,
   selectedDeviceId,
 }: {
   row: ResourceMappingRow;
+  categoryKeyById: ReadonlyMap<number, string>;
   compact?: boolean;
   selectedDeviceType?: string;
   selectedDeviceId?: number;
@@ -178,12 +169,18 @@ const MappingLane = ({
   const isSelected = (type: string, id: number | undefined) =>
     selectedDeviceType === type && id === selectedDeviceId;
 
-  const equipmentByCategory = new Map<string, MappingEquipmentItem[]>();
+  // Group by the category's stable key (computing, display, ...), never by its editable name.
+  const equipmentByCategory = new Map<string, { key: string | null; label: string; items: MappingEquipmentItem[] }>();
   for (const eq of row.equipment) {
-    const catName = eq.category?.name || "Other";
-    const list = equipmentByCategory.get(catName) ?? [];
-    list.push(eq);
-    equipmentByCategory.set(catName, list);
+    const key = resolveCategoryKey(eq.category, categoryKeyById);
+    const groupId = key ?? `name:${eq.category?.name || "Other"}`;
+    const group = equipmentByCategory.get(groupId) ?? {
+      key,
+      label: key ? EQUIPMENT_CATEGORIES[key].label : eq.category?.name || "Other",
+      items: [],
+    };
+    group.items.push(eq);
+    equipmentByCategory.set(groupId, group);
   }
 
   const licensesByEquipment = new Map<number, MappingLicenseItem[]>();
@@ -261,14 +258,13 @@ const MappingLane = ({
           />
         ) : (
           <div className={styles.connectionRows}>
-            {Array.from(equipmentByCategory.entries()).map(([categoryName, items]) => {
-              const catKey = categoryName.toLowerCase();
-              const tone = CATEGORY_TONE_MAP[catKey] ?? "accessory";
-              const icon = CATEGORY_ICON_MAP[catKey] ?? <AccessoriesIcon />;
-              const path = CATEGORY_PATH_MAP[catKey] ?? "/lab-equipment/accessory";
+            {Array.from(equipmentByCategory.entries()).map(([groupId, { key: catKey, label: categoryName, items }]) => {
+              const tone = (catKey && CATEGORY_TONE_MAP[catKey]) || "other";
+              const icon = (catKey && CATEGORY_ICON_MAP[catKey]) || <AccessoriesIcon />;
+              const path = catKey ? `/lab-equipment/${catKey}` : null;
 
               return (
-                <div key={categoryName} className={styles.deviceGroup} data-tone={tone}>
+                <div key={groupId} className={styles.deviceGroup} data-tone={tone}>
                   <div className={styles.deviceGroupHeader}>
                     <span>{categoryName}</span>
                     <strong>{items.length}</strong>
@@ -292,7 +288,7 @@ const MappingLane = ({
                             path={path}
                             tone={tone}
                             compact={compact}
-                            selected={isSelected(catKey, eq.id)}
+                            selected={isSelected(catKey ?? "", eq.id)}
                           />
 
                           {hasLicenses && (
@@ -349,6 +345,7 @@ export const MappingVisualization = ({
   selectedDeviceType,
   selectedDeviceId,
 }: MappingVisualizationProps) => {
+  const categoryKeyById = useCategoryKeyById();
   const [zoom, setZoom] = useState(() => (compact ? 1 : rememberedZoom));
   const viewportRef = useRef<HTMLDivElement>(null);
 
@@ -431,6 +428,7 @@ export const MappingVisualization = ({
               <div className={styles.lanes}>
                 {rows.map((row) => (
                   <MappingLane
+                    categoryKeyById={categoryKeyById}
                     key={row.id}
                     row={row}
                     compact={compact}

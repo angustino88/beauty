@@ -107,7 +107,10 @@ export default function Dashboard() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-      <PageHeader title="Dashboard" />
+      <PageHeader
+        title="Dashboard"
+        description="Live status of every bench. Click a row for details, or use the status chips to filter."
+      />
 
       {isError &&
         statusCode !== 404 &&

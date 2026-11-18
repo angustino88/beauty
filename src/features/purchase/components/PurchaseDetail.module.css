@@ -56,7 +56,7 @@
 .lifecycleComplete .lifecycleNode { color: var(--lm-success-fg); background: var(--lm-surface-muted); border-color: var(--lm-border); }
 .lifecycleComplete:not(:last-child)::after { background: var(--lm-neutral-solid); }
 .lifecycleComplete .lifecycleLabel { color: var(--lm-text-secondary); }
-.lifecycleCurrent .lifecycleNode { color: #fff; background: var(--lm-success-solid); border-color: var(--lm-success-solid); box-shadow: 0 0 0 4px #edf6f0; }
+.lifecycleCurrent .lifecycleNode { color: #fff; background: var(--lm-success-solid); border-color: var(--lm-success-solid); box-shadow: 0 0 0 4px var(--lm-success-bg); }
 .lifecycleCurrent .lifecycleLabel { color: var(--lm-text); }
 .lifecycleCurrent .lifecycleText p { color: var(--lm-text-tertiary); }
 .lifecycleStopped .lifecycleNode { background: var(--lm-surface-subtle); }

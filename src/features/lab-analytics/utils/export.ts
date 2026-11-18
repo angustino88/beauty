@@ -8,20 +8,19 @@ export interface ExcelColumn<T = unknown> {
   read?: (row: T) => string | number | null | undefined;
 }
 
-const LabSessionLogColumnIndex: { title: string; dataIndex: string | string[] }[] = [
-  { title: 'ID', dataIndex: 'id' },
-  { title: 'Computer Name', dataIndex: 'computer_name' },
-  { title: 'Login time', dataIndex: 'login_time' },
-  { title: 'Logout time', dataIndex: 'logout_time' },
-  { title: 'Duration [H]', dataIndex: 'duration_in_hour' },
-  { title: 'Active Time [H]', dataIndex: 'active_time_in_hour' },
-  { title: 'Remote User', dataIndex: 'remote_user' },
-  { title: 'Remote Computer', dataIndex: 'remote_computer' },
-  { title: 'Remote IP', dataIndex: 'remote_ip' },
-  { title: 'Booking Code', dataIndex: 'booking_code' },
-  { title: 'Project', dataIndex: ['booking_info', 'project'] },
-  { title: 'From Datetime', dataIndex: ['booking_info', 'from_date_time'] },
-  { title: 'To Datetime', dataIndex: ['booking_info', 'to_date_time'] },
+const minutes = (value: number | null) => (value == null ? '' : value);
+const LabSessionLogColumnIndex: ExcelColumn<LabSessionLogEntry>[] = [
+  { title: 'Login', dataIndex: 'login_at' },
+  { title: 'Logout', dataIndex: 'logout_at' },
+  { title: 'User', dataIndex: 'user', read: (row) => row.user?.display_name || row.remote_user_display_name || '' },
+  { title: 'Login name', dataIndex: 'remote_user' },
+  { title: 'Access', dataIndex: 'access_type', read: (row) => row.access_type?.label ?? '' },
+  { title: 'Booking code', dataIndex: 'booking_code' },
+  { title: 'Bench', dataIndex: 'bench', read: (row) => row.bench?.name ?? '' },
+  { title: 'Computer', dataIndex: 'computer', read: (row) => row.computer?.name ?? '' },
+  { title: 'Host name', dataIndex: 'host_name' },
+  { title: 'Session (min)', dataIndex: 'duration_minutes', read: (row) => minutes(row.duration_minutes) },
+  { title: 'Active (min)', dataIndex: 'active_minutes', read: (row) => minutes(row.active_minutes) },
 ];
 
 function resolvePath(obj: unknown, path: string | string[]): string {

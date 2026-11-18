@@ -24,35 +24,33 @@ export const LabEfficiencyCard = memo(function LabEfficiencyCard({
   return (
     <ChartCard
       id={2}
-      title="Top Lab Efficiency"
+      title="Computer utilization"
+      description="Logged-in hours per computer as a share of official working hours in the period."
       subtitle={getChartSubtitle(filters)}
       loading={isFetching}
       error={isError}
       onRetry={refetch}
       component={<LabEfficiencyChart dataSource={data ?? []} />}
+      onExport={
+        data
+          ? () =>
+              void exportRowsToExcel(
+                data,
+                analyticsColumnIndex.labEfficiency,
+                "Computer_utilization",
+                "Computer utilization",
+              )
+          : undefined
+      }
       filters={
         <OrderRankDateFilter
           filterParams={filters}
           onChange={setFilters}
-          onExport={
-            data
-              ? () =>
-                  void exportRowsToExcel(
-                    data,
-                    analyticsColumnIndex.labEfficiency,
-                    "Top_Lab_Efficiency",
-                    "Top Lab Efficiency",
-                  )
-              : undefined
-          }
         />
       }
       isOpen={isOpen}
       onOpen={onOpen}
-      onClose={() => {
-        onClose();
-        setFilters((f) => ({ ...f, top: 5 }));
-      }}
+      onClose={onClose}
     />
   );
 });

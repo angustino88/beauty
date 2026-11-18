@@ -1,10 +1,12 @@
+import { stateFilterParams } from "@/features/spaces/shared/resourceStatusFilter";
+import { useUrlSearch } from '@/shared/hooks/useUrlSearch';
 import { useCallback, useMemo, useState } from "react";
 import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
 import { useGetBenchesQuery } from "../api";
 import type { IBench } from "../types";
 
 export function useBenchTable() {
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useUrlSearch();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [filters, setFilters] = useState<Record<string, (string | number)[] | null>>({});
@@ -20,7 +22,8 @@ export function useBenchTable() {
       type_id: filters.type?.length ? filters.type.join(',') : undefined,
       setup_location_id: filters.location?.length ? filters.location.join(',') : undefined,
       owner_id: filters.owner?.length ? filters.owner.join(',') : undefined,
-      status: filters.status?.length ? filters.status.join(',') : undefined,
+      // Availability, Activity and Lifecycle columns → condition, activity_status, lifecycle_status.
+      ...stateFilterParams(filters),
     };
   }, [page, pageSize, debouncedSearch, filters]);
 

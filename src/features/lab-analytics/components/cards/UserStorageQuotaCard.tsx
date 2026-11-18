@@ -24,35 +24,33 @@ export const UserStorageQuotaCard = memo(function UserStorageQuotaCard({
   return (
     <ChartCard
       id={7}
-      title="User Storage Utilization"
+      title="Storage used against quota"
+      description="Each user's storage use against their own quota on the snapshot day."
       subtitle={getChartSubtitle(filters, false)}
       loading={isFetching}
       error={isError}
       onRetry={refetch}
       component={<UserStorageQuotaChart dataSource={data ?? []} />}
+      onExport={
+        data
+          ? () =>
+              void exportRowsToExcel(
+                data,
+                analyticsColumnIndex.userStorageQuota,
+                "Storage_used_against_quota",
+                "Storage used against quota",
+              )
+          : undefined
+      }
       filters={
         <DateFilter
           filterParams={filters}
           onChange={setFilters}
-          onExport={
-            data
-              ? () =>
-                  void exportRowsToExcel(
-                    data,
-                    analyticsColumnIndex.userStorageQuota,
-                    "User_Storage_Utilization",
-                    "User Storage Utilization",
-                  )
-              : undefined
-          }
         />
       }
       isOpen={isOpen}
       onOpen={onOpen}
-      onClose={() => {
-        onClose();
-        setFilters((f) => ({ ...f, top: 12 }));
-      }}
+      onClose={onClose}
     />
   );
 });

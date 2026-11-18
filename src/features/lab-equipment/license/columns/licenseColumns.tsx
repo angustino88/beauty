@@ -11,7 +11,6 @@ import {
   renderOwnerCell,
 } from '../../shared';
 import LicenseStatus from '../../shared/components/status/LicenseStatus';
-import LicenseInformationCell from './LicenseInformationCell';
 import type { ILicense } from '../types';
 import { pageIcons } from '@/components/layout/pageIcons';
 import { filterResourceOption } from '@/components/inputs/ResourceOption';
@@ -65,7 +64,9 @@ interface BuildColumnsArgs {
   ownerOptions: UserSelectOption[];
   carrierOptions: EquipmentOption[];
   onCarrierSearch: (query: string) => void;
+  onCarrierOpenChange: (open: boolean) => void;
   carrierLoading: boolean;
+  carrierEmptyText: string;
   isEditing: (record: ILicense) => boolean;
   editingDraft: LicenseInlineDraft | null;
   updateDraftField: <K extends keyof LicenseInlineDraft>(
@@ -110,7 +111,9 @@ export const buildLicenseColumns = ({
   ownerOptions,
   carrierOptions,
   onCarrierSearch,
+  onCarrierOpenChange,
   carrierLoading,
+  carrierEmptyText,
   isEditing,
   editingDraft,
   updateDraftField,
@@ -118,8 +121,8 @@ export const buildLicenseColumns = ({
   onImageChange,
   onStatusChange,
 }: BuildColumnsArgs) => [
-  { title: 'ID', dataIndex: 'id', key: 'id', width: 100, fixed: 'left' as const },
-  { title: 'SKU', dataIndex: 'sku', key: 'sku', width: 200, fixed: 'left' as const },
+  { title: 'ID', dataIndex: 'id', key: 'id', width: 70, fixed: 'left' as const },
+  { title: 'SKU', dataIndex: 'sku', key: 'sku', width: 140, fixed: 'left' as const },
   {
     title: 'Name',
     dataIndex: 'name',
@@ -135,6 +138,40 @@ export const buildLicenseColumns = ({
           />
         )
         : (value ?? '')
+    ),
+  },
+  {
+    title: 'Image',
+    dataIndex: 'image',
+    key: 'image',
+    width: 150,
+    align: 'center' as const,
+    render: (_: unknown, record: ILicense) => (
+      onImageChange
+        ? <InlineImageUpload key={record.id} currentImage={record.image} onImageChange={(file) => onImageChange(file, record)} />
+        : renderImageCell(record.image, pageIcons.licenses)
+    ),
+  },
+  {
+    title: 'Status',
+    key: 'status',
+    width: 150,
+    align: 'left' as const,
+    onHeaderCell: () => ({ className: 'centeredFilterHeader' }),
+    filters: statusFilters,
+    filterSearch: true,
+    filteredValue: filters.status ?? null,
+    onFilter: (value: boolean | Key, record: ILicense) => readStatusFromRecord(record) === String(value),
+    render: (_: unknown, record: ILicense) => (
+      <LicenseStatus
+        status={isEditing(record) ? editingDraft?.pending_status_type ?? readStatusFromRecord(record) : readStatusFromRecord(record)}
+        isEditing={isEditing(record)}
+        record={isEditing(record) && editingDraft?.pending_status_type ? {
+          ...record,
+          status: editingDraft.pending_status_type,
+        } : record}
+        onStatusChange={onStatusChange ? (values) => onStatusChange(record, values) : undefined}
+      />
     ),
   },
   {
@@ -211,7 +248,9 @@ export const buildLicenseColumns = ({
         seats={record.license_seats}
         options={carrierOptions}
         onSearch={onCarrierSearch}
+        onOpenChange={onCarrierOpenChange}
         loading={carrierLoading}
+        emptyText={carrierEmptyText}
       />
     ),
   },
@@ -332,50 +371,6 @@ export const buildLicenseColumns = ({
     width: 180,
     align: 'center' as const,
     render: (_: unknown, record: ILicense) => <LastAuditCell resourceType="license" resourceId={record.id} />,
-  },
-  {
-    title: 'Image',
-    dataIndex: 'image',
-    key: 'image',
-    width: 150,
-    align: 'center' as const,
-    render: (_: unknown, record: ILicense) => (
-      onImageChange
-        ? <InlineImageUpload key={record.id} currentImage={record.image} onImageChange={(file) => onImageChange(file, record)} />
-        : renderImageCell(record.image, pageIcons.licenses)
-    ),
-  },
-  {
-    title: 'Status',
-    key: 'status',
-    width: 150,
-    align: 'left' as const,
-    onHeaderCell: () => ({ className: 'centeredFilterHeader' }),
-    filters: statusFilters,
-    filterSearch: true,
-    filteredValue: filters.status ?? null,
-    onFilter: (value: boolean | Key, record: ILicense) => readStatusFromRecord(record) === String(value),
-    render: (_: unknown, record: ILicense) => (
-      <LicenseStatus
-        status={isEditing(record) ? editingDraft?.pending_status_type ?? readStatusFromRecord(record) : readStatusFromRecord(record)}
-        isEditing={isEditing(record)}
-        record={isEditing(record) && editingDraft?.pending_status_type ? {
-          ...record,
-          status: editingDraft.pending_status_type,
-        } : record}
-        onStatusChange={onStatusChange ? (values) => onStatusChange(record, values) : undefined}
-      />
-    ),
-  },
-  {
-    title: 'Information',
-    key: 'information',
-    width: 180,
-    render: (_: unknown, record: ILicense) => (
-      <span style={{ whiteSpace: 'pre-line' }}>
-        <LicenseInformationCell record={record} />
-      </span>
-    ),
   },
   {
     title: 'Remark',

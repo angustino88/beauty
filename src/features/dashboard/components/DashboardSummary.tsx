@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { benchActivityTone } from '@/shared/status/statusTone';
+import { BENCH_ACTIVITY_META, benchActivityTone } from '@/shared/status/statusTone';
 import type { DerivedDashboardStats, SummaryStatus } from '../types';
 import styles from './DashboardSummary.module.css';
 
@@ -13,7 +13,7 @@ const STATUSES: StatDef[] = [
   { label: 'Free',        key: 'freeCount',        summaryKey: 'free' },
   { label: 'Active',      key: 'activeCount',      summaryKey: 'active' },
   { label: 'Inactive',    key: 'inactiveCount',    summaryKey: 'inactive' },
-  { label: 'Maintaining', key: 'maintainingCount', summaryKey: 'maintaining' },
+  { label: 'Maintenance', key: 'maintainingCount', summaryKey: 'maintaining' },
   { label: 'Offline',     key: 'offlineCount',     summaryKey: 'offline' },
 ];
 
@@ -60,7 +60,7 @@ export const DashboardSummary = memo(function DashboardSummary({ stats, activeSu
                 type="button"
                 className={`${styles.chip} ${styles[benchActivityTone(stat.summaryKey)]} ${isActive ? styles.chipActive : ''}`}
                 aria-pressed={isActive}
-                title={isActive ? 'Clear this filter' : `Show only ${stat.label.toLowerCase()} benches`}
+                title={`${BENCH_ACTIVITY_META[stat.summaryKey].meaning} ${isActive ? 'Click to show all benches again.' : `Click to show only ${stat.summaryKey === 'maintaining' ? 'benches under maintenance' : `${stat.label.toLowerCase()} benches`}.`}`}
                 onClick={() => onSummaryClick(isActive ? null : stat.summaryKey)}
               >
                 <span className={styles.dot} aria-hidden="true" />

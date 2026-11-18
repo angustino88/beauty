@@ -66,7 +66,7 @@ test('resourceBadge shows unavailable blocked_by parent resource when blocked', 
   });
 });
 
-test('resourceBadge shows in use and booked today when operational and available', () => {
+test('resourceBadge keeps booking activity out of the status badge', () => {
   const active: ResourceState = {
     lifecycle_status: { value: 'in_service', label: 'In Service' },
     condition: { value: 'operational', label: 'Operational' },
@@ -74,7 +74,7 @@ test('resourceBadge shows in use and booked today when operational and available
     activity_status: { value: 'active', label: 'Active' },
     status: null,
   };
-  assert.deepEqual(resourceBadge(active), { text: 'In use', tone: 'info' });
+  assert.deepEqual(resourceBadge(active), { text: 'Available', tone: 'success' });
 
   const scheduled: ResourceState = {
     lifecycle_status: { value: 'in_service', label: 'In Service' },
@@ -83,7 +83,7 @@ test('resourceBadge shows in use and booked today when operational and available
     activity_status: { value: 'scheduled', label: 'Scheduled' },
     status: null,
   };
-  assert.deepEqual(resourceBadge(scheduled), { text: 'Booked today', tone: 'reserved' });
+  assert.deepEqual(resourceBadge(scheduled), { text: 'Available', tone: 'success' });
 
   const idle: ResourceState = {
     lifecycle_status: { value: 'in_service', label: 'In Service' },

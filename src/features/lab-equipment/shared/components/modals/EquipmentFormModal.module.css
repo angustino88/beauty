@@ -18,3 +18,10 @@
 .form :global(.ant-upload-text) { font-size: 12px !important; }
 .form :global(.ant-upload-hint) { font-size: 11px !important; }
 @media (max-width: 600px) { .form { padding: 16px !important; } }
+.popupHint {
+    padding: 6px 12px 4px;
+    margin-top: 4px;
+    border-top: 1px solid var(--lm-border-subtle);
+    color: var(--lm-text-tertiary);
+    font-size: 12px;
+}

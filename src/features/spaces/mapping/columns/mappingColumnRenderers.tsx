@@ -22,6 +22,8 @@ import {
   RackIcon,
   SampleIcon,
 } from "@/features/lab-equipment/shared/components/EquipmentIcons";
+import { useCategoryKeyById } from "../hooks/useCategoryKeyById";
+import { resolveCategoryKey } from "../utils/categoryKey";
 import styles from "./MappingTable.module.css";
 
 const CATEGORY_ICONS: Record<string, ReactNode> = {
@@ -45,9 +47,9 @@ export const ENTITY_PATHS = {
   license: "/lab-equipment/license",
 } as const;
 
-const categoryKey = (item: MappingEquipmentItem) => (item.category?.name || "Other").toLowerCase();
-export const categoryIcon = (key: string) => CATEGORY_ICONS[key] ?? <AccessoriesIcon />;
-export const categoryPath = (key: string) => `/lab-equipment/${CATEGORY_ICONS[key] ? key : "other"}`;
+export const categoryIcon = (key: string | null) => (key && CATEGORY_ICONS[key]) || <AccessoriesIcon />;
+/** Equipment page of a category key; categories without a page get no link. */
+export const categoryPath = (key: string | null) => (key ? `/lab-equipment/${key}` : null);
 
 /** A linked resource: SKU on the first line, name on the second, an optional location line. */
 export const MappingAsset = ({
@@ -60,17 +62,30 @@ export const MappingAsset = ({
   sku?: string | null;
   name?: string | null;
   meta?: string | null;
-  path: string;
+  /** Page to open; without one the asset is shown but not linked. */
+  path?: string | null;
   icon: ReactNode;
 }) => {
   const primary = sku || name || "—";
   const secondary = sku && name && name !== sku ? name : null;
+  if (!path) {
+    return (
+      <span className={styles.asset} title={[secondary ? `${secondary} (${primary})` : primary, meta].filter(Boolean).join(" · ")}>
+        <span className={styles.assetIcon} aria-hidden="true">{icon}</span>
+        <span className={styles.assetText}>
+          <strong className={styles.assetSku}>{primary}</strong>
+          {secondary && <span>{secondary}</span>}
+          {meta && <span className={styles.assetMeta}>{meta}</span>}
+        </span>
+      </span>
+    );
+  }
   return (
     <Link
       className={styles.asset}
       aria-label={`Open ${[primary, secondary].filter(Boolean).join(", ")}`}
       title={[secondary ? `${secondary} (${primary})` : primary, meta].filter(Boolean).join(" · ")}
-      to={`${path}?search=${encodeURIComponent(sku || name || "")}`}
+      to={`${path}?q=${encodeURIComponent(sku || name || "")}`}
     >
       <span className={styles.assetIcon} aria-hidden="true">{icon}</span>
       <span className={styles.assetText}>
@@ -142,10 +157,10 @@ export const renderRoomTag = (row: ResourceMappingRow) => {
   );
 };
 
-const EquipmentList = ({ equipment }: { equipment: MappingEquipmentItem[] }) => (
+const EquipmentList = ({ equipment, keyById }: { equipment: MappingEquipmentItem[]; keyById: ReadonlyMap<number, string> }) => (
   <div className={styles.popoverList}>
     {equipment.map((item) => {
-      const key = categoryKey(item);
+      const key = resolveCategoryKey(item.category, keyById);
       return (
         <MappingAsset
           key={item.id}
@@ -160,20 +175,23 @@ const EquipmentList = ({ equipment }: { equipment: MappingEquipmentItem[] }) => 
   </div>
 );
 
-export const renderEquipmentCategories = (equipment: MappingEquipmentItem[]) => {
+/** Category chips of a bench; grouped by the category's stable key, labelled with its name. */
+const EquipmentCategories = ({ equipment }: { equipment: MappingEquipmentItem[] }) => {
+  const keyById = useCategoryKeyById();
   if (!equipment.length) return <EmptyMapping label="No equipment" />;
-  const byCategory = new Map<string, { label: string; count: number }>();
+  const byCategory = new Map<string, { key: string | null; label: string; count: number }>();
   for (const item of equipment) {
-    const key = categoryKey(item);
-    const entry = byCategory.get(key) ?? { label: item.category.name || "Other", count: 0 };
+    const key = resolveCategoryKey(item.category, keyById);
+    const groupId = key ?? `name:${item.category.name || "Other"}`;
+    const entry = byCategory.get(groupId) ?? { key, label: item.category.name || "Other", count: 0 };
     entry.count += 1;
-    byCategory.set(key, entry);
+    byCategory.set(groupId, entry);
   }
   return (
-    <Popover content={<EquipmentList equipment={equipment} />} title={`${equipment.length} units on this bench`}>
+    <Popover content={<EquipmentList equipment={equipment} keyById={keyById} />} title={`${equipment.length} units on this bench`}>
       <span className={styles.categoryChips} tabIndex={0}>
-        {[...byCategory.entries()].map(([key, { label, count }]) => (
-          <span key={key} className={styles.categoryChip}>
+        {[...byCategory.entries()].map(([groupId, { key, label, count }]) => (
+          <span key={groupId} className={styles.categoryChip}>
             <span className={styles.chipIcon} aria-hidden="true">{categoryIcon(key)}</span>
             {label}
             <strong>{count}</strong>
@@ -183,6 +201,8 @@ export const renderEquipmentCategories = (equipment: MappingEquipmentItem[]) => 
     </Popover>
   );
 };
+
+export const renderEquipmentCategories = (equipment: MappingEquipmentItem[]) => <EquipmentCategories equipment={equipment} />;
 
 const MAX_LICENSE_TAGS = 2;
 
@@ -194,7 +214,7 @@ export const renderLicenses = (licenses: MappingLicenseItem[]) => {
     <span className={styles.categoryChips}>
       {shown.map((license) => (
         <Tooltip key={`${license.id}-${license.equipment_id}`} title={`${license.name} (${license.sku})`}>
-          <Link to={`${ENTITY_PATHS.license}?search=${encodeURIComponent(license.sku || license.name)}`}>
+          <Link to={`${ENTITY_PATHS.license}?q=${encodeURIComponent(license.sku || license.name)}`}>
             <Tag icon={<span className={styles.chipIcon}><LicenseIcon /></span>} className={styles.licenseTag}>
               {license.sku || license.name}
             </Tag>
