@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Card, Select, Tabs } from "antd";
+import { useState, type ReactNode } from "react";
+import { Select, Tabs } from "antd";
 import { useSearchParams } from "react-router-dom";
 import { Activity } from "lucide-react";
 import { useGetBenchOptionsQuery } from "@/features/booking/api";
@@ -14,6 +14,18 @@ type TabKey = "devices" | "events";
 function positiveInt(value: string | null): number | undefined {
   const parsed = value ? Number(value) : NaN;
   return Number.isInteger(parsed) && parsed > 0 ? parsed : undefined;
+}
+
+function Panel({ title, description, children }: { title: string; description: string; children: ReactNode }) {
+  return (
+    <section className={styles.panel}>
+      <div className={styles.panelHeading}>
+        <h2>{title}</h2>
+        <span>{description}</span>
+      </div>
+      <div className={styles.panelBody}>{children}</div>
+    </section>
+  );
 }
 
 /**
@@ -56,8 +68,7 @@ export default function LabMonitoring() {
           <p>Watch what the agent on each computing unit reports: devices plugged in, missing, or not yet matched to inventory.</p>
         </div>
       </header>
-      <Card className={`${tableStyles.tableCard} ${tableStyles.registerCard}`}>
-        <Tabs
+      <Tabs
           className={styles.tabs}
           destroyOnHidden
           activeKey={tab}
@@ -80,6 +91,7 @@ export default function LabMonitoring() {
               key: "devices",
               label: "Devices",
               children: (
+                <Panel title="Monitored devices" description="Current state of every device the agents observe">
                 <DevicesPanel
                   benchId={benchId}
                   computingId={computingId}
@@ -89,23 +101,25 @@ export default function LabMonitoring() {
                     update({ tab: "events", computing: String(computing.id) });
                   }}
                 />
+                </Panel>
               ),
             },
             {
               key: "events",
               label: "Events",
               children: (
+                <Panel title="Monitoring events" description="Log of what the agents reported, newest first">
                 <MonitoringEventsPanel
                   benchId={benchId}
                   computingId={computingId}
                   computingLabel={computingLabel}
                   onClearComputing={clearComputing}
                 />
+                </Panel>
               ),
             },
           ]}
-        />
-      </Card>
+      />
     </div>
   );
 }
