@@ -20,3 +20,81 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* Tab bar sits on the page (like the heading), content lives in cards. */
+.tabs :global(.ant-tabs-nav) {
+  margin: 0 0 18px;
+}
+
+.tabs :global(.ant-tabs-nav::before) {
+  border-bottom: 1px solid var(--lm-border);
+}
+
+.tabs :global(.ant-tabs-tab) {
+  padding: 10px 2px 12px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--lm-text-tertiary);
+}
+
+.tabs :global(.ant-tabs-tab + .ant-tabs-tab) {
+  margin-left: 28px;
+}
+
+.tabs :global(.ant-tabs-tab-active .ant-tabs-tab-btn) {
+  color: var(--lm-primary-fg, var(--lm-primary));
+  font-weight: 600;
+}
+
+.tabs :global(.ant-tabs-ink-bar) {
+  height: 2px;
+  background: var(--lm-primary);
+}
+
+.panel {
+  --table-control-height: 30px;
+  --table-accent: var(--lm-primary);
+  --table-accent-hover: var(--lm-primary-hover);
+  min-width: 0;
+  overflow: hidden;
+  background: var(--lm-surface);
+  border: 1px solid var(--lm-border);
+  border-radius: 11px;
+  box-shadow: 0 3px 16px rgba(29, 41, 59, 0.04);
+}
+
+.panelHeading {
+  padding: 18px 20px 14px;
+}
+
+.panelHeading h2 {
+  margin: 0 0 4px;
+  color: var(--lm-text);
+  font-size: 16px;
+  line-height: 1.3;
+  letter-spacing: -0.015em;
+}
+
+.panelHeading span {
+  color: var(--lm-text-tertiary);
+  font-size: 12px;
+}
+
+.panelBody {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  padding: 0 20px 20px;
+}
+
+.panelBody > form:global(.ant-form) {
+  padding: 0;
+  border-bottom: 0;
+}
+
+.panelBody :global(.ant-table-wrapper) {
+  border: 1px solid var(--lm-border);
+  border-radius: 8px;
+  overflow: hidden;
+}

@@ -80,8 +80,8 @@ export const useLoginStyles = createStyles(({ css, token }) => ({
     position: relative;
     display: grid;
     place-items: center;
-    width: 80px;
-    height: 80px;
+    width: 96px;
+    height: 96px;
     margin: 8px 0 20px;
     border-radius: 50%;
     font-size: 34px;
@@ -89,8 +89,8 @@ export const useLoginStyles = createStyles(({ css, token }) => ({
   `,
 
   lockImage: css`
-    width: 80px;
-    height: 80px;
+    width: 96px;
+    height: 96px;
     object-fit: contain;
   `,
 

@@ -1,28 +1,21 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="100%" height="100%">
-      <!-- Full light pink circular background -->
-      <circle cx="250" cy="250" r="250" fill="#fce4e7" />
-  
-  <!-- Lock Shackle (Arch) -->
-  <path d="M 207 220 V 175 A 43 43 0 0 1 293 175 V 220" 
-        fill="none" 
-        stroke="#db0012" 
-        stroke-width="13.5" />
-  
-  <!-- Lock Body -->
-  <rect x="175" y="220" width="150" height="102" rx="18" 
-        fill="none" 
-        stroke="#db0012" 
-        stroke-width="13.5" />
-  
-  <!-- Mask/Cutout for the 'X' Circle (Matches pink background to create a gap) -->
-  <circle cx="317" cy="315" r="54.5" fill="#fce4e7" />
-  
-  <!-- Red 'X' Circle -->
-  <circle cx="317" cy="315" r="46" fill="#db0012" />
-  
-  <!-- White 'X' Icon -->
-  <path d="M 296 294 L 338 336 M 338 294 L 296 336" 
-        stroke="#ffffff" 
-        stroke-width="11" 
-        stroke-linecap="round" />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" width="100%" height="100%" role="img" aria-label="Sign-in failed">
+  <defs>
+    <linearGradient id="lm-badge" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ef2a3c"/>
+      <stop offset="1" stop-color="#c4000f"/>
+    </linearGradient>
+    <filter id="lm-shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2.500" flood-color="#db0012" flood-opacity=".22"/>
+    </filter>
+  </defs>
+  <circle cx="80" cy="80" r="80" fill="#fdeff1"/>
+  <circle cx="80" cy="80" r="64" fill="#fbe0e4"/>
+  <g filter="url(#lm-shadow)">
+    <path d="M63 76V62a17 17 0 0 1 34 0v14" fill="none" stroke="#db0012" stroke-width="6.500" stroke-linecap="round"/>
+    <rect x="52" y="74" width="56" height="40" rx="9" fill="#fff" stroke="#db0012" stroke-width="6.500"/>
+    <circle cx="80" cy="92" r="4.500" fill="#db0012"/>
+    <path d="M80 95v9" stroke="#db0012" stroke-width="5" stroke-linecap="round"/>
+  </g>
+  <circle cx="108" cy="112" r="17" fill="url(#lm-badge)" stroke="#fbe0e4" stroke-width="5"/>
+  <path d="M102 106l12 12M114 106l-12 12" stroke="#fff" stroke-width="4.500" stroke-linecap="round"/>
 </svg>
