@@ -233,7 +233,7 @@ export function DevicesPanel({ benchId, computingId, onClearComputing, onViewEve
         </div>
         <Input.Search
           allowClear
-          placeholder="Device, serial or computing unit"
+          placeholder="Device, PnP ID or computing unit"
           aria-label="Search devices"
           style={{ width: 300, maxWidth: '100%' }}
           onSearch={(value) => { setQ(value.trim()); setPage(1); }}

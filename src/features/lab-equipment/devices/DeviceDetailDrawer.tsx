@@ -23,7 +23,7 @@ function problemMessage(error: unknown, fallback: string): string {
   return body?.error?.message || fallback;
 }
 
-function LinkToInventory({ connectionId, serial }: { connectionId: number; serial: string }) {
+function LinkToInventory({ connectionId, hardwareId }: { connectionId: number; hardwareId: string }) {
   const [search, setSearch] = useState('');
   const [equipmentId, setEquipmentId] = useState<number>();
   const options = useLabsEquipmentOptionsRetrieveQuery(search.trim().length >= 2 ? { q: search.trim() } : skipToken);
@@ -33,7 +33,7 @@ function LinkToInventory({ connectionId, serial }: { connectionId: number; seria
     if (!equipmentId) return;
     try {
       const result = await link({ connectionId, equipmentId }).unwrap();
-      message.success(result.match_status.value === 'matched' ? 'Linked to inventory' : `Serial saved; match is ${result.match_status.label.toLowerCase()}`);
+      message.success(result.match_status.value === 'matched' ? 'Linked to inventory' : `Hardware ID registered; match is ${result.match_status.label.toLowerCase()}`);
       setEquipmentId(undefined);
     } catch (error) {
       message.error(problemMessage(error, 'Could not link this device'));
@@ -44,8 +44,9 @@ function LinkToInventory({ connectionId, serial }: { connectionId: number; seria
     <section className={styles.matchCard} aria-labelledby="link-title">
       <h3 id="link-title" className={styles.panelTitle}>Match to inventory</h3>
       <span className={styles.footnote}>
-        No single equipment unit has serial <span className={styles.mono}>{serial}</span>. Link this device to the unit it is,
-        and its serial number is saved on that unit. A unit that already has another serial is never changed.
+        No equipment unit has the hardware ID <span className={styles.mono} style={{ overflowWrap: 'anywhere' }}>{hardwareId}</span>.
+        Link this device to the unit it is: the ID is registered on that unit and the agent watches it from its next policy
+        sync. An ID already registered on another unit is never moved.
       </span>
       <Select
         showSearch
@@ -65,7 +66,7 @@ function LinkToInventory({ connectionId, serial }: { connectionId: number; seria
       />
       <div>
         <Button type="primary" onClick={() => void submit()} loading={isLoading} disabled={!equipmentId}>
-          Link and save serial
+          Link and register ID
         </Button>
       </div>
     </section>
@@ -162,12 +163,12 @@ export function DeviceDetailDrawer({ connectionId, onClose }: { connectionId: nu
             <ToneBadge tone={presentation.matchTone} label={presentation.matchLabel} title={presentation.matchDescription} />
           </div>
 
-          {presentation.canLink && <LinkToInventory connectionId={connection.id} serial={connection.serial_number} />}
+          {presentation.canLink && <LinkToInventory connectionId={connection.id} hardwareId={presentation.hardwareId} />}
           {presentation.inventoryFix && (
             <Alert type="warning" showIcon title="Fix this in the equipment inventory" description={presentation.inventoryFix} />
           )}
-          {connection.match_status.value === 'unmatched' && !connection.serial_number && (
-            <Alert type="info" showIcon title="This device reported no serial number" description="It cannot be linked to inventory until the agent reports a serial." />
+          {connection.match_status.value === 'unmatched' && !presentation.hardwareId && (
+            <Alert type="info" showIcon title="This device reported no hardware ID" description="It cannot be linked to inventory until the agent reports its PnP ID." />
           )}
 
           <section className={styles.panel} aria-labelledby="evidence-title">
@@ -175,7 +176,11 @@ export function DeviceDetailDrawer({ connectionId, onClose }: { connectionId: nu
             <Descriptions size="small" column={1} bordered>
               <Descriptions.Item label="Reported name">{connection.name || '—'}</Descriptions.Item>
               <Descriptions.Item label="Inventory">{connection.equipment ? connection.equipment.name : presentation.matchDescription}</Descriptions.Item>
-              <Descriptions.Item label="Serial"><span className={styles.mono}>{connection.serial_number || '—'}</span></Descriptions.Item>
+              <Descriptions.Item label="Hardware IDs">
+                {(connection.hardware_ids ?? []).length === 0 ? '—' : (connection.hardware_ids ?? []).map((id) => (
+                  <div key={`${id.kind}:${id.value}`} className={styles.mono} style={{ overflowWrap: 'anywhere' }}>{id.value}</div>
+                ))}
+              </Descriptions.Item>
               <Descriptions.Item label="Interface">{connection.interface?.name || connection.interface_name}</Descriptions.Item>
               <Descriptions.Item label="Collector"><span className={styles.mono}>{connection.collector_key}</span></Descriptions.Item>
               <Descriptions.Item label="Instance key"><span className={styles.mono} style={{ overflowWrap: 'anywhere' }}>{connection.observation_key}</span></Descriptions.Item>

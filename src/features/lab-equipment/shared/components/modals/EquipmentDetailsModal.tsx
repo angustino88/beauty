@@ -12,6 +12,7 @@ import { MappingVisualization } from '@/features/spaces/mapping/components/Mappi
 import type { ResourceMappingRow } from '@/features/spaces/mapping/types';
 import { SpaceDetailSummary } from '@/features/spaces/shared/components/SpaceDetailSummary';
 import { EquipmentCompactSummary } from './EquipmentCompactSummary';
+import { EquipmentHardwareIds } from '@/features/lab-equipment/devices/EquipmentHardwareIds';
 import { DowntimeTab } from '@/features/spaces/shared/components/DowntimeTab';
 import { ChangeLifecycleModal } from '@/features/spaces/shared/components/ChangeLifecycleModal';
 import type {
@@ -773,6 +774,9 @@ export default function EquipmentDetailsModal({
               mappingError={equipmentMappingQuery.isError}
               onRetryMapping={() => void equipmentMappingQuery.refetch()}
             />
+            {equipmentType !== 'computing' && Number.isFinite(recordId) && (
+              <EquipmentHardwareIds equipmentId={recordId} canEdit={isAdmin} />
+            )}
           </>
         ) : (
           <>
