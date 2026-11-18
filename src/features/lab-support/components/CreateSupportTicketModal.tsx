@@ -1,11 +1,15 @@
 import { useState } from 'react';
-import { Alert, DatePicker, Form, Input, Modal, Select, Space, Typography, message } from 'antd';
+import { Alert, DatePicker, Form, Input, Modal, Select, Space, Typography, Upload, message } from 'antd';
+import type { UploadFile } from 'antd';
+import { InboxOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import {
   useCreateSupportTicketMutation,
   useGetSupportCategoriesQuery,
   useGetSupportPrioritiesQuery,
+  useUploadSupportAttachmentMutation,
 } from '../api';
+import { SUPPORT_ATTACHMENT_ACCEPT, SUPPORT_ATTACHMENT_HINT, apiErrorMessage } from '../attachments';
 import type { TicketCreatePayload } from '../types';
 
 interface CreateSupportTicketModalProps {
@@ -21,6 +25,8 @@ export function CreateSupportTicketModal({
 }: CreateSupportTicketModalProps) {
   const [form] = Form.useForm<TicketCreatePayload>();
   const [submitting, setSubmitting] = useState(false);
+  const [files, setFiles] = useState<UploadFile[]>([]);
+  const [uploadAttachment] = useUploadSupportAttachmentMutation();
 
   const [createTicket] = useCreateSupportTicketMutation();
   const { data: categoriesData, isFetching: isCategoriesFetching, isError: categoriesError } =
@@ -49,16 +55,30 @@ export function CreateSupportTicketModal({
         due_date: values.due_date || null,
       }).unwrap();
 
-      void message.success(`Ticket ${ticket.key || `#${ticket.id}`} created successfully!`);
+      const ticketLabel = ticket.key || `#${ticket.id}`;
+      const selected = files.flatMap((entry) => (entry.originFileObj ? [entry.originFileObj] : []));
+      const failed: string[] = [];
+      for (const file of selected) {
+        try {
+          await uploadAttachment({ key: ticket.key, file }).unwrap();
+        } catch (error) {
+          failed.push(`${file.name}: ${apiErrorMessage(error)}`);
+        }
+      }
+
+      if (failed.length) {
+        void message.warning(
+          `Ticket ${ticketLabel} created, but ${failed.length} file(s) were not attached. ${failed.join(' ')} You can add them from the ticket page.`,
+          10,
+        );
+      } else {
+        void message.success(`Ticket ${ticketLabel} created successfully!`);
+      }
       form.resetFields();
+      setFiles([]);
       onSuccess();
     } catch (error: unknown) {
-      const detail =
-        (error as { data?: { message?: string; detail?: string } })?.data
-          ?.message ??
-        (error as { data?: { detail?: string } })?.data?.detail ??
-        (error instanceof Error ? error.message : 'Failed to create support ticket');
-      void message.error(`Error: ${detail}`);
+      void message.error(`Error: ${apiErrorMessage(error, 'Failed to create support ticket')}`);
     } finally {
       setSubmitting(false);
     }
@@ -79,6 +99,7 @@ export function CreateSupportTicketModal({
       open={open}
       onCancel={() => {
         form.resetFields();
+        setFiles([]);
         onCancel();
       }}
       onOk={() => void handleOk()}
@@ -191,6 +212,19 @@ export function CreateSupportTicketModal({
             placeholder="What happened or what do you need? Include the equipment or lab location, impact, troubleshooting already tried, and any steps to reproduce."
             showCount
           />
+        </Form.Item>
+
+        <Form.Item label="Attachments" extra={SUPPORT_ATTACHMENT_HINT}>
+          <Upload.Dragger
+            multiple
+            accept={SUPPORT_ATTACHMENT_ACCEPT}
+            fileList={files}
+            beforeUpload={() => false}
+            onChange={({ fileList }) => setFiles(fileList)}
+          >
+            <p className="ant-upload-drag-icon"><InboxOutlined /></p>
+            <p className="ant-upload-text">Click or drag screenshots, photos or documents here</p>
+          </Upload.Dragger>
         </Form.Item>
       </Form>
       </Space>
