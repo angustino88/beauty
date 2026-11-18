@@ -5,6 +5,7 @@ import { Activity } from "lucide-react";
 import { useGetBenchOptionsQuery } from "@/features/booking/api";
 import { DevicesPanel } from "@/features/lab-equipment/devices";
 import { MonitoringEventsPanel } from "../components/MonitoringEventsPanel";
+import styles from "./LabMonitoring.module.css";
 import tableStyles from "@/components/tables/AppTable.module.css";
 import heading from "@/features/lab-equipment/shared/components/layout/InventoryPresentation.module.css";
 
@@ -57,6 +58,7 @@ export default function LabMonitoring() {
       </header>
       <Card className={`${tableStyles.tableCard} ${tableStyles.registerCard}`}>
         <Tabs
+          className={styles.tabs}
           destroyOnHidden
           activeKey={tab}
           onChange={(key) => update({ tab: key })}
