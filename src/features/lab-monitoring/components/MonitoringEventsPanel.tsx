@@ -33,7 +33,9 @@ export function MonitoringEventsPanel({ benchId, computingId, computingLabel, on
 
   const filter = { lab: benchId, computing_id: computingId, ...period };
   const [fetchExport] = useLazyGetLabMonitoringExportQuery();
-  const { data, isFetching, refetch } = useGetLabMonitoringListQuery({ ...filter, page, page_size: pageSize });
+  const { data, currentData, isFetching, refetch } = useGetLabMonitoringListQuery({ ...filter, page, page_size: pageSize });
+  // Spinner only while the shown rows are for other filters/page; a live or manual refetch swaps rows silently.
+  const isLoadingNewQuery = isFetching && currentData === undefined;
   useLabMonitoringWebSocket({ labId: benchId, onReload: refetch });
 
   const rows = useMemo<ILabMonitoring[]>(() => data?.value ?? [], [data?.value]);
@@ -111,7 +113,7 @@ export function MonitoringEventsPanel({ benchId, computingId, computingLabel, on
         dataSource={rows}
         rowKey="id"
         rowClassName={(_, index) => `${styles.row} ${rowAdded && index === 0 ? styles.highlightRow : ""}`}
-        loading={{ spinning: isFetching, description: "Loading..." }}
+        loading={{ spinning: isLoadingNewQuery, description: "Loading..." }}
         locale={{ emptyText: "No monitoring data found — try adjusting the filters" }}
         onChange={handleTableChange}
         pagination={{
