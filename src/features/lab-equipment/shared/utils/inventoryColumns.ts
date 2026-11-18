@@ -12,4 +12,4 @@ export function getVisibleInventoryColumns<T extends { key?: unknown }>(
       || REQUIRED_INVENTORY_COLUMN_KEYS.includes(key);
   });
   return [...visible.filter((column) => column.key === 'id'), ...visible.filter((column) => column.key !== 'id')];
-}
+}
