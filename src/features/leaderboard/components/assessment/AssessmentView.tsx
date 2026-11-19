@@ -122,26 +122,36 @@ export function AssessmentReport({ assessment }: { assessment: LeaderboardAssess
   );
 }
 
+const VISIBILITY = {
+  self: 'Visible to you, lab coordinators and admins',
+  user: 'Visible to this user, lab coordinators and admins',
+  bench: 'Lab coordinators and admins only',
+} as const;
+
 interface AssessmentPanelProps {
   assessment?: LeaderboardAssessment;
   loading: boolean;
   error: boolean;
+  /** Whose assessment it is, for the title and the visibility note: the viewer's own, another user's, or a bench's. */
+  audience?: 'self' | 'user' | 'bench';
 }
 
-/** Card around the report for the detail view. Shown only to lab coordinators and admins. */
-export function AssessmentPanel({ assessment, loading, error }: AssessmentPanelProps) {
+/** Card around the report for the detail view: lab coordinators and admins, or the user it is about. */
+export function AssessmentPanel({ assessment, loading, error, audience = 'bench' }: AssessmentPanelProps) {
   return (
     <section className={styles.report} aria-label="KPI assessment">
       <div className={styles.head}>
         <div>
-          <h4 className={styles.title}>KPI assessment</h4>
+          <h4 className={styles.title}>{audience === 'self' ? 'Your KPI assessment' : 'KPI assessment'}</h4>
           {assessment && (
             <div className={styles.period}>
               {period(assessment.period)} · {assessment.total_sessions} sessions · {assessment.total_bookings} bookings
             </div>
           )}
         </div>
-        <span className={styles.restricted}><LockOutlined aria-hidden="true" /> Coordinators and admins only</span>
+        <span className={styles.restricted}>
+          <LockOutlined aria-hidden="true" /> {VISIBILITY[audience]}
+        </span>
       </div>
       {loading && !assessment ? (
         <div className={styles.body}><Skeleton active paragraph={{ rows: 6 }} /></div>

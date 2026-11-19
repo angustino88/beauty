@@ -140,12 +140,15 @@ export function LeaderboardDetailModal({ open, type, userRow, labRow, filter, on
     { icon: <DesktopOutlined />,     title: 'Booked Time Used',    value: toPercent(labRow?.booking_utilization) },
   ], [labRow]);
 
-  // The assessment is for lab coordinators and admins only; the API refuses everyone else.
+  // Coordinators and admins see every assessment; a user sees their own. The API enforces the same rule.
   const permissionGroups = useAppSelector((state) => state.me.permissionGroups) as Record<string, unknown> | null;
-  const canSeeAssessment = Boolean(permissionGroups?.['admin'] || permissionGroups?.['lab-coordinator']);
+  const myId = useAppSelector((state) => state.me.id);
+  const isStaff = Boolean(permissionGroups?.['admin'] || permissionGroups?.['lab-coordinator']);
+  const isOwn = type === 'persona' && myId != null && userRow?.id === myId;
+  const canSeeAssessment = isStaff || isOwn;
   const assessmentArg = { id: selectedId ?? 0, filter };
   const userAssessment = useGetUserAssessmentQuery(assessmentArg, { skip: !open || !canSeeAssessment || type !== 'persona' || !selectedId });
-  const benchAssessment = useGetBenchAssessmentQuery(assessmentArg, { skip: !open || !canSeeAssessment || type !== 'lab' || !selectedId });
+  const benchAssessment = useGetBenchAssessmentQuery(assessmentArg, { skip: !open || !isStaff || type !== 'lab' || !selectedId });
   const assessmentQuery = type === 'persona' ? userAssessment : benchAssessment;
 
   const metrics = type === 'persona' ? personaMetrics : labMetrics;
@@ -187,6 +190,7 @@ export function LeaderboardDetailModal({ open, type, userRow, labRow, filter, on
           assessment={assessmentQuery.currentData}
           loading={assessmentQuery.isFetching}
           error={assessmentQuery.isError}
+          audience={type === 'lab' ? 'bench' : isOwn ? 'self' : 'user'}
         />
       )}
 
