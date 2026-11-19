@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#fbf6e9">
+  <title>Little Acre</title>
+  <link rel="stylesheet" href="style.css">
+  <script defer src="game.js"></script>
+</head>
+<body>
+  <header class="top">
+    <div class="brand"><span aria-hidden="true">🌱</span> Little Acre</div>
+    <div class="stats"><span>☀️ Day <b id="day">1</b></span><span>🪙 <b id="coins">30</b> coins</span></div>
+  </header>
+  <main>
+    <section class="farm">
+      <div class="farm-header"><div><h1>Your farm</h1><p>Plant, water, and watch your garden grow.</p></div><button id="next" class="primary">End day <span aria-hidden="true">→</span></button></div>
+      <div class="field">
+        <canvas id="land" width="480" height="320" aria-hidden="true"></canvas>
+        <div class="plots" id="plots" aria-label="Farm plots"></div>
+      </div>
+      <div class="toolbar" aria-label="Farm tools">
+        <button data-tool="plant" aria-pressed="true">🌱 <span>Plant</span></button>
+        <button data-tool="water" aria-pressed="false">💧 <span>Water</span></button>
+        <button data-tool="harvest" aria-pressed="false">🧺 <span>Harvest</span></button>
+        <button id="water-all">💦 Water all</button>
+      </div>
+      <p class="status" id="status" role="status">Pick a seed and select an empty plot to plant it.</p>
+    </section>
+    <aside>
+      <section class="panel order"><h2>Market order</h2><p id="order"></p><button class="primary" id="deliver">Deliver order</button></section>
+      <section class="panel"><h2>Seed shop</h2><p>Choose a crop to plant. Seeds are paid for when you plant them.</p><div id="seeds"></div></section>
+      <section class="panel"><h2>Harvest basket</h2><p id="basket">Your basket is empty.</p><button id="sell" class="primary" disabled>Sell harvest</button></section>
+    </aside>
+  </main>
+  <footer>Little Acre <span>·</span> Progress saves on this device</footer>
+</body>
+</html>

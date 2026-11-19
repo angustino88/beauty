@@ -1,0 +1,70 @@
+:root {
+  color-scheme: light;
+  font-family: system-ui, sans-serif;
+  color: #303724;
+  background: #fbf6e9;
+  --line: #e9e0c9;
+  --green: #34583b;
+  --muted: #656a55;
+}
+* { box-sizing: border-box; }
+body { margin: 0; }
+button { font: inherit; cursor: pointer; }
+button:focus-visible { outline: 3px solid #be632b; outline-offset: 3px; }
+button:disabled { cursor: default; opacity: .5; }
+.top { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 16px max(20px, calc((100% - 1120px) / 2)); background: #fffdf5; border-bottom: 1px solid var(--line); }
+.brand, h1, h2 { font-family: Georgia, serif; }
+.brand { display: flex; align-items: center; gap: 9px; font-size: clamp(20px, 4vw, 28px); font-weight: bold; white-space: nowrap; }
+.stats { display: flex; gap: 8px; white-space: nowrap; }
+.stats span { border-radius: 30px; background: #f2ead5; padding: 8px 12px; font-size: clamp(11px, 2.5vw, 14px); }
+main { width: min(1120px, calc(100% - 40px)); margin: 36px auto 22px; display: grid; grid-template-columns: minmax(0, 1fr) 290px; gap: 24px; align-items: start; }
+.farm, .panel { background: #fffdf5; border: 1px solid var(--line); border-radius: 20px; box-shadow: 0 6px 16px #503b1810; }
+.farm { padding: 22px; }
+.farm-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 18px; }
+h1, h2, p { margin: 0; }
+h1 { font-size: clamp(32px, 5vw, 48px); letter-spacing: -.04em; }
+h2 { font-size: 25px; }
+p { color: var(--muted); font-size: 14px; line-height: 1.5; margin-top: 5px; }
+.primary { background: var(--green); color: white; border: 0; border-radius: 10px; padding: 11px 15px; font-weight: 700; white-space: nowrap; }
+.primary:hover:enabled { background: #284832; }
+.field { position: relative; overflow: hidden; border-radius: 13px; box-shadow: inset 0 0 0 1px #625d37; background: #83aa57; }
+canvas { display: block; width: 100%; image-rendering: pixelated; }
+.plots { position: absolute; inset: 39% 21% 19%; display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(3, 1fr); gap: 4%; }
+.plot { min-width: 0; padding: 0; border: 2px solid #5e3828; border-radius: 5px; box-shadow: inset 0 -4px #60382091; color: white; background: repeating-linear-gradient(0deg, #98603b 0 5px, #ab7045 5px 10px); font-size: clamp(17px, 4vw, 36px); line-height: 1; }
+.plot:hover { filter: brightness(1.18); }
+.plot.wet { background: repeating-linear-gradient(0deg, #654e3f 0 5px, #795e49 5px 10px); }
+.plot.ripe { border-color: #ffe39c; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 15px; }
+.toolbar button, .seed { background: #f9f3e4; border: 1px solid var(--line); border-radius: 10px; color: inherit; padding: 9px 13px; }
+button[aria-pressed="true"] { background: #e6eed8; border-color: #88a476; }
+.status { min-height: 1.5em; margin-top: 11px; }
+aside { display: grid; gap: 16px; }
+.panel { padding: 18px; }
+#seeds { display: grid; gap: 8px; margin-top: 14px; }
+.seed { display: grid; grid-template-columns: 28px 1fr auto; gap: 8px; align-items: center; text-align: left; width: 100%; }
+.seed small { display: block; color: var(--muted); }
+.seed .icon { font-size: 20px; }
+#sell { width: 100%; margin-top: 13px; }
+footer { text-align: center; font-size: 13px; color: var(--muted); padding: 0 12px 22px; }
+footer span { padding: 0 5px; }
+@media (max-width: 790px) {
+  main { grid-template-columns: 1fr; margin-top: 20px; }
+  aside { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 500px) {
+  main { width: calc(100% - 24px); }
+  .farm { padding: 12px; }
+  aside { grid-template-columns: 1fr; }
+  .stats span { padding: 7px; }
+}
+.top { background: #243e35; color: #fff4d8; border-bottom: 4px solid #d0ae6b; }
+.stats span { background: #365246; color: #fff2cc; }
+body { background: radial-gradient(ellipse at 10% 12%, #f2ead4, transparent 55%), #f7f4e9; }
+.field { border: 4px solid #49583b; }
+.plot { transition: filter .15s, transform .15s; }
+.plot:hover { transform: translateY(-1px); }
+.order { background: #344f40; color: #fff1d2; }
+.order p { color: #f2e2ba; }
+.order button { background: #f1cf84; color: #293e30; margin-top: 12px; }
+.order button:hover:enabled { background: #ffe3a2; }
+#water-all { margin-left: auto; }
