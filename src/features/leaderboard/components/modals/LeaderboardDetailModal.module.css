@@ -141,5 +141,6 @@
 }
 
 
-/* KPI assessment action, top right of the profile header. */
-.headerAction { flex-shrink: 0; align-self: flex-start; }
+/* Overview | KPI assessment tabs under the profile header. */
+.tabs :global(.ant-tabs-nav) { margin-bottom: 16px; }
+.tabLabel { display: inline-flex; align-items: center; gap: 6px; }
