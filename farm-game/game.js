@@ -5,13 +5,14 @@ const crops = {
   cabbage: { name: "Cabbage", icon: "🥬", cost: 5, days: 2, price: 13 },
   strawberry: { name: "Strawberry", icon: "🍓", cost: 8, days: 3, price: 22 }
 };
+const rainyDay = day => day % 5 === 3 || day % 9 === 0;
 const saveKey = "little-acre-v1";
 const byId = (id) => document.getElementById(id);
 
 function loadFarm() {
   try {
     const farm = JSON.parse(localStorage.getItem(saveKey));
-    if (farm?.plots?.length === 12 && farm.basket && Number.isInteger(farm.day) && Number.isInteger(farm.coins)) {
+    if ([12, 16, 20, 24, 28, 32].includes(farm?.plots?.length) && farm.basket && Number.isInteger(farm.day) && Number.isInteger(farm.coins)) {
       return farm;
     }
   } catch {
@@ -21,16 +22,18 @@ function loadFarm() {
 }
 
 const farm = loadFarm();
+const renderValley = setupValley(farm, commit, render);
 let tool = "plant";
 let selected = "carrot";
 const tools = [...document.querySelectorAll("[data-tool]")];
-const plotButtons = farm.plots.map((_, index) => {
+function createPlot(index) {
   const button = document.createElement("button");
   button.className = "plot";
   button.addEventListener("click", () => tend(index));
   byId("plots").append(button);
   return button;
-});
+}
+const plotButtons = farm.plots.map((_, index) => createPlot(index));
 
 const seedButtons = Object.entries(crops).map(([id, crop]) => {
   const button = document.createElement("button");
@@ -46,6 +49,12 @@ const seedButtons = Object.entries(crops).map(([id, crop]) => {
 });
 
 function render(message) {
+  renderValley();
+  renderEstate();
+  const rain = rainyDay(farm.day);
+  document.body.classList.toggle("rainy",rain);
+  byId("weather").firstChild.textContent = rain ? "☂ Rain · Day " : "☀ Day ";
+  byId("weather").title = (rain ? "Rain waters all growing crops today. " : "") + (rainyDay(farm.day+1) ? "Tomorrow: rain." : "Tomorrow: sunshine.");
   byId("day").textContent = farm.day;
   byId("coins").textContent = farm.coins;
   const order = currentOrder();
@@ -122,8 +131,8 @@ function tend(index) {
     if (plot) return render("This plot is occupied. Choose an empty plot.");
     if (farm.coins < crop.cost) return render("You need more coins to plant this seed.");
     farm.coins -= crop.cost;
-    farm.plots[index] = { crop: selected, age: 0, wet: false };
-    return commit(`Planted ${crop.name.toLowerCase()}. Water it before ending the day.`);
+    farm.plots[index] = { crop: selected, age: 0, wet: rainyDay(farm.day) };
+    return commit(`Planted ${crop.name.toLowerCase()}. ${rainyDay(farm.day) ? "Today’s rain has watered it." : "Water it before ending the day."}`);
   }
 
   if (!plot) return render("Plant a seed here first.");
@@ -159,13 +168,20 @@ for (const button of tools) {
 byId("next").addEventListener("click", () => {
   let ready = 0;
   for (const plot of farm.plots) {
-    if (!plot?.wet) continue;
+    if (!plot || plot.age >= crops[plot.crop].days || (!plot.wet && !farm.irrigated && !rainyDay(farm.day))) continue;
     plot.age++;
     plot.wet = false;
     if (plot.age === crops[plot.crop].days) ready++;
   }
+  for (const animal of Object.values(farm.animals)) {
+    if (animal.fed) animal.ready = true;
+    animal.fed = false;
+  }
   farm.day++;
-  commit(ready ? `${ready} ${ready === 1 ? "crop is" : "crops are"} ready to harvest!` : "A new day begins. Water your crops to keep them growing.");
+  if (rainyDay(farm.day)) {
+    for (const plot of farm.plots) if(plot && plot.age < crops[plot.crop].days) plot.wet = true;
+  }
+  commit(ready ? `${ready} ${ready === 1 ? "crop is" : "crops are"} ready to harvest!` : (rainyDay(farm.day) ? "Rain is watering the fields today." : "A new day begins. Water your crops to keep them growing."));
 });
 
 byId("sell").addEventListener("click", () => {
@@ -176,80 +192,80 @@ byId("sell").addEventListener("click", () => {
   commit(`Sold your harvest for ${value} coins.`);
 });
 
-function drawLandscape() {
-  const context = byId("land").getContext("2d");
-  function rect(color, x, y, width, height) {
-    context.fillStyle = color;
-    context.fillRect(x, y, width, height);
+const species = {
+  hen: { name: "Hen", icon: "🐔", cost: 12, product: "eggs", price: 4 },
+  cow: { name: "Cow", icon: "🐄", cost: 32, product: "milk", price: 9 }
+};
+farm.animals ??= {};
+function expansionCost() {
+  return 20 + (farm.plots.length - 12) * 5;
+}
+byId("expand").onclick = () => {
+  const cost = expansionCost();
+  if (farm.plots.length >= 32 || farm.coins < cost) return;
+  farm.coins -= cost;
+  for (let i = 0; i < 4; i++) {
+    plotButtons.push(createPlot(farm.plots.length));
+    farm.plots.push(null);
   }
-  function shape(color, points) {
-    context.fillStyle = color;
-    context.beginPath();
-    for (const [index, [x, y]] of points.entries()) {
-      if (index === 0) context.moveTo(x, y);
-      else context.lineTo(x, y);
-    }
-    context.closePath();
-    context.fill();
-  }
+  commit(farm.plots.length > 20 ? "Four new plots await in Cider Orchard." : "Four new plots are ready at the homestead.");
+};
 
-  rect("#bce0cf", 0, 0, 480, 320);
-  rect("#fce6a2", 397, 23, 22, 22);
-  rect("#fce6a2", 392, 28, 32, 12);
-  for (const [x, y] of [[30, 30], [179, 19], [293, 37]]) {
-    rect("#f4f3d5", x, y + 5, 46, 7);
-    rect("#f4f3d5", x + 9, y, 21, 7);
-  }
-  shape("#92bb82", [[0, 66], [54, 49], [91, 62], [150, 41], [224, 67], [290, 49], [340, 66], [412, 52], [480, 67], [480, 114], [0, 114]]);
-  shape("#719c64", [[0, 89], [69, 64], [133, 86], [222, 68], [302, 86], [373, 69], [480, 88], [480, 126], [0, 126]]);
-  rect("#8ab25f", 0, 92, 480, 228);
-  shape("#a6c873", [[0, 119], [107, 97], [360, 97], [480, 116], [480, 305], [0, 290]]);
-  shape("#d9be7f", [[208, 320], [273, 320], [253, 248], [224, 248]]);
-  rect("#78964f", 88, 114, 304, 152);
-  rect("#ba955d", 93, 118, 294, 146);
-  for (let i = 0; i < 150; i++) {
-    const x = (i * 73 + 19) % 474;
-    const y = 104 + (i * 53) % 211;
-    if ((x > 88 && x < 392 && y < 267) || (x > 208 && x < 273 && y >= 248)) continue;
-    rect(i % 7 === 0 ? "#f6df91" : "#789d53", x, y, 3, 2);
-    rect("#91b760", x + 3, y - 3, 2, 3);
-  }
-  rect("#99774b", 14, 109, 452, 4);
-  rect("#d7bc82", 14, 102, 452, 4);
-  for (let x = 14; x < 468; x += 24) {
-    rect("#91704a", x + 4, 97, 3, 22);
-    rect("#ebcf92", x, 96, 4, 22);
-  }
+byId("irrigate").onclick = () => {
+  if (farm.irrigated || farm.coins < 75) return;
+  farm.coins -= 75;
+  farm.irrigated = true;
+  commit("Sprinklers installed across your homestead and orchard plots.");
+};
 
-  // Barn and silo on the ridge, with a shaded roof and cross-braced doors.
-  rect("#708854", 52, 95, 84, 7);
-  rect("#b2bbb0", 104, 63, 23, 34);
-  shape("#697b78", [[102,64],[107,55],[118,52],[127,58],[130,64]]);
-  for (let y = 69; y < 95; y += 7) rect("#87978b", 104, y, 23, 2);
-  rect("#aa5540", 46, 72, 59, 26);
-  for (let x = 47; x < 105; x += 6) rect("#bd6549", x, 73, 2, 24);
-  shape("#793f34", [[39,75],[49,55],[65,45],[91,47],[109,74]]);
-  shape("#c8794e", [[49,56],[65,45],[91,47],[99,57]]);
-  rect("#f1d49a", 56, 77, 22, 21);
-  rect("#813f33", 58, 79, 18, 19);
-  context.strokeStyle = "#efd499";
-  context.lineWidth = 2;
-  context.beginPath();
-  context.moveTo(59,80); context.lineTo(75,96);
-  context.moveTo(75,80); context.lineTo(59,96);
-  context.stroke();
-  rect("#f1d49a", 86, 78, 11, 10);
-  rect("#4f645a", 88, 80, 7, 6);
-  // A lily pond with stepped banks and reflected light.
-  for (const [color,x,y,w,h] of [["#74944e",13,273,68,24],["#b1b675",8,279,77,13],["#579c97",13,278,65,15],["#69b2a7",21,274,49,20],["#a6d7ba",26,280,18,2],["#a6d7ba",57,286,12,2],["#538654",33,287,8,3],["#edc3aa",36,285,3,2]]) rect(color,x,y,w,h);
-  for (const [x, y] of [[25, 143], [52, 222], [8, 266], [414, 157], [435, 243], [404, 282]]) {
-    rect("#7d9e54", x - 8, y + 14, 43, 7);
-    rect("#7d593b", x + 11, y - 5, 7, 23);
-    shape("#417345", [[x + 13, y - 35], [x + 27, y - 27], [x + 30, y - 12], [x + 23, y - 3], [x + 1, y - 3], [x - 5, y - 13], [x, y - 27]]);
-    shape("#60914d", [[x + 10, y - 35], [x + 23, y - 29], [x + 22, y - 17], [x + 13, y - 12], [x, y - 16], [x, y - 27]]);
-    rect("#83aa53", x + 5, y - 28, 7, 4);
+function renderEstate() {
+  byId("irrigate").disabled = Boolean(farm.irrigated) || farm.coins < 75;
+  byId("irrigate").textContent = farm.irrigated ? "Sprinklers installed" : "Install sprinklers · 75 coins";
+  valleyCamera.paint(farm, crops, plotButtons);
+  const size = farm.plots.length;
+  byId("acreage").textContent = `${size} cultivated plots out of 32`;
+  byId("expand").disabled = size >= 32 || farm.coins < expansionCost();
+  byId("expand").textContent = size >= 32 ? "Fully expanded" : `Add 4 ${size >= 20 ? "orchard" : "home"} plots · ${expansionCost()} coins`;
+  for (const [id, animal] of Object.entries(species)) {
+    const state = farm.animals[id];
+    const button = byId(id);
+    button.disabled = state ? state.fed : farm.coins < animal.cost;
+    let action = `Buy · ${animal.cost} coins`;
+    if (state) action = state.ready ? `Sell ${animal.product} · ${animal.price} coins` : state.fed ? "Fed today" : "Feed from pasture";
+    button.textContent = `${animal.name} · ${action}`;
   }
 }
-
-drawLandscape();
+for (const [id, animal] of Object.entries(species)) {
+  const button = document.createElement("button");
+  button.id = id;
+  button.className = "seed";
+  byId("livestock").append(button);
+  button.onclick = () => {
+    const state = farm.animals[id];
+    if (!state) {
+      if (farm.coins < animal.cost) return;
+      farm.coins -= animal.cost;
+      farm.animals[id] = { fed: false, ready: false };
+      return commit(`Your ${animal.name.toLowerCase()} has arrived. Feed it in the pasture.`);
+    }
+    if (state.ready) {
+      farm.coins += animal.price;
+      state.ready = false;
+      return commit(`Sold ${animal.product} for ${animal.price} coins.`);
+    }
+    if (state.fed) return;
+    state.fed = true;
+    commit(`Fed your ${animal.name.toLowerCase()}. Its ${animal.product} will be ready tomorrow.`);
+  };
+}
 render();
+
+const managementButtons = document.querySelectorAll("[data-view]");
+for (const button of managementButtons) {
+  button.addEventListener("click", () => {
+    for (const tab of managementButtons) tab.setAttribute("aria-pressed", tab === button);
+    for (const panel of document.querySelectorAll("[data-panel]")) {
+      panel.hidden = panel.dataset.panel !== button.dataset.view;
+    }
+  });
+}
