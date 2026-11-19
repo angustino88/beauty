@@ -3,6 +3,9 @@ import type { ColumnsType } from 'antd/es/table';
 import { getAvatarUrl } from '@/shared/utils/avatar';
 import { toPercent } from '../../../formatters';
 import type { RankedPersonaItem } from '../../../types';
+import { assessPersona } from '../../../utils/assessment';
+import { AssessmentCell } from '../../assessment/AssessmentView';
+import { HeaderHint } from './HeaderHint';
 
 const { Text } = Typography;
 
@@ -61,7 +64,14 @@ export const personaColumns: ColumnsType<RankedPersonaItem> = [
     render: (_name: string, record) => <Text>{record.display_name || record.username}</Text>,
   },
   {
-    title: 'WFO',
+    title: 'Assessment',
+    key: 'assessment',
+    width: 300,
+    sorter: (a, b) => (assessPersona(a).score ?? -1) - (assessPersona(b).score ?? -1),
+    render: (_: unknown, record) => <AssessmentCell assessment={assessPersona(record)} />,
+  },
+  {
+    title: <HeaderHint label="RFO" hint="Remote from office: sessions against two per weekday." />,
     dataIndex: 'wfo_rate',
     key: 'wfo_rate',
     width: 80,
@@ -70,7 +80,7 @@ export const personaColumns: ColumnsType<RankedPersonaItem> = [
     render: (v: number) => toPercent(v),
   },
   {
-    title: 'WFH',
+    title: <HeaderHint label="RFH" hint="Remote from home: the rest of the expected sessions (100% − RFO)." />,
     dataIndex: 'wfh_rate',
     key: 'wfh_rate',
     width: 80,
@@ -79,28 +89,46 @@ export const personaColumns: ColumnsType<RankedPersonaItem> = [
     render: (v: number) => toPercent(v),
   },
   {
-    title: 'Work Late',
+    title: <HeaderHint label="Work late" hint="Share of lab time between 20:00 and 06:00." />,
     dataIndex: 'late_rate',
     key: 'late_rate',
-    width: 90,
+    width: 100,
     align: 'center',
     sorter: (a, b) => (a.late_rate ?? 0) - (b.late_rate ?? 0),
     render: (v: number) => toPercent(v),
   },
   {
-    title: 'Compliance',
+    title: <HeaderHint label="Attendance" hint="Approved bookings that had a session. Bookings with no session are no-shows." />,
     dataIndex: 'booking_compliance',
     key: 'booking_compliance',
-    width: 100,
+    width: 110,
     align: 'center',
-    sorter: (a, b) => (a.booking_compliance ?? 0) - (b.booking_compliance ?? 0),
-    render: (v: number) => toPercent(v),
+    sorter: (a, b) => (a.booking_compliance ?? -1) - (b.booking_compliance ?? -1),
+    render: (v: number | null) => toPercent(v),
   },
   {
-    title: 'Efficiency',
+    title: <HeaderHint label="Booked used" hint="Booked time actually spent in a session." />,
+    dataIndex: 'booking_utilization',
+    key: 'booking_utilization',
+    width: 120,
+    align: 'center',
+    sorter: (a, b) => (a.booking_utilization ?? -1) - (b.booking_utilization ?? -1),
+    render: (v: number | null) => toPercent(v),
+  },
+  {
+    title: <HeaderHint label="Active" hint="Active time against total session time (idle time excluded)." />,
+    dataIndex: 'active_rate',
+    key: 'active_rate',
+    width: 90,
+    align: 'center',
+    sorter: (a, b) => (a.active_rate ?? -1) - (b.active_rate ?? -1),
+    render: (v: number | null) => toPercent(v),
+  },
+  {
+    title: <HeaderHint label="Efficiency" hint="Active lab time against 8 hours per weekday." />,
     dataIndex: 'usage_efficiency',
     key: 'usage_efficiency',
-    width: 120,
+    width: 110,
     align: 'center',
     sorter: (a, b) => (a.usage_efficiency ?? 0) - (b.usage_efficiency ?? 0),
     render: (v: number | undefined) => toPercent(v),

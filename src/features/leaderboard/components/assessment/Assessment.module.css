@@ -1,0 +1,106 @@
+/* Inline cell: rating pill with score, then the lead strength and the lead point to improve. */
+.cell {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  max-width: 320px;
+  cursor: help;
+}
+
+.ratingLine {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.score {
+  color: var(--lm-text-tertiary);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.point {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  min-width: 0;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.point > span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.strength { color: var(--lm-success-fg); }
+.improve { color: var(--lm-warning-fg); }
+.more { color: var(--lm-text-tertiary); font-size: 11.5px; }
+
+/* Tooltip and detail panel lists. */
+.listTitle {
+  margin: 0 0 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.list li {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  line-height: 1.4;
+}
+
+.tooltip { display: flex; flex-direction: column; gap: 10px; padding: 2px; }
+.tooltip .listTitle { color: inherit; opacity: 0.75; }
+
+/* Detail view panel. */
+.panel {
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--lm-border);
+  border-radius: 12px;
+  background: var(--lm-surface);
+}
+
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.panelTitle {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--lm-text);
+}
+
+.panelColumns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.panelColumns .listTitle { color: var(--lm-text-secondary); }
+.panelColumns .list { font-size: 13px; color: var(--lm-text); }
+.empty { color: var(--lm-text-tertiary); font-size: 13px; }
+
+@media (max-width: 560px) {
+  .panelColumns { grid-template-columns: 1fr; }
+}

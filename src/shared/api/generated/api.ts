@@ -13773,13 +13773,27 @@ export type LeaderboardPersona = {
   wfo_rate?: number;
   wfh_rate?: number;
   late_rate?: number;
+  /** Active lab time against 8 hours per weekday, 0-1. */
   usage_efficiency?: number;
-  booking_compliance?: number;
+  /** Active time against total session time, 0-1; null without sessions. */
+  active_rate?: number | null;
+  /** Sessions without a verified booking against all sessions, 0-1; null without sessions. */
+  ad_hoc_rate?: number | null;
+  /** Attended bookings (at least one session) against approved bookings that have started, 0-1; null without bookings. */
+  booking_compliance?: number | null;
+  /** Booked time actually used against booked time, 0-1; null without bookings. */
+  booking_utilization?: number | null;
+  /** Session time inside the booked slot against all time of booked sessions, 0-1; null when no booking was attended. */
+  slot_adherence?: number | null;
+  /** Bookings with no session. */
+  no_show_bookings?: number;
   last_remote_at?: string | null;
   labs_accessed?: number;
   total_bookings?: number;
   total_sessions: number;
   total_usage_minutes?: number;
+  /** Active minutes in sessions. */
+  active_usage_minutes?: number;
   avg_session_minutes?: number;
   longest_session_minutes?: number;
   top_projects?: string[];
@@ -13794,6 +13808,19 @@ export type LeaderboardLab = {
   total_sessions: number;
   active_users?: number;
   last_remote_at?: string | null;
+  /** Active minutes on the bench. */
+  total_usage_minutes?: number;
+  /** Active time against 8 hours per weekday, 0-1. */
+  utilization_rate?: number;
+  /** Booked time against 8 hours per weekday, 0-1. */
+  booking_fill?: number;
+  total_bookings?: number;
+  /** Bookings with no session. */
+  no_show_bookings?: number;
+  /** Attended bookings against approved bookings that have started, 0-1; null without bookings. */
+  booking_compliance?: number | null;
+  /** Booked time actually used against booked time, 0-1; null without bookings. */
+  booking_utilization?: number | null;
   downtime_minutes?: number;
   top_projects?: string[];
 };

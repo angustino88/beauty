@@ -17,6 +17,8 @@ import type {
 
 type RecordValue = Record<string, unknown>;
 
+const rateOrNull = (value: unknown): number | null => (typeof value === 'number' && Number.isFinite(value) ? value : null);
+
 const mapTopProjects = (projects?: unknown[]): TopProjectItem[] => {
   if (!Array.isArray(projects)) return [];
   return projects.map((p, index) => {
@@ -47,10 +49,16 @@ export function mapPersonaResponse(response: LabsLeaderboardPersonaRetrieveApiRe
       late_rate: (row.late_rate as number) ?? 0,
       labs_accessed: (row.labs_accessed as number) ?? 0,
       usage_efficiency: (row.usage_efficiency as number) ?? 0,
+      active_rate: rateOrNull(row.active_rate),
+      ad_hoc_rate: rateOrNull(row.ad_hoc_rate),
       total_bookings: (row.total_bookings as number) ?? 0,
-      booking_compliance: (row.booking_compliance as number) ?? 0,
+      no_show_bookings: (row.no_show_bookings as number) ?? 0,
+      booking_compliance: rateOrNull(row.booking_compliance),
+      booking_utilization: rateOrNull(row.booking_utilization),
+      slot_adherence: rateOrNull(row.slot_adherence),
       total_sessions: (row.total_sessions as number) ?? 0,
       total_usage_minutes: (row.total_usage_minutes as number) ?? 0,
+      active_usage_minutes: (row.active_usage_minutes as number) ?? 0,
       avg_session_minutes: (row.avg_session_minutes as number) ?? 0,
       longest_session_minutes: (row.longest_session_minutes as number) ?? 0,
       last_remote: (row.last_remote_at as string) ?? null,
@@ -73,11 +81,15 @@ export function mapLabResponse(response: LabsLeaderboardLabRetrieveApiResponse):
       points: (row.points as number) ?? 0,
       active_users: (row.active_users as number) ?? 0,
       utilization_rate: (row.utilization_rate as number) ?? 0,
-      booking_compliance: (row.booking_compliance as number) ?? 0,
+      booking_fill: (row.booking_fill as number) ?? 0,
+      total_bookings: (row.total_bookings as number) ?? 0,
+      no_show_bookings: (row.no_show_bookings as number) ?? 0,
+      booking_compliance: rateOrNull(row.booking_compliance),
+      booking_utilization: rateOrNull(row.booking_utilization),
       availability: (row.availability as number) ?? 0,
       last_remote: (row.last_remote_at as string) ?? null,
       total_sessions: (row.total_sessions as number) ?? 0,
-      total_usage_minutes: (row.total_usage_minutes as number) ?? downtimeMinutes,
+      total_usage_minutes: (row.total_usage_minutes as number) ?? 0,
       downtime_hours: downtimeHours,
       top_projects: mapTopProjects(row.top_projects as unknown[]),
     };

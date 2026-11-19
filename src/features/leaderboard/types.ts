@@ -22,10 +22,21 @@ export interface PersonaItem {
   late_rate: number;
   labs_accessed: number;
   usage_efficiency: number;
+  /** Active time against session time; null without sessions. */
+  active_rate: number | null;
+  /** Sessions without a verified booking; null without sessions. */
+  ad_hoc_rate: number | null;
   total_bookings: number;
-  booking_compliance: number;
+  no_show_bookings: number;
+  /** Attended bookings against expected bookings; null without bookings. */
+  booking_compliance: number | null;
+  /** Booked time actually used; null without bookings. */
+  booking_utilization: number | null;
+  /** Share of booked-session time inside the slot; null when no booking was attended. */
+  slot_adherence: number | null;
   total_sessions: number;
   total_usage_minutes: number;
+  active_usage_minutes: number;
   avg_session_minutes: number;
   longest_session_minutes: number;
   last_remote: string | null;
@@ -40,7 +51,12 @@ export interface LabItem {
   points: number;
   active_users: number;
   utilization_rate: number;
-  booking_compliance: number;
+  /** Booked time against working hours. */
+  booking_fill: number;
+  total_bookings: number;
+  no_show_bookings: number;
+  booking_compliance: number | null;
+  booking_utilization: number | null;
   availability: number;
   last_remote: string | null;
   total_sessions: number;
