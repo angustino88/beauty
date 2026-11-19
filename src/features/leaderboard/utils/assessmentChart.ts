@@ -61,3 +61,14 @@ export function radarData(kpis: AssessmentKpiResult[]): RadarData | null {
 }
 
 export const pct = (value: number | null | undefined) => (value == null ? '—' : `${Math.round(value * 100)}%`);
+
+/**
+ * Progress towards the target, 0–1, as the server scores it: a "higher is better" KPI reaches 1 at the
+ * target; a "lower is better" KPI is 1 up to its ceiling and falls to 0 at 100 %.
+ */
+export function attainment(value: number | null, target: number, isHigherBetter: boolean): number | null {
+  if (value == null) return null;
+  if (isHigherBetter) return target > 0 ? Math.min(1, value / target) : 1;
+  if (value <= target) return 1;
+  return Math.max(0, 1 - (value - target) / (1 - target));
+}

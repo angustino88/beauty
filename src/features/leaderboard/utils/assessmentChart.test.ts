@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import type { AssessmentKpiResult } from '../types.ts';
-import { orientKpis, radarData } from './assessmentChart.ts';
+import { attainment, orientKpis, radarData } from './assessmentChart.ts';
 
 const kpi = (value: string, label: string, v: number | null, prev: number | null, target: number, isHigherBetter = true): AssessmentKpiResult => ({
   kpi: { value, label }, value: v, previous_value: prev, target, is_higher_better: isHigherBetter, weight: 1,
@@ -28,4 +28,12 @@ test('the radar uses applicable KPIs only and needs three axes', () => {
 test('a partial previous period is not drawn', () => {
   const data = radarData([kpi('a', 'A', 0.5, null, 0.9), kpi('c', 'C', 0.7, 0.6, 0.8), kpi('d', 'D', 0.2, 0.1, 0.5)]);
   assert.equal(data?.hasPrevious, false);
+});
+
+test('attainment measures progress towards the target the way the server scores it', () => {
+  assert.equal(attainment(0.45, 0.9, true), 0.5);
+  assert.equal(attainment(0.95, 0.9, true), 1);
+  assert.equal(attainment(0.05, 0.1, false), 1);
+  assert.equal(Math.round((attainment(0.55, 0.1, false) ?? 0) * 100), 50);
+  assert.equal(attainment(null, 0.9, true), null);
 });

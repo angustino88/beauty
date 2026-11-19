@@ -2,74 +2,69 @@ import { Tooltip } from 'antd';
 import { StatusBadge } from '@/shared/components/StatusBadge';
 import type { StatusTone } from '@/shared/status/statusTone';
 import type { AssessmentKpiResult } from '../../types';
-import { pct } from '../../utils/assessmentChart';
+import { attainment, pct } from '../../utils/assessmentChart';
 import styles from './Assessment.module.css';
 
 const STATUS_TONE: Record<string, StatusTone> = { met: 'success', near: 'warning', below: 'danger', not_applicable: 'neutral' };
 
-const toPoints = (value: number | null) => (value == null ? null : Math.round(value * 100));
+function ChangeChip({ kpi }: { kpi: AssessmentKpiResult }) {
+  if (kpi.value == null || kpi.previous_value == null) {
+    return <span className={`${styles.change} ${styles.changeNone}`}>No prior data</span>;
+  }
+  const delta = Math.round((kpi.value - kpi.previous_value) * 100);
+  if (delta === 0) return <span className={`${styles.change} ${styles.changeFlat}`}>No change</span>;
+  const improved = kpi.is_higher_better ? delta > 0 : delta < 0;
+  return (
+    <Tooltip title={`Previous period ${pct(kpi.previous_value)}`}>
+      <span className={`${styles.change} ${improved ? styles.changeUp : styles.changeDown}`}>
+        {delta > 0 ? '+' : '−'}{Math.abs(delta)} pts
+      </span>
+    </Tooltip>
+  );
+}
 
 /**
- * KPI scorecard as bullet bars on the actual value (0–100 %): the result, a target tick and the previous
- * period as a hollow marker. For lower-is-better KPIs the target is a ceiling; colour and status say
- * whether the result is good, and the change arrow is coloured by whether it is an improvement.
+ * KPI scorecard: one row per KPI with its target, a progress bar towards the target (a full bar means the
+ * target is reached), the result, the change against the previous period and the status.
  */
 export function KpiBulletList({ kpis }: { kpis: AssessmentKpiResult[] }) {
   return (
-    <ul className={styles.bullets}>
+    <div className={styles.scorecard} role="table" aria-label="KPI scorecard">
+      <div className={styles.scoreHead} role="row">
+        <span role="columnheader">KPI</span>
+        <span role="columnheader">Progress to target</span>
+        <span role="columnheader" className={styles.alignEnd}>Result</span>
+        <span role="columnheader" className={styles.alignEnd}>Change</span>
+        <span role="columnheader">Status</span>
+      </div>
       {kpis.map((kpi) => {
-        const row = {
-          key: kpi.kpi.value,
-          label: kpi.kpi.label,
-          raw: kpi.value,
-          rawPrevious: kpi.previous_value,
-          rawTarget: kpi.target,
-          isHigherBetter: kpi.is_higher_better,
-          current: toPoints(kpi.value),
-          previous: toPoints(kpi.previous_value),
-          target: toPoints(kpi.target) ?? 0,
-          status: kpi.status,
-        };
-        const delta = row.current != null && row.previous != null ? row.current - row.previous : null;
-        const improved = delta != null && (row.isHigherBetter ? delta > 0 : delta < 0);
+        const progress = attainment(kpi.value, kpi.target, kpi.is_higher_better);
+        const progressPct = progress == null ? null : Math.round(progress * 100);
         return (
-          <li key={row.key} className={styles.bulletRow}>
-            <div className={styles.bulletHead}>
-              <span className={styles.bulletName}>{row.label}</span>
-              <span className={styles.bulletValue}>
-                {pct(row.raw)}
-                <span className={styles.bulletTarget}>target {row.isHigherBetter ? '≥' : '≤'} {pct(row.rawTarget)}</span>
-              </span>
-            </div>
-            <div className={styles.bulletBody}>
-              <Tooltip
-                title={(
-                  <span>
-                    {row.label}: {pct(row.raw)} (target {row.isHigherBetter ? '≥' : '≤'} {pct(row.rawTarget)})
-                    {row.rawPrevious != null ? `, previous period ${pct(row.rawPrevious)}` : ''}
-                  </span>
-                )}
-              >
-                <div className={styles.track} role="img" aria-label={`${row.label}: ${pct(row.raw)}, target ${row.isHigherBetter ? 'at least' : 'at most'} ${pct(row.rawTarget)}`}>
-                  {row.current != null && <div className={`${styles.fill} ${styles[`fill_${row.status.value}`] ?? ''}`} style={{ width: `${Math.max(2, row.current)}%` }} />}
-                  <div className={styles.targetTick} style={{ left: `${row.target}%` }} />
-                  {row.previous != null && <div className={styles.previousMark} style={{ left: `${row.previous}%` }} />}
-                </div>
+          <div key={kpi.kpi.value} className={styles.scoreRow} role="row">
+            <span className={styles.kpiCell} role="cell">
+              <span className={styles.kpiName}>{kpi.kpi.label}</span>
+              <span className={styles.kpiTarget}>Target {kpi.is_higher_better ? '≥' : '≤'} {pct(kpi.target)}</span>
+            </span>
+            <span className={styles.progressCell} role="cell">
+              <Tooltip title={progressPct == null ? 'Not applicable this period' : `${progressPct}% of the way to target`}>
+                <span className={styles.progressTrack} aria-label={progressPct == null ? 'Not applicable' : `${progressPct}% of target`}>
+                  {progressPct != null && (
+                    <span
+                      className={`${styles.progressFill} ${progressPct >= 100 ? styles.progressDone : ''}`}
+                      style={{ width: `${Math.max(3, progressPct)}%` }}
+                    />
+                  )}
+                </span>
               </Tooltip>
-              <span className={styles.bulletDelta}>
-                {delta == null ? <span className={styles.muted}>—</span>
-                  : delta === 0 ? <span className={styles.flat}>±0</span>
-                    : (
-                      <Tooltip title={improved ? 'Improved on the previous period' : 'Worse than the previous period'}>
-                        <span className={improved ? styles.up : styles.down}>{delta > 0 ? '▲' : '▼'} {Math.abs(delta)}</span>
-                      </Tooltip>
-                    )}
-              </span>
-              <StatusBadge tone={STATUS_TONE[row.status.value] ?? 'neutral'} label={row.status.label} fit />
-            </div>
-          </li>
+              <span className={styles.progressValue}>{progressPct == null ? '—' : `${progressPct}%`}</span>
+            </span>
+            <span className={`${styles.resultCell} ${styles.alignEnd}`} role="cell">{pct(kpi.value)}</span>
+            <span className={styles.alignEnd} role="cell"><ChangeChip kpi={kpi} /></span>
+            <span role="cell"><StatusBadge tone={STATUS_TONE[kpi.status.value] ?? 'neutral'} label={kpi.status.label} fit /></span>
+          </div>
         );
       })}
-    </ul>
+    </div>
   );
 }

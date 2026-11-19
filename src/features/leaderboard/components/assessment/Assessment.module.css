@@ -20,6 +20,7 @@
 
 .cardHead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 16px; margin-bottom: 10px; }
 .cardHead .sectionTitle { margin: 0; }
+.cardNote { font-size: 11.5px; color: var(--lm-text-tertiary); }
 
 .sectionTitle {
   margin: 0 0 10px;
@@ -79,42 +80,63 @@
 .chartTooltip strong { font-variant-numeric: tabular-nums; }
 .chartTooltipTitle { margin-bottom: 4px; font-size: 11px; font-weight: 600; color: var(--lm-text-secondary); }
 
-/* Scorecard bullet bars. */
-.bullets { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 12px; }
-.bulletHead { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 5px; }
-.bulletName { font-size: 13px; color: var(--lm-text); }
-.bulletValue { font-size: 13px; font-weight: 600; color: var(--lm-text); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.bulletTarget { margin-left: 8px; font-size: 11.5px; font-weight: 400; color: var(--lm-text-tertiary); }
-.bulletBody { display: grid; grid-template-columns: minmax(0, 1fr) 52px 118px; align-items: center; gap: 12px; }
-.bulletBody > :last-child { justify-self: start; }
-
-.track { position: relative; height: 8px; border-radius: 4px; background: var(--lm-surface-subtle, var(--lm-border-subtle)); cursor: default; }
-.fill { position: absolute; inset: 0 auto 0 0; border-radius: 4px; background: var(--lm-neutral-solid); }
-.fill_met { background: var(--lm-success-solid); }
-.fill_near { background: var(--lm-warning-solid); }
-.fill_below { background: var(--lm-danger-solid); }
-.targetTick { position: absolute; top: -4px; bottom: -4px; width: 2px; margin-left: -1px; border-radius: 1px; background: var(--lm-text); }
-.previousMark {
-  position: absolute;
-  top: 50%;
-  width: 10px;
-  height: 10px;
-  margin: -5px 0 0 -5px;
-  border: 2px solid var(--lm-text-secondary);
-  border-radius: 50%;
-  background: var(--lm-surface);
+/* KPI scorecard: rows with a slim progress-to-target bar in one accent colour. */
+.scorecard { display: flex; flex-direction: column; }
+.scoreHead,
+.scoreRow {
+  display: grid;
+  grid-template-columns: minmax(150px, 1.25fr) minmax(140px, 1.4fr) 64px 96px 118px;
+  align-items: center;
+  gap: 16px;
 }
+.scoreHead {
+  padding: 0 0 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--lm-text-tertiary);
+  border-bottom: 1px solid var(--lm-border);
+}
+.scoreRow { padding: 10px 0; border-bottom: 1px solid var(--lm-border-subtle); }
+.scoreRow:last-child { border-bottom: 0; padding-bottom: 0; }
+.alignEnd { text-align: right; justify-self: end; }
 
-.bulletDelta { font-size: 12px; text-align: right; font-variant-numeric: tabular-nums; }
-.up { color: var(--lm-success-fg); }
-.down { color: var(--lm-danger-fg, var(--lm-danger-solid)); }
-.flat, .muted { color: var(--lm-text-tertiary); }
+.kpiCell { display: flex; flex-direction: column; min-width: 0; }
+.kpiName { font-size: 13px; font-weight: 500; color: var(--lm-text); }
+.kpiTarget { font-size: 11.5px; color: var(--lm-text-tertiary); font-variant-numeric: tabular-nums; }
 
-.bulletLegend { display: flex; gap: 14px; margin: 0; padding: 0; list-style: none; font-size: 11.5px; color: var(--lm-text-secondary); }
-.bulletLegend li { display: inline-flex; align-items: center; gap: 6px; }
-.legendFill { width: 14px; height: 6px; border-radius: 3px; background: var(--lm-text-tertiary); }
-.legendTick { width: 2px; height: 12px; background: var(--lm-text); }
-.legendPrevious { width: 9px; height: 9px; border: 2px solid var(--lm-text-secondary); border-radius: 50%; }
+.progressCell { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.progressTrack {
+  position: relative;
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--lm-chart-1) 12%, transparent);
+  overflow: hidden;
+}
+.progressFill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--lm-chart-1) 70%, var(--lm-surface));
+}
+.progressDone { background: var(--lm-chart-1); }
+.progressValue { width: 36px; font-size: 11.5px; color: var(--lm-text-tertiary); text-align: right; font-variant-numeric: tabular-nums; }
+
+.resultCell { font-size: 14px; font-weight: 600; color: var(--lm-text); font-variant-numeric: tabular-nums; }
+
+.change {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.changeUp { color: var(--lm-success-fg); background: var(--lm-success-bg); }
+.changeDown { color: var(--lm-danger-fg, var(--lm-danger-solid)); background: var(--lm-danger-bg); }
+.changeFlat { color: var(--lm-text-secondary); background: var(--lm-surface-subtle, var(--lm-border-subtle)); }
+.changeNone { padding: 0; font-weight: 400; color: var(--lm-text-tertiary); }
 
 /* Findings. */
 .findings { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
@@ -132,6 +154,7 @@
 @media (max-width: 680px) {
   .overview, .findings { grid-template-columns: 1fr; }
   .scorePanel { border-right: 0; border-bottom: 1px solid var(--lm-border-subtle); }
-  .bulletBody { grid-template-columns: minmax(0, 1fr) 44px; }
-  .bulletBody > :last-child { grid-column: 1 / -1; }
+  .scoreHead { display: none; }
+  .scoreRow { grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; }
+  .progressCell { grid-column: 1 / -1; grid-row: 2; }
 }

@@ -134,11 +134,7 @@ export function AssessmentReport({ assessment, loading, error, audience }: Asses
           <section className={styles.card}>
             <div className={styles.cardHead}>
               <h5 className={styles.sectionTitle}>KPI scorecard</h5>
-              <ul className={styles.bulletLegend} aria-label="Scorecard legend">
-                <li><i className={styles.legendFill} /> Result</li>
-                <li><i className={styles.legendTick} /> Target</li>
-                <li><i className={styles.legendPrevious} /> Previous period</li>
-              </ul>
+              <span className={styles.cardNote}>A full bar means the target is reached</span>
             </div>
             <KpiBulletList kpis={assessment.kpis} />
           </section>
