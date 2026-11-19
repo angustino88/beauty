@@ -150,7 +150,7 @@ export function LabSessionLogTable() {
           : `${total.toLocaleString()} ${total === 1 ? "session" : "sessions"} · logins ${range[0].format("D MMM YYYY")} – ${range[1].format("D MMM YYYY")}`}
       </p>
       <Table<LabSessionLogEntry>
-        className={`${tableStyles.table} ${tableStyles.nowrapHeader}`}
+        className={`${tableStyles.table} ${tableStyles.nowrapHeader} ${styles.table}`}
         tableLayout="fixed"
         rowKey="id"
         size="middle"
@@ -175,7 +175,7 @@ export function LabSessionLogTable() {
             }
           },
         }}
-        scroll={{ x: 1470 }}
+        scroll={{ x: 1860 }}
       />
     </div>
   );

@@ -16,6 +16,7 @@ import type {
 } from '@/shared/api/generated/api';
 import type {
   LabEfficiencyChartEntry,
+  LabSessionBooking,
   LabSessionLogEntry,
   LabSessionLogResponse,
   LabUsageByTimeFrameChartEntry,
@@ -143,7 +144,22 @@ export function mapSessionLogEntry(dto: Record<string, unknown>): LabSessionLogE
     user,
     access_type: access,
     booking_code: asNullableString(dto.booking_code),
-    booking_id: asNumberOrNull(dto.booking_id),
+    booking: mapSessionBooking(dto.booking),
+  };
+}
+
+function mapSessionBooking(value: unknown): LabSessionBooking | null {
+  if (!isRecord(value) || typeof value.id !== 'number') return null;
+  const status = isRecord(value.status) && typeof value.status.value === 'string'
+    ? { value: value.status.value, label: asNullableString(value.status.label) ?? value.status.value }
+    : null;
+  return {
+    id: value.id,
+    booking_code: asNullableString(value.booking_code) ?? '',
+    starts_at: asNullableString(value.starts_at),
+    ends_at: asNullableString(value.ends_at),
+    status,
+    project: asRef(value.project),
   };
 }
 

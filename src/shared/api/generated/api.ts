@@ -10957,6 +10957,8 @@ export type DashboardComputing = {
   /** Client computer of the remote session. */
   remote_computer: string;
   remote_ip: string | null;
+  /** When the current offline or inactive status began; null for any other status. */
+  status_started_at: string | null;
 };
 export type DashboardEquipmentReference = {
   id: number;
@@ -11019,6 +11021,8 @@ export type DashboardComputingDetail = {
   activity_status: string;
   last_agent_report_at: string | null;
   is_stale: boolean | null;
+  /** When the current offline or inactive status began; null for any other status. */
+  status_started_at: string | null;
 };
 export type DashboardEquipmentItem = {
   id: number;
@@ -13724,6 +13728,15 @@ export type SessionLogListSerializersSessionLogItemPaginationMeta = {
   pagination: SessionLogListSerializersSessionLogItemPagination;
 };
 export type SessionLogItem = {};
+export type SessionLogBooking = {};
+export type SessionLogBookingRead = {
+  id: number;
+  booking_code: string;
+  starts_at: string;
+  ends_at: string;
+  status: ChoiceRead;
+  project: LabsNamedReferenceRead | null;
+};
 export type SessionLogItemRead = {
   id: number;
   login_at: string;
@@ -13740,7 +13753,8 @@ export type SessionLogItemRead = {
   user: UserReferenceRead | null;
   access_type: ChoiceRead | null;
   booking_code: string | null;
-  booking_id: number | null;
+  /** The verified booking (access type booked); null otherwise. */
+  booking: SessionLogBookingRead | null;
 };
 export type SessionLogListSerializersSessionLogItemPaginatedResponse = {
   meta: SessionLogListSerializersSessionLogItemPaginationMeta;

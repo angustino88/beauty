@@ -124,6 +124,7 @@ export function mapDashboardBench(
           remote_user: asString(computing.remote_user),
           remote_user_display_name: asString(computing.remote_user_display_name),
           remote_ip: asNullableString(computing.remote_ip),
+          status_started_at: asNullableString(computing.status_started_at),
         }
       : null,
     samples,
@@ -422,6 +423,7 @@ export function mapBenchDetailResponse(
   const activityStatus = computing
     ? asString(computing.activity_status || computing.status)
     : '';
+  const statusStartedAt = computing ? asNullableString(computing.status_started_at) : null;
 
   return {
     id: asNumber(source.id),
@@ -465,6 +467,7 @@ export function mapBenchDetailResponse(
           activity_status: activityStatus,
           last_agent_report_at: asNullableString(computing.last_agent_report_at),
           is_stale: computing.is_stale != null ? Boolean(computing.is_stale) : null,
+          status_started_at: statusStartedAt,
         }
       : null,
     samples: asArray(source.samples).map((s) => {
@@ -567,8 +570,9 @@ export function mapBenchDetailResponse(
       ? {
           id: asNumber(computing.id),
           status: activityStatus,
-          inactive_time: null,
-          offline_time: null,
+          // The server sends one start time for the current spell; it belongs to whichever status is current.
+          inactive_time: activityStatus === 'inactive' ? statusStartedAt : null,
+          offline_time: activityStatus === 'offline' ? statusStartedAt : null,
           booking_code: currentBooking ? asString(currentBooking.booking_code) : null,
           remote_user: asNullableString(computing.remote_user),
           remote_user_displayname: asNullableString(computing.remote_user_display_name),
