@@ -3,7 +3,7 @@ import {
   FieldTimeOutlined, LineChartOutlined, RadarChartOutlined,
   TeamOutlined, UserOutlined,
 } from '@ant-design/icons';
-import { Alert, Avatar, Modal, Skeleton, Tabs, Typography } from 'antd';
+import { Alert, Avatar, Modal, Segmented, Skeleton, Typography } from 'antd';
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { getAvatarUrl } from '@/shared/utils/avatar';
 import type {
@@ -110,21 +110,23 @@ export function LeaderboardDetailModal({ open, type, userRow, labRow, filter, on
   const personaMetrics = useMemo<MetricRowProps[]>(() => [
     { icon: <ClockCircleOutlined />, title: 'Last Remote',         value: toDateTime(userRow?.last_remote) },
     { icon: <TeamOutlined />,        title: 'Total Sessions',      value: toNumber(userRow?.total_sessions) },
-    { icon: <LineChartOutlined />,   title: 'RFO (remote from office)', value: toPercent(userRow?.wfo_rate) },
-    { icon: <LineChartOutlined />,   title: 'RFH (remote from home)',   value: toPercent(userRow?.wfh_rate) },
+    { icon: <LineChartOutlined />,   title: 'RFO Rate (Remote from Office)', value: toPercent(userRow?.wfo_rate) },
+    { icon: <LineChartOutlined />,   title: 'RFH Rate (Remote from Home)',   value: toPercent(userRow?.wfh_rate) },
     { icon: <FieldTimeOutlined />,   title: 'Total Usage',         value: minutesAsHours(userRow?.total_usage_minutes) },
     { icon: <FieldTimeOutlined />,   title: 'Active Usage',        value: minutesAsHours(userRow?.active_usage_minutes) },
     { icon: <FieldTimeOutlined />,   title: 'Avg Session',         value: minutesAsHours(userRow?.avg_session_minutes) },
     { icon: <FieldTimeOutlined />,   title: 'Longest Session',     value: minutesAsHours(userRow?.longest_session_minutes) },
-    { icon: <FieldTimeOutlined />,   title: 'Work Late',           value: toPercent(userRow?.late_rate) },
-    { icon: <RadarChartOutlined />,  title: 'Active Rate',         value: toPercent(userRow?.active_rate) },
-    { icon: <RadarChartOutlined />,  title: 'Usage Efficiency',    value: toPercent(userRow?.usage_efficiency) },
+    { icon: <FieldTimeOutlined />,   title: 'Off-hours Usage Rate', value: toPercent(userRow?.late_rate) },
+    { icon: <RadarChartOutlined />,  title: 'Active Time Ratio',   value: toPercent(userRow?.active_rate) },
+    { icon: <RadarChartOutlined />,  title: 'Workday Utilization Rate', value: toPercent(userRow?.usage_efficiency) },
     { icon: <EnvironmentOutlined />, title: 'Labs Accessed',       value: toNumber(userRow?.labs_accessed) },
     { icon: <DesktopOutlined />,     title: 'Bookings (no-shows)', value: userRow ? `${userRow.total_bookings} (${userRow.no_show_bookings})` : '—' },
-    { icon: <DesktopOutlined />,     title: 'Booking Attendance',  value: toPercent(userRow?.booking_compliance) },
-    { icon: <DesktopOutlined />,     title: 'Booked Time Used',    value: toPercent(userRow?.booking_utilization) },
-    { icon: <DesktopOutlined />,     title: 'Slot Adherence',      value: toPercent(userRow?.slot_adherence) },
-    { icon: <DesktopOutlined />,     title: 'Sessions Without Booking', value: toPercent(userRow?.ad_hoc_rate) },
+    { icon: <DesktopOutlined />,     title: 'Show-up Rate',        value: toPercent(userRow?.booking_compliance) },
+    { icon: <DesktopOutlined />,     title: 'Booking Utilization Rate', value: toPercent(userRow?.booking_utilization) },
+    { icon: <DesktopOutlined />,     title: 'Slot Adherence Rate', value: toPercent(userRow?.slot_adherence) },
+    { icon: <DesktopOutlined />,     title: 'Early Release Rate',  value: toPercent(userRow?.early_release_rate) },
+    { icon: <FieldTimeOutlined />,   title: 'Idle Reserved Time',  value: minutesAsHours(userRow?.idle_reserved_minutes) },
+    { icon: <DesktopOutlined />,     title: 'Ad-hoc Session Rate', value: toPercent(userRow?.ad_hoc_rate) },
   ], [userRow]);
 
   // The ranking row already carries these figures; the profile endpoint adds only the top projects.
@@ -133,11 +135,12 @@ export function LeaderboardDetailModal({ open, type, userRow, labRow, filter, on
     { icon: <TeamOutlined />,        title: 'Total Sessions',      value: toNumber(labRow?.total_sessions) },
     { icon: <UserOutlined />,        title: 'Active Users',        value: toNumber(labRow?.active_users) },
     { icon: <FieldTimeOutlined />,   title: 'Active Usage',        value: toHours(labRow?.total_usage_minutes != null ? labRow.total_usage_minutes / 60 : undefined) },
-    { icon: <RadarChartOutlined />,  title: 'Utilization',         value: toPercent(labRow?.utilization_rate) },
-    { icon: <RadarChartOutlined />,  title: 'Booking Fill',        value: toPercent(labRow?.booking_fill) },
+    { icon: <RadarChartOutlined />,  title: 'Bench Utilization Rate', value: toPercent(labRow?.utilization_rate) },
+    { icon: <RadarChartOutlined />,  title: 'Booking Occupancy Rate', value: toPercent(labRow?.booking_fill) },
     { icon: <DesktopOutlined />,     title: 'Bookings (no-shows)', value: labRow ? `${labRow.total_bookings} (${labRow.no_show_bookings})` : '—' },
-    { icon: <DesktopOutlined />,     title: 'Booking Attendance',  value: toPercent(labRow?.booking_compliance) },
-    { icon: <DesktopOutlined />,     title: 'Booked Time Used',    value: toPercent(labRow?.booking_utilization) },
+    { icon: <DesktopOutlined />,     title: 'Show-up Rate',        value: toPercent(labRow?.booking_compliance) },
+    { icon: <DesktopOutlined />,     title: 'Booking Utilization Rate', value: toPercent(labRow?.booking_utilization) },
+    { icon: <DesktopOutlined />,     title: 'Early Release Rate',  value: toPercent(labRow?.early_release_rate) },
   ], [labRow]);
 
   // Coordinators and admins see every assessment; a user sees their own. The API enforces the same rule.
@@ -189,67 +192,38 @@ export function LeaderboardDetailModal({ open, type, userRow, labRow, filter, on
         </div>
       )}
 
-      {canSeeAssessment ? (
-        <Tabs
-          className={styles.tabs}
-          activeKey={tab}
-          onChange={(key) => setTab(key as 'overview' | 'assessment')}
-          items={[
-            {
-              key: 'overview',
-              label: 'Overview',
-              children: (
-                <>
-                  {error && <Alert type="error" message={error} style={{ marginBottom: 12 }} />}
-
-
-                  {isLoading ? (
-                    <Skeleton active paragraph={{ rows: type === 'persona' ? 7 : 6 }} />
-                  ) : !error && (
-                    <>
-                      <div className={styles.metricsGrid}>
-                        {metrics.map((m) => <MetricRow key={m.title} {...m} />)}
-                        {topProjects.length > 0 && (
-                          <div className={styles.metricsGridFull}><TopProjectsBar data={topProjects} /></div>
-                        )}
-                      </div>
-                    </>
-                  )}
-
-                  <WeeklyUsageHeatmap data={weeklyUsage} loading={isLoading} />
-                </>
-              ),
-            },
-            {
-              key: 'assessment',
-              label: <span className={styles.tabLabel}><RadarChartOutlined /> {isOwn ? 'My KPI assessment' : 'KPI assessment'}</span>,
-              children: (
-                <AssessmentReport
-                  assessment={assessmentQuery.currentData}
-                  loading={assessmentQuery.isFetching}
-                  error={assessmentQuery.isError}
-                  audience={type === 'lab' ? 'bench' : isOwn ? 'self' : 'user'}
-                />
-              ),
-            },
+      {canSeeAssessment && (
+        <Segmented
+          className={styles.viewSwitch}
+          value={tab}
+          onChange={(value) => setTab(value as 'overview' | 'assessment')}
+          options={[
+            { label: 'Overview', value: 'overview' },
+            { label: 'Assessment', value: 'assessment' },
           ]}
+        />
+      )}
+
+      {tab === 'assessment' ? (
+        <AssessmentReport
+          assessment={assessmentQuery.currentData}
+          loading={assessmentQuery.isFetching}
+          error={assessmentQuery.isError}
+          audience={type === 'lab' ? 'bench' : isOwn ? 'self' : 'user'}
         />
       ) : (
         <>
           {error && <Alert type="error" message={error} style={{ marginBottom: 12 }} />}
 
-
           {isLoading ? (
             <Skeleton active paragraph={{ rows: type === 'persona' ? 7 : 6 }} />
           ) : !error && (
-            <>
-              <div className={styles.metricsGrid}>
-                {metrics.map((m) => <MetricRow key={m.title} {...m} />)}
-                {topProjects.length > 0 && (
-                  <div className={styles.metricsGridFull}><TopProjectsBar data={topProjects} /></div>
-                )}
-              </div>
-            </>
+            <div className={styles.metricsGrid}>
+              {metrics.map((m) => <MetricRow key={m.title} {...m} />)}
+              {topProjects.length > 0 && (
+                <div className={styles.metricsGridFull}><TopProjectsBar data={topProjects} /></div>
+              )}
+            </div>
           )}
 
           <WeeklyUsageHeatmap data={weeklyUsage} loading={isLoading} />

@@ -13909,6 +13909,10 @@ export type LeaderboardPersona = {
   slot_adherence?: number | null;
   /** Bookings with no session. */
   no_show_bookings?: number;
+  /** Unused booked time after the last session that was released by completing the booking early, against all such unused time, 0-1; null when no booking had unused time left. */
+  early_release_rate?: number | null;
+  /** Booked minutes left after the last session that stayed reserved (not released). */
+  idle_reserved_minutes?: number;
   last_remote_at?: string | null;
   labs_accessed?: number;
   total_bookings?: number;
@@ -13939,6 +13943,10 @@ export type LeaderboardLab = {
   total_bookings?: number;
   /** Bookings with no session. */
   no_show_bookings?: number;
+  /** Unused booked time after the last session that was released by completing the booking early, against all such unused time, 0-1; null when no booking had unused time left. */
+  early_release_rate?: number | null;
+  /** Booked minutes left after the last session that stayed reserved (not released). */
+  idle_reserved_minutes?: number;
   /** Attended bookings against approved bookings that have started, 0-1; null without bookings. */
   booking_compliance?: number | null;
   /** Booked time actually used against booked time, 0-1; null without bookings. */

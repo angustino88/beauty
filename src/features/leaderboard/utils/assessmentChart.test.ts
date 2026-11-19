@@ -9,10 +9,10 @@ const kpi = (value: string, label: string, v: number | null, prev: number | null
 });
 
 test('lower-is-better KPIs are plotted as their positive complement', () => {
-  const [row] = orientKpis([kpi('advance_booking', 'Sessions without a booking', 0.14, 0.25, 0.2, false)]);
+  const [row] = orientKpis([kpi('ad_hoc_session_rate', 'Ad-hoc Session Rate', 0.14, 0.25, 0.2, false)]);
   assert.deepEqual(
     [row.axis, row.current, row.previous, row.target, row.raw],
-    ['Booked ahead', 86, 75, 80, 0.14],
+    ['Pre-booked Session Rate', 86, 75, 80, 0.14],
   );
 });
 

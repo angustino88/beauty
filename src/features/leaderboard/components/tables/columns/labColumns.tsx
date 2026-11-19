@@ -40,7 +40,7 @@ export const labColumns: ColumnsType<RankedLabItem> = [
     sorter: (a, b) => (a.total_sessions ?? 0) - (b.total_sessions ?? 0),
   },
   {
-    title: <HeaderHint label="Utilization" hint="Active time on the bench against 8 hours per weekday." />,
+    title: <HeaderHint label="Bench Utilization" hint="Bench Utilization Rate: active time on the bench against 8 hours per weekday." />,
     dataIndex: 'utilization_rate',
     key: 'utilization_rate',
     width: 110,
@@ -49,7 +49,7 @@ export const labColumns: ColumnsType<RankedLabItem> = [
     render: (v: number) => toPercent(v),
   },
   {
-    title: <HeaderHint label="Booking fill" hint="Booked time against 8 hours per weekday." />,
+    title: <HeaderHint label="Booking Occupancy" hint="Booking Occupancy Rate: booked time against 8 hours per weekday." />,
     dataIndex: 'booking_fill',
     key: 'booking_fill',
     width: 110,
@@ -58,7 +58,7 @@ export const labColumns: ColumnsType<RankedLabItem> = [
     render: (v: number) => toPercent(v),
   },
   {
-    title: <HeaderHint label="Attendance" hint="Approved bookings on this bench that had a session." />,
+    title: <HeaderHint label="Show-up Rate" hint="Show-up Rate: expected bookings on this bench with at least one session." />,
     dataIndex: 'booking_compliance',
     key: 'booking_compliance',
     width: 110,
