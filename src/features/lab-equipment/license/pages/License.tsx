@@ -1,8 +1,8 @@
 import { useEquipmentSearchOptions } from '../hooks/useEquipmentSearchOptions';
 import { useMemo, useState } from 'react';
-import { Alert, Tabs } from 'antd';
+import { Alert, Badge, Tabs } from 'antd';
 import { useSearchParams } from 'react-router-dom';
-import { FoundLicensesPanel, LicenseChecksPanel } from '@/features/lab-equipment/license-checks';
+import { FoundLicensesPanel, LicenseChecksPanel, useGetLicenseObservationsQuery } from '@/features/lab-equipment/license-checks';
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useSelector } from 'react-redux';
 import type { RootState } from '@/app/store';
@@ -315,6 +315,9 @@ export default function LicensePage() {
     setSearchParams(next, { replace: true });
   };
 
+  const attention = useGetLicenseObservationsQuery({ isAttentionRequired: true, pageSize: 1 }, { skip: !isStaff, pollingInterval: 300_000 });
+  const attentionCount = attention.data?.meta.pagination.count ?? 0;
+
   if (!isStaff) return <LicenseInventory />;
   return (
     <Tabs
@@ -335,7 +338,12 @@ export default function LicensePage() {
         },
         {
           key: 'found',
-          label: 'Found on lab hardware',
+          label: (
+            <span>
+              Found on lab hardware{' '}
+              <Badge count={attentionCount} size="small" title={`${attentionCount} need attention`} />
+            </span>
+          ),
           children: (
             <div style={{ padding: 16 }}>
               <FoundLicensesPanel checkId={checkId} onClearCheck={() => update({ check: undefined })} />
