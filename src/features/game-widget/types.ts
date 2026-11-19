@@ -1,29 +1,22 @@
-export interface Obstacle {
+export type Phase = 'briefing' | 'playing' | 'paused' | 'lost' | 'delivered';
+export type Item = 'letter' | 'star' | 'shield' | 'hazard';
+export interface Entity {
   id: number;
+  kind: Item;
   x: number;
-  oy?: number;
-  passed: boolean;
+  bottom: number;
 }
-
-export interface Collectible {
-  id: number;
-  x: number;
-  y: number;
-  eaten: boolean;
-  kind?: 'score' | 'shield';
-}
-
-export interface GameWidgetState {
-  running: boolean;
-  gameOver: boolean;
+export interface Run {
+  phase: Phase;
+  chapter: number;
+  height: number;
+  velocity: number;
+  jumps: number;
+  distance: number;
+  wave: number;
+  nextWave: number;
+  letters: number;
   score: number;
-  highScore: number;
-  jumpTier: 1 | 2 | 3;
-  shieldCountdown: number;
-  tierNotice: string | null;
-  isChallenge: boolean;
-  isSuperChallenge: boolean;
-  y: number;
-  obstacles: Obstacle[];
-  collectibles: Collectible[];
+  shield: boolean;
+  entities: Entity[];
 }
