@@ -3,8 +3,6 @@ import type { ColumnsType } from 'antd/es/table';
 import { getAvatarUrl } from '@/shared/utils/avatar';
 import { toPercent } from '../../../formatters';
 import type { RankedPersonaItem } from '../../../types';
-import { assessPersona } from '../../../utils/assessment';
-import { AssessmentCell } from '../../assessment/AssessmentView';
 import { HeaderHint } from './HeaderHint';
 
 const { Text } = Typography;
@@ -62,13 +60,6 @@ export const personaColumns: ColumnsType<RankedPersonaItem> = [
     sorter: (a, b) =>
       (a.display_name || a.username || '').localeCompare(b.display_name || b.username || ''),
     render: (_name: string, record) => <Text>{record.display_name || record.username}</Text>,
-  },
-  {
-    title: 'Assessment',
-    key: 'assessment',
-    width: 300,
-    sorter: (a, b) => (assessPersona(a).score ?? -1) - (assessPersona(b).score ?? -1),
-    render: (_: unknown, record) => <AssessmentCell assessment={assessPersona(record)} />,
   },
   {
     title: <HeaderHint label="RFO" hint="Remote from office: sessions against two per weekday." />,

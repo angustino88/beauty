@@ -6,9 +6,11 @@ import type {
   LabItem,
   UserProfile,
   LabProfile,
+  LeaderboardAssessment,
   WeeklyUsageItem,
 } from './types';
 import {
+  mapAssessmentResponse,
   mapLabProfileResponse,
   mapLabResponse,
   mapLabWeeklyUsageResponse,
@@ -65,6 +67,17 @@ export const leaderboardApi = baseApi.injectEndpoints({
       query: ({ id, filter }) => ({ url: `/api/labs/benches/${id}/weekly-usage`, params: filter }),
       transformResponse: (res: LabsBenchesWeeklyUsageRetrieveByIdApiResponse) => mapLabWeeklyUsageResponse(res),
     }),
+
+    /** KPI assessments: lab coordinators and admins only (the API answers 403 to everyone else). */
+    getUserAssessment: build.query<LeaderboardAssessment, DetailQueryArg>({
+      query: ({ id, filter }) => ({ url: `/api/labs/leaderboard/users/${id}/assessment`, params: filter }),
+      transformResponse: mapAssessmentResponse,
+    }),
+
+    getBenchAssessment: build.query<LeaderboardAssessment, DetailQueryArg>({
+      query: ({ id, filter }) => ({ url: `/api/labs/benches/${id}/assessment`, params: filter }),
+      transformResponse: mapAssessmentResponse,
+    }),
   }),
   overrideExisting: false,
 });
@@ -76,6 +89,8 @@ export const {
   useLazyGetUserWeeklyUsageQuery,
   useLazyGetLabProfileQuery,
   useLazyGetLabWeeklyUsageQuery,
+  useGetUserAssessmentQuery,
+  useGetBenchAssessmentQuery,
 } = leaderboardApi;
 
 const leaderboardExportApi = baseApi.injectEndpoints({

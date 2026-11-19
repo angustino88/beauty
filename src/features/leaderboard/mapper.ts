@@ -9,6 +9,7 @@ import type {
 import type {
   LabItem,
   LabProfile,
+  LeaderboardAssessment,
   PersonaItem,
   TopProjectItem,
   UserProfile,
@@ -182,4 +183,46 @@ export function mapUserWeeklyUsageResponse(response: LabsLeaderboardUsersWeeklyU
 
 export function mapLabWeeklyUsageResponse(response: LabsBenchesWeeklyUsageRetrieveByIdApiResponse): WeeklyUsageItem[] {
   return mapWeeklyUsage(response.data as RawUsageItem[]);
+}
+
+const asChoice = (value: unknown) => {
+  const rec = (value as RecordValue) ?? {};
+  return { value: String(rec.value ?? ''), label: String(rec.label ?? rec.value ?? '') };
+};
+const asList = (value: unknown): RecordValue[] => (Array.isArray(value) ? value.filter((v) => v && typeof v === 'object') as RecordValue[] : []);
+const asPeriod = (value: unknown) => {
+  const rec = (value as RecordValue) ?? {};
+  return { starts_at: String(rec.starts_at ?? ''), ends_at: String(rec.ends_at ?? '') };
+};
+const numberOrNull = (value: unknown): number | null => (typeof value === 'number' && Number.isFinite(value) ? value : null);
+
+/** `{data: {...}}` from GET .../assessment. */
+export function mapAssessmentResponse(response: unknown): LeaderboardAssessment {
+  const data = (((response as RecordValue) ?? {}).data as RecordValue) ?? {};
+  return {
+    period: asPeriod(data.period),
+    previous_period: asPeriod(data.previous_period),
+    rating: asChoice(data.rating),
+    score: numberOrNull(data.score),
+    previous_score: numberOrNull(data.previous_score),
+    summary: String(data.summary ?? ''),
+    total_sessions: Number(data.total_sessions ?? 0),
+    total_bookings: Number(data.total_bookings ?? 0),
+    kpis: asList(data.kpis).map((kpi) => ({
+      kpi: asChoice(kpi.kpi),
+      value: numberOrNull(kpi.value),
+      previous_value: numberOrNull(kpi.previous_value),
+      target: Number(kpi.target ?? 0),
+      is_higher_better: kpi.is_higher_better !== false,
+      weight: Number(kpi.weight ?? 0),
+      status: asChoice(kpi.status),
+    })),
+    strengths: asList(data.strengths).map((item) => ({ kpi: asChoice(item.kpi), text: String(item.text ?? '') })),
+    development_areas: asList(data.development_areas).map((item) => ({
+      kpi: asChoice(item.kpi),
+      severity: asChoice(item.severity),
+      text: String(item.text ?? ''),
+      recommendation: String(item.recommendation ?? ''),
+    })),
+  };
 }

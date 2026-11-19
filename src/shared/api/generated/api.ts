@@ -935,6 +935,18 @@ const injectedRtkApi = api.injectEndpoints({
         method: "DELETE",
       }),
     }),
+    labsBenchesAssessmentRetrieveById: build.query<
+      LabsBenchesAssessmentRetrieveByIdApiResponse,
+      LabsBenchesAssessmentRetrieveByIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/benches/${queryArg.id}/assessment`,
+        params: {
+          end_date: queryArg.endDate,
+          start_date: queryArg.startDate,
+        },
+      }),
+    }),
     labsBenchesProfileRetrieveById: build.query<
       LabsBenchesProfileRetrieveByIdApiResponse,
       LabsBenchesProfileRetrieveByIdApiArg
@@ -2888,6 +2900,18 @@ const injectedRtkApi = api.injectEndpoints({
     >({
       query: (queryArg) => ({
         url: `/api/labs/leaderboard/persona`,
+        params: {
+          end_date: queryArg.endDate,
+          start_date: queryArg.startDate,
+        },
+      }),
+    }),
+    labsLeaderboardUsersAssessmentRetrieveById: build.query<
+      LabsLeaderboardUsersAssessmentRetrieveByIdApiResponse,
+      LabsLeaderboardUsersAssessmentRetrieveByIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/leaderboard/users/${queryArg.id}/assessment`,
         params: {
           end_date: queryArg.endDate,
           start_date: queryArg.startDate,
@@ -5973,6 +5997,13 @@ export type LabsBenchesImageDestroyByBenchIdApiResponse = unknown;
 export type LabsBenchesImageDestroyByBenchIdApiArg = {
   benchId: number;
 };
+export type LabsBenchesAssessmentRetrieveByIdApiResponse =
+  /** status 200  */ BenchAssessmentSerializersAssessmentDetailResponseRead;
+export type LabsBenchesAssessmentRetrieveByIdApiArg = {
+  endDate?: string;
+  id: number;
+  startDate?: string;
+};
 export type LabsBenchesProfileRetrieveByIdApiResponse =
   /** status 200  */ LabProfileSerializersLabProfileDetailResponse;
 export type LabsBenchesProfileRetrieveByIdApiArg = {
@@ -7336,6 +7367,13 @@ export type LabsLeaderboardPersonaRetrieveApiResponse =
   /** status 200  */ LeaderboardPersonaSerializersLeaderboardPersonaListResponse;
 export type LabsLeaderboardPersonaRetrieveApiArg = {
   endDate?: string;
+  startDate?: string;
+};
+export type LabsLeaderboardUsersAssessmentRetrieveByIdApiResponse =
+  /** status 200  */ UserAssessmentSerializersAssessmentDetailResponseRead;
+export type LabsLeaderboardUsersAssessmentRetrieveByIdApiArg = {
+  endDate?: string;
+  id: number;
   startDate?: string;
 };
 export type LabsLeaderboardUsersProfileRetrieveByIdApiResponse =
@@ -10488,6 +10526,90 @@ export type ResourceImageResourceImagesResourceImageDetailResponseRead = {
 export type ResourceImageUpload = {
   /** JPEG, PNG, GIF or WebP, at most 5 MB. The type is detected from the content. */
   file: Blob;
+};
+export type LeaderboardAssessmentPeriod = {
+  starts_at: string;
+  ends_at: string;
+};
+export type LeaderboardAssessmentKpi = {
+  /** 0-1; null when the KPI does not apply. */
+  value: number | null;
+  /** Same KPI in the previous period. */
+  previous_value: number | null;
+  /** 0-1 target; a ceiling when is_higher_better is false. */
+  target: number;
+  is_higher_better: boolean;
+  /** Weight in the overall score. */
+  weight: number;
+};
+export type LeaderboardAssessmentKpiRead = {
+  kpi: ChoiceRead;
+  /** 0-1; null when the KPI does not apply. */
+  value: number | null;
+  /** Same KPI in the previous period. */
+  previous_value: number | null;
+  /** 0-1 target; a ceiling when is_higher_better is false. */
+  target: number;
+  is_higher_better: boolean;
+  /** Weight in the overall score. */
+  weight: number;
+  status: ChoiceRead;
+};
+export type LeaderboardAssessmentStrength = {
+  text: string;
+};
+export type LeaderboardAssessmentStrengthRead = {
+  kpi: ChoiceRead;
+  text: string;
+};
+export type LeaderboardAssessmentDevelopmentArea = {
+  /** The finding, with the figure behind it. */
+  text: string;
+  /** The recommended action. */
+  recommendation: string;
+};
+export type LeaderboardAssessmentDevelopmentAreaRead = {
+  kpi: ChoiceRead;
+  severity: ChoiceRead;
+  /** The finding, with the figure behind it. */
+  text: string;
+  /** The recommended action. */
+  recommendation: string;
+};
+export type LeaderboardAssessment = {
+  period: LeaderboardAssessmentPeriod;
+  previous_period: LeaderboardAssessmentPeriod;
+  /** Weighted KPI score 0-100; null with too little data. */
+  score: number | null;
+  /** Score of the previous period. */
+  previous_score: number | null;
+  summary: string;
+  total_sessions: number;
+  total_bookings: number;
+  kpis: LeaderboardAssessmentKpi[];
+  strengths: LeaderboardAssessmentStrength[];
+  development_areas: LeaderboardAssessmentDevelopmentArea[];
+};
+export type LeaderboardAssessmentRead = {
+  period: LeaderboardAssessmentPeriod;
+  previous_period: LeaderboardAssessmentPeriod;
+  rating: ChoiceRead;
+  /** Weighted KPI score 0-100; null with too little data. */
+  score: number | null;
+  /** Score of the previous period. */
+  previous_score: number | null;
+  summary: string;
+  total_sessions: number;
+  total_bookings: number;
+  kpis: LeaderboardAssessmentKpiRead[];
+  strengths: LeaderboardAssessmentStrengthRead[];
+  development_areas: LeaderboardAssessmentDevelopmentAreaRead[];
+};
+export type BenchAssessmentSerializersAssessmentDetailResponse = {
+  data: LeaderboardAssessment;
+};
+export type BenchAssessmentSerializersAssessmentDetailResponseRead = {
+  data: LeaderboardAssessmentRead;
 };
 export type LabProfile = {
   id: number;
@@ -13829,6 +13951,12 @@ export type LeaderboardLabSerializersLeaderboardLabListResponse = {
 };
 export type LeaderboardPersonaSerializersLeaderboardPersonaListResponse = {
   data: LeaderboardPersona[];
+};
+export type UserAssessmentSerializersAssessmentDetailResponse = {
+  data: LeaderboardAssessment;
+};
+export type UserAssessmentSerializersAssessmentDetailResponseRead = {
+  data: LeaderboardAssessmentRead;
 };
 export type UserProfile = {
   id: number;
@@ -18054,6 +18182,7 @@ export const {
   useLabsBenchesImageRetrieveByBenchIdQuery,
   useLabsBenchesImageUpdateByBenchIdMutation,
   useLabsBenchesImageDestroyByBenchIdMutation,
+  useLabsBenchesAssessmentRetrieveByIdQuery,
   useLabsBenchesProfileRetrieveByIdQuery,
   useLabsBenchesWeeklyUsageRetrieveByIdQuery,
   useLabsBenchesMappingRetrieveByResourceIdQuery,
@@ -18224,6 +18353,7 @@ export const {
   useLabsLeaderboardExportRetrieveQuery,
   useLabsLeaderboardLabRetrieveQuery,
   useLabsLeaderboardPersonaRetrieveQuery,
+  useLabsLeaderboardUsersAssessmentRetrieveByIdQuery,
   useLabsLeaderboardUsersProfileRetrieveByIdQuery,
   useLabsLeaderboardUsersWeeklyUsageRetrieveByIdQuery,
   useLabsLicenseCategoriesRetrieveQuery,

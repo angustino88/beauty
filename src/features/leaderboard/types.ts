@@ -103,3 +103,31 @@ export interface LabProfile {
   total_usage_minutes: number;
   top_projects: TopProjectItem[];
 }
+
+export interface Choice { value: string; label: string; }
+
+/** One scorecard line of a KPI assessment. */
+export interface AssessmentKpiResult {
+  kpi: Choice;
+  value: number | null;
+  previous_value: number | null;
+  target: number;
+  is_higher_better: boolean;
+  weight: number;
+  status: Choice;
+}
+
+/** KPI assessment of a user or bench (lab coordinators and admins only). */
+export interface LeaderboardAssessment {
+  period: { starts_at: string; ends_at: string };
+  previous_period: { starts_at: string; ends_at: string };
+  rating: Choice;
+  score: number | null;
+  previous_score: number | null;
+  summary: string;
+  total_sessions: number;
+  total_bookings: number;
+  kpis: AssessmentKpiResult[];
+  strengths: Array<{ kpi: Choice; text: string }>;
+  development_areas: Array<{ kpi: Choice; severity: Choice; text: string; recommendation: string }>;
+}

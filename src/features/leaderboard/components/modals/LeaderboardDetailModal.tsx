@@ -13,13 +13,14 @@ import type {
 import {
   useLazyGetUserProfileQuery, useLazyGetUserWeeklyUsageQuery,
   useLazyGetLabProfileQuery, useLazyGetLabWeeklyUsageQuery,
+  useGetBenchAssessmentQuery, useGetUserAssessmentQuery,
 } from '../../api';
 import {
   toDateTime, toHours, toNumber, toPercent,
 } from '../../formatters';
 import { TopProjectsBar } from '../charts/TopProjectsBar';
 import { WeeklyUsageHeatmap } from '../charts/WeeklyUsageHeatmap';
-import { assessLab, assessPersona } from '../../utils/assessment';
+import { useAppSelector } from '@/app/store';
 import { AssessmentPanel } from '../assessment/AssessmentView';
 import styles from './LeaderboardDetailModal.module.css';
 
@@ -139,9 +140,13 @@ export function LeaderboardDetailModal({ open, type, userRow, labRow, filter, on
     { icon: <DesktopOutlined />,     title: 'Booked Time Used',    value: toPercent(labRow?.booking_utilization) },
   ], [labRow]);
 
-  const assessment = type === 'persona'
-    ? (userRow ? assessPersona(userRow) : null)
-    : (labRow ? assessLab(labRow) : null);
+  // The assessment is for lab coordinators and admins only; the API refuses everyone else.
+  const permissionGroups = useAppSelector((state) => state.me.permissionGroups) as Record<string, unknown> | null;
+  const canSeeAssessment = Boolean(permissionGroups?.['admin'] || permissionGroups?.['lab-coordinator']);
+  const assessmentArg = { id: selectedId ?? 0, filter };
+  const userAssessment = useGetUserAssessmentQuery(assessmentArg, { skip: !open || !canSeeAssessment || type !== 'persona' || !selectedId });
+  const benchAssessment = useGetBenchAssessmentQuery(assessmentArg, { skip: !open || !canSeeAssessment || type !== 'lab' || !selectedId });
+  const assessmentQuery = type === 'persona' ? userAssessment : benchAssessment;
 
   const metrics = type === 'persona' ? personaMetrics : labMetrics;
 
@@ -177,7 +182,13 @@ export function LeaderboardDetailModal({ open, type, userRow, labRow, filter, on
 
       {error && <Alert type="error" message={error} style={{ marginBottom: 12 }} />}
 
-      {assessment && <AssessmentPanel assessment={assessment} />}
+      {canSeeAssessment && (
+        <AssessmentPanel
+          assessment={assessmentQuery.currentData}
+          loading={assessmentQuery.isFetching}
+          error={assessmentQuery.isError}
+        />
+      )}
 
       {isLoading ? (
         <Skeleton active paragraph={{ rows: type === 'persona' ? 7 : 6 }} />

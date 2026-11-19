@@ -1,6 +1,3 @@
-import { mapLabResponse, mapPersonaResponse } from '../mapper';
-import { assessLab, assessPersona, type Assessment } from './assessment';
-
 type Row = Record<string, unknown>;
 type Column = { title: string; value: (row: Row) => string | number };
 
@@ -50,22 +47,8 @@ export const LAB_COLUMNS: Column[] = [
   { title: 'Top projects', value: (r) => projects(r.top_projects) },
 ];
 
-const ASSESSMENT_KEY = '__assessment';
-const assessmentOf = (r: Row) => r[ASSESSMENT_KEY] as Assessment | undefined;
-const ASSESSMENT_COLUMNS: Column[] = [
-  { title: 'Assessment', value: (r) => assessmentOf(r)?.label ?? '' },
-  { title: 'Assessment score', value: (r) => assessmentOf(r)?.score ?? '' },
-  { title: 'Strengths', value: (r) => (assessmentOf(r)?.strengths ?? []).join('; ') },
-  { title: 'To improve', value: (r) => (assessmentOf(r)?.improvements ?? []).join('; ') },
-];
-
 export async function exportLeaderboardExcel(rows: Row[], type: 'persona' | 'lab', fileName: string): Promise<void> {
-  const columns = [...(type === 'lab' ? LAB_COLUMNS : PERSONA_COLUMNS), ...ASSESSMENT_COLUMNS];
-  // The assessment is derived from the same mapped KPIs the table shows, so the file says the same thing.
-  const assessments = type === 'lab'
-    ? mapLabResponse({ data: rows } as never).map(assessLab)
-    : mapPersonaResponse({ data: rows } as never).map(assessPersona);
-  rows = rows.map((row, i) => ({ ...row, [ASSESSMENT_KEY]: assessments[i] }));
+  const columns = type === 'lab' ? LAB_COLUMNS : PERSONA_COLUMNS;
   const { default: ExcelJS } = await import('exceljs');
   const workbook = new ExcelJS.Workbook();
   const sheet = workbook.addWorksheet(type === 'lab' ? 'Labs' : 'Users');

@@ -2,8 +2,6 @@ import { Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { toPercent } from '../../../formatters';
 import type { RankedLabItem } from '../../../types';
-import { assessLab } from '../../../utils/assessment';
-import { AssessmentCell } from '../../assessment/AssessmentView';
 import { HeaderHint } from './HeaderHint';
 
 const { Text } = Typography;
@@ -24,13 +22,6 @@ export const labColumns: ColumnsType<RankedLabItem> = [
     key: 'lab_name',
     sorter: (a, b) => (a.lab_name || '').localeCompare(b.lab_name || ''),
     render: (name: string) => <Text>{name}</Text>,
-  },
-  {
-    title: 'Assessment',
-    key: 'assessment',
-    width: 300,
-    sorter: (a, b) => (assessLab(a).score ?? -1) - (assessLab(b).score ?? -1),
-    render: (_: unknown, record) => <AssessmentCell assessment={assessLab(record)} />,
   },
   {
     title: 'Active Users',
