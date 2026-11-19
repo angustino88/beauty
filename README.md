@@ -46,8 +46,9 @@ Minimum variables:
 - `VITE_APP_URL`
 - `VITE_WS_URL_CHATBOT`
 
-Optional: `VITE_AGENT_URL`. The agent setup dialog shows no server address by default: the agent gets
-it from the service gateway at enrollment. Set this only to put an explicit `--url` in the command.
+Production: `VITE_AGENT_URL`, the public Nginx or Router address lab computers enroll at (never the
+application server). The agent setup dialog puts it in the enroll command; without it the command shows
+`<server-url>` and a warning. Development uses `VITE_API_URL` (the backend directly).
 
 For exact values per environment, use secure internal channels and contact the team lead.
 

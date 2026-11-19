@@ -119,9 +119,10 @@ export interface ScriptSection {
 }
 
 /**
- * The `--url` the enroll command shows, if any. In production none: the agent asks the service
- * gateway for the server address lab computers can reach, so the web app never shows a backend or
- * Router address. `VITE_AGENT_URL` sets one explicitly; development uses `VITE_API_URL`.
+ * The `--url` of the enroll command: in production the public Nginx or Router address lab computers
+ * reach (`VITE_AGENT_URL`), never the application server; in development the backend directly
+ * (`VITE_API_URL`). `undefined` when production has none configured: the dialog then shows a
+ * placeholder and a warning.
  */
 export function agentServerUrl(options: { override?: string; isDev: boolean; apiUrl?: string }): string | undefined {
   if (options.override) return options.override;
@@ -129,10 +130,12 @@ export function agentServerUrl(options: { override?: string; isDev: boolean; api
   return undefined;
 }
 
+export const SERVER_URL_PLACEHOLDER = '<server-url>';
+
 export interface SetupContext {
   os: SetupOs;
   arch: SetupArch;
-  /** `--url` for enroll; left out when the agent gets it from the gateway (see {@link agentServerUrl}). */
+  /** `--url` for enroll (see {@link agentServerUrl}); a placeholder is shown when it is not configured. */
   serverUrl?: string;
   agentUid: string;
   /** Agent executable name (`VITE_AGENT_CLI`). */
@@ -151,7 +154,7 @@ const wrapped = (windows: boolean, ...parts: string[]): ScriptLine =>
 
 /** Download → Configure → Verify, in the shape of self-hosted CI runner setup pages. */
 export function setupScript(ctx: SetupContext): ScriptSection[] {
-  const url = ctx.serverUrl?.replace(/\/+$/, '');
+  const url = ctx.serverUrl?.replace(/\/+$/, '') || SERVER_URL_PLACEHOLDER;
   const windows = ctx.os === 'windows';
   const shell = windows ? 'PowerShell' : 'Shell';
   const prompt = windows ? 'PS>' : '$';
@@ -194,7 +197,7 @@ export function setupScript(ctx: SetupContext): ScriptSection[] {
         wrapped(
           windows,
           `${root}${exe} enroll`,
-          ...(url ? [`--url ${url}`] : []),
+          `--url ${url}`,
           `--agent-uid ${ctx.agentUid}`,
           `--grant ${ctx.grant}`,
         ),

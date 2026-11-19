@@ -94,6 +94,16 @@ export function AgentSetup({ agent, grant, mode, generating, onGenerate }: {
         </div>
       </div>
 
+      {!serverUrl && (
+        <Alert
+          type="warning"
+          showIcon
+          style={{ marginBottom: 12 }}
+          message="The agent server URL is not configured"
+          description="Replace <server-url> with the public Nginx or Router address lab computers use, or set VITE_AGENT_URL for this web app."
+        />
+      )}
+
       <section className={styles.step}>
         <h4 className={styles.stepTitle}>Download</h4>
         {download ? <CodeBlock section={download} /> : (
