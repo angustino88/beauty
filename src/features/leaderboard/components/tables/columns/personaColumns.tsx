@@ -62,7 +62,7 @@ export const personaColumns: ColumnsType<RankedPersonaItem> = [
     render: (_name: string, record) => <Text>{record.display_name || record.username}</Text>,
   },
   {
-    title: <HeaderHint label="RFO" hint="Remote from office: sessions against two per weekday." />,
+    title: <HeaderHint label="RFO" hint="RFO rate (Remote from Office): sessions against two per weekday." />,
     dataIndex: 'wfo_rate',
     key: 'wfo_rate',
     width: 80,
@@ -71,7 +71,7 @@ export const personaColumns: ColumnsType<RankedPersonaItem> = [
     render: (v: number) => toPercent(v),
   },
   {
-    title: <HeaderHint label="RFH" hint="Remote from home: the rest of the expected sessions (100% − RFO)." />,
+    title: <HeaderHint label="RFH" hint="RFH rate (Remote from Home): 100% − RFO rate." />,
     dataIndex: 'wfh_rate',
     key: 'wfh_rate',
     width: 80,
@@ -80,7 +80,7 @@ export const personaColumns: ColumnsType<RankedPersonaItem> = [
     render: (v: number) => toPercent(v),
   },
   {
-    title: <HeaderHint label="Work late" hint="Share of lab time between 20:00 and 06:00." />,
+    title: <HeaderHint label="Off-hours Usage" hint="Off-hours Usage Rate: share of session time between 20:00 and 06:00. Lower is better." />,
     dataIndex: 'late_rate',
     key: 'late_rate',
     width: 100,
@@ -89,7 +89,7 @@ export const personaColumns: ColumnsType<RankedPersonaItem> = [
     render: (v: number) => toPercent(v),
   },
   {
-    title: <HeaderHint label="Attendance" hint="Approved bookings that had a session. Bookings with no session are no-shows." />,
+    title: <HeaderHint label="Show-up Rate" hint="Show-up Rate: expected bookings with at least one session. A booking with no session is a no-show." />,
     dataIndex: 'booking_compliance',
     key: 'booking_compliance',
     width: 110,
@@ -98,7 +98,7 @@ export const personaColumns: ColumnsType<RankedPersonaItem> = [
     render: (v: number | null) => toPercent(v),
   },
   {
-    title: <HeaderHint label="Booked used" hint="Booked time actually spent in a session." />,
+    title: <HeaderHint label="Booking Utilization" hint="Booking Utilization Rate: time covered by the booking's sessions (all sessions merged) inside the slot, against booked time." />,
     dataIndex: 'booking_utilization',
     key: 'booking_utilization',
     width: 120,
@@ -107,7 +107,7 @@ export const personaColumns: ColumnsType<RankedPersonaItem> = [
     render: (v: number | null) => toPercent(v),
   },
   {
-    title: <HeaderHint label="Active" hint="Active time against total session time (idle time excluded)." />,
+    title: <HeaderHint label="Active Time Ratio" hint="Active Time Ratio: active time against session time." />,
     dataIndex: 'active_rate',
     key: 'active_rate',
     width: 90,
@@ -116,10 +116,19 @@ export const personaColumns: ColumnsType<RankedPersonaItem> = [
     render: (v: number | null) => toPercent(v),
   },
   {
-    title: <HeaderHint label="Efficiency" hint="Active lab time against 8 hours per weekday." />,
+    title: <HeaderHint label="Early Release" hint="Early Release Rate: unused booked time after the last session that was released by completing the booking early." />,
+    dataIndex: 'early_release_rate',
+    key: 'early_release_rate',
+    width: 120,
+    align: 'center',
+    sorter: (a, b) => (a.early_release_rate ?? -1) - (b.early_release_rate ?? -1),
+    render: (v: number | null) => toPercent(v),
+  },
+  {
+    title: <HeaderHint label="Workday Utilization" hint="Workday Utilization Rate: active lab time against 8 hours per weekday." />,
     dataIndex: 'usage_efficiency',
     key: 'usage_efficiency',
-    width: 110,
+    width: 140,
     align: 'center',
     sorter: (a, b) => (a.usage_efficiency ?? 0) - (b.usage_efficiency ?? 0),
     render: (v: number | undefined) => toPercent(v),

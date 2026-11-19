@@ -103,3 +103,12 @@ test('mapAssessmentResponse maps the scorecard, strengths and development areas'
   assert.deepEqual(result.kpis[0], { kpi: { value: 'after_hours', label: 'After-hours share' }, value: 0, previous_value: null, target: 0.1, is_higher_better: false, weight: 1, status: { value: 'met', label: 'On target' } });
   assert.equal(result.development_areas[0].recommendation, 'Cancel unused slots.');
 });
+
+test('mapPersonaResponse reads Early Release Rate and idle reserved minutes', () => {
+  const [row] = mapPersonaResponse({ data: [{ id: 1, username: 'a', points: 0, total_sessions: 1, early_release_rate: 0, idle_reserved_minutes: 180 }] } as never);
+  assert.equal(row.early_release_rate, 0);
+  assert.equal(row.idle_reserved_minutes, 180);
+  const [none] = mapPersonaResponse({ data: [{ id: 2, username: 'b', points: 0, total_sessions: 1, early_release_rate: null }] } as never);
+  assert.equal(none.early_release_rate, null);
+  assert.equal(none.idle_reserved_minutes, 0);
+});

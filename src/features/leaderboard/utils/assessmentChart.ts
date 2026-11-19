@@ -3,12 +3,12 @@ import type { AssessmentKpiResult } from '../types';
 /**
  * Chart geometry for the KPI assessment. Every KPI is oriented so that further out (or further right)
  * is better: a "lower is better" KPI is plotted as its complement under a positive name, e.g.
- * "Sessions without a booking 14%" becomes "Booked ahead 86%". Tooltips still show the raw figure.
+ * "Ad-hoc Session Rate 14%" becomes "Pre-booked Session Rate 86%". Tooltips still show the raw figure.
  */
 
 const POSITIVE_NAME: Record<string, string> = {
-  advance_booking: 'Booked ahead',
-  after_hours: 'Within regular hours',
+  ad_hoc_session_rate: 'Pre-booked Session Rate',
+  off_hours_usage_rate: 'On-hours Usage Rate',
 };
 
 export interface OrientedKpi {

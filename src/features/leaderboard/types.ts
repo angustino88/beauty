@@ -34,6 +34,10 @@ export interface PersonaItem {
   booking_utilization: number | null;
   /** Share of booked-session time inside the slot; null when no booking was attended. */
   slot_adherence: number | null;
+  /** Unused booked time after the last session that was released early; null when none was left. */
+  early_release_rate: number | null;
+  /** Booked minutes left after the last session that stayed reserved. */
+  idle_reserved_minutes: number;
   total_sessions: number;
   total_usage_minutes: number;
   active_usage_minutes: number;
@@ -57,6 +61,8 @@ export interface LabItem {
   no_show_bookings: number;
   booking_compliance: number | null;
   booking_utilization: number | null;
+  early_release_rate: number | null;
+  idle_reserved_minutes: number;
   availability: number;
   last_remote: string | null;
   total_sessions: number;
