@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  agentServerUrl,
   agentStatus,
   currentAgent,
   formatCountdown,
@@ -68,7 +69,7 @@ test('countdown never goes negative', () => {
   assert.equal(formatCountdown(65), '1:05');
 });
 
-const ctx = { backendUrl: 'https://lab.example/', agentUid: 'uid-1', cli: 'labmango-agent', grant: 'eg_secret' };
+const ctx = { serverUrl: 'https://lab.example/', agentUid: 'uid-1', cli: 'labmango-agent', grant: 'eg_secret' };
 
 test('script: download only with a package URL, configure only with a grant', () => {
   assert.deepEqual(setupScript({ ...ctx, os: 'linux', arch: 'x64', grant: undefined }).map((s) => s.key), ['verify']);
@@ -88,4 +89,11 @@ test('script: Windows uses PowerShell, the .exe and a zip package', () => {
   assert.ok(sectionCommands(download).includes('labmango-agent-win-x64.zip'));
   assert.ok(sectionCommands(configure).startsWith('.\\labmango-agent.exe enroll `\n    --url https://lab.example `\n'));
   assert.ok(!sectionCommands(configure).includes('# '));
+});
+
+test('agents enroll at the frontend address in production, never a build-time API URL', () => {
+  const origin = 'https://labmango.company.com';
+  assert.equal(agentServerUrl({ origin, isDev: false, apiUrl: 'http://10.0.0.5:8000' }), origin);
+  assert.equal(agentServerUrl({ origin, isDev: true, apiUrl: 'http://127.0.0.1:8000' }), 'http://127.0.0.1:8000');
+  assert.equal(agentServerUrl({ origin, isDev: false, override: 'https://agents.company.com' }), 'https://agents.company.com');
 });

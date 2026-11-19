@@ -118,10 +118,23 @@ export interface ScriptSection {
   lines: ScriptLine[];
 }
 
+/**
+ * The address agents enroll and report to: the frontend's own address. In production the
+ * frontend's Nginx forwards `/agent/` to the backend (or Router), so the backend address never
+ * appears in the command or on the computer. `VITE_AGENT_URL` overrides it; the Vite dev server
+ * does not forward `/agent/`, so development uses `VITE_API_URL`.
+ */
+export function agentServerUrl(options: { override?: string; origin: string; isDev: boolean; apiUrl?: string }): string {
+  if (options.override) return options.override;
+  if (options.isDev && options.apiUrl) return options.apiUrl;
+  return options.origin;
+}
+
 export interface SetupContext {
   os: SetupOs;
   arch: SetupArch;
-  backendUrl: string;
+  /** Where the agent enrolls: see {@link agentServerUrl}. */
+  serverUrl: string;
   agentUid: string;
   /** Agent executable name (`VITE_AGENT_CLI`). */
   cli: string;
@@ -139,7 +152,7 @@ const wrapped = (windows: boolean, ...parts: string[]): ScriptLine =>
 
 /** Download → Configure → Verify, in the shape of self-hosted CI runner setup pages. */
 export function setupScript(ctx: SetupContext): ScriptSection[] {
-  const url = ctx.backendUrl.replace(/\/+$/, '');
+  const url = ctx.serverUrl.replace(/\/+$/, '');
   const windows = ctx.os === 'windows';
   const shell = windows ? 'PowerShell' : 'Shell';
   const prompt = windows ? 'PS>' : '$';
@@ -202,7 +215,7 @@ export function sectionCommands(section: ScriptSection): string {
 }
 
 /** Development stub from the backend repository (tools/stub_agent.py); never for real computers. */
-export function stubScript(ctx: Pick<SetupContext, 'backendUrl' | 'agentUid' | 'grant'>): ScriptSection {
+export function stubScript(ctx: Pick<SetupContext, 'serverUrl' | 'agentUid' | 'grant'>): ScriptSection {
   return {
     key: 'configure',
     title: 'Development stub',
@@ -213,7 +226,7 @@ export function stubScript(ctx: Pick<SetupContext, 'backendUrl' | 'agentUid' | '
       wrapped(
         false,
         'python tools/stub_agent.py enroll',
-        `--base-url ${ctx.backendUrl.replace(/\/+$/, '')}`,
+        `--base-url ${ctx.serverUrl.replace(/\/+$/, '')}`,
         `--agent-uid ${ctx.agentUid}`,
         `--grant ${ctx.grant ?? '<grant>'}`,
       ),
