@@ -3,7 +3,7 @@ import {
   FieldTimeOutlined, LineChartOutlined, RadarChartOutlined,
   TeamOutlined, UserOutlined,
 } from '@ant-design/icons';
-import { Alert, Avatar, Modal, Skeleton, Tabs, Typography } from 'antd';
+import { Alert, Avatar, Modal, Segmented, Skeleton, Typography } from 'antd';
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { getAvatarUrl } from '@/shared/utils/avatar';
 import type {
@@ -189,67 +189,38 @@ export function LeaderboardDetailModal({ open, type, userRow, labRow, filter, on
         </div>
       )}
 
-      {canSeeAssessment ? (
-        <Tabs
-          className={styles.tabs}
-          activeKey={tab}
-          onChange={(key) => setTab(key as 'overview' | 'assessment')}
-          items={[
-            {
-              key: 'overview',
-              label: 'Overview',
-              children: (
-                <>
-                  {error && <Alert type="error" message={error} style={{ marginBottom: 12 }} />}
-
-
-                  {isLoading ? (
-                    <Skeleton active paragraph={{ rows: type === 'persona' ? 7 : 6 }} />
-                  ) : !error && (
-                    <>
-                      <div className={styles.metricsGrid}>
-                        {metrics.map((m) => <MetricRow key={m.title} {...m} />)}
-                        {topProjects.length > 0 && (
-                          <div className={styles.metricsGridFull}><TopProjectsBar data={topProjects} /></div>
-                        )}
-                      </div>
-                    </>
-                  )}
-
-                  <WeeklyUsageHeatmap data={weeklyUsage} loading={isLoading} />
-                </>
-              ),
-            },
-            {
-              key: 'assessment',
-              label: <span className={styles.tabLabel}><RadarChartOutlined /> {isOwn ? 'My KPI assessment' : 'KPI assessment'}</span>,
-              children: (
-                <AssessmentReport
-                  assessment={assessmentQuery.currentData}
-                  loading={assessmentQuery.isFetching}
-                  error={assessmentQuery.isError}
-                  audience={type === 'lab' ? 'bench' : isOwn ? 'self' : 'user'}
-                />
-              ),
-            },
+      {canSeeAssessment && (
+        <Segmented
+          className={styles.viewSwitch}
+          value={tab}
+          onChange={(value) => setTab(value as 'overview' | 'assessment')}
+          options={[
+            { label: 'Overview', value: 'overview' },
+            { label: 'Assessment', value: 'assessment' },
           ]}
+        />
+      )}
+
+      {tab === 'assessment' ? (
+        <AssessmentReport
+          assessment={assessmentQuery.currentData}
+          loading={assessmentQuery.isFetching}
+          error={assessmentQuery.isError}
+          audience={type === 'lab' ? 'bench' : isOwn ? 'self' : 'user'}
         />
       ) : (
         <>
           {error && <Alert type="error" message={error} style={{ marginBottom: 12 }} />}
 
-
           {isLoading ? (
             <Skeleton active paragraph={{ rows: type === 'persona' ? 7 : 6 }} />
           ) : !error && (
-            <>
-              <div className={styles.metricsGrid}>
-                {metrics.map((m) => <MetricRow key={m.title} {...m} />)}
-                {topProjects.length > 0 && (
-                  <div className={styles.metricsGridFull}><TopProjectsBar data={topProjects} /></div>
-                )}
-              </div>
-            </>
+            <div className={styles.metricsGrid}>
+              {metrics.map((m) => <MetricRow key={m.title} {...m} />)}
+              {topProjects.length > 0 && (
+                <div className={styles.metricsGridFull}><TopProjectsBar data={topProjects} /></div>
+              )}
+            </div>
           )}
 
           <WeeklyUsageHeatmap data={weeklyUsage} loading={isLoading} />

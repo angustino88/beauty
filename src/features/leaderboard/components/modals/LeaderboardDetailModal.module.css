@@ -141,6 +141,24 @@
 }
 
 
-/* Overview | KPI assessment tabs under the profile header. */
-.tabs :global(.ant-tabs-nav) { margin-bottom: 16px; }
-.tabLabel { display: inline-flex; align-items: center; gap: 6px; }
+/* Overview | Assessment switch under the profile header, styled like the leaderboard's period switch. */
+.viewSwitch {
+  margin-bottom: 16px;
+  padding: 3px;
+  background: var(--lm-surface-muted, var(--lm-surface-subtle)) !important;
+  border: 1px solid var(--lm-border-subtle);
+  border-radius: 10px;
+}
+.viewSwitch :global(.ant-segmented-thumb),
+.viewSwitch :global(.ant-segmented-item-selected) {
+  background: var(--lm-surface) !important;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.08), 0 0 0 1px var(--lm-border-subtle) !important;
+}
+.viewSwitch :global(.ant-segmented-item) { min-width: 112px; }
+.viewSwitch :global(.ant-segmented-item-label) { padding: 0 16px; font-size: 13px; line-height: 30px; min-height: 30px; }
+.viewSwitch :global(.ant-segmented-item-selected) {
+  color: var(--lm-primary-fg) !important;
+  font-weight: 600;
+}
+.viewSwitch :global(.ant-segmented-item:not(.ant-segmented-item-selected):hover) { color: var(--lm-primary) !important; }
