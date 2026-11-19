@@ -122,6 +122,19 @@ export function LicenseChecksPanel({
       ),
     },
     {
+      title: 'Expected',
+      key: 'expected',
+      render: (_, check) => check.expected_licenses.length === 0 ? <span className={styles.muted}>—</span> : (
+        <div className={styles.tags}>
+          {check.expected_licenses.map((item) => (
+            <Tag key={item.id} color={item.is_found ? 'green' : 'red'} title={item.is_found ? 'Found by a current run' : 'Not found on any computer'}>
+              {item.is_found ? '' : 'Missing: '}{item.name}
+            </Tag>
+          ))}
+        </div>
+      ),
+    },
+    {
       title: 'Every',
       key: 'interval',
       width: 90,

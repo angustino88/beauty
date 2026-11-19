@@ -9275,9 +9275,14 @@ export type RunError = {
 };
 export type ReportedCarrierTypeEnum =
   "computer" | "device" | "dongle" | "server" | "equipment";
+export type CarrierIdKindEnum = "vector_device";
+export type CarrierId = {
+  kind: CarrierIdKindEnum;
+  value: string;
+};
 export type ReportedCarrier = {
   type: ReportedCarrierTypeEnum;
-  hardware_id?: HardwareId;
+  hardware_id?: CarrierId;
   equipment_uid?: string;
 };
 export type ReportedLicense = {
@@ -13880,6 +13885,12 @@ export type LicenseCheckTargetRead = {
   kind: ChoiceRead;
   name: string;
 };
+export type ExpectedLicense = {
+  id: number;
+  uid: string;
+  name: string;
+  is_found: boolean;
+};
 export type LicenseCheckRead = {
   id: number;
   key: string;
@@ -13903,6 +13914,7 @@ export type LicenseCheckRead = {
   license_count: number;
   /** Found licenses that are not matched. */
   attention_count: number;
+  expected_licenses: ExpectedLicense[];
   created_at: string;
   updated_at: string;
 };
@@ -13943,6 +13955,8 @@ export type LicenseCheckWrite = {
   is_enabled?: boolean;
   is_lab_wide?: boolean;
   targets?: LicenseCheckTargetRequest[];
+  /** Licenses this check should find; one no run reports is flagged missing. */
+  expected_license_ids?: number[];
 };
 export type LicenseCheckDetailSerializersLicenseCheckDetailResponse = {
   data: LicenseCheck;
@@ -13972,6 +13986,8 @@ export type PatchedLicenseCheckWrite = {
   is_enabled?: boolean;
   is_lab_wide?: boolean;
   targets?: LicenseCheckTargetRequest[];
+  /** Licenses this check should find; one no run reports is flagged missing. */
+  expected_license_ids?: number[];
 };
 export type LicenseCheckRun = {
   id: number;

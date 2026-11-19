@@ -3,6 +3,7 @@ import { Alert, Input, InputNumber, Modal, Segmented, Select, Switch, message } 
 import type { LicenseCheckRead, LicenseCheckWrite } from '@/shared/api/generated/api';
 import { useCreateLicenseCheckMutation, useGetLicenseCheckPresetsQuery, useUpdateLicenseCheckMutation } from './api';
 import { TargetPicker } from './TargetPicker';
+import { ExpectedLicensesPicker, type PickedLicense } from './ExpectedLicensesPicker';
 import type { PickedTarget } from './targets';
 import styles from './LicenseChecks.module.css';
 
@@ -65,6 +66,9 @@ function CheckFormDialog({ open, check, isAdmin, onClose }: CheckFormModalProps)
   const [interval, setInterval] = useState<number>(check?.interval_minutes ?? 360);
   const [isLabWide, setIsLabWide] = useState(check?.is_lab_wide ?? false);
   const [targets, setTargets] = useState<PickedTarget[]>(() => toTargets(check));
+  const [expected, setExpected] = useState<PickedLicense[]>(
+    () => (check?.expected_licenses ?? []).map((item) => ({ id: item.id, name: item.name })),
+  );
   const [config, setConfig] = useState<Record<ConfigField, string>>(() => ({
     probe: pretty(check?.probe),
     extract: pretty(check?.extract),
@@ -92,6 +96,7 @@ function CheckFormDialog({ open, check, isAdmin, onClose }: CheckFormModalProps)
       interval_minutes: interval,
       is_lab_wide: isLabWide,
       targets: targets.map(({ kind, target_id }) => ({ kind, target_id })),
+      expected_license_ids: expected.map((item) => item.id),
     };
     let body: LicenseCheckWrite = shared;
     if (!check && source === 'preset') {
@@ -179,6 +184,13 @@ function CheckFormDialog({ open, check, isAdmin, onClose }: CheckFormModalProps)
           {!isLabWide && targets.length === 0 && (
             <span className={styles.muted}>No target yet: the check runs nowhere until you add one.</span>
           )}
+        </div>
+        <div className={styles.field}>
+          <span className={styles.fieldLabel}>Expected licenses (optional)</span>
+          <ExpectedLicensesPicker value={expected} onChange={setExpected} />
+          <span className={styles.muted}>
+            Licenses this check should find. One that no computer reports is shown as missing, and you are notified once.
+          </span>
         </div>
         {!usesPreset && (
           isAdmin ? (
