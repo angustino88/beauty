@@ -140,3 +140,7 @@
   font-weight: 700;
 }
 
+
+/* Overview | KPI assessment tabs under the profile header. */
+.tabs :global(.ant-tabs-nav) { margin-bottom: 16px; }
+.tabLabel { display: inline-flex; align-items: center; gap: 6px; }

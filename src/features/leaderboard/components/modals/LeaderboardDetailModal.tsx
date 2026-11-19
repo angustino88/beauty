@@ -3,7 +3,7 @@ import {
   FieldTimeOutlined, LineChartOutlined, RadarChartOutlined,
   TeamOutlined, UserOutlined,
 } from '@ant-design/icons';
-import { Alert, Avatar, Modal, Skeleton, Typography } from 'antd';
+import { Alert, Avatar, Modal, Skeleton, Tabs, Typography } from 'antd';
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { getAvatarUrl } from '@/shared/utils/avatar';
 import type {
@@ -21,7 +21,7 @@ import {
 import { TopProjectsBar } from '../charts/TopProjectsBar';
 import { WeeklyUsageHeatmap } from '../charts/WeeklyUsageHeatmap';
 import { useAppSelector } from '@/app/store';
-import { AssessmentPanel } from '../assessment/AssessmentView';
+import { AssessmentReport } from '../assessment/AssessmentView';
 import styles from './LeaderboardDetailModal.module.css';
 
 const { Text } = Typography;
@@ -147,15 +147,21 @@ export function LeaderboardDetailModal({ open, type, userRow, labRow, filter, on
   const isOwn = type === 'persona' && myId != null && userRow?.id === myId;
   const canSeeAssessment = isStaff || isOwn;
   const assessmentArg = { id: selectedId ?? 0, filter };
-  const userAssessment = useGetUserAssessmentQuery(assessmentArg, { skip: !open || !canSeeAssessment || type !== 'persona' || !selectedId });
-  const benchAssessment = useGetBenchAssessmentQuery(assessmentArg, { skip: !open || !isStaff || type !== 'lab' || !selectedId });
+  // The chosen tab belongs to the subject shown: opening another user or bench starts on Overview.
+  const subjectKey = `${type}:${selectedId ?? ''}`;
+  const [tabState, setTabState] = useState<{ subject: string; tab: 'overview' | 'assessment' }>({ subject: '', tab: 'overview' });
+  const tab = open && tabState.subject === subjectKey ? tabState.tab : 'overview';
+  const setTab = (next: 'overview' | 'assessment') => setTabState({ subject: subjectKey, tab: next });
+  const showAssessment = open && canSeeAssessment && tab === 'assessment' && Boolean(selectedId);
+  const userAssessment = useGetUserAssessmentQuery(assessmentArg, { skip: !showAssessment || type !== 'persona' });
+  const benchAssessment = useGetBenchAssessmentQuery(assessmentArg, { skip: !showAssessment || type !== 'lab' });
   const assessmentQuery = type === 'persona' ? userAssessment : benchAssessment;
 
   const metrics = type === 'persona' ? personaMetrics : labMetrics;
 
   return (
     <Modal open={open} title={type === 'persona' ? 'User Profile' : 'Lab Profile'}
-      onCancel={onClose} footer={null} destroyOnHidden width={760}>
+      onCancel={onClose} footer={null} destroyOnHidden width={canSeeAssessment ? 880 : 760}>
 
       {type === 'persona' ? (
         <div className={styles.header}>
@@ -183,31 +189,72 @@ export function LeaderboardDetailModal({ open, type, userRow, labRow, filter, on
         </div>
       )}
 
-      {error && <Alert type="error" message={error} style={{ marginBottom: 12 }} />}
+      {canSeeAssessment ? (
+        <Tabs
+          className={styles.tabs}
+          activeKey={tab}
+          onChange={(key) => setTab(key as 'overview' | 'assessment')}
+          items={[
+            {
+              key: 'overview',
+              label: 'Overview',
+              children: (
+                <>
+                  {error && <Alert type="error" message={error} style={{ marginBottom: 12 }} />}
 
-      {canSeeAssessment && (
-        <AssessmentPanel
-          assessment={assessmentQuery.currentData}
-          loading={assessmentQuery.isFetching}
-          error={assessmentQuery.isError}
-          audience={type === 'lab' ? 'bench' : isOwn ? 'self' : 'user'}
+
+                  {isLoading ? (
+                    <Skeleton active paragraph={{ rows: type === 'persona' ? 7 : 6 }} />
+                  ) : !error && (
+                    <>
+                      <div className={styles.metricsGrid}>
+                        {metrics.map((m) => <MetricRow key={m.title} {...m} />)}
+                        {topProjects.length > 0 && (
+                          <div className={styles.metricsGridFull}><TopProjectsBar data={topProjects} /></div>
+                        )}
+                      </div>
+                    </>
+                  )}
+
+                  <WeeklyUsageHeatmap data={weeklyUsage} loading={isLoading} />
+                </>
+              ),
+            },
+            {
+              key: 'assessment',
+              label: <span className={styles.tabLabel}><RadarChartOutlined /> {isOwn ? 'My KPI assessment' : 'KPI assessment'}</span>,
+              children: (
+                <AssessmentReport
+                  assessment={assessmentQuery.currentData}
+                  loading={assessmentQuery.isFetching}
+                  error={assessmentQuery.isError}
+                  audience={type === 'lab' ? 'bench' : isOwn ? 'self' : 'user'}
+                />
+              ),
+            },
+          ]}
         />
-      )}
-
-      {isLoading ? (
-        <Skeleton active paragraph={{ rows: type === 'persona' ? 7 : 6 }} />
-      ) : !error && (
+      ) : (
         <>
-          <div className={styles.metricsGrid}>
-            {metrics.map((m) => <MetricRow key={m.title} {...m} />)}
-            {topProjects.length > 0 && (
-              <div className={styles.metricsGridFull}><TopProjectsBar data={topProjects} /></div>
-            )}
-          </div>
+          {error && <Alert type="error" message={error} style={{ marginBottom: 12 }} />}
+
+
+          {isLoading ? (
+            <Skeleton active paragraph={{ rows: type === 'persona' ? 7 : 6 }} />
+          ) : !error && (
+            <>
+              <div className={styles.metricsGrid}>
+                {metrics.map((m) => <MetricRow key={m.title} {...m} />)}
+                {topProjects.length > 0 && (
+                  <div className={styles.metricsGridFull}><TopProjectsBar data={topProjects} /></div>
+                )}
+              </div>
+            </>
+          )}
+
+          <WeeklyUsageHeatmap data={weeklyUsage} loading={isLoading} />
         </>
       )}
-
-      <WeeklyUsageHeatmap data={weeklyUsage} loading={isLoading} />
     </Modal>
   );
 }
