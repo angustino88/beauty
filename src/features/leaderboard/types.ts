@@ -22,10 +22,21 @@ export interface PersonaItem {
   late_rate: number;
   labs_accessed: number;
   usage_efficiency: number;
+  /** Active time against session time; null without sessions. */
+  active_rate: number | null;
+  /** Sessions without a verified booking; null without sessions. */
+  ad_hoc_rate: number | null;
   total_bookings: number;
-  booking_compliance: number;
+  no_show_bookings: number;
+  /** Attended bookings against expected bookings; null without bookings. */
+  booking_compliance: number | null;
+  /** Booked time actually used; null without bookings. */
+  booking_utilization: number | null;
+  /** Share of booked-session time inside the slot; null when no booking was attended. */
+  slot_adherence: number | null;
   total_sessions: number;
   total_usage_minutes: number;
+  active_usage_minutes: number;
   avg_session_minutes: number;
   longest_session_minutes: number;
   last_remote: string | null;
@@ -40,7 +51,12 @@ export interface LabItem {
   points: number;
   active_users: number;
   utilization_rate: number;
-  booking_compliance: number;
+  /** Booked time against working hours. */
+  booking_fill: number;
+  total_bookings: number;
+  no_show_bookings: number;
+  booking_compliance: number | null;
+  booking_utilization: number | null;
   availability: number;
   last_remote: string | null;
   total_sessions: number;
@@ -86,4 +102,32 @@ export interface LabProfile {
   availability: number;
   total_usage_minutes: number;
   top_projects: TopProjectItem[];
+}
+
+export interface Choice { value: string; label: string; }
+
+/** One scorecard line of a KPI assessment. */
+export interface AssessmentKpiResult {
+  kpi: Choice;
+  value: number | null;
+  previous_value: number | null;
+  target: number;
+  is_higher_better: boolean;
+  weight: number;
+  status: Choice;
+}
+
+/** KPI assessment of a user or bench (lab coordinators and admins only). */
+export interface LeaderboardAssessment {
+  period: { starts_at: string; ends_at: string };
+  previous_period: { starts_at: string; ends_at: string };
+  rating: Choice;
+  score: number | null;
+  previous_score: number | null;
+  summary: string;
+  total_sessions: number;
+  total_bookings: number;
+  kpis: AssessmentKpiResult[];
+  strengths: Array<{ kpi: Choice; text: string }>;
+  development_areas: Array<{ kpi: Choice; severity: Choice; text: string; recommendation: string }>;
 }

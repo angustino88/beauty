@@ -220,3 +220,28 @@ test('isCurrentlyBooked correctly detects active booking intervals', () => {
   assert.equal(isCurrentlyBooked(pastBooking), false);
   assert.equal(isCurrentlyBooked(null), false);
 });
+
+test('mapBenchDetailResponse puts the status start time on the current offline or inactive status', () => {
+  const detail = (status: string) => mapBenchDetailResponse({
+    data: {
+      id: 11,
+      name: 'Rig 11',
+      computing: { id: 7, name: 'PC-7', activity_status: status, status_started_at: '2026-11-19T06:00:00Z' },
+      equipment_by_category: [],
+      upcoming_bookings: [],
+    },
+  });
+
+  const offline = detail('offline');
+  assert.equal(offline.computing?.status_started_at, '2026-11-19T06:00:00Z');
+  assert.equal(offline.current_activity?.offline_time, '2026-11-19T06:00:00Z');
+  assert.equal(offline.current_activity?.inactive_time, null);
+
+  const inactive = detail('inactive');
+  assert.equal(inactive.current_activity?.inactive_time, '2026-11-19T06:00:00Z');
+  assert.equal(inactive.current_activity?.offline_time, null);
+
+  const active = detail('active');
+  assert.equal(active.current_activity?.offline_time, null);
+  assert.equal(active.current_activity?.inactive_time, null);
+});

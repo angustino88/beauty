@@ -103,6 +103,8 @@ export interface DashboardBench {
     remote_user: string;
     remote_user_display_name: string;
     remote_ip: string | null;
+    /** Start of the current offline or inactive spell; null for other statuses. */
+    status_started_at: string | null;
   } | null;
   samples: Array<{ id: number; sku?: string; name?: string }>;
   licenses: Array<{ id: number; sku?: string; name?: string }>;
@@ -299,6 +301,8 @@ export interface DashboardBenchDetail {
     activity_status: string;
     last_agent_report_at: string | null;
     is_stale: boolean | null;
+    /** Start of the current offline or inactive spell; null for other statuses. */
+    status_started_at: string | null;
   } | null;
   samples: Array<{ id: number; sku?: string; name?: string }>;
   licenses: Array<{ id: number; sku?: string; name?: string }>;

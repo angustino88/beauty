@@ -17,15 +17,27 @@ import dayjs from 'dayjs';
 import { LabStatus } from '@/components/display/LabStatus';
 import { useInfoModalStyles } from './InfoModal.styles';
 
-function calcDuration(startTime: string): { formatted: string; intervalMs: number } {
-  const diffMinutes = dayjs().diff(dayjs(startTime), 'minute');
-  const days = Math.floor(diffMinutes / 1440);
-  const hours = Math.floor((diffMinutes % 1440) / 60);
-  const mins = diffMinutes % 60;
+/** "45 min", "3 h 20 min", "2 d 4 h": precise enough to read at a glance next to the status. */
+function formatElapsed(since: string, now: dayjs.Dayjs = dayjs()): string {
+  const total = Math.max(0, now.diff(dayjs(since), 'minute'));
+  if (total < 1) return '< 1 min';
+  const days = Math.floor(total / 1440);
+  const hours = Math.floor((total % 1440) / 60);
+  const mins = total % 60;
+  if (days > 0) return hours ? `${days} d ${hours} h` : `${days} d`;
+  if (hours > 0) return mins ? `${hours} h ${mins} min` : `${hours} h`;
+  return `${mins} min`;
+}
 
-  if (days > 0) return { formatted: `${days} ${days > 1 ? 'days' : 'day'}`, intervalMs: 3_600_000 };
-  if (hours > 0) return { formatted: `${hours} ${hours > 1 ? 'hours' : 'hour'}`, intervalMs: 60_000 };
-  return { formatted: `${mins} ${mins > 1 ? 'mins' : 'min'}`, intervalMs: 60_000 };
+/** Time since `since`, refreshed every minute while shown; null when there is no start time. */
+function useElapsed(since: string | null | undefined): string | null {
+  const [now, setNow] = useState(() => dayjs());
+  useEffect(() => {
+    if (!since) return undefined;
+    const id = setInterval(() => setNow(dayjs()), 60_000);
+    return () => clearInterval(id);
+  }, [since]);
+  return since && dayjs(since).isValid() ? formatElapsed(since, now) : null;
 }
 
 interface InfoModalProps {
@@ -34,48 +46,17 @@ interface InfoModalProps {
 
 export default function InfoModal({ data }: InfoModalProps) {
   const { styles } = useInfoModalStyles();
-  const [offlineDuration, setOfflineDuration] = useState('–');
-  const [inactiveDuration, setInactiveDuration] = useState('–');
-
-  useEffect(() => {
-    const status = data?.computer?.status;
-    const offlineTime = data?.current_activity?.offline_time;
-    const inactiveTime = data?.current_activity?.inactive_time;
-    let intervalId: ReturnType<typeof setInterval> | null = null;
-
-    const update = () => {
-      if (status === 'offline' && offlineTime) {
-        const { formatted, intervalMs } = calcDuration(offlineTime);
-        setOfflineDuration(formatted);
-        if (intervalId) clearInterval(intervalId);
-        intervalId = setInterval(update, intervalMs);
-      } else {
-        setOfflineDuration('–');
-      }
-
-      if (status === 'inactive' && inactiveTime) {
-        const { formatted, intervalMs } = calcDuration(inactiveTime);
-        setInactiveDuration(formatted);
-        if (intervalId) clearInterval(intervalId);
-        intervalId = setInterval(update, intervalMs);
-      } else {
-        setInactiveDuration('–');
-      }
-    };
-
-    update();
-    return () => {
-      if (intervalId) clearInterval(intervalId);
-    };
-  }, [data?.computer?.status, data?.current_activity?.offline_time, data?.current_activity?.inactive_time]);
+  const computerStatus = data?.computer?.status;
+  // Only offline and inactive have a meaningful start: how long the bench has been unreachable or idle.
+  const statusSince = computerStatus === 'offline' ? data?.current_activity?.offline_time
+    : computerStatus === 'inactive' ? data?.current_activity?.inactive_time
+      : null;
+  const elapsed = useElapsed(statusSince);
 
   const booked = isCurrentlyBooked(data?.booking_status);
   // The same mapping the Mapping page shows (room, station, bench, equipment with their real
   // categories, licenses on the equipment that holds them), not one rebuilt from dashboard fields.
   const { data: mappingRow, isFetching: mappingLoading } = useGetBenchMappingQuery(data.id, { skip: !data.id });
-  const duration = data.computer?.status === 'offline' ? offlineDuration
-    : data.computer?.status === 'inactive' ? inactiveDuration
-      : '–';
   const hasRemoteActivity = Boolean(
     data.current_activity?.remote_user
     || data.current_activity?.remote_computer
@@ -106,7 +87,11 @@ export default function InfoModal({ data }: InfoModalProps) {
             <div className={styles.statusMeta} data-status={status}>
               <span>Status</span>
               <LabStatus labStatus={status} isBooked={booked} fit />
-              {duration !== '–' && <small>{duration}</small>}
+              {elapsed && statusSince && (
+                <Tooltip title={`${computerStatus === 'offline' ? 'Offline' : 'Inactive'} since ${dayjs(statusSince).format('DD MMM YYYY, HH:mm')}`}>
+                  <small aria-label={`${computerStatus} for ${elapsed}`}>{elapsed}</small>
+                </Tooltip>
+              )}
             </div>
           </div>
           <div className={styles.quickFacts}>

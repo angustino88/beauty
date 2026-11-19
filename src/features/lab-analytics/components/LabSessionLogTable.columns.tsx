@@ -4,18 +4,9 @@ import type { ColumnsType } from 'antd/es/table';
 import { StatusBadge } from '@/shared/components/StatusBadge';
 import { SpaceLocationRow } from '@/features/spaces/shared/components/SpaceLocation';
 import type { LabSessionLogEntry } from '../types';
+import { checkAgainstSlot, formatMinutes, formatSlot } from '../utils/sessionBookingSlot';
 
 const DATETIME_FORMAT = 'DD MMM YYYY, HH:mm';
-
-/** 95 → "1 h 35 min"; minutes stay readable at a glance, hours for long sessions. */
-export function formatMinutes(minutes: number | null): string {
-  if (minutes == null) return '—';
-  const total = Math.round(minutes);
-  if (total < 60) return `${total} min`;
-  const hours = Math.floor(total / 60);
-  const rest = total % 60;
-  return rest ? `${hours} h ${rest} min` : `${hours} h`;
-}
 
 const ACCESS_TONE: Record<string, 'success' | 'neutral' | 'warning'> = {
   booked: 'success',
@@ -29,6 +20,8 @@ const ACCESS_HINT: Record<string, string> = {
 };
 
 const muted = { color: 'var(--lm-text-tertiary)' } as const;
+const stack = { display: 'flex', flexDirection: 'column', lineHeight: 1.3, minWidth: 0 } as const;
+const ellipsis = { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } as const;
 
 /** Sorting is done by the server; the column keys are its `ordering` fields. */
 export const labSessionLogColumns: ColumnsType<LabSessionLogEntry> = [
@@ -58,8 +51,8 @@ export const labSessionLogColumns: ColumnsType<LabSessionLogEntry> = [
       const name = row.user?.display_name || row.remote_user_display_name || row.remote_user || '—';
       const login = row.remote_user && row.remote_user !== name ? row.remote_user : null;
       return (
-        <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.3, minWidth: 0 }}>
-          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</span>
+        <div style={stack}>
+          <span style={ellipsis}>{name}</span>
           {login ? <span style={{ ...muted, fontSize: 12 }}>{login}</span> : null}
           {!row.user && row.remote_user ? (
             <Tooltip title="No Lab Mango account matches this login name.">
@@ -83,13 +76,6 @@ export const labSessionLogColumns: ColumnsType<LabSessionLogEntry> = [
         />
       )
       : <span style={muted}>—</span>,
-  },
-  {
-    title: 'Booking code',
-    dataIndex: 'booking_code',
-    key: 'booking_code',
-    width: 140,
-    render: (value: string | null) => value || <span style={muted}>—</span>,
   },
   {
     title: 'Bench',
@@ -132,6 +118,56 @@ export const labSessionLogColumns: ColumnsType<LabSessionLogEntry> = [
           {formatMinutes(value)}
           {share != null ? <span style={{ ...muted, marginLeft: 6, fontSize: 12 }}>{share}%</span> : null}
         </span>
+      );
+    },
+  },
+  {
+    title: 'Booking code',
+    key: 'booking_code',
+    width: 170,
+    // Space after the right-aligned Active figures so the two columns don't run together.
+    onHeaderCell: () => ({ style: { paddingLeft: 28 } }),
+    onCell: () => ({ style: { paddingLeft: 28 } }),
+    render: (_: unknown, row) => {
+      const code = row.booking?.booking_code || row.booking_code;
+      if (!code) return <span style={muted}>—</span>;
+      return (
+        <div style={stack}>
+          <Tooltip title={row.booking?.status ? `Booking status: ${row.booking.status.label}` : 'Not linked to a verified booking.'}>
+            <span style={{ ...ellipsis, fontFamily: 'var(--lm-font-mono, ui-monospace, monospace)', fontSize: 12.5 }}>{code}</span>
+          </Tooltip>
+          {row.booking?.status ? <span style={{ ...muted, fontSize: 12 }}>{row.booking.status.label}</span> : null}
+        </div>
+      );
+    },
+  },
+  {
+    title: 'Project',
+    key: 'booking_project',
+    width: 180,
+    render: (_: unknown, row) => {
+      const project = row.booking?.project?.name;
+      if (project) return <Tooltip title={project}><span style={{ ...ellipsis, display: 'block' }}>{project}</span></Tooltip>;
+      return <span style={muted}>{row.booking ? 'No project' : '—'}</span>;
+    },
+  },
+  {
+    title: 'Booked slot',
+    key: 'booking_slot',
+    width: 200,
+    render: (_: unknown, row) => {
+      const slot = formatSlot(row);
+      if (!slot) return <span style={muted}>—</span>;
+      const check = checkAgainstSlot(row);
+      return (
+        <div style={stack}>
+          <span style={{ fontVariantNumeric: 'tabular-nums' }}>{slot}</span>
+          {check ? (
+            <Tooltip title={check.detail}>
+              <span style={{ fontSize: 12, color: check.ok ? 'var(--lm-success-fg)' : 'var(--lm-warning-fg)' }}>{check.label}</span>
+            </Tooltip>
+          ) : null}
+        </div>
       );
     },
   },

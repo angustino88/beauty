@@ -9,6 +9,7 @@ import type {
 import type {
   LabItem,
   LabProfile,
+  LeaderboardAssessment,
   PersonaItem,
   TopProjectItem,
   UserProfile,
@@ -16,6 +17,8 @@ import type {
 } from './types';
 
 type RecordValue = Record<string, unknown>;
+
+const rateOrNull = (value: unknown): number | null => (typeof value === 'number' && Number.isFinite(value) ? value : null);
 
 const mapTopProjects = (projects?: unknown[]): TopProjectItem[] => {
   if (!Array.isArray(projects)) return [];
@@ -47,10 +50,16 @@ export function mapPersonaResponse(response: LabsLeaderboardPersonaRetrieveApiRe
       late_rate: (row.late_rate as number) ?? 0,
       labs_accessed: (row.labs_accessed as number) ?? 0,
       usage_efficiency: (row.usage_efficiency as number) ?? 0,
+      active_rate: rateOrNull(row.active_rate),
+      ad_hoc_rate: rateOrNull(row.ad_hoc_rate),
       total_bookings: (row.total_bookings as number) ?? 0,
-      booking_compliance: (row.booking_compliance as number) ?? 0,
+      no_show_bookings: (row.no_show_bookings as number) ?? 0,
+      booking_compliance: rateOrNull(row.booking_compliance),
+      booking_utilization: rateOrNull(row.booking_utilization),
+      slot_adherence: rateOrNull(row.slot_adherence),
       total_sessions: (row.total_sessions as number) ?? 0,
       total_usage_minutes: (row.total_usage_minutes as number) ?? 0,
+      active_usage_minutes: (row.active_usage_minutes as number) ?? 0,
       avg_session_minutes: (row.avg_session_minutes as number) ?? 0,
       longest_session_minutes: (row.longest_session_minutes as number) ?? 0,
       last_remote: (row.last_remote_at as string) ?? null,
@@ -73,11 +82,15 @@ export function mapLabResponse(response: LabsLeaderboardLabRetrieveApiResponse):
       points: (row.points as number) ?? 0,
       active_users: (row.active_users as number) ?? 0,
       utilization_rate: (row.utilization_rate as number) ?? 0,
-      booking_compliance: (row.booking_compliance as number) ?? 0,
+      booking_fill: (row.booking_fill as number) ?? 0,
+      total_bookings: (row.total_bookings as number) ?? 0,
+      no_show_bookings: (row.no_show_bookings as number) ?? 0,
+      booking_compliance: rateOrNull(row.booking_compliance),
+      booking_utilization: rateOrNull(row.booking_utilization),
       availability: (row.availability as number) ?? 0,
       last_remote: (row.last_remote_at as string) ?? null,
       total_sessions: (row.total_sessions as number) ?? 0,
-      total_usage_minutes: (row.total_usage_minutes as number) ?? downtimeMinutes,
+      total_usage_minutes: (row.total_usage_minutes as number) ?? 0,
       downtime_hours: downtimeHours,
       top_projects: mapTopProjects(row.top_projects as unknown[]),
     };
@@ -170,4 +183,46 @@ export function mapUserWeeklyUsageResponse(response: LabsLeaderboardUsersWeeklyU
 
 export function mapLabWeeklyUsageResponse(response: LabsBenchesWeeklyUsageRetrieveByIdApiResponse): WeeklyUsageItem[] {
   return mapWeeklyUsage(response.data as RawUsageItem[]);
+}
+
+const asChoice = (value: unknown) => {
+  const rec = (value as RecordValue) ?? {};
+  return { value: String(rec.value ?? ''), label: String(rec.label ?? rec.value ?? '') };
+};
+const asList = (value: unknown): RecordValue[] => (Array.isArray(value) ? value.filter((v) => v && typeof v === 'object') as RecordValue[] : []);
+const asPeriod = (value: unknown) => {
+  const rec = (value as RecordValue) ?? {};
+  return { starts_at: String(rec.starts_at ?? ''), ends_at: String(rec.ends_at ?? '') };
+};
+const numberOrNull = (value: unknown): number | null => (typeof value === 'number' && Number.isFinite(value) ? value : null);
+
+/** `{data: {...}}` from GET .../assessment. */
+export function mapAssessmentResponse(response: unknown): LeaderboardAssessment {
+  const data = (((response as RecordValue) ?? {}).data as RecordValue) ?? {};
+  return {
+    period: asPeriod(data.period),
+    previous_period: asPeriod(data.previous_period),
+    rating: asChoice(data.rating),
+    score: numberOrNull(data.score),
+    previous_score: numberOrNull(data.previous_score),
+    summary: String(data.summary ?? ''),
+    total_sessions: Number(data.total_sessions ?? 0),
+    total_bookings: Number(data.total_bookings ?? 0),
+    kpis: asList(data.kpis).map((kpi) => ({
+      kpi: asChoice(kpi.kpi),
+      value: numberOrNull(kpi.value),
+      previous_value: numberOrNull(kpi.previous_value),
+      target: Number(kpi.target ?? 0),
+      is_higher_better: kpi.is_higher_better !== false,
+      weight: Number(kpi.weight ?? 0),
+      status: asChoice(kpi.status),
+    })),
+    strengths: asList(data.strengths).map((item) => ({ kpi: asChoice(item.kpi), text: String(item.text ?? '') })),
+    development_areas: asList(data.development_areas).map((item) => ({
+      kpi: asChoice(item.kpi),
+      severity: asChoice(item.severity),
+      text: String(item.text ?? ''),
+      recommendation: String(item.recommendation ?? ''),
+    })),
+  };
 }

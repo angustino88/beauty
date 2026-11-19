@@ -175,7 +175,7 @@ export function LabSessionLogTable() {
             }
           },
         }}
-        scroll={{ x: 1470 }}
+        scroll={{ x: 1860 }}
       />
     </div>
   );

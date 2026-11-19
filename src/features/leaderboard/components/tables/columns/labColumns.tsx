@@ -1,6 +1,8 @@
 import { Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
+import { toPercent } from '../../../formatters';
 import type { RankedLabItem } from '../../../types';
+import { HeaderHint } from './HeaderHint';
 
 const { Text } = Typography;
 
@@ -38,12 +40,31 @@ export const labColumns: ColumnsType<RankedLabItem> = [
     sorter: (a, b) => (a.total_sessions ?? 0) - (b.total_sessions ?? 0),
   },
   {
-    title: 'Downtime (h)',
-    dataIndex: 'downtime_hours',
-    key: 'downtime_hours',
-    width: 120,
+    title: <HeaderHint label="Utilization" hint="Active time on the bench against 8 hours per weekday." />,
+    dataIndex: 'utilization_rate',
+    key: 'utilization_rate',
+    width: 110,
     align: 'center',
-    sorter: (a, b) => (a.downtime_hours ?? 0) - (b.downtime_hours ?? 0),
+    sorter: (a, b) => (a.utilization_rate ?? 0) - (b.utilization_rate ?? 0),
+    render: (v: number) => toPercent(v),
+  },
+  {
+    title: <HeaderHint label="Booking fill" hint="Booked time against 8 hours per weekday." />,
+    dataIndex: 'booking_fill',
+    key: 'booking_fill',
+    width: 110,
+    align: 'center',
+    sorter: (a, b) => (a.booking_fill ?? 0) - (b.booking_fill ?? 0),
+    render: (v: number) => toPercent(v),
+  },
+  {
+    title: <HeaderHint label="Attendance" hint="Approved bookings on this bench that had a session." />,
+    dataIndex: 'booking_compliance',
+    key: 'booking_compliance',
+    width: 110,
+    align: 'center',
+    sorter: (a, b) => (a.booking_compliance ?? -1) - (b.booking_compliance ?? -1),
+    render: (v: number | null) => toPercent(v),
   },
   {
     title: 'Points',

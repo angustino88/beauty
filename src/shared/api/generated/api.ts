@@ -935,6 +935,18 @@ const injectedRtkApi = api.injectEndpoints({
         method: "DELETE",
       }),
     }),
+    labsBenchesAssessmentRetrieveById: build.query<
+      LabsBenchesAssessmentRetrieveByIdApiResponse,
+      LabsBenchesAssessmentRetrieveByIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/benches/${queryArg.id}/assessment`,
+        params: {
+          end_date: queryArg.endDate,
+          start_date: queryArg.startDate,
+        },
+      }),
+    }),
     labsBenchesProfileRetrieveById: build.query<
       LabsBenchesProfileRetrieveByIdApiResponse,
       LabsBenchesProfileRetrieveByIdApiArg
@@ -2888,6 +2900,18 @@ const injectedRtkApi = api.injectEndpoints({
     >({
       query: (queryArg) => ({
         url: `/api/labs/leaderboard/persona`,
+        params: {
+          end_date: queryArg.endDate,
+          start_date: queryArg.startDate,
+        },
+      }),
+    }),
+    labsLeaderboardUsersAssessmentRetrieveById: build.query<
+      LabsLeaderboardUsersAssessmentRetrieveByIdApiResponse,
+      LabsLeaderboardUsersAssessmentRetrieveByIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/leaderboard/users/${queryArg.id}/assessment`,
         params: {
           end_date: queryArg.endDate,
           start_date: queryArg.startDate,
@@ -5973,6 +5997,13 @@ export type LabsBenchesImageDestroyByBenchIdApiResponse = unknown;
 export type LabsBenchesImageDestroyByBenchIdApiArg = {
   benchId: number;
 };
+export type LabsBenchesAssessmentRetrieveByIdApiResponse =
+  /** status 200  */ BenchAssessmentSerializersAssessmentDetailResponseRead;
+export type LabsBenchesAssessmentRetrieveByIdApiArg = {
+  endDate?: string;
+  id: number;
+  startDate?: string;
+};
 export type LabsBenchesProfileRetrieveByIdApiResponse =
   /** status 200  */ LabProfileSerializersLabProfileDetailResponse;
 export type LabsBenchesProfileRetrieveByIdApiArg = {
@@ -7336,6 +7367,13 @@ export type LabsLeaderboardPersonaRetrieveApiResponse =
   /** status 200  */ LeaderboardPersonaSerializersLeaderboardPersonaListResponse;
 export type LabsLeaderboardPersonaRetrieveApiArg = {
   endDate?: string;
+  startDate?: string;
+};
+export type LabsLeaderboardUsersAssessmentRetrieveByIdApiResponse =
+  /** status 200  */ UserAssessmentSerializersAssessmentDetailResponseRead;
+export type LabsLeaderboardUsersAssessmentRetrieveByIdApiArg = {
+  endDate?: string;
+  id: number;
   startDate?: string;
 };
 export type LabsLeaderboardUsersProfileRetrieveByIdApiResponse =
@@ -10489,6 +10527,90 @@ export type ResourceImageUpload = {
   /** JPEG, PNG, GIF or WebP, at most 5 MB. The type is detected from the content. */
   file: Blob;
 };
+export type LeaderboardAssessmentPeriod = {
+  starts_at: string;
+  ends_at: string;
+};
+export type LeaderboardAssessmentKpi = {
+  /** 0-1; null when the KPI does not apply. */
+  value: number | null;
+  /** Same KPI in the previous period. */
+  previous_value: number | null;
+  /** 0-1 target; a ceiling when is_higher_better is false. */
+  target: number;
+  is_higher_better: boolean;
+  /** Weight in the overall score. */
+  weight: number;
+};
+export type LeaderboardAssessmentKpiRead = {
+  kpi: ChoiceRead;
+  /** 0-1; null when the KPI does not apply. */
+  value: number | null;
+  /** Same KPI in the previous period. */
+  previous_value: number | null;
+  /** 0-1 target; a ceiling when is_higher_better is false. */
+  target: number;
+  is_higher_better: boolean;
+  /** Weight in the overall score. */
+  weight: number;
+  status: ChoiceRead;
+};
+export type LeaderboardAssessmentStrength = {
+  text: string;
+};
+export type LeaderboardAssessmentStrengthRead = {
+  kpi: ChoiceRead;
+  text: string;
+};
+export type LeaderboardAssessmentDevelopmentArea = {
+  /** The finding, with the figure behind it. */
+  text: string;
+  /** The recommended action. */
+  recommendation: string;
+};
+export type LeaderboardAssessmentDevelopmentAreaRead = {
+  kpi: ChoiceRead;
+  severity: ChoiceRead;
+  /** The finding, with the figure behind it. */
+  text: string;
+  /** The recommended action. */
+  recommendation: string;
+};
+export type LeaderboardAssessment = {
+  period: LeaderboardAssessmentPeriod;
+  previous_period: LeaderboardAssessmentPeriod;
+  /** Weighted KPI score 0-100; null with too little data. */
+  score: number | null;
+  /** Score of the previous period. */
+  previous_score: number | null;
+  summary: string;
+  total_sessions: number;
+  total_bookings: number;
+  kpis: LeaderboardAssessmentKpi[];
+  strengths: LeaderboardAssessmentStrength[];
+  development_areas: LeaderboardAssessmentDevelopmentArea[];
+};
+export type LeaderboardAssessmentRead = {
+  period: LeaderboardAssessmentPeriod;
+  previous_period: LeaderboardAssessmentPeriod;
+  rating: ChoiceRead;
+  /** Weighted KPI score 0-100; null with too little data. */
+  score: number | null;
+  /** Score of the previous period. */
+  previous_score: number | null;
+  summary: string;
+  total_sessions: number;
+  total_bookings: number;
+  kpis: LeaderboardAssessmentKpiRead[];
+  strengths: LeaderboardAssessmentStrengthRead[];
+  development_areas: LeaderboardAssessmentDevelopmentAreaRead[];
+};
+export type BenchAssessmentSerializersAssessmentDetailResponse = {
+  data: LeaderboardAssessment;
+};
+export type BenchAssessmentSerializersAssessmentDetailResponseRead = {
+  data: LeaderboardAssessmentRead;
+};
 export type LabProfile = {
   id: number;
   name: string;
@@ -10957,6 +11079,8 @@ export type DashboardComputing = {
   /** Client computer of the remote session. */
   remote_computer: string;
   remote_ip: string | null;
+  /** When the current offline or inactive status began; null for any other status. */
+  status_started_at: string | null;
 };
 export type DashboardEquipmentReference = {
   id: number;
@@ -11019,6 +11143,8 @@ export type DashboardComputingDetail = {
   activity_status: string;
   last_agent_report_at: string | null;
   is_stale: boolean | null;
+  /** When the current offline or inactive status began; null for any other status. */
+  status_started_at: string | null;
 };
 export type DashboardEquipmentItem = {
   id: number;
@@ -13724,6 +13850,15 @@ export type SessionLogListSerializersSessionLogItemPaginationMeta = {
   pagination: SessionLogListSerializersSessionLogItemPagination;
 };
 export type SessionLogItem = {};
+export type SessionLogBooking = {};
+export type SessionLogBookingRead = {
+  id: number;
+  booking_code: string;
+  starts_at: string;
+  ends_at: string;
+  status: ChoiceRead;
+  project: LabsNamedReferenceRead | null;
+};
 export type SessionLogItemRead = {
   id: number;
   login_at: string;
@@ -13740,7 +13875,8 @@ export type SessionLogItemRead = {
   user: UserReferenceRead | null;
   access_type: ChoiceRead | null;
   booking_code: string | null;
-  booking_id: number | null;
+  /** The verified booking (access type booked); null otherwise. */
+  booking: SessionLogBookingRead | null;
 };
 export type SessionLogListSerializersSessionLogItemPaginatedResponse = {
   meta: SessionLogListSerializersSessionLogItemPaginationMeta;
@@ -13759,13 +13895,27 @@ export type LeaderboardPersona = {
   wfo_rate?: number;
   wfh_rate?: number;
   late_rate?: number;
+  /** Active lab time against 8 hours per weekday, 0-1. */
   usage_efficiency?: number;
-  booking_compliance?: number;
+  /** Active time against total session time, 0-1; null without sessions. */
+  active_rate?: number | null;
+  /** Sessions without a verified booking against all sessions, 0-1; null without sessions. */
+  ad_hoc_rate?: number | null;
+  /** Attended bookings (at least one session) against approved bookings that have started, 0-1; null without bookings. */
+  booking_compliance?: number | null;
+  /** Booked time actually used against booked time, 0-1; null without bookings. */
+  booking_utilization?: number | null;
+  /** Session time inside the booked slot against all time of booked sessions, 0-1; null when no booking was attended. */
+  slot_adherence?: number | null;
+  /** Bookings with no session. */
+  no_show_bookings?: number;
   last_remote_at?: string | null;
   labs_accessed?: number;
   total_bookings?: number;
   total_sessions: number;
   total_usage_minutes?: number;
+  /** Active minutes in sessions. */
+  active_usage_minutes?: number;
   avg_session_minutes?: number;
   longest_session_minutes?: number;
   top_projects?: string[];
@@ -13780,6 +13930,19 @@ export type LeaderboardLab = {
   total_sessions: number;
   active_users?: number;
   last_remote_at?: string | null;
+  /** Active minutes on the bench. */
+  total_usage_minutes?: number;
+  /** Active time against 8 hours per weekday, 0-1. */
+  utilization_rate?: number;
+  /** Booked time against 8 hours per weekday, 0-1. */
+  booking_fill?: number;
+  total_bookings?: number;
+  /** Bookings with no session. */
+  no_show_bookings?: number;
+  /** Attended bookings against approved bookings that have started, 0-1; null without bookings. */
+  booking_compliance?: number | null;
+  /** Booked time actually used against booked time, 0-1; null without bookings. */
+  booking_utilization?: number | null;
   downtime_minutes?: number;
   top_projects?: string[];
 };
@@ -13788,6 +13951,12 @@ export type LeaderboardLabSerializersLeaderboardLabListResponse = {
 };
 export type LeaderboardPersonaSerializersLeaderboardPersonaListResponse = {
   data: LeaderboardPersona[];
+};
+export type UserAssessmentSerializersAssessmentDetailResponse = {
+  data: LeaderboardAssessment;
+};
+export type UserAssessmentSerializersAssessmentDetailResponseRead = {
+  data: LeaderboardAssessmentRead;
 };
 export type UserProfile = {
   id: number;
@@ -18013,6 +18182,7 @@ export const {
   useLabsBenchesImageRetrieveByBenchIdQuery,
   useLabsBenchesImageUpdateByBenchIdMutation,
   useLabsBenchesImageDestroyByBenchIdMutation,
+  useLabsBenchesAssessmentRetrieveByIdQuery,
   useLabsBenchesProfileRetrieveByIdQuery,
   useLabsBenchesWeeklyUsageRetrieveByIdQuery,
   useLabsBenchesMappingRetrieveByResourceIdQuery,
@@ -18183,6 +18353,7 @@ export const {
   useLabsLeaderboardExportRetrieveQuery,
   useLabsLeaderboardLabRetrieveQuery,
   useLabsLeaderboardPersonaRetrieveQuery,
+  useLabsLeaderboardUsersAssessmentRetrieveByIdQuery,
   useLabsLeaderboardUsersProfileRetrieveByIdQuery,
   useLabsLeaderboardUsersWeeklyUsageRetrieveByIdQuery,
   useLabsLicenseCategoriesRetrieveQuery,

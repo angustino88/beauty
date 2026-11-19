@@ -15,12 +15,16 @@ const LabSessionLogColumnIndex: ExcelColumn<LabSessionLogEntry>[] = [
   { title: 'User', dataIndex: 'user', read: (row) => row.user?.display_name || row.remote_user_display_name || '' },
   { title: 'Login name', dataIndex: 'remote_user' },
   { title: 'Access', dataIndex: 'access_type', read: (row) => row.access_type?.label ?? '' },
-  { title: 'Booking code', dataIndex: 'booking_code' },
   { title: 'Bench', dataIndex: 'bench', read: (row) => row.bench?.name ?? '' },
   { title: 'Computer', dataIndex: 'computer', read: (row) => row.computer?.name ?? '' },
   { title: 'Host name', dataIndex: 'host_name' },
   { title: 'Session (min)', dataIndex: 'duration_minutes', read: (row) => minutes(row.duration_minutes) },
   { title: 'Active (min)', dataIndex: 'active_minutes', read: (row) => minutes(row.active_minutes) },
+  { title: 'Booking code', dataIndex: 'booking_code' },
+  { title: 'Project', dataIndex: 'booking', read: (row) => row.booking?.project?.name ?? '' },
+  { title: 'Booking start', dataIndex: 'booking', read: (row) => row.booking?.starts_at ?? '' },
+  { title: 'Booking end', dataIndex: 'booking', read: (row) => row.booking?.ends_at ?? '' },
+  { title: 'Booking status', dataIndex: 'booking', read: (row) => row.booking?.status?.label ?? '' },
 ];
 
 function resolvePath(obj: unknown, path: string | string[]): string {

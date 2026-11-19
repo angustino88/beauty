@@ -13,12 +13,15 @@ import type {
 import {
   useLazyGetUserProfileQuery, useLazyGetUserWeeklyUsageQuery,
   useLazyGetLabProfileQuery, useLazyGetLabWeeklyUsageQuery,
+  useGetBenchAssessmentQuery, useGetUserAssessmentQuery,
 } from '../../api';
 import {
   toDateTime, toHours, toNumber, toPercent,
 } from '../../formatters';
 import { TopProjectsBar } from '../charts/TopProjectsBar';
 import { WeeklyUsageHeatmap } from '../charts/WeeklyUsageHeatmap';
+import { useAppSelector } from '@/app/store';
+import { AssessmentPanel } from '../assessment/AssessmentView';
 import styles from './LeaderboardDetailModal.module.css';
 
 const { Text } = Typography;
@@ -103,27 +106,50 @@ export function LeaderboardDetailModal({ open, type, userRow, labRow, filter, on
 
   const avatarSrc = getAvatarUrl(userRow?.avatar ?? null, userRow?.username ?? null) ?? undefined;
 
+  const minutesAsHours = (v: number | null | undefined) => toHours(v != null ? v / 60 : undefined);
   const personaMetrics = useMemo<MetricRowProps[]>(() => [
-    { icon: <ClockCircleOutlined />, title: 'Last Remote',        value: toDateTime(userRow?.last_remote) },
-    { icon: <TeamOutlined />,        title: 'Total Sessions',     value: toNumber(userRow?.total_sessions) },
-    { icon: <LineChartOutlined />,   title: 'WFO',                value: toPercent(userRow?.wfo_rate) },
-    { icon: <FieldTimeOutlined />,   title: 'Total Usage',        value: toHours(userRow?.total_usage_minutes != null ? userRow.total_usage_minutes / 60 : undefined) },
-    { icon: <LineChartOutlined />,   title: 'WFH',                value: toPercent(userRow?.wfh_rate) },
-    { icon: <FieldTimeOutlined />,   title: 'Avg Session',        value: toHours(userRow?.avg_session_minutes != null ? userRow.avg_session_minutes / 60 : undefined) },
-    { icon: <FieldTimeOutlined />,   title: 'Work Late',          value: toPercent(userRow?.late_rate) },
-    { icon: <FieldTimeOutlined />,   title: 'Longest Session',    value: toHours(userRow?.longest_session_minutes != null ? userRow.longest_session_minutes / 60 : undefined) },
-    { icon: <EnvironmentOutlined />, title: 'Labs Accessed',      value: toNumber(userRow?.labs_accessed) },
-    { icon: <RadarChartOutlined />,  title: 'Usage Efficiency',   value: toPercent(userRow?.usage_efficiency) },
-    { icon: <DesktopOutlined />,     title: 'Booking Compliance', value: toPercent(userRow?.booking_compliance) },
+    { icon: <ClockCircleOutlined />, title: 'Last Remote',         value: toDateTime(userRow?.last_remote) },
+    { icon: <TeamOutlined />,        title: 'Total Sessions',      value: toNumber(userRow?.total_sessions) },
+    { icon: <LineChartOutlined />,   title: 'RFO (remote from office)', value: toPercent(userRow?.wfo_rate) },
+    { icon: <LineChartOutlined />,   title: 'RFH (remote from home)',   value: toPercent(userRow?.wfh_rate) },
+    { icon: <FieldTimeOutlined />,   title: 'Total Usage',         value: minutesAsHours(userRow?.total_usage_minutes) },
+    { icon: <FieldTimeOutlined />,   title: 'Active Usage',        value: minutesAsHours(userRow?.active_usage_minutes) },
+    { icon: <FieldTimeOutlined />,   title: 'Avg Session',         value: minutesAsHours(userRow?.avg_session_minutes) },
+    { icon: <FieldTimeOutlined />,   title: 'Longest Session',     value: minutesAsHours(userRow?.longest_session_minutes) },
+    { icon: <FieldTimeOutlined />,   title: 'Work Late',           value: toPercent(userRow?.late_rate) },
+    { icon: <RadarChartOutlined />,  title: 'Active Rate',         value: toPercent(userRow?.active_rate) },
+    { icon: <RadarChartOutlined />,  title: 'Usage Efficiency',    value: toPercent(userRow?.usage_efficiency) },
+    { icon: <EnvironmentOutlined />, title: 'Labs Accessed',       value: toNumber(userRow?.labs_accessed) },
+    { icon: <DesktopOutlined />,     title: 'Bookings (no-shows)', value: userRow ? `${userRow.total_bookings} (${userRow.no_show_bookings})` : '—' },
+    { icon: <DesktopOutlined />,     title: 'Booking Attendance',  value: toPercent(userRow?.booking_compliance) },
+    { icon: <DesktopOutlined />,     title: 'Booked Time Used',    value: toPercent(userRow?.booking_utilization) },
+    { icon: <DesktopOutlined />,     title: 'Slot Adherence',      value: toPercent(userRow?.slot_adherence) },
+    { icon: <DesktopOutlined />,     title: 'Sessions Without Booking', value: toPercent(userRow?.ad_hoc_rate) },
   ], [userRow]);
 
   // The ranking row already carries these figures; the profile endpoint adds only the top projects.
   const labMetrics = useMemo<MetricRowProps[]>(() => [
-    { icon: <ClockCircleOutlined />, title: 'Last Remote',        value: toDateTime(labRow?.last_remote) },
-    { icon: <TeamOutlined />,        title: 'Total Sessions',     value: toNumber(labRow?.total_sessions) },
-    { icon: <UserOutlined />,        title: 'Active Users',       value: toNumber(labRow?.active_users) },
-    { icon: <FieldTimeOutlined />,   title: 'Downtime',           value: toHours(labRow?.downtime_hours) },
+    { icon: <ClockCircleOutlined />, title: 'Last Remote',         value: toDateTime(labRow?.last_remote) },
+    { icon: <TeamOutlined />,        title: 'Total Sessions',      value: toNumber(labRow?.total_sessions) },
+    { icon: <UserOutlined />,        title: 'Active Users',        value: toNumber(labRow?.active_users) },
+    { icon: <FieldTimeOutlined />,   title: 'Active Usage',        value: toHours(labRow?.total_usage_minutes != null ? labRow.total_usage_minutes / 60 : undefined) },
+    { icon: <RadarChartOutlined />,  title: 'Utilization',         value: toPercent(labRow?.utilization_rate) },
+    { icon: <RadarChartOutlined />,  title: 'Booking Fill',        value: toPercent(labRow?.booking_fill) },
+    { icon: <DesktopOutlined />,     title: 'Bookings (no-shows)', value: labRow ? `${labRow.total_bookings} (${labRow.no_show_bookings})` : '—' },
+    { icon: <DesktopOutlined />,     title: 'Booking Attendance',  value: toPercent(labRow?.booking_compliance) },
+    { icon: <DesktopOutlined />,     title: 'Booked Time Used',    value: toPercent(labRow?.booking_utilization) },
   ], [labRow]);
+
+  // Coordinators and admins see every assessment; a user sees their own. The API enforces the same rule.
+  const permissionGroups = useAppSelector((state) => state.me.permissionGroups) as Record<string, unknown> | null;
+  const myId = useAppSelector((state) => state.me.id);
+  const isStaff = Boolean(permissionGroups?.['admin'] || permissionGroups?.['lab-coordinator']);
+  const isOwn = type === 'persona' && myId != null && userRow?.id === myId;
+  const canSeeAssessment = isStaff || isOwn;
+  const assessmentArg = { id: selectedId ?? 0, filter };
+  const userAssessment = useGetUserAssessmentQuery(assessmentArg, { skip: !open || !canSeeAssessment || type !== 'persona' || !selectedId });
+  const benchAssessment = useGetBenchAssessmentQuery(assessmentArg, { skip: !open || !isStaff || type !== 'lab' || !selectedId });
+  const assessmentQuery = type === 'persona' ? userAssessment : benchAssessment;
 
   const metrics = type === 'persona' ? personaMetrics : labMetrics;
 
@@ -158,6 +184,15 @@ export function LeaderboardDetailModal({ open, type, userRow, labRow, filter, on
       )}
 
       {error && <Alert type="error" message={error} style={{ marginBottom: 12 }} />}
+
+      {canSeeAssessment && (
+        <AssessmentPanel
+          assessment={assessmentQuery.currentData}
+          loading={assessmentQuery.isFetching}
+          error={assessmentQuery.isError}
+          audience={type === 'lab' ? 'bench' : isOwn ? 'self' : 'user'}
+        />
+      )}
 
       {isLoading ? (
         <Skeleton active paragraph={{ rows: type === 'persona' ? 7 : 6 }} />

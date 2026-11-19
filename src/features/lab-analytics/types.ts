@@ -129,7 +129,18 @@ export interface LabSessionLogEntry {
   user: { id: number; username: string; display_name: string } | null;
   access_type: { value: SessionAccessType | string; label: string } | null;
   booking_code: string | null;
-  booking_id: number | null;
+  /** The verified booking (access type booked); null for ad hoc and unverified sessions. */
+  booking: LabSessionBooking | null;
+}
+
+/** The booking a session ran under, to check the session against the booked slot. */
+export interface LabSessionBooking {
+  id: number;
+  booking_code: string;
+  starts_at: string | null;
+  ends_at: string | null;
+  status: { value: string; label: string } | null;
+  project: { id: number; name: string } | null;
 }
 
 export interface LabSessionLogResponse {
