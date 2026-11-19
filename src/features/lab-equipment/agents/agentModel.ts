@@ -119,22 +119,21 @@ export interface ScriptSection {
 }
 
 /**
- * The address agents enroll and report to: the frontend's own address. In production the
- * frontend's Nginx forwards `/agent/` to the backend (or Router), so the backend address never
- * appears in the command or on the computer. `VITE_AGENT_URL` overrides it; the Vite dev server
- * does not forward `/agent/`, so development uses `VITE_API_URL`.
+ * The `--url` the enroll command shows, if any. In production none: the agent asks the service
+ * gateway for the server address lab computers can reach, so the web app never shows a backend or
+ * Router address. `VITE_AGENT_URL` sets one explicitly; development uses `VITE_API_URL`.
  */
-export function agentServerUrl(options: { override?: string; origin: string; isDev: boolean; apiUrl?: string }): string {
+export function agentServerUrl(options: { override?: string; isDev: boolean; apiUrl?: string }): string | undefined {
   if (options.override) return options.override;
   if (options.isDev && options.apiUrl) return options.apiUrl;
-  return options.origin;
+  return undefined;
 }
 
 export interface SetupContext {
   os: SetupOs;
   arch: SetupArch;
-  /** Where the agent enrolls: see {@link agentServerUrl}. */
-  serverUrl: string;
+  /** `--url` for enroll; left out when the agent gets it from the gateway (see {@link agentServerUrl}). */
+  serverUrl?: string;
   agentUid: string;
   /** Agent executable name (`VITE_AGENT_CLI`). */
   cli: string;
@@ -152,7 +151,7 @@ const wrapped = (windows: boolean, ...parts: string[]): ScriptLine =>
 
 /** Download → Configure → Verify, in the shape of self-hosted CI runner setup pages. */
 export function setupScript(ctx: SetupContext): ScriptSection[] {
-  const url = ctx.serverUrl.replace(/\/+$/, '');
+  const url = ctx.serverUrl?.replace(/\/+$/, '');
   const windows = ctx.os === 'windows';
   const shell = windows ? 'PowerShell' : 'Shell';
   const prompt = windows ? 'PS>' : '$';
@@ -192,7 +191,13 @@ export function setupScript(ctx: SetupContext): ScriptSection[] {
       prompt,
       lines: [
         comment('Enroll this computer. The grant works once and expires soon.'),
-        wrapped(windows, `${root}${exe} enroll`, `--url ${url}`, `--agent-uid ${ctx.agentUid}`, `--grant ${ctx.grant}`),
+        wrapped(
+          windows,
+          `${root}${exe} enroll`,
+          ...(url ? [`--url ${url}`] : []),
+          `--agent-uid ${ctx.agentUid}`,
+          `--grant ${ctx.grant}`,
+        ),
         comment('Install and start the background service'),
         command(`${svc}${exe} service install --start`),
       ],
@@ -215,7 +220,7 @@ export function sectionCommands(section: ScriptSection): string {
 }
 
 /** Development stub from the backend repository (tools/stub_agent.py); never for real computers. */
-export function stubScript(ctx: Pick<SetupContext, 'serverUrl' | 'agentUid' | 'grant'>): ScriptSection {
+export function stubScript(ctx: { serverUrl: string; agentUid: string; grant?: string }): ScriptSection {
   return {
     key: 'configure',
     title: 'Development stub',

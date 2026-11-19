@@ -91,9 +91,10 @@ test('script: Windows uses PowerShell, the .exe and a zip package', () => {
   assert.ok(!sectionCommands(configure).includes('# '));
 });
 
-test('agents enroll at the frontend address in production, never a build-time API URL', () => {
-  const origin = 'https://labmango.company.com';
-  assert.equal(agentServerUrl({ origin, isDev: false, apiUrl: 'http://10.0.0.5:8000' }), origin);
-  assert.equal(agentServerUrl({ origin, isDev: true, apiUrl: 'http://127.0.0.1:8000' }), 'http://127.0.0.1:8000');
-  assert.equal(agentServerUrl({ origin, isDev: false, override: 'https://agents.company.com' }), 'https://agents.company.com');
+test('production enroll commands show no server address: the agent asks the gateway', () => {
+  assert.equal(agentServerUrl({ isDev: false, apiUrl: 'http://10.0.0.5:8000' }), undefined);
+  assert.equal(agentServerUrl({ isDev: true, apiUrl: 'http://127.0.0.1:8000' }), 'http://127.0.0.1:8000');
+  assert.equal(agentServerUrl({ isDev: false, override: 'https://agents.company.com' }), 'https://agents.company.com');
+  const [, configure] = setupScript({ ...ctx, serverUrl: undefined, os: 'windows', arch: 'x64', downloadUrl: 'https://dl' });
+  assert.ok(!sectionCommands(configure).includes('--url'));
 });

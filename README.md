@@ -46,9 +46,8 @@ Minimum variables:
 - `VITE_APP_URL`
 - `VITE_WS_URL_CHATBOT`
 
-Optional: `VITE_AGENT_URL`, the address computing agents enroll at. By default the setup dialog uses
-the frontend's own address, so production Nginx must forward `/agent/` (path, body and `X-Agent-*`,
-`Idempotency-Key`, `If-None-Match` headers unchanged) to the backend or Router, as it does `/api/`.
+Optional: `VITE_AGENT_URL`. The agent setup dialog shows no server address by default: the agent gets
+it from the service gateway at enrollment. Set this only to put an explicit `--url` in the command.
 
 For exact values per environment, use secure internal channels and contact the team lead.
 
