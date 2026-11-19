@@ -140,3 +140,6 @@
   font-weight: 700;
 }
 
+
+/* KPI assessment action, top right of the profile header. */
+.headerAction { flex-shrink: 0; align-self: flex-start; }

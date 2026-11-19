@@ -1,5 +1,6 @@
-import { Alert, Skeleton } from 'antd';
-import { CheckCircleFilled, ExclamationCircleFilled, LockOutlined, WarningFilled } from '@ant-design/icons';
+import { useState } from 'react';
+import { Button, Drawer, Progress, Tooltip } from 'antd';
+import { AuditOutlined, CheckCircleFilled, ExclamationCircleFilled, LockOutlined, WarningFilled } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { StatusBadge } from '@/shared/components/StatusBadge';
 import type { StatusTone } from '@/shared/status/statusTone';
@@ -30,27 +31,43 @@ function KpiTrend({ kpi }: { kpi: AssessmentKpiResult }) {
   return <span className={better ? styles.up : styles.down}>{delta > 0 ? '▲' : '▼'} {Math.abs(delta)} pts</span>;
 }
 
-function ScoreTrend({ score, previous }: { score: number | null; previous: number | null }) {
-  if (score == null || previous == null) return <span className={`${styles.trend} ${styles.flat}`}>No previous period to compare</span>;
-  const delta = score - previous;
-  if (delta === 0) return <span className={`${styles.trend} ${styles.flat}`}>Unchanged on the previous period</span>;
-  return (
-    <span className={`${styles.trend} ${delta > 0 ? styles.up : styles.down}`}>
-      {delta > 0 ? '▲' : '▼'} {Math.abs(delta)} points on the previous period ({previous}/100)
-    </span>
-  );
-}
+const DIAL_COLOR: Record<string, string> = {
+  exceeds: 'var(--lm-success-solid)',
+  meets: 'var(--lm-info-solid)',
+  partially_meets: 'var(--lm-warning-solid)',
+  below: 'var(--lm-danger-solid)',
+};
 
 export function AssessmentReport({ assessment }: { assessment: LeaderboardAssessment }) {
   const rated = assessment.rating.value !== 'insufficient_data';
   return (
     <div className={styles.body}>
-      <div className={styles.verdict}>
-        <StatusBadge tone={RATING_TONE[assessment.rating.value] ?? 'neutral'} label={assessment.rating.label} fit />
-        {assessment.score != null && <span className={styles.score}>{assessment.score}<small>/100</small></span>}
-        {rated && <ScoreTrend score={assessment.score} previous={assessment.previous_score} />}
+      <div className={styles.hero}>
+        <Progress
+          type="dashboard"
+          size={104}
+          percent={assessment.score ?? 0}
+          strokeColor={DIAL_COLOR[assessment.rating.value] ?? 'var(--lm-border)'}
+          format={() => (
+            <span className={styles.dialValue}>
+              {assessment.score ?? '—'}
+              <small>{assessment.score != null ? 'of 100' : 'no score'}</small>
+            </span>
+          )}
+        />
+        <div className={styles.heroText}>
+          <div className={styles.heroRating}>
+            <StatusBadge tone={RATING_TONE[assessment.rating.value] ?? 'neutral'} label={assessment.rating.label} fit />
+          </div>
+          <p className={styles.summary}>{assessment.summary}</p>
+          <div className={styles.evidence}>
+            <span><strong>{assessment.total_sessions}</strong> sessions</span>
+            <span><strong>{assessment.total_bookings}</strong> bookings</span>
+            {rated && <span><strong>{assessment.strengths.length}</strong> strengths</span>}
+            {rated && <span><strong>{assessment.development_areas.length}</strong> development areas</span>}
+          </div>
+        </div>
       </div>
-      <p className={styles.summary}>{assessment.summary}</p>
 
       {rated && (
         <>
@@ -128,38 +145,53 @@ const VISIBILITY = {
   bench: 'Lab coordinators and admins only',
 } as const;
 
-interface AssessmentPanelProps {
+interface AssessmentActionProps {
   assessment?: LeaderboardAssessment;
   loading: boolean;
   error: boolean;
   /** Whose assessment it is, for the title and the visibility note: the viewer's own, another user's, or a bench's. */
   audience?: 'self' | 'user' | 'bench';
+  /** Name of the user or bench, shown in the report header. */
+  subjectName?: string;
 }
 
-/** Card around the report for the detail view: lab coordinators and admins, or the user it is about. */
-export function AssessmentPanel({ assessment, loading, error, audience = 'bench' }: AssessmentPanelProps) {
+/** Header action on the profile that opens the KPI assessment report in a side drawer. */
+export function AssessmentAction({ assessment, loading, error, audience = 'bench', subjectName }: AssessmentActionProps) {
+  const [open, setOpen] = useState(false);
+  const label = audience === 'self' ? 'My KPI assessment' : 'KPI assessment';
+  const button = (
+    <Button
+      icon={<AuditOutlined />}
+      loading={loading && !assessment}
+      disabled={!assessment}
+      onClick={() => setOpen(true)}
+    >
+      {label}
+    </Button>
+  );
+
   return (
-    <section className={styles.report} aria-label="KPI assessment">
-      <div className={styles.head}>
-        <div>
-          <h4 className={styles.title}>{audience === 'self' ? 'Your KPI assessment' : 'KPI assessment'}</h4>
-          {assessment && (
-            <div className={styles.period}>
-              {period(assessment.period)} · {assessment.total_sessions} sessions · {assessment.total_bookings} bookings
-            </div>
-          )}
-        </div>
-        <span className={styles.restricted}>
-          <LockOutlined aria-hidden="true" /> {VISIBILITY[audience]}
-        </span>
-      </div>
-      {loading && !assessment ? (
-        <div className={styles.body}><Skeleton active paragraph={{ rows: 6 }} /></div>
-      ) : error && !assessment ? (
-        <div className={styles.body}><Alert type="error" showIcon message="The assessment could not be loaded." /></div>
-      ) : assessment ? (
-        <AssessmentReport assessment={assessment} />
-      ) : null}
-    </section>
+    <>
+      {error && !assessment ? <Tooltip title="The assessment could not be loaded.">{button}</Tooltip> : button}
+      <Drawer
+        open={open && Boolean(assessment)}
+        onClose={() => setOpen(false)}
+        placement="right"
+        width="min(760px, 100vw)"
+        destroyOnHidden
+        title={(
+          <div className={styles.drawerHeader}>
+            <small>{audience === 'self' ? 'Your KPI assessment' : 'KPI assessment'}</small>
+            <strong>{subjectName || (audience === 'bench' ? 'Bench' : 'User')}</strong>
+          </div>
+        )}
+        extra={assessment && <span className={styles.periodChip}>{period(assessment.period)}</span>}
+        footer={(
+          <span className={styles.restricted}><LockOutlined aria-hidden="true" /> {VISIBILITY[audience]}</span>
+        )}
+      >
+        {assessment && <AssessmentReport assessment={assessment} />}
+      </Drawer>
+    </>
   );
 }

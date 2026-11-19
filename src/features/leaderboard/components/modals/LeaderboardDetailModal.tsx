@@ -21,7 +21,7 @@ import {
 import { TopProjectsBar } from '../charts/TopProjectsBar';
 import { WeeklyUsageHeatmap } from '../charts/WeeklyUsageHeatmap';
 import { useAppSelector } from '@/app/store';
-import { AssessmentPanel } from '../assessment/AssessmentView';
+import { AssessmentAction } from '../assessment/AssessmentView';
 import styles from './LeaderboardDetailModal.module.css';
 
 const { Text } = Typography;
@@ -150,6 +150,17 @@ export function LeaderboardDetailModal({ open, type, userRow, labRow, filter, on
   const userAssessment = useGetUserAssessmentQuery(assessmentArg, { skip: !open || !canSeeAssessment || type !== 'persona' || !selectedId });
   const benchAssessment = useGetBenchAssessmentQuery(assessmentArg, { skip: !open || !isStaff || type !== 'lab' || !selectedId });
   const assessmentQuery = type === 'persona' ? userAssessment : benchAssessment;
+  const assessmentAction = canSeeAssessment ? (
+    <div className={styles.headerAction}>
+      <AssessmentAction
+        assessment={assessmentQuery.currentData}
+        loading={assessmentQuery.isFetching}
+        error={assessmentQuery.isError}
+        audience={type === 'lab' ? 'bench' : isOwn ? 'self' : 'user'}
+        subjectName={type === 'lab' ? labRow?.lab_name ?? undefined : userRow?.display_name || userRow?.username}
+      />
+    </div>
+  ) : null;
 
   const metrics = type === 'persona' ? personaMetrics : labMetrics;
 
@@ -168,6 +179,7 @@ export function LeaderboardDetailModal({ open, type, userRow, labRow, filter, on
               <span className={styles.pointsBadge}>{userRow?.points ?? '—'} pts</span>
             </div>
           </div>
+          {assessmentAction}
         </div>
       ) : (
         <div className={styles.header}>
@@ -180,19 +192,12 @@ export function LeaderboardDetailModal({ open, type, userRow, labRow, filter, on
               <span className={styles.pointsBadge}>{labRow?.points ?? '—'} pts</span>
             </div>
           </div>
+          {assessmentAction}
         </div>
       )}
 
       {error && <Alert type="error" message={error} style={{ marginBottom: 12 }} />}
 
-      {canSeeAssessment && (
-        <AssessmentPanel
-          assessment={assessmentQuery.currentData}
-          loading={assessmentQuery.isFetching}
-          error={assessmentQuery.isError}
-          audience={type === 'lab' ? 'bench' : isOwn ? 'self' : 'user'}
-        />
-      )}
 
       {isLoading ? (
         <Skeleton active paragraph={{ rows: type === 'persona' ? 7 : 6 }} />
