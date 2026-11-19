@@ -46,6 +46,22 @@ function isKnown<Key extends string>(table: Record<Key, unknown>, value: string)
 }
 
 /**
+ * Mirrors the backend rule: a PnP ID whose last segment contains `&` was made up by Windows from
+ * the USB port (the device has no serial), so it identifies the unit only on one computer.
+ */
+export function isPortBoundPnpId(value: string): boolean {
+  const normalized = value.trim().replace(/\//g, '\\');
+  const last = normalized.split('\\').pop() ?? '';
+  return normalized.includes('\\') && last.includes('&');
+}
+
+/** The ID Link registers: the PnP instance ID when reported, otherwise the first reported ID. */
+export function primaryHardwareId(connection: Pick<DeviceConnection, 'hardware_ids'>): string {
+  const ids = connection.hardware_ids ?? [];
+  return (ids.find((id) => id.kind === 'pnp_id') ?? ids[0])?.value ?? '';
+}
+
+/**
  * Derives display text and tones for one device connection.
  *
  * `isAvailable` is false while the latest refresh failed: cached rows are then shown as
@@ -64,6 +80,7 @@ export function deviceConnectionPresentation(connection: DeviceConnection, isAva
       ? freshnessDescriptions[freshnessValue]
       : UNCONFIRMED;
   }
+  const hardwareId = primaryHardwareId(connection);
   const dot: StatusDot = !isConnected ? 'disconnected' : isFresh ? 'connected' : 'unconfirmed';
   return {
     title: connection.equipment?.name || connection.name || 'Unidentified device',
@@ -80,14 +97,15 @@ export function deviceConnectionPresentation(connection: DeviceConnection, isAva
       : `Match status: ${connection.match_status.label}`,
     freshnessDescription,
     dot,
-    meta: [connection.interface?.name || connection.interface_name, connection.serial_number].filter(Boolean).join(' · '),
-    // Only an unknown serial can be linked: an ambiguous or wrong-interface match is an inventory
-    // correction (duplicate serial, missing interface) that linking would refuse.
-    canLink: matchValue === 'unmatched' && Boolean(connection.serial_number),
+    hardwareId,
+    meta: [connection.interface?.name || connection.interface_name, hardwareId].filter(Boolean).join(' · '),
+    // Only an unregistered ID can be linked: an ambiguous or wrong-interface match is an inventory
+    // correction (ID on two units, missing interface) that linking would refuse.
+    canLink: matchValue === 'unmatched' && Boolean(hardwareId),
     inventoryFix: matchValue === 'ambiguous'
-      ? 'Two or more active units share this serial number. Correct the duplicate in the equipment inventory; the device matches automatically on the next report.'
+      ? 'The IDs this device reported are registered on more than one unit. Remove the wrong hardware ID from the equipment inventory; the device matches automatically on the next report.'
       : matchValue === 'interface_mismatch'
-        ? `The unit with this serial does not list the ${connection.interface_name} interface. Add it to the unit in the equipment inventory; the device matches automatically on the next report.`
+        ? `The unit with this hardware ID does not list the ${connection.interface_name} interface. Add it to the unit in the equipment inventory; the device matches automatically on the next report.`
         : '',
   };
 }

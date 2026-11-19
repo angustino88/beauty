@@ -34,6 +34,7 @@ export interface LicenseInlineDraft {
   license_product: number | null;
   license_vendor: number | null;
   maximum_version: string;
+  serial_number: string;
   license_ID: string;
   assigned_equipment_ids: number[];
   license_category: number | null;
@@ -83,6 +84,7 @@ export const toLicenseInlineDraft = (item: ILicense): LicenseInlineDraft => ({
   license_product: item.license_product?.id ?? item.product?.id ?? null,
   license_vendor: item.license_vendor?.id ?? item.vendor?.id ?? null,
   maximum_version: item.maximum_version == null ? '' : String(item.maximum_version),
+  serial_number: item.serial_number ?? '',
   license_ID: item.license_ID ?? '',
   assigned_equipment_ids: (item.assigned_equipment ?? []).map((equipment) => equipment.id),
   license_category: item.license_category?.id ?? item.category?.id ?? null,
@@ -229,6 +231,22 @@ export const buildLicenseColumns = ({
           <Input
             value={editingDraft?.maximum_version ?? ''}
             onChange={(event) => updateDraftField('maximum_version', event.target.value)}
+          />
+        )
+        : (value ?? '')
+    ),
+  },
+  {
+    title: 'Serial Number',
+    dataIndex: 'serial_number',
+    key: 'serial_number',
+    width: 170,
+    render: (value: string | null | undefined, record: ILicense) => (
+      isEditing(record)
+        ? (
+          <Input
+            value={editingDraft?.serial_number ?? ''}
+            onChange={(event) => updateDraftField('serial_number', event.target.value)}
           />
         )
         : (value ?? '')

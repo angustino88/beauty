@@ -118,10 +118,25 @@ export interface ScriptSection {
   lines: ScriptLine[];
 }
 
+/**
+ * The `--url` of the enroll command: in production the public Nginx or Router address lab computers
+ * reach (`VITE_AGENT_URL`), never the application server; in development the backend directly
+ * (`VITE_API_URL`). `undefined` when production has none configured: the dialog then shows a
+ * placeholder and a warning.
+ */
+export function agentServerUrl(options: { override?: string; isDev: boolean; apiUrl?: string }): string | undefined {
+  if (options.override) return options.override;
+  if (options.isDev && options.apiUrl) return options.apiUrl;
+  return undefined;
+}
+
+export const SERVER_URL_PLACEHOLDER = '<server-url>';
+
 export interface SetupContext {
   os: SetupOs;
   arch: SetupArch;
-  backendUrl: string;
+  /** `--url` for enroll (see {@link agentServerUrl}); a placeholder is shown when it is not configured. */
+  serverUrl?: string;
   agentUid: string;
   /** Agent executable name (`VITE_AGENT_CLI`). */
   cli: string;
@@ -139,7 +154,7 @@ const wrapped = (windows: boolean, ...parts: string[]): ScriptLine =>
 
 /** Download → Configure → Verify, in the shape of self-hosted CI runner setup pages. */
 export function setupScript(ctx: SetupContext): ScriptSection[] {
-  const url = ctx.backendUrl.replace(/\/+$/, '');
+  const url = ctx.serverUrl?.replace(/\/+$/, '') || SERVER_URL_PLACEHOLDER;
   const windows = ctx.os === 'windows';
   const shell = windows ? 'PowerShell' : 'Shell';
   const prompt = windows ? 'PS>' : '$';
@@ -179,7 +194,13 @@ export function setupScript(ctx: SetupContext): ScriptSection[] {
       prompt,
       lines: [
         comment('Enroll this computer. The grant works once and expires soon.'),
-        wrapped(windows, `${root}${exe} enroll`, `--url ${url}`, `--agent-uid ${ctx.agentUid}`, `--grant ${ctx.grant}`),
+        wrapped(
+          windows,
+          `${root}${exe} enroll`,
+          `--url ${url}`,
+          `--agent-uid ${ctx.agentUid}`,
+          `--grant ${ctx.grant}`,
+        ),
         comment('Install and start the background service'),
         command(`${svc}${exe} service install --start`),
       ],
@@ -202,7 +223,7 @@ export function sectionCommands(section: ScriptSection): string {
 }
 
 /** Development stub from the backend repository (tools/stub_agent.py); never for real computers. */
-export function stubScript(ctx: Pick<SetupContext, 'backendUrl' | 'agentUid' | 'grant'>): ScriptSection {
+export function stubScript(ctx: { serverUrl: string; agentUid: string; grant?: string }): ScriptSection {
   return {
     key: 'configure',
     title: 'Development stub',
@@ -213,7 +234,7 @@ export function stubScript(ctx: Pick<SetupContext, 'backendUrl' | 'agentUid' | '
       wrapped(
         false,
         'python tools/stub_agent.py enroll',
-        `--base-url ${ctx.backendUrl.replace(/\/+$/, '')}`,
+        `--base-url ${ctx.serverUrl.replace(/\/+$/, '')}`,
         `--agent-uid ${ctx.agentUid}`,
         `--grant ${ctx.grant ?? '<grant>'}`,
       ),

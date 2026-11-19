@@ -150,7 +150,7 @@ export const baseApi = createApi({
     // Downtime & Resource Status
     'Downtime',
     // Monitoring
-    'Monitoring',
+    'Monitoring', 'LicenseCheck',
     // Leaderboard
     'Leaderboard',
     // Jira support & Support desk

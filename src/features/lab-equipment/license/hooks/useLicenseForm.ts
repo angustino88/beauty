@@ -65,6 +65,7 @@ export function useLicenseForm() {
       sku: typeof values.sku === 'string' ? values.sku : undefined,
       name: typeof values.name === 'string' ? values.name : undefined,
       maximum_version: typeof values.maximum_version === 'string' ? values.maximum_version.trim() : undefined,
+      serial_number: typeof values.serial_number === 'string' ? values.serial_number.trim() : undefined,
       license_ID: typeof values.license_ID === 'string' ? values.license_ID : undefined,
       license_seats: toSeats(values.license_seats),
       remark: typeof values.remark === 'string' ? values.remark : undefined,

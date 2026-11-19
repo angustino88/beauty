@@ -41,8 +41,9 @@ const toExpiresAt = (value: string | null | undefined): string | null | undefine
 };
 
 /**
- * UI draft -> `POST/PATCH /api/labs/licenses` body. Relations are written as `<name>_id`; `identifier`
- * (the license key) is write-only and sent only when the user typed one, so an empty field never wipes it.
+ * UI draft -> `POST/PATCH /api/labs/licenses` body. Relations are written as `<name>_id`. `serial_number`
+ * is the vendor's license serial (visible; an empty string clears it). `identifier` (the license key) is
+ * write-only and sent only when the user typed one, so an empty field never wipes it.
  * Status is not part of this body: it changes through `actions/change-status`.
  */
 export function mapLicenseWritePayload(payload: LicenseUiWritePayload): LicenseWritePayload {
@@ -59,6 +60,7 @@ export function mapLicenseWritePayload(payload: LicenseUiWritePayload): LicenseW
     owner_id: payload.primary_owner,
     seats: payload.license_seats ?? undefined,
     max_version: maximumVersion == null ? undefined : String(maximumVersion),
+    serial_number: typeof payload.serial_number === 'string' ? payload.serial_number.trim() : undefined,
     expires_at: toExpiresAt(payload.expiry_date),
   };
   if (typeof payload.license_ID === 'string' && payload.license_ID.trim()) {

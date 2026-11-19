@@ -3,6 +3,10 @@ import type {
   LabsDeviceConnectionsActionsLinkCreateByConnectionIdApiResponse,
   LabsDeviceConnectionsRetrieveByConnectionIdApiResponse,
   LabsDeviceConnectionsSummaryRetrieveApiResponse,
+  LabsEquipmentHardwareIdsCreateByEquipmentIdApiResponse,
+  LabsExpectedDevicesLegacySuggestionsRetrieveApiResponse,
+  LabsEquipmentHardwareIdsRetrieveByEquipmentIdApiResponse,
+  RegisterHardwareIdRequest,
   LabsExpectedDevicesCreateApiResponse,
   LabsExpectedDevicesPartialUpdateByExpectedDeviceIdApiResponse,
 } from '@/shared/api/generated/api';
@@ -91,6 +95,41 @@ export const devicesApi = baseApi.injectEndpoints({
       query: (expectedDeviceId) => ({ url: `/api/labs/expected-devices/${expectedDeviceId}`, method: 'DELETE' }),
       invalidatesTags: ['Monitoring'],
     }),
+    getLegacyDeviceSuggestions: build.query<
+      LabsExpectedDevicesLegacySuggestionsRetrieveApiResponse['data']['items'],
+      number
+    >({
+      query: (computingId) => ({ url: '/api/labs/expected-devices/legacy-suggestions', params: { computing_id: computingId } }),
+      transformResponse: (response: LabsExpectedDevicesLegacySuggestionsRetrieveApiResponse) => response.data.items,
+      providesTags: ['Monitoring'],
+    }),
+    getEquipmentHardwareIds: build.query<
+      LabsEquipmentHardwareIdsRetrieveByEquipmentIdApiResponse['data']['items'],
+      number
+    >({
+      query: (equipmentId) => ({ url: `/api/labs/equipment/${equipmentId}/hardware-ids` }),
+      transformResponse: (response: LabsEquipmentHardwareIdsRetrieveByEquipmentIdApiResponse) => response.data.items,
+      providesTags: ['Monitoring'],
+    }),
+    registerEquipmentHardwareId: build.mutation<
+      LabsEquipmentHardwareIdsCreateByEquipmentIdApiResponse['data'],
+      { equipmentId: number } & RegisterHardwareIdRequest
+    >({
+      query: ({ equipmentId, ...body }) => ({
+        url: `/api/labs/equipment/${equipmentId}/hardware-ids`,
+        method: 'POST',
+        body,
+      }),
+      transformResponse: (response: LabsEquipmentHardwareIdsCreateByEquipmentIdApiResponse) => response.data,
+      invalidatesTags: ['Monitoring'],
+    }),
+    deleteEquipmentHardwareId: build.mutation<void, { equipmentId: number; hardwareIdId: number }>({
+      query: ({ equipmentId, hardwareIdId }) => ({
+        url: `/api/labs/equipment/${equipmentId}/hardware-ids/${hardwareIdId}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Monitoring'],
+    }),
   }),
 });
 
@@ -103,4 +142,8 @@ export const {
   useCreateExpectedDeviceMutation,
   useUpdateExpectedDeviceMutation,
   useDeleteExpectedDeviceMutation,
+  useGetLegacyDeviceSuggestionsQuery,
+  useGetEquipmentHardwareIdsQuery,
+  useRegisterEquipmentHardwareIdMutation,
+  useDeleteEquipmentHardwareIdMutation,
 } = devicesApi;

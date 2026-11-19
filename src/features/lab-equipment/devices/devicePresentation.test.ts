@@ -8,6 +8,7 @@ import {
   deviceConnectionPresentation,
   formatObserved,
   historyLabel,
+  isPortBoundPnpId,
   presencePresentation,
 } from './devicePresentation.ts';
 
@@ -22,6 +23,7 @@ const connection: DeviceConnection = {
   observation_key: 'usb-serial-1',
   name: 'Detected scope',
   serial_number: 'scope-1',
+  hardware_ids: [{ kind: 'pnp_id', value: 'USB\\VID_0403&PID_6001\\SCOPE1' }],
   state: { value: 'connected', label: 'Connected' },
   match_status: { value: 'matched', label: 'Matched' },
   freshness: { value: 'fresh', label: 'Fresh' },
@@ -112,15 +114,16 @@ test('page is clamped to the last page that still exists', () => {
 
 test('compact meta line and link eligibility', () => {
   const matched = deviceConnectionPresentation(connection);
-  assert.equal(matched.meta, 'USB · scope-1');
+  assert.equal(matched.meta, 'USB · USB\\VID_0403&PID_6001\\SCOPE1');
+  assert.equal(matched.hardwareId, 'USB\\VID_0403&PID_6001\\SCOPE1');
   assert.equal(matched.canLink, false);
   const unmatched = deviceConnectionPresentation({ ...connection, equipment: null, match_status: { value: 'unmatched', label: 'Unmatched' } });
   assert.equal(unmatched.matchLabel, 'Not in inventory');
   assert.equal(unmatched.canLink, true);
-  assert.equal(deviceConnectionPresentation({ ...connection, serial_number: '', match_status: { value: 'unmatched', label: 'Unmatched' } }).canLink, false);
+  assert.equal(deviceConnectionPresentation({ ...connection, hardware_ids: [], match_status: { value: 'unmatched', label: 'Unmatched' } }).canLink, false);
   const ambiguous = deviceConnectionPresentation({ ...connection, match_status: { value: 'ambiguous', label: 'Ambiguous' } });
   assert.equal(ambiguous.canLink, false);
-  assert.match(ambiguous.inventoryFix, /share this serial/);
+  assert.match(ambiguous.inventoryFix, /more than one unit/);
   assert.match(deviceConnectionPresentation({ ...connection, match_status: { value: 'interface_mismatch', label: 'Interface mismatch' } }).inventoryFix, /USB interface/);
   assert.equal(matched.inventoryFix, '');
   assert.equal(deviceConnectionPresentation({ ...connection, state: { value: 'disconnected', label: 'Disconnected' } }).dot, 'disconnected');
@@ -155,4 +158,10 @@ test('popover counts', () => {
     { ...connection, id: 3, state: { value: 'disconnected', label: 'Disconnected' } },
   ];
   assert.deepEqual(connectionCounts(rows), { connected: 2, toMatch: 1, unplugged: 1 });
+});
+
+test('port-bound PnP IDs follow the backend rule', () => {
+  assert.equal(isPortBoundPnpId('USB\\VID_0403&PID_6001\\A1B2C3'), false);
+  assert.equal(isPortBoundPnpId('USB\\VID_046D&PID_C52B\\6&2A1B3C4&0&3'), true);
+  assert.equal(isPortBoundPnpId('007113-585343'), false);
 });

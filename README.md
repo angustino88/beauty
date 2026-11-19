@@ -46,6 +46,10 @@ Minimum variables:
 - `VITE_APP_URL`
 - `VITE_WS_URL_CHATBOT`
 
+Production: `VITE_AGENT_URL`, the public Nginx or Router address lab computers enroll at (never the
+application server). The agent setup dialog puts it in the enroll command; without it the command shows
+`<server-url>` and a warning. Development uses `VITE_API_URL` (the backend directly).
+
 For exact values per environment, use secure internal channels and contact the team lead.
 
 ## Available Scripts

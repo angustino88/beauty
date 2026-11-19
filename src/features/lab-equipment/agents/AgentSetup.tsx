@@ -4,6 +4,7 @@ import { AppleOutlined, LinuxOutlined, WindowsOutlined } from '@ant-design/icons
 import type { AgentIdentityRead } from '@/shared/api/generated/api';
 import { CodeBlock } from './CodeBlock';
 import {
+  agentServerUrl,
   setupScript,
   stubScript,
   type SetupArch,
@@ -50,16 +51,16 @@ export function AgentSetup({ agent, grant, mode, generating, onGenerate }: {
   const [ttl, setTtl] = useState(15);
   const [showStub, setShowStub] = useState(false);
 
-  const backendUrl = env('VITE_API_URL') ?? window.location.origin;
+  const serverUrl = agentServerUrl({ override: env('VITE_AGENT_URL'), isDev: import.meta.env.DEV, apiUrl: env('VITE_API_URL') });
   const sections = useMemo(() => setupScript({
     os,
     arch,
-    backendUrl,
+    serverUrl,
     agentUid: agent?.agent_uid ?? '<agent-uid>',
     cli: env('VITE_AGENT_CLI') ?? 'labmango-agent',
     downloadUrl: env('VITE_AGENT_DOWNLOAD_URL'),
     grant: grant?.grant,
-  }), [os, arch, backendUrl, agent?.agent_uid, grant?.grant]);
+  }), [os, arch, serverUrl, agent?.agent_uid, grant?.grant]);
   const download = sections.find((section) => section.key === 'download');
   const configure = sections.find((section) => section.key === 'configure');
   const verify = sections.find((section) => section.key === 'verify');
@@ -92,6 +93,16 @@ export function AgentSetup({ agent, grant, mode, generating, onGenerate }: {
           />
         </div>
       </div>
+
+      {!serverUrl && (
+        <Alert
+          type="warning"
+          showIcon
+          style={{ marginBottom: 12 }}
+          message="The agent server URL is not configured"
+          description="Replace <server-url> with the public Nginx or Router address lab computers use, or set VITE_AGENT_URL for this web app."
+        />
+      )}
 
       <section className={styles.step}>
         <h4 className={styles.stepTitle}>Download</h4>
@@ -136,7 +147,7 @@ export function AgentSetup({ agent, grant, mode, generating, onGenerate }: {
           <Button type="link" size="small" style={{ padding: 0 }} onClick={() => setShowStub((value) => !value)}>
             {showStub ? 'Hide development stub' : 'Testing without the real agent? Use the development stub'}
           </Button>
-          {showStub && <CodeBlock section={stubScript({ backendUrl, agentUid: agent.agent_uid, grant: grant.grant })} secret={grant.grant} />}
+          {showStub && <CodeBlock section={stubScript({ serverUrl: serverUrl ?? env('VITE_API_URL') ?? window.location.origin, agentUid: agent.agent_uid, grant: grant.grant })} secret={grant.grant} />}
         </div>
       )}
     </div>

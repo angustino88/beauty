@@ -1,6 +1,8 @@
 import { useEquipmentSearchOptions } from '../hooks/useEquipmentSearchOptions';
 import { useMemo, useState } from 'react';
-import { Alert } from 'antd';
+import { Alert, Badge, Tabs } from 'antd';
+import { useSearchParams } from 'react-router-dom';
+import { FoundLicensesPanel, LicenseChecksPanel, useGetLicenseObservationsQuery } from '@/features/lab-equipment/license-checks';
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useSelector } from 'react-redux';
 import type { RootState } from '@/app/store';
@@ -35,7 +37,7 @@ const LICENSE_DEFAULT_COLUMNS = [
 const isAdminGroupMap = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
-export default function LicensePage() {
+function LicenseInventory() {
   const permissionGroups = useSelector((state: RootState) => state.me.permissionGroups);
   const isAdmin = isAdminGroupMap(permissionGroups) && ('admin' in permissionGroups || 'lab-coordinator' in permissionGroups);
 
@@ -70,6 +72,7 @@ export default function LicensePage() {
       { name: 'license_product', label: 'Product', type: 'select', required: true, options: table.productOptions },
       { name: 'license_vendor', label: 'Vendor', type: 'select', required: true, options: table.vendorOptions },
       { name: 'maximum_version', label: 'Maximum Version', type: 'text' },
+      { name: 'serial_number', label: 'Serial Number', type: 'text', help: "The vendor's license serial or ID, for example the Vector license ID. Lab computers match the licenses they find by it." },
       { name: 'license_ID', label: 'License Key (write-only)', type: 'text', help: 'Write-only: stored securely and never shown again. Leave empty to keep the current key; type a new one to replace it.' },
       { name: 'license_category', label: 'License Category', type: 'select', required: true, options: table.categoryOptions },
       { name: 'license_type', label: 'License Type', type: 'select', required: true, options: table.typeOptions },
@@ -141,6 +144,7 @@ export default function LicensePage() {
       license_product: editingDraft.license_product,
       license_vendor: editingDraft.license_vendor,
       maximum_version: editingDraft.maximum_version ?? '',
+      serial_number: editingDraft.serial_number ?? '',
       license_ID: editingDraft.license_ID || null,
       license_category: editingDraft.license_category,
       license_type: editingDraft.license_type,
@@ -288,5 +292,65 @@ export default function LicensePage() {
         loading={form.creating}
       />
     </>
+  );
+}
+
+type LicenseTab = 'inventory' | 'checks' | 'found';
+const LICENSE_TABS: readonly LicenseTab[] = ['inventory', 'checks', 'found'];
+
+/** Licenses: the inventory, the license checks agents run, and what they found on lab hardware. */
+export default function LicensePage() {
+  const permissionGroups = useSelector((state: RootState) => state.me.permissionGroups);
+  const isLabsAdmin = isAdminGroupMap(permissionGroups) && 'admin' in permissionGroups;
+  const isStaff = isAdminGroupMap(permissionGroups) && ('admin' in permissionGroups || 'lab-coordinator' in permissionGroups);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requested = searchParams.get('tab') as LicenseTab | null;
+  const tab: LicenseTab = requested && LICENSE_TABS.includes(requested) && (requested === 'inventory' || isStaff) ? requested : 'inventory';
+  const checkParam = Number(searchParams.get('check'));
+  const checkId = Number.isInteger(checkParam) && checkParam > 0 ? checkParam : undefined;
+
+  const update = (changes: Record<string, string | undefined>) => {
+    const next = new URLSearchParams(searchParams);
+    Object.entries(changes).forEach(([key, value]) => (value ? next.set(key, value) : next.delete(key)));
+    setSearchParams(next, { replace: true });
+  };
+
+  const attention = useGetLicenseObservationsQuery({ isAttentionRequired: true, pageSize: 1 }, { skip: !isStaff, pollingInterval: 300_000 });
+  const attentionCount = attention.data?.meta.pagination.count ?? 0;
+
+  if (!isStaff) return <LicenseInventory />;
+  return (
+    <Tabs
+      activeKey={tab}
+      onChange={(key) => update({ tab: key === 'inventory' ? undefined : key, check: undefined })}
+      destroyOnHidden
+      tabBarStyle={{ marginBottom: 0, paddingInline: 16 }}
+      items={[
+        { key: 'inventory', label: 'Inventory', children: <LicenseInventory /> },
+        {
+          key: 'checks',
+          label: 'License checks',
+          children: (
+            <div style={{ padding: 16 }}>
+              <LicenseChecksPanel isAdmin={isLabsAdmin} onShowFound={(id) => update({ tab: 'found', check: String(id) })} />
+            </div>
+          ),
+        },
+        {
+          key: 'found',
+          label: (
+            <span>
+              Found on lab hardware{' '}
+              <Badge count={attentionCount} size="small" title={`${attentionCount} need attention`} />
+            </span>
+          ),
+          children: (
+            <div style={{ padding: 16 }}>
+              <FoundLicensesPanel checkId={checkId} onClearCheck={() => update({ check: undefined })} />
+            </div>
+          ),
+        },
+      ]}
+    />
   );
 }

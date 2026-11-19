@@ -49,7 +49,6 @@ test('fields the API no longer takes are not sent', () => {
     name: 'x',
     status: 'available',
     log_label: 'L',
-    serial_number: 'S',
   } as Parameters<typeof mapLicenseWritePayload>[0]);
 
   assert.deepEqual(Object.keys(body), ['name']);
@@ -67,4 +66,12 @@ test('required relations are never sent as null, optional ones may clear', () =>
   } as Parameters<typeof mapLicenseWritePayload>[0]);
 
   assert.deepEqual(body, { name: 'x', restriction_id: null, owner_id: null });
+});
+
+test('the serial number is sent trimmed and separately from the write-only key', () => {
+  const body = mapLicenseWritePayload({ serial_number: ' 55100045010 ', license_ID: 'KEY-1' });
+  assert.equal(body.serial_number, '55100045010');
+  assert.equal(body.identifier, 'KEY-1');
+  assert.equal(mapLicenseWritePayload({ serial_number: '' }).serial_number, '');
+  assert.equal('serial_number' in mapLicenseWritePayload({ name: 'x' }), false);
 });

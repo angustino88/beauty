@@ -84,6 +84,25 @@ const injectedRtkApi = api.injectEndpoints({
     getAgentInfo: build.query<GetAgentInfoApiResponse, GetAgentInfoApiArg>({
       query: () => ({ url: `/agent/info` }),
     }),
+    agentLicenseChecksRetrieve: build.query<
+      AgentLicenseChecksRetrieveApiResponse,
+      AgentLicenseChecksRetrieveApiArg
+    >({
+      query: () => ({ url: `/agent/license-checks` }),
+    }),
+    agentLicenseChecksActionsReportCreateByCheckKey: build.mutation<
+      AgentLicenseChecksActionsReportCreateByCheckKeyApiResponse,
+      AgentLicenseChecksActionsReportCreateByCheckKeyApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/agent/license-checks/${queryArg.checkKey}/actions/report`,
+        method: "POST",
+        body: queryArg.licenseCheckRunReport,
+        headers: {
+          "Idempotency-Key": queryArg["Idempotency-Key"],
+        },
+      }),
+    }),
     agentMonitoringPolicyRetrieve: build.query<
       AgentMonitoringPolicyRetrieveApiResponse,
       AgentMonitoringPolicyRetrieveApiArg
@@ -1779,6 +1798,33 @@ const injectedRtkApi = api.injectEndpoints({
         method: "DELETE",
       }),
     }),
+    labsEquipmentHardwareIdsRetrieveByEquipmentId: build.query<
+      LabsEquipmentHardwareIdsRetrieveByEquipmentIdApiResponse,
+      LabsEquipmentHardwareIdsRetrieveByEquipmentIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/equipment/${queryArg.equipmentId}/hardware-ids`,
+      }),
+    }),
+    labsEquipmentHardwareIdsCreateByEquipmentId: build.mutation<
+      LabsEquipmentHardwareIdsCreateByEquipmentIdApiResponse,
+      LabsEquipmentHardwareIdsCreateByEquipmentIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/equipment/${queryArg.equipmentId}/hardware-ids`,
+        method: "POST",
+        body: queryArg.registerHardwareIdRequest,
+      }),
+    }),
+    labsEquipmentHardwareIdsDestroyByEquipmentIdHardwareIdId: build.mutation<
+      LabsEquipmentHardwareIdsDestroyByEquipmentIdHardwareIdIdApiResponse,
+      LabsEquipmentHardwareIdsDestroyByEquipmentIdHardwareIdIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/equipment/${queryArg.equipmentId}/hardware-ids/${queryArg.hardwareIdId}`,
+        method: "DELETE",
+      }),
+    }),
     labsEquipmentImageRetrieveByEquipmentId: build.query<
       LabsEquipmentImageRetrieveByEquipmentIdApiResponse,
       LabsEquipmentImageRetrieveByEquipmentIdApiArg
@@ -2666,6 +2712,17 @@ const injectedRtkApi = api.injectEndpoints({
         method: "DELETE",
       }),
     }),
+    labsExpectedDevicesLegacySuggestionsRetrieve: build.query<
+      LabsExpectedDevicesLegacySuggestionsRetrieveApiResponse,
+      LabsExpectedDevicesLegacySuggestionsRetrieveApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/expected-devices/legacy-suggestions`,
+        params: {
+          computing_id: queryArg.computingId,
+        },
+      }),
+    }),
     labsExpensesPaymentsRetrieveByExpenseId: build.query<
       LabsExpensesPaymentsRetrieveByExpenseIdApiResponse,
       LabsExpensesPaymentsRetrieveByExpenseIdApiArg
@@ -2780,6 +2837,26 @@ const injectedRtkApi = api.injectEndpoints({
         },
       }),
     }),
+    labsLabSessionsRetrieve: build.query<
+      LabsLabSessionsRetrieveApiResponse,
+      LabsLabSessionsRetrieveApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/lab-sessions`,
+        params: {
+          access_type: queryArg.accessType,
+          bench_id: queryArg.benchId,
+          computer_id: queryArg.computerId,
+          end_date: queryArg.endDate,
+          ordering: queryArg.ordering,
+          page: queryArg.page,
+          page_size: queryArg.pageSize,
+          q: queryArg.q,
+          start_date: queryArg.startDate,
+          user_id: queryArg.userId,
+        },
+      }),
+    }),
     labsLeaderboardExportRetrieve: build.query<
       LabsLeaderboardExportRetrieveApiResponse,
       LabsLeaderboardExportRetrieveApiArg
@@ -2866,6 +2943,90 @@ const injectedRtkApi = api.injectEndpoints({
         params: {
           include_ids: queryArg.includeIds,
           q: queryArg.q,
+        },
+      }),
+    }),
+    labsLicenseChecksRetrieve: build.query<
+      LabsLicenseChecksRetrieveApiResponse,
+      LabsLicenseChecksRetrieveApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/license-checks`,
+        params: {
+          is_enabled: queryArg.isEnabled,
+          page: queryArg.page,
+          page_size: queryArg.pageSize,
+          q: queryArg.q,
+        },
+      }),
+    }),
+    labsLicenseChecksCreate: build.mutation<
+      LabsLicenseChecksCreateApiResponse,
+      LabsLicenseChecksCreateApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/license-checks`,
+        method: "POST",
+        body: queryArg.licenseCheckWrite,
+      }),
+    }),
+    labsLicenseChecksRetrieveByCheckId: build.query<
+      LabsLicenseChecksRetrieveByCheckIdApiResponse,
+      LabsLicenseChecksRetrieveByCheckIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/license-checks/${queryArg.checkId}`,
+      }),
+    }),
+    labsLicenseChecksPartialUpdateByCheckId: build.mutation<
+      LabsLicenseChecksPartialUpdateByCheckIdApiResponse,
+      LabsLicenseChecksPartialUpdateByCheckIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/license-checks/${queryArg.checkId}`,
+        method: "PATCH",
+        body: queryArg.patchedLicenseCheckWrite,
+      }),
+    }),
+    labsLicenseChecksDestroyByCheckId: build.mutation<
+      LabsLicenseChecksDestroyByCheckIdApiResponse,
+      LabsLicenseChecksDestroyByCheckIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/license-checks/${queryArg.checkId}`,
+        method: "DELETE",
+      }),
+    }),
+    labsLicenseChecksRunsRetrieveByCheckId: build.query<
+      LabsLicenseChecksRunsRetrieveByCheckIdApiResponse,
+      LabsLicenseChecksRunsRetrieveByCheckIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/license-checks/${queryArg.checkId}/runs`,
+      }),
+    }),
+    labsLicenseChecksPresetsRetrieve: build.query<
+      LabsLicenseChecksPresetsRetrieveApiResponse,
+      LabsLicenseChecksPresetsRetrieveApiArg
+    >({
+      query: () => ({ url: `/api/labs/license-checks/presets` }),
+    }),
+    labsLicenseObservationsRetrieve: build.query<
+      LabsLicenseObservationsRetrieveApiResponse,
+      LabsLicenseObservationsRetrieveApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/license-observations`,
+        params: {
+          check_id: queryArg.checkId,
+          computing_id: queryArg.computingId,
+          include_removed: queryArg.includeRemoved,
+          is_attention_required: queryArg.isAttentionRequired,
+          license_id: queryArg.licenseId,
+          page: queryArg.page,
+          page_size: queryArg.pageSize,
+          q: queryArg.q,
+          status: queryArg.status,
         },
       }),
     }),
@@ -5245,6 +5406,17 @@ export type AgentHeartbeatApiArg = {
 export type GetAgentInfoApiResponse =
   /** status 200 Server agent metadata */ AgentInfoResponse;
 export type GetAgentInfoApiArg = void;
+export type AgentLicenseChecksRetrieveApiResponse =
+  /** status 200  */ AgentLicenseChecksLicenseCheckSerializersAgentLicenseChecksDetailResponse;
+export type AgentLicenseChecksRetrieveApiArg = void;
+export type AgentLicenseChecksActionsReportCreateByCheckKeyApiResponse =
+  /** status 200  */ AgentLicenseCheckReportLicenseCheckSerializersLicenseCheckRunAcknowledgmentDetailResponseRead;
+export type AgentLicenseChecksActionsReportCreateByCheckKeyApiArg = {
+  /** Durable UUID run key; reuse on retry with the same content. */
+  "Idempotency-Key": string;
+  checkKey: string;
+  licenseCheckRunReport: LicenseCheckRunReport;
+};
 export type AgentMonitoringPolicyRetrieveApiResponse =
   /** status 200  */ AgentMonitoringPolicyObservationSerializersMonitoringPolicyDetailResponse;
 export type AgentMonitoringPolicyRetrieveApiArg = void;
@@ -6401,6 +6573,23 @@ export type LabsEquipmentAssignmentDestroyByEquipmentIdApiResponse = unknown;
 export type LabsEquipmentAssignmentDestroyByEquipmentIdApiArg = {
   equipmentId: number;
 };
+export type LabsEquipmentHardwareIdsRetrieveByEquipmentIdApiResponse =
+  /** status 200  */ EquipmentHardwareIdListHardwareIdsEquipmentHardwareIdListDetailResponseRead;
+export type LabsEquipmentHardwareIdsRetrieveByEquipmentIdApiArg = {
+  equipmentId: number;
+};
+export type LabsEquipmentHardwareIdsCreateByEquipmentIdApiResponse =
+  /** status 201  */ EquipmentHardwareIdCreatedHardwareIdsEquipmentHardwareIdDetailResponseRead;
+export type LabsEquipmentHardwareIdsCreateByEquipmentIdApiArg = {
+  equipmentId: number;
+  registerHardwareIdRequest: RegisterHardwareIdRequest;
+};
+export type LabsEquipmentHardwareIdsDestroyByEquipmentIdHardwareIdIdApiResponse =
+  unknown;
+export type LabsEquipmentHardwareIdsDestroyByEquipmentIdHardwareIdIdApiArg = {
+  equipmentId: number;
+  hardwareIdId: number;
+};
 export type LabsEquipmentImageRetrieveByEquipmentIdApiResponse =
   /** status 200  */ ResourceImageResourceImagesResourceImageDetailResponseRead;
 export type LabsEquipmentImageRetrieveByEquipmentIdApiArg = {
@@ -7013,6 +7202,11 @@ export type LabsExpectedDevicesDestroyByExpectedDeviceIdApiResponse = unknown;
 export type LabsExpectedDevicesDestroyByExpectedDeviceIdApiArg = {
   expectedDeviceId: number;
 };
+export type LabsExpectedDevicesLegacySuggestionsRetrieveApiResponse =
+  /** status 200  */ LegacyDeviceSuggestionListConnectionsLegacyDeviceSuggestionListDetailResponseRead;
+export type LabsExpectedDevicesLegacySuggestionsRetrieveApiArg = {
+  computingId: number;
+};
 export type LabsExpensesPaymentsRetrieveByExpenseIdApiResponse =
   /** status 200  */ ExpensePaymentListSerializersExpensePaymentPaginatedResponseRead;
 export type LabsExpensesPaymentsRetrieveByExpenseIdApiArg = {
@@ -7089,6 +7283,40 @@ export type LabsLabProjectsOptionsRetrieveApiArg = {
   /** Search text (1 to 100 characters). */
   q?: string;
 };
+export type LabsLabSessionsRetrieveApiResponse =
+  /** status 200  */ SessionLogListSerializersSessionLogItemPaginatedResponseRead;
+export type LabsLabSessionsRetrieveApiArg = {
+  /** * `booked` - Booked
+   * `ad_hoc` - Ad hoc (no booking)
+   * `unverified_booking` - Booking not verified */
+  accessType?: "booked" | "ad_hoc" | "unverified_booking";
+  benchId?: number;
+  computerId?: number;
+  /** Last login day, inclusive (server time zone). */
+  endDate: string;
+  /** Default -login_time (newest first). The row id always breaks ties.
+    
+    * `-active_duration_seconds` - -active_duration_seconds
+    * `-login_time` - -login_time
+    * `-logout_time` - -logout_time
+    * `active_duration_seconds` - active_duration_seconds
+    * `login_time` - login_time
+    * `logout_time` - logout_time */
+  ordering?:
+    | "-active_duration_seconds"
+    | "-login_time"
+    | "-logout_time"
+    | "active_duration_seconds"
+    | "login_time"
+    | "logout_time";
+  page?: number;
+  pageSize?: number;
+  /** Free-text search term. */
+  q?: string;
+  /** First login day, inclusive (server time zone). */
+  startDate: string;
+  userId?: number;
+};
 export type LabsLeaderboardExportRetrieveApiResponse =
   /** status 200  */ LeaderboardExportSerializersLeaderboardPersonaListResponse;
 export type LabsLeaderboardExportRetrieveApiArg = {
@@ -7140,6 +7368,69 @@ export type LabsLicenseCategoriesOptionsRetrieveApiArg = {
   includeIds?: number[];
   /** Search text (1 to 100 characters). */
   q?: string;
+};
+export type LabsLicenseChecksRetrieveApiResponse =
+  /** status 200  */ LicenseCheckListSerializersLicenseCheckPaginatedResponseRead;
+export type LabsLicenseChecksRetrieveApiArg = {
+  isEnabled?: boolean | null;
+  page?: number;
+  pageSize?: number;
+  q?: string;
+};
+export type LabsLicenseChecksCreateApiResponse =
+  /** status 201  */ LicenseCheckCreateSerializersLicenseCheckDetailResponseRead;
+export type LabsLicenseChecksCreateApiArg = {
+  licenseCheckWrite: LicenseCheckWrite;
+};
+export type LabsLicenseChecksRetrieveByCheckIdApiResponse =
+  /** status 200  */ LicenseCheckDetailSerializersLicenseCheckDetailResponseRead;
+export type LabsLicenseChecksRetrieveByCheckIdApiArg = {
+  checkId: number;
+};
+export type LabsLicenseChecksPartialUpdateByCheckIdApiResponse =
+  /** status 200  */ LicenseCheckUpdateSerializersLicenseCheckDetailResponseRead;
+export type LabsLicenseChecksPartialUpdateByCheckIdApiArg = {
+  checkId: number;
+  patchedLicenseCheckWrite: PatchedLicenseCheckWrite;
+};
+export type LabsLicenseChecksDestroyByCheckIdApiResponse = unknown;
+export type LabsLicenseChecksDestroyByCheckIdApiArg = {
+  checkId: number;
+};
+export type LabsLicenseChecksRunsRetrieveByCheckIdApiResponse =
+  /** status 200  */ LicenseCheckRunListSerializersLicenseCheckRunListDetailResponseRead;
+export type LabsLicenseChecksRunsRetrieveByCheckIdApiArg = {
+  checkId: number;
+};
+export type LabsLicenseChecksPresetsRetrieveApiResponse =
+  /** status 200  */ LicenseCheckPresetListSerializersLicenseCheckPresetListDetailResponse;
+export type LabsLicenseChecksPresetsRetrieveApiArg = void;
+export type LabsLicenseObservationsRetrieveApiResponse =
+  /** status 200  */ LicenseObservationListSerializersLicenseObservationPaginatedResponseRead;
+export type LabsLicenseObservationsRetrieveApiArg = {
+  checkId?: number;
+  computingId?: number;
+  includeRemoved?: boolean;
+  isAttentionRequired?: boolean | null;
+  licenseId?: number;
+  page?: number;
+  pageSize?: number;
+  q?: string;
+  /** * `matched` - Matched
+   * `unregistered` - Not in inventory
+   * `ambiguous` - Several licenses match
+   * `carrier_unlinked` - Carrier not linked
+   * `carrier_not_at_computer` - Carrier not at this computer
+   * `carrier_mismatch` - Assigned elsewhere
+   * `unassigned` - Not assigned */
+  status?:
+    | "matched"
+    | "unregistered"
+    | "ambiguous"
+    | "carrier_unlinked"
+    | "carrier_not_at_computer"
+    | "carrier_mismatch"
+    | "unassigned";
 };
 export type LabsLicenseProductsRetrieveApiResponse =
   /** status 200  */ LicenseProductCatalogListSerializersLicenseProductPaginatedResponseRead;
@@ -8820,12 +9111,20 @@ export type ProblemResponseEnvelope = {
   error: ProblemDetail;
 };
 export type StateEnum = "connected" | "disconnected";
+export type EquipmentHardwareIdKindEnum = "pnp_id" | "vector_device";
+export type HardwareId = {
+  kind: EquipmentHardwareIdKindEnum;
+  value: string;
+};
 export type DeviceObservation = {
   observation_key: string;
   interface_name: string;
   state: StateEnum;
   name?: string;
+  /** Evidence only; not used for matching. */
   serial_number?: string;
+  /** IDs read from the device (Windows PnP instance ID); matched to registered equipment IDs. */
+  hardware_ids?: HardwareId[];
 };
 export type DeviceObservationReport = {
   generation_key: string;
@@ -8932,12 +9231,102 @@ export type AgentInfoResponseData = {
 export type AgentInfoResponse = {
   data: AgentInfoResponseData;
 };
+export type LicenseCheckDefinition = {
+  key: string;
+  revision: number;
+  name: string;
+  vendor: string;
+  interval_minutes: number;
+  probe: any;
+  extract: any;
+  carrier: any;
+};
+export type AgentLicenseChecks = {
+  checks: LicenseCheckDefinition[];
+};
+export type AgentLicenseChecksLicenseCheckSerializersAgentLicenseChecksDetailResponse =
+  {
+    data: AgentLicenseChecks;
+  };
+export type LicenseCheckRunAcknowledgment = {
+  idempotency_key: string;
+  sequence: number;
+  received_at: string;
+};
+export type LicenseCheckRunAcknowledgmentRead = {
+  idempotency_key: string;
+  sequence: number;
+  result: ChoiceRead;
+  received_at: string;
+};
+export type AgentLicenseCheckReportLicenseCheckSerializersLicenseCheckRunAcknowledgmentDetailResponse =
+  {
+    data: LicenseCheckRunAcknowledgment;
+  };
+export type AgentLicenseCheckReportLicenseCheckSerializersLicenseCheckRunAcknowledgmentDetailResponseRead =
+  {
+    data: LicenseCheckRunAcknowledgmentRead;
+  };
+export type LicenseCheckRunReportStatusEnum =
+  "ok" | "not_installed" | "failed" | "rejected";
+export type RunError = {
+  code: string;
+  message?: string;
+};
+export type ReportedCarrierTypeEnum =
+  "computer" | "device" | "dongle" | "server" | "equipment";
+export type CarrierIdKindEnum = "vector_device";
+export type CarrierId = {
+  kind: CarrierIdKindEnum;
+  value: string;
+};
+export type ReportedCarrier = {
+  type: ReportedCarrierTypeEnum;
+  hardware_id?: CarrierId;
+  equipment_uid?: string;
+};
+export type ReportedLicense = {
+  observation_key: string;
+  vendor?: string;
+  product_code?: string;
+  product_name: string;
+  /** The tool's license serial or ID; matched to License.serial_number. Never a license key. */
+  license_serial?: string;
+  carrier: ReportedCarrier;
+  expires_at?: string | null;
+  final_expires_at?: string | null;
+  max_version?: string;
+  is_reactivatable?: boolean;
+};
+export type LicenseCheckRunReport = {
+  revision: number;
+  sequence: number;
+  status: LicenseCheckRunReportStatusEnum;
+  started_at: string;
+  /** Agent clock; informational. */
+  reported_at?: string;
+  duration_ms?: number;
+  is_complete: boolean;
+  error?: RunError;
+  licenses: ReportedLicense[];
+};
+export type PolicyHardwareId = {
+  kind: string;
+  value: string;
+};
+export type ExpectedDeviceWatch = {
+  equipment_uid: string;
+  name: string;
+  hardware_ids: PolicyHardwareId[];
+};
 export type MonitoringPolicy = {
   generation_key: string;
   max_devices: number;
   max_body_bytes: number;
   freshness_seconds: number;
   interface_names: string[];
+  /** Equipment expected on this computer with their registered hardware IDs: the agent reports only devices whose ID is listed here. */
+  expected_devices: ExpectedDeviceWatch[];
 };
 export type AgentMonitoringPolicyObservationSerializersMonitoringPolicyDetailResponse =
   {
@@ -9808,6 +10197,13 @@ export type BenchListSerializersBenchPaginationMeta = {
   pagination: BenchListSerializersBenchPagination;
 };
 export type Bench = {};
+export type LabsBenchRoomReference = {};
+export type LabsBenchRoomReferenceRead = {
+  id: number;
+  uid: string;
+  name: string;
+  sku: string;
+};
 export type LabsAvailability = {};
 export type LabsAvailabilitySource = {};
 export type LabsAvailabilitySourceTypeEnum = "bench" | "station" | "room";
@@ -9840,6 +10236,8 @@ export type BenchRead = {
   documentation_url: string;
   setup_location: LabsUidNamedReferenceRead | null;
   station_slot: LabsNamedReferenceRead | null;
+  /** Room of the station the bench is set up on; null when the bench is unplaced or the station has no room. */
+  room: LabsBenchRoomReferenceRead | null;
   /** Deprecated: use lifecycle_status, condition, availability and activity_status. */
   status: LabsChoiceReferenceRead | null;
   lifecycle_status: LabsChoiceReferenceRead;
@@ -9916,6 +10314,8 @@ export type BenchResourceDetailRead = {
   documentation_url: string;
   setup_location: LabsUidNamedReferenceRead | null;
   station_slot: LabsNamedReferenceRead | null;
+  /** Room of the station the bench is set up on; null when the bench is unplaced or the station has no room. */
+  room: LabsBenchRoomReferenceRead | null;
   /** Deprecated: use lifecycle_status, condition, availability and activity_status. */
   status: LabsChoiceReferenceRead | null;
   lifecycle_status: LabsChoiceReferenceRead;
@@ -10554,6 +10954,8 @@ export type DashboardComputing = {
   activity_status: string;
   remote_user: string;
   remote_user_display_name: string;
+  /** Client computer of the remote session. */
+  remote_computer: string;
   remote_ip: string | null;
 };
 export type DashboardEquipmentReference = {
@@ -10776,6 +11178,10 @@ export type DeviceConnectionListConnectionsDeviceConnectionPagination = {
 export type DeviceConnectionListConnectionsDeviceConnectionPaginationMeta = {
   pagination: DeviceConnectionListConnectionsDeviceConnectionPagination;
 };
+export type ReportedHardwareId = {
+  kind: string;
+  value: string;
+};
 export type DeviceConnection = {
   id: number;
   computing: LabsUidNamedReference;
@@ -10785,7 +11191,10 @@ export type DeviceConnection = {
   collector_key: string;
   observation_key: string;
   name: string;
+  /** Reported evidence only; not used for matching. */
   serial_number: string;
+  /** IDs the agent read from the device; Link registers them on the chosen unit. */
+  hardware_ids: ReportedHardwareId[];
   is_attention_required: boolean;
   expected_device_id: number | null;
 };
@@ -10799,7 +11208,10 @@ export type DeviceConnectionRead = {
   collector_key: string;
   observation_key: string;
   name: string;
+  /** Reported evidence only; not used for matching. */
   serial_number: string;
+  /** IDs the agent read from the device; Link registers them on the chosen unit. */
+  hardware_ids: ReportedHardwareId[];
   state: ChoiceRead;
   match_status: ChoiceRead;
   freshness: ChoiceRead;
@@ -10836,7 +11248,10 @@ export type DeviceConnectionDetail = {
   collector_key: string;
   observation_key: string;
   name: string;
+  /** Reported evidence only; not used for matching. */
   serial_number: string;
+  /** IDs the agent read from the device; Link registers them on the chosen unit. */
+  hardware_ids: ReportedHardwareId[];
   is_attention_required: boolean;
   expected_device_id: number | null;
   history: DeviceConnectionChange[];
@@ -10851,7 +11266,10 @@ export type DeviceConnectionDetailRead = {
   collector_key: string;
   observation_key: string;
   name: string;
+  /** Reported evidence only; not used for matching. */
   serial_number: string;
+  /** IDs the agent read from the device; Link registers them on the chosen unit. */
+  hardware_ids: ReportedHardwareId[];
   state: ChoiceRead;
   match_status: ChoiceRead;
   freshness: ChoiceRead;
@@ -11774,6 +12192,51 @@ export type EquipmentAssignment = {
   bench_id: number;
   role?: string;
   position?: number;
+};
+export type EquipmentHardwareId = {
+  id: number;
+  value: string;
+  /** Set only for IDs valid on one computer. */
+  computing: LabsUidNamedReference | null;
+  created_at: string;
+};
+export type EquipmentHardwareIdRead = {
+  id: number;
+  kind: ChoiceRead;
+  value: string;
+  /** Set only for IDs valid on one computer. */
+  computing: LabsUidNamedReferenceRead | null;
+  /** Read from a USB port, not from the device. */
+  is_port_bound: boolean;
+  created_at: string;
+};
+export type EquipmentHardwareIdList = {
+  items: EquipmentHardwareId[];
+};
+export type EquipmentHardwareIdListRead = {
+  items: EquipmentHardwareIdRead[];
+};
+export type EquipmentHardwareIdListHardwareIdsEquipmentHardwareIdListDetailResponse =
+  {
+    data: EquipmentHardwareIdList;
+  };
+export type EquipmentHardwareIdListHardwareIdsEquipmentHardwareIdListDetailResponseRead =
+  {
+    data: EquipmentHardwareIdListRead;
+  };
+export type EquipmentHardwareIdCreatedHardwareIdsEquipmentHardwareIdDetailResponse =
+  {
+    data: EquipmentHardwareId;
+  };
+export type EquipmentHardwareIdCreatedHardwareIdsEquipmentHardwareIdDetailResponseRead =
+  {
+    data: EquipmentHardwareIdRead;
+  };
+export type RegisterHardwareIdRequest = {
+  kind: EquipmentHardwareIdKindEnum;
+  value: string;
+  /** Required for a port-bound PnP ID. */
+  computing_id?: number | null;
 };
 export type EquipmentLoanDetailSerializersEquipmentLoanDetailResponse = {
   data: EquipmentLoan;
@@ -12967,6 +13430,43 @@ export type ExpectedDeviceUpdateConnectionsExpectedDeviceDetailResponseRead = {
 export type PatchedUpdateExpectedDeviceRequest = {
   is_disconnect_alert_enabled?: boolean;
 };
+export type LegacyDeviceSuggestion = {
+  /** Windows PnP device instance ID from the legacy list (normalised). */
+  pnp_id: string;
+  /** Label a coordinator gave the entry in the legacy list. */
+  label: string;
+  /** Read from a USB port: register it for this computer only. */
+  is_port_bound: boolean;
+  /** Unit the ID is registered on, if any. */
+  equipment: LabsUidNamedReference | null;
+  expected_device_id: number | null;
+};
+export type LegacyDeviceSuggestionRead = {
+  /** Windows PnP device instance ID from the legacy list (normalised). */
+  pnp_id: string;
+  /** Label a coordinator gave the entry in the legacy list. */
+  label: string;
+  /** Read from a USB port: register it for this computer only. */
+  is_port_bound: boolean;
+  status: ChoiceRead;
+  /** Unit the ID is registered on, if any. */
+  equipment: LabsUidNamedReferenceRead | null;
+  expected_device_id: number | null;
+};
+export type LegacyDeviceSuggestionList = {
+  items: LegacyDeviceSuggestion[];
+};
+export type LegacyDeviceSuggestionListRead = {
+  items: LegacyDeviceSuggestionRead[];
+};
+export type LegacyDeviceSuggestionListConnectionsLegacyDeviceSuggestionListDetailResponse =
+  {
+    data: LegacyDeviceSuggestionList;
+  };
+export type LegacyDeviceSuggestionListConnectionsLegacyDeviceSuggestionListDetailResponseRead =
+  {
+    data: LegacyDeviceSuggestionListRead;
+  };
 export type ExpensePaymentListSerializersExpensePaymentPagination = {
   count: number;
   page: number;
@@ -13213,6 +13713,43 @@ export type LabProjectDetailSerializersLabProjectDetailResponse = {
 export type LabProjectDetailSerializersLabProjectDetailResponseRead = {
   data: LabProjectRead;
 };
+export type SessionLogListSerializersSessionLogItemPagination = {
+  count: number;
+  page: number;
+  page_size: number;
+  next: string | null;
+  previous: string | null;
+};
+export type SessionLogListSerializersSessionLogItemPaginationMeta = {
+  pagination: SessionLogListSerializersSessionLogItemPagination;
+};
+export type SessionLogItem = {};
+export type SessionLogItemRead = {
+  id: number;
+  login_at: string;
+  logout_at: string;
+  /** Logout minus login, in minutes. */
+  duration_minutes: number | null;
+  /** Time the user was active, in minutes. */
+  active_minutes: number | null;
+  computer: LabsUidNamedReferenceRead | null;
+  host_name: string | null;
+  bench: LabsUidNamedReferenceRead | null;
+  remote_user: string | null;
+  remote_user_display_name: string | null;
+  user: UserReferenceRead | null;
+  access_type: ChoiceRead | null;
+  booking_code: string | null;
+  booking_id: number | null;
+};
+export type SessionLogListSerializersSessionLogItemPaginatedResponse = {
+  meta: SessionLogListSerializersSessionLogItemPaginationMeta;
+  data: SessionLogItem[];
+};
+export type SessionLogListSerializersSessionLogItemPaginatedResponseRead = {
+  meta: SessionLogListSerializersSessionLogItemPaginationMeta;
+  data: SessionLogItemRead[];
+};
 export type LeaderboardPersona = {
   id: number;
   username: string;
@@ -13303,6 +13840,286 @@ export type LicenseCategoryCatalogDetailSerializersLicenseCategoryDetailResponse
 export type LicenseCategoryCatalogDetailSerializersLicenseCategoryDetailResponseRead =
   {
     data: LicenseCategoryCatalogItemRead;
+  };
+export type LicenseCheckListSerializersLicenseCheckPagination = {
+  count: number;
+  page: number;
+  page_size: number;
+  next: string | null;
+  previous: string | null;
+};
+export type LicenseCheckListSerializersLicenseCheckPaginationMeta = {
+  pagination: LicenseCheckListSerializersLicenseCheckPagination;
+};
+export type LicenseCheck = {
+  id: number;
+  key: string;
+  name: string;
+  vendor: string;
+  /** Closed catalog: {type: command, executable, args, timeout_s, encoding} | {type: file, path} | {type: registry, hive: HKLM, key, values}. */
+  probe: any;
+  /** {format: xml|json|text|values, records, fields: {product_name, product_code, max_version, expires_at, final_expires_at, carrier_id, license_serial, is_reactivatable, carrier_type}, date_formats, never_values}. */
+  extract: any;
+  /** {type: computer|device|dongle|server|equipment|mapped, hardware_id_kind, equipment_uid, type_map, default_type}. */
+  carrier: any;
+  interval_minutes: number;
+  is_enabled: boolean;
+  /** Runs on every computer with an agent. */
+  is_lab_wide: boolean;
+  /** Increases on every change agents pick up. */
+  revision: number;
+  preset_key: string;
+  /** Licenses currently found by this check. */
+  license_count: number;
+  /** Found licenses that are not matched. */
+  attention_count: number;
+  created_at: string;
+  updated_at: string;
+};
+export type LicenseCheckTarget = {
+  /** Id of the room, station, bench, category or computer. */
+  id: number;
+  name: string;
+};
+export type LicenseCheckTargetRead = {
+  /** Id of the room, station, bench, category or computer. */
+  id: number;
+  kind: ChoiceRead;
+  name: string;
+};
+export type ExpectedLicense = {
+  id: number;
+  uid: string;
+  name: string;
+  is_found: boolean;
+};
+export type LicenseCheckRead = {
+  id: number;
+  key: string;
+  name: string;
+  vendor: string;
+  /** Closed catalog: {type: command, executable, args, timeout_s, encoding} | {type: file, path} | {type: registry, hive: HKLM, key, values}. */
+  probe: any;
+  /** {format: xml|json|text|values, records, fields: {product_name, product_code, max_version, expires_at, final_expires_at, carrier_id, license_serial, is_reactivatable, carrier_type}, date_formats, never_values}. */
+  extract: any;
+  /** {type: computer|device|dongle|server|equipment|mapped, hardware_id_kind, equipment_uid, type_map, default_type}. */
+  carrier: any;
+  interval_minutes: number;
+  is_enabled: boolean;
+  /** Runs on every computer with an agent. */
+  is_lab_wide: boolean;
+  /** Increases on every change agents pick up. */
+  revision: number;
+  preset_key: string;
+  targets: LicenseCheckTargetRead[];
+  /** Licenses currently found by this check. */
+  license_count: number;
+  /** Found licenses that are not matched. */
+  attention_count: number;
+  expected_licenses: ExpectedLicense[];
+  created_at: string;
+  updated_at: string;
+};
+export type LicenseCheckListSerializersLicenseCheckPaginatedResponse = {
+  meta: LicenseCheckListSerializersLicenseCheckPaginationMeta;
+  data: LicenseCheck[];
+};
+export type LicenseCheckListSerializersLicenseCheckPaginatedResponseRead = {
+  meta: LicenseCheckListSerializersLicenseCheckPaginationMeta;
+  data: LicenseCheckRead[];
+};
+export type LicenseCheckCreateSerializersLicenseCheckDetailResponse = {
+  data: LicenseCheck;
+};
+export type LicenseCheckCreateSerializersLicenseCheckDetailResponseRead = {
+  data: LicenseCheckRead;
+};
+export type LicenseCheckTargetRequestKindEnum =
+  "room" | "station" | "bench" | "category" | "equipment";
+export type LicenseCheckTargetRequest = {
+  kind: LicenseCheckTargetRequestKindEnum;
+  /** Id of the room, station, bench, category or computer. */
+  target_id: number;
+};
+export type LicenseCheckWrite = {
+  /** Create from this preset; probe, extract and carrier are copied. */
+  preset_key?: string;
+  key?: string;
+  name?: string;
+  vendor?: string;
+  /** Closed catalog: {type: command, executable, args, timeout_s, encoding} | {type: file, path} | {type: registry, hive: HKLM, key, values}. */
+  probe?: any;
+  /** {format: xml|json|text|values, records, fields: {product_name, product_code, max_version, expires_at, final_expires_at, carrier_id, license_serial, is_reactivatable, carrier_type}, date_formats, never_values}. */
+  extract?: any;
+  /** {type: computer|device|dongle|server|equipment|mapped, hardware_id_kind, equipment_uid, type_map, default_type}. */
+  carrier?: any;
+  interval_minutes?: number;
+  is_enabled?: boolean;
+  is_lab_wide?: boolean;
+  targets?: LicenseCheckTargetRequest[];
+  /** Licenses this check should find; one no run reports is flagged missing. */
+  expected_license_ids?: number[];
+};
+export type LicenseCheckDetailSerializersLicenseCheckDetailResponse = {
+  data: LicenseCheck;
+};
+export type LicenseCheckDetailSerializersLicenseCheckDetailResponseRead = {
+  data: LicenseCheckRead;
+};
+export type LicenseCheckUpdateSerializersLicenseCheckDetailResponse = {
+  data: LicenseCheck;
+};
+export type LicenseCheckUpdateSerializersLicenseCheckDetailResponseRead = {
+  data: LicenseCheckRead;
+};
+export type PatchedLicenseCheckWrite = {
+  /** Create from this preset; probe, extract and carrier are copied. */
+  preset_key?: string;
+  key?: string;
+  name?: string;
+  vendor?: string;
+  /** Closed catalog: {type: command, executable, args, timeout_s, encoding} | {type: file, path} | {type: registry, hive: HKLM, key, values}. */
+  probe?: any;
+  /** {format: xml|json|text|values, records, fields: {product_name, product_code, max_version, expires_at, final_expires_at, carrier_id, license_serial, is_reactivatable, carrier_type}, date_formats, never_values}. */
+  extract?: any;
+  /** {type: computer|device|dongle|server|equipment|mapped, hardware_id_kind, equipment_uid, type_map, default_type}. */
+  carrier?: any;
+  interval_minutes?: number;
+  is_enabled?: boolean;
+  is_lab_wide?: boolean;
+  targets?: LicenseCheckTargetRequest[];
+  /** Licenses this check should find; one no run reports is flagged missing. */
+  expected_license_ids?: number[];
+};
+export type LicenseCheckRun = {
+  id: number;
+  computing: LabsUidNamedReference;
+  revision: number;
+  error_code: string;
+  error_message: string;
+  license_count: number;
+  is_applied: boolean;
+  started_at: string;
+  duration_ms: number;
+  received_at: string;
+};
+export type LicenseCheckRunRead = {
+  id: number;
+  computing: LabsUidNamedReferenceRead;
+  revision: number;
+  status: ChoiceRead;
+  error_code: string;
+  error_message: string;
+  license_count: number;
+  is_applied: boolean;
+  started_at: string;
+  duration_ms: number;
+  received_at: string;
+};
+export type LicenseCheckRunList = {
+  items: LicenseCheckRun[];
+};
+export type LicenseCheckRunListRead = {
+  items: LicenseCheckRunRead[];
+};
+export type LicenseCheckRunListSerializersLicenseCheckRunListDetailResponse = {
+  data: LicenseCheckRunList;
+};
+export type LicenseCheckRunListSerializersLicenseCheckRunListDetailResponseRead =
+  {
+    data: LicenseCheckRunListRead;
+  };
+export type LicenseCheckPreset = {
+  key: string;
+  name: string;
+  vendor: string;
+  description: string;
+  interval_minutes: number;
+  probe: any;
+  extract: any;
+  carrier: any;
+};
+export type LicenseCheckPresetList = {
+  items: LicenseCheckPreset[];
+};
+export type LicenseCheckPresetListSerializersLicenseCheckPresetListDetailResponse =
+  {
+    data: LicenseCheckPresetList;
+  };
+export type LicenseObservationListSerializersLicenseObservationPagination = {
+  count: number;
+  page: number;
+  page_size: number;
+  next: string | null;
+  previous: string | null;
+};
+export type LicenseObservationListSerializersLicenseObservationPaginationMeta =
+  {
+    pagination: LicenseObservationListSerializersLicenseObservationPagination;
+  };
+export type InventoryValues = {
+  serial_number: string;
+  expires_at: string | null;
+  max_version: string;
+};
+export type LicenseObservation = {
+  id: number;
+  check: LabsNamedReference;
+  computing: LabsUidNamedReference;
+  observation_key: string;
+  vendor: string;
+  product_code: string;
+  product_name: string;
+  license_serial: string;
+  carrier_type: string;
+  carrier_hardware_kind: string;
+  carrier_hardware_value: string;
+  carrier_equipment: LabsUidNamedReference | null;
+  license: LabsUidNamedReference | null;
+  inventory: InventoryValues | null;
+  expires_at: string | null;
+  /** Null: perpetual. */
+  final_expires_at: string | null;
+  max_version: string;
+  is_reactivatable: boolean;
+  first_seen_at: string;
+  last_seen_at: string;
+  removed_at: string | null;
+};
+export type LicenseObservationRead = {
+  id: number;
+  check: LabsNamedReferenceRead;
+  computing: LabsUidNamedReferenceRead;
+  observation_key: string;
+  vendor: string;
+  product_code: string;
+  product_name: string;
+  license_serial: string;
+  carrier_type: string;
+  carrier_hardware_kind: string;
+  carrier_hardware_value: string;
+  carrier_equipment: LabsUidNamedReferenceRead | null;
+  license: LabsUidNamedReferenceRead | null;
+  inventory: InventoryValues | null;
+  status: ChoiceRead;
+  expires_at: string | null;
+  /** Null: perpetual. */
+  final_expires_at: string | null;
+  max_version: string;
+  is_reactivatable: boolean;
+  first_seen_at: string;
+  last_seen_at: string;
+  removed_at: string | null;
+};
+export type LicenseObservationListSerializersLicenseObservationPaginatedResponse =
+  {
+    meta: LicenseObservationListSerializersLicenseObservationPaginationMeta;
+    data: LicenseObservation[];
+  };
+export type LicenseObservationListSerializersLicenseObservationPaginatedResponseRead =
+  {
+    meta: LicenseObservationListSerializersLicenseObservationPaginationMeta;
+    data: LicenseObservationRead[];
   };
 export type LicenseProductCatalogListSerializersLicenseProductPagination = {
   count: number;
@@ -13501,6 +14318,8 @@ export type LicenseRead = {
   seats_in_use: number;
   assigned_equipment: AssignedEquipmentRead[];
   max_version: string;
+  /** Vendor's license serial or ID (for example the Vector license ID). Not secret; agents match the licenses they find to this value. */
+  serial_number: string;
   expires_at: string | null;
   status: LabsChoiceReferenceRead | null;
   acquisition_price: LabsMoneyRead | null;
@@ -13535,6 +14354,7 @@ export type LicenseCreate = {
   restriction_id?: number | null;
   seats?: number;
   max_version?: string;
+  serial_number?: string;
   expires_at?: string | null;
 };
 export type LicenseCreateWrite = {
@@ -13551,6 +14371,7 @@ export type LicenseCreateWrite = {
   restriction_id?: number | null;
   seats?: number;
   max_version?: string;
+  serial_number?: string;
   identifier?: string;
   expires_at?: string | null;
 };
@@ -13580,6 +14401,7 @@ export type PatchedLicenseUpdate = {
   restriction_id?: number | null;
   seats?: number;
   max_version?: string;
+  serial_number?: string;
   expires_at?: string | null;
 };
 export type PatchedLicenseUpdateWrite = {
@@ -13596,6 +14418,7 @@ export type PatchedLicenseUpdateWrite = {
   restriction_id?: number | null;
   seats?: number;
   max_version?: string;
+  serial_number?: string;
   identifier?: string;
   expires_at?: string | null;
 };
@@ -17111,6 +17934,8 @@ export const {
   useAgentReportActivityMutation,
   useAgentHeartbeatMutation,
   useGetAgentInfoQuery,
+  useAgentLicenseChecksRetrieveQuery,
+  useAgentLicenseChecksActionsReportCreateByCheckKeyMutation,
   useAgentMonitoringPolicyRetrieveQuery,
   useAgentRecordSessionLogMutation,
   useAadLoginCreateMutation,
@@ -17263,6 +18088,9 @@ export const {
   useLabsEquipmentAssignmentRetrieveByEquipmentIdQuery,
   useLabsEquipmentAssignmentUpdateByEquipmentIdMutation,
   useLabsEquipmentAssignmentDestroyByEquipmentIdMutation,
+  useLabsEquipmentHardwareIdsRetrieveByEquipmentIdQuery,
+  useLabsEquipmentHardwareIdsCreateByEquipmentIdMutation,
+  useLabsEquipmentHardwareIdsDestroyByEquipmentIdHardwareIdIdMutation,
   useLabsEquipmentImageRetrieveByEquipmentIdQuery,
   useLabsEquipmentImageUpdateByEquipmentIdMutation,
   useLabsEquipmentImageDestroyByEquipmentIdMutation,
@@ -17340,6 +18168,7 @@ export const {
   useLabsExpectedDevicesCreateMutation,
   useLabsExpectedDevicesPartialUpdateByExpectedDeviceIdMutation,
   useLabsExpectedDevicesDestroyByExpectedDeviceIdMutation,
+  useLabsExpectedDevicesLegacySuggestionsRetrieveQuery,
   useLabsExpensesPaymentsRetrieveByExpenseIdQuery,
   useLabsExpensesPaymentsCreateByExpenseIdMutation,
   useLabsExpensesReportRetrieveQuery,
@@ -17350,6 +18179,7 @@ export const {
   useLabsLabProjectsRetrieveQuery,
   useLabsLabProjectsRetrieveByProjectIdQuery,
   useLabsLabProjectsOptionsRetrieveQuery,
+  useLabsLabSessionsRetrieveQuery,
   useLabsLeaderboardExportRetrieveQuery,
   useLabsLeaderboardLabRetrieveQuery,
   useLabsLeaderboardPersonaRetrieveQuery,
@@ -17358,6 +18188,14 @@ export const {
   useLabsLicenseCategoriesRetrieveQuery,
   useLabsLicenseCategoriesRetrieveByCategoryIdQuery,
   useLabsLicenseCategoriesOptionsRetrieveQuery,
+  useLabsLicenseChecksRetrieveQuery,
+  useLabsLicenseChecksCreateMutation,
+  useLabsLicenseChecksRetrieveByCheckIdQuery,
+  useLabsLicenseChecksPartialUpdateByCheckIdMutation,
+  useLabsLicenseChecksDestroyByCheckIdMutation,
+  useLabsLicenseChecksRunsRetrieveByCheckIdQuery,
+  useLabsLicenseChecksPresetsRetrieveQuery,
+  useLabsLicenseObservationsRetrieveQuery,
   useLabsLicenseProductsRetrieveQuery,
   useLabsLicenseProductsRetrieveByProductIdQuery,
   useLabsLicenseProductsOptionsRetrieveQuery,

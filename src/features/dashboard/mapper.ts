@@ -572,7 +572,7 @@ export function mapBenchDetailResponse(
           booking_code: currentBooking ? asString(currentBooking.booking_code) : null,
           remote_user: asNullableString(computing.remote_user),
           remote_user_displayname: asNullableString(computing.remote_user_display_name),
-          remote_computer: asNullableString(computing.name),
+          remote_computer: asNullableString(computing.remote_computer),
           remote_ip: asNullableString(computing.remote_ip),
           source: null,
           created: asString(computing.last_agent_report_at),
