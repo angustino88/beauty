@@ -10954,6 +10954,8 @@ export type DashboardComputing = {
   activity_status: string;
   remote_user: string;
   remote_user_display_name: string;
+  /** Client computer of the remote session. */
+  remote_computer: string;
   remote_ip: string | null;
 };
 export type DashboardEquipmentReference = {
