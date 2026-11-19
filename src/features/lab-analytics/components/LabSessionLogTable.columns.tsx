@@ -78,61 +78,6 @@ export const labSessionLogColumns: ColumnsType<LabSessionLogEntry> = [
       : <span style={muted}>—</span>,
   },
   {
-    title: 'Booking',
-    key: 'booking',
-    children: [
-      {
-        title: 'Code',
-        key: 'booking_code',
-        width: 150,
-        className: 'booking-group-start',
-        render: (_: unknown, row) => {
-          const code = row.booking?.booking_code || row.booking_code;
-          if (!code) return <span style={muted}>—</span>;
-          return (
-            <div style={stack}>
-              <Tooltip title={row.booking?.status ? `Booking status: ${row.booking.status.label}` : 'Not linked to a verified booking.'}>
-                <span style={{ ...ellipsis, fontFamily: 'var(--lm-font-mono, ui-monospace, monospace)', fontSize: 12.5 }}>{code}</span>
-              </Tooltip>
-              {row.booking?.status ? <span style={{ ...muted, fontSize: 12 }}>{row.booking.status.label}</span> : null}
-            </div>
-          );
-        },
-      },
-      {
-        title: 'Project',
-        key: 'booking_project',
-        width: 180,
-        render: (_: unknown, row) => {
-          const project = row.booking?.project?.name;
-          if (project) return <Tooltip title={project}><span style={{ ...ellipsis, display: 'block' }}>{project}</span></Tooltip>;
-          return <span style={muted}>{row.booking ? 'No project' : '—'}</span>;
-        },
-      },
-      {
-        title: 'Booked slot',
-        key: 'booking_slot',
-        width: 200,
-        className: 'booking-group-end',
-        render: (_: unknown, row) => {
-          const slot = formatSlot(row);
-          if (!slot) return <span style={muted}>—</span>;
-          const check = checkAgainstSlot(row);
-          return (
-            <div style={stack}>
-              <span style={{ fontVariantNumeric: 'tabular-nums' }}>{slot}</span>
-              {check ? (
-                <Tooltip title={check.detail}>
-                  <span style={{ fontSize: 12, color: check.ok ? 'var(--lm-success-fg)' : 'var(--lm-warning-fg)' }}>{check.label}</span>
-                </Tooltip>
-              ) : null}
-            </div>
-          );
-        },
-      },
-    ],
-  },
-  {
     title: 'Bench',
     key: 'bench',
     width: 170,
@@ -175,5 +120,58 @@ export const labSessionLogColumns: ColumnsType<LabSessionLogEntry> = [
         </span>
       );
     },
+  },
+  {
+    title: 'Booking',
+    key: 'booking',
+    children: [
+      {
+        title: 'Code',
+        key: 'booking_code',
+        width: 150,
+        render: (_: unknown, row) => {
+          const code = row.booking?.booking_code || row.booking_code;
+          if (!code) return <span style={muted}>—</span>;
+          return (
+            <div style={stack}>
+              <Tooltip title={row.booking?.status ? `Booking status: ${row.booking.status.label}` : 'Not linked to a verified booking.'}>
+                <span style={{ ...ellipsis, fontFamily: 'var(--lm-font-mono, ui-monospace, monospace)', fontSize: 12.5 }}>{code}</span>
+              </Tooltip>
+              {row.booking?.status ? <span style={{ ...muted, fontSize: 12 }}>{row.booking.status.label}</span> : null}
+            </div>
+          );
+        },
+      },
+      {
+        title: 'Project',
+        key: 'booking_project',
+        width: 180,
+        render: (_: unknown, row) => {
+          const project = row.booking?.project?.name;
+          if (project) return <Tooltip title={project}><span style={{ ...ellipsis, display: 'block' }}>{project}</span></Tooltip>;
+          return <span style={muted}>{row.booking ? 'No project' : '—'}</span>;
+        },
+      },
+      {
+        title: 'Booked slot',
+        key: 'booking_slot',
+        width: 200,
+        render: (_: unknown, row) => {
+          const slot = formatSlot(row);
+          if (!slot) return <span style={muted}>—</span>;
+          const check = checkAgainstSlot(row);
+          return (
+            <div style={stack}>
+              <span style={{ fontVariantNumeric: 'tabular-nums' }}>{slot}</span>
+              {check ? (
+                <Tooltip title={check.detail}>
+                  <span style={{ fontSize: 12, color: check.ok ? 'var(--lm-success-fg)' : 'var(--lm-warning-fg)' }}>{check.label}</span>
+                </Tooltip>
+              ) : null}
+            </div>
+          );
+        },
+      },
+    ],
   },
 ];

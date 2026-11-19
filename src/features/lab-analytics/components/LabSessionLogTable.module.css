@@ -23,17 +23,11 @@
   font-size: 12.5px;
 }
 
-/* "Booking" spans Code, Project and Booked slot: centre it and rule it off from its sub-columns. */
+/* "Booking" spans Code, Project and Booked slot: centre its title over them. */
 .table :global(.ant-table-thead > tr:first-child > th[colspan]:not([colspan="1"])) {
   text-align: center;
-  border-bottom: 1px solid var(--lm-border);
-  border-inline: 1px solid var(--lm-border);
 }
 
 .table :global(.ant-table-thead > tr:nth-child(2) > th) {
   font-size: 12.5px;
 }
-
-/* Column classNames land on both header and body cells: thin dividers keep the group one block. */
-.table :global(.booking-group-start) { border-left: 1px solid var(--lm-border); }
-.table :global(.booking-group-end) { border-right: 1px solid var(--lm-border); }
