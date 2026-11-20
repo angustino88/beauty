@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   Button,
   Card,
@@ -16,8 +15,7 @@ import {
   message,
 } from "antd";
 import { DeleteOutlined, PlusOutlined } from "@ant-design/icons";
-import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
-import { useLabsEquipmentOptionsRetrieveQuery } from "@/shared/api/generated/api";
+import { usePagedOptions } from "@/shared/hooks/usePagedOptions";
 import {
   useAssignEquipmentMutation,
   useUnassignEquipmentMutation,
@@ -38,18 +36,20 @@ export function EquipmentAssignmentModal({
   onSuccess,
 }: EquipmentAssignmentModalProps) {
   const [form] = Form.useForm<{ equipmentId: number; role?: string; position?: number }>();
-  const [search, setSearch] = useState("");
-  // The equipment selector is a large catalog: the API rejects it unless `q` is sent, so wait for input.
-  const debouncedSearch = useDebouncedValue(search.trim(), 300);
-
-  const { data: optionsData, isFetching: loadingOptions } = useLabsEquipmentOptionsRetrieveQuery(
-    {
-      assignable: true,
-      assigned: false,
-      q: debouncedSearch || undefined,
-    },
-    { skip: !open || !debouncedSearch },
-  );
+  // Equipment that can go on a bench right now (available = in service, operational, calibrated)
+  // and is not on another bench. The first page loads when the list opens; more load on scroll.
+  const equipment = usePagedOptions({
+    path: "/api/labs/equipment",
+    params: { status: "available", assigned: false },
+    noun: "available equipment",
+    enabled: open,
+    toOption: (item: { id: number; name?: string | null; sku?: string | null }) => ({
+      // SKU only in the control; the name shows on hover. Search is server-side, so name still matches.
+      label: String(item.sku || item.name || item.id),
+      title: item.name ?? undefined,
+      value: item.id,
+    }),
+  });
 
   const [assignEquipment, { isLoading: assigning }] = useAssignEquipmentMutation();
   const [unassignEquipment, { isLoading: unassigning }] = useUnassignEquipmentMutation();
@@ -93,14 +93,6 @@ export function EquipmentAssignmentModal({
       message.error(errorMsg);
     }
   };
-
-  const rawEquipmentOptions = Array.isArray(optionsData?.data) ? optionsData.data : [];
-  const equipmentOptions = rawEquipmentOptions.map((item) => ({
-    // SKU only in the control; the name shows on hover. Search is server-side, so name still matches.
-    label: String(item.sku || item.name || item.id),
-    title: item.name ?? undefined,
-    value: item.id,
-  }));
 
   return (
     <Modal
@@ -176,13 +168,9 @@ export function EquipmentAssignmentModal({
               rules={[{ required: true, message: "Please select equipment to assign" }]}
             >
               <Select
-                showSearch
-                placeholder="Type to search equipment by name or SKU"
-                notFoundContent={debouncedSearch ? undefined : "Type a name or SKU to find equipment"}
-                options={equipmentOptions}
-                loading={loadingOptions}
-                onSearch={setSearch}
-                filterOption={false}
+                {...equipment.selectProps}
+                placeholder="Choose equipment, or type a name or SKU"
+                options={equipment.options}
                 allowClear
               />
             </Form.Item>

@@ -5,7 +5,7 @@ import { Button as UiButton } from '@/components/ui/button';
 import { Pencil, Settings2 } from 'lucide-react';
 import { AppstoreOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useGetBenchMappingQuery, useGetEquipmentMappingQuery } from '@/features/spaces/mapping/api';
 import { MappingVisualization } from '@/features/spaces/mapping/components/MappingVisualization';
 import type { ResourceMappingRow } from '@/features/spaces/mapping/types';
@@ -533,6 +533,14 @@ export default function EquipmentDetailsModal({
 }: EquipmentDetailsModalProps) {
   const [mappingExpanded, setMappingExpanded] = useState(true);
   const [lifecycleModalOpen, setLifecycleModalOpen] = useState(false);
+  // antd overlays opened from inside this sheet (modals, drawers, dropdowns) must be mounted inside the
+  // sheet's DOM: the sheet is a modal Radix dialog that traps focus and pointer events, so an overlay
+  // mounted on <body> appears behind the sheet and cannot receive typing. Modals and drawers call
+  // getPopupContainer without a trigger (or with document.body), so they go to the in-sheet host.
+  const overlayHost = useRef<HTMLDivElement>(null);
+  const getPopupContainer = useCallback((trigger?: HTMLElement) => (
+    (trigger && trigger !== document.body ? trigger.parentElement : null) ?? overlayHost.current ?? document.body
+  ), []);
   const isAdmin = usePermission('lab_operations.manage');
 
   const isEquipment = ['computing', 'display', 'debugging', 'networking', 'power', 'accessory', 'sample', 'furniture', 'instrument', 'laboratory', 'mechanical', 'other'].includes(equipmentType);
@@ -656,7 +664,13 @@ export default function EquipmentDetailsModal({
 
   return (
     <Sheet open={open} onOpenChange={(next) => { if (!next) onClose(); }}>
-      <SheetContent className={presentation.sheet}>
+      <SheetContent
+        className={presentation.sheet}
+        onEscapeKeyDown={(event) => {
+          // Escape inside a nested antd modal or drawer closes that overlay only, not the whole sheet.
+          if ((event.target as Element | null)?.closest?.('.ant-modal-wrap, .ant-drawer')) event.preventDefault();
+        }}
+      >
         <header className="tw:shrink-0 tw:border-0 tw:border-b tw:border-solid tw:border-border tw:px-6 tw:py-5 tw:pr-16">
           <SheetTitle className="tw:m-0 tw:text-base tw:font-semibold">{isEquipment ? 'Equipment details' : `${displayType} summary`}</SheetTitle>
           <SheetDescription className="tw:mt-1 tw:text-xs tw:text-muted-foreground">{name}{sku && name !== sku ? ` · ${sku}` : ''}</SheetDescription>
@@ -669,7 +683,7 @@ export default function EquipmentDetailsModal({
           )}
           </div>
         </header>
-        <ConfigProvider getPopupContainer={(trigger) => trigger?.parentElement ?? document.body}>
+        <ConfigProvider getPopupContainer={getPopupContainer}>
         <div className="tw:min-h-0 tw:flex-1 tw:overflow-y-auto tw:bg-background tw:p-6">
       {!normalizedSpaceType && !isEquipment && (
         <div className={styles.detailsHero}>
@@ -864,6 +878,7 @@ export default function EquipmentDetailsModal({
 
         </div>
         </ConfigProvider>
+        <div ref={overlayHost} />
       {normalizedSpaceType && (
         <ChangeLifecycleModal
           open={lifecycleModalOpen}

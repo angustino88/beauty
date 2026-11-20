@@ -2,6 +2,7 @@ import { Select, Space } from 'antd';
 import { useMemo, useState } from 'react';
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
+import { equipmentPagedConfig, usePagedOptions } from '@/shared/hooks/usePagedOptions';
 import { useGetTargetOptionsQuery } from '../api';
 import { TARGET_TYPE_LABEL } from '../format';
 import type { TargetType } from '../types';
@@ -35,22 +36,26 @@ export function TargetPicker({
   const [type, setType] = useState<TargetType>(value?.type ?? types[0]);
   const [search, setSearch] = useState('');
   const q = useDebouncedValue(search, 300).trim();
-  // Equipment selectors need a search term (the backend refuses an unbounded equipment list).
-  const needsSearch = type === 'equipment' && q.length === 0;
+  const isEquipment = type === 'equipment';
+  // Rooms, stations and benches are small catalogs (options selector); equipment is a large catalog,
+  // browsed through the paginated list so the first page shows before anything is typed.
   const { data, isFetching } = useGetTargetOptionsQuery(
-    needsSearch ? skipToken : { type, q: q || undefined, room_id: type === 'station' ? roomId : undefined },
+    isEquipment ? skipToken : { type, q: q || undefined, room_id: type === 'station' ? roomId : undefined },
   );
+  const equipment = usePagedOptions({ ...equipmentPagedConfig, enabled: isEquipment });
 
   const options = useMemo(() => {
-    const items = (data ?? []).map((item) => ({
-      value: item.id,
-      label: item.sku && item.sku !== item.name ? `${item.name} · ${item.sku}` : item.name,
-    }));
+    const items = isEquipment
+      ? [...equipment.options]
+      : (data ?? []).map((item) => ({
+        value: item.id,
+        label: item.sku && item.sku !== item.name ? `${item.name} · ${item.sku}` : item.name,
+      }));
     if (value && value.type === type && !items.some((item) => item.value === value.id)) {
       items.unshift({ value: value.id, label: value.name ?? `#${value.id}` });
     }
     return items;
-  }, [data, value, type]);
+  }, [isEquipment, equipment.options, data, value, type]);
 
   return (
     <Space.Compact style={{ width: '100%' }}>
@@ -63,18 +68,22 @@ export function TargetPicker({
         onChange={(next) => {
           setType(next);
           setSearch('');
+          equipment.reset();
           onChange?.(null);
         }}
       />
       <Select<number>
         aria-label={`${TARGET_TYPE_LABEL[type]} to choose`}
         style={{ flex: 1, minWidth: 0 }}
-        showSearch={{ filterOption: false, onSearch: setSearch }}
+        showSearch={{ filterOption: false, onSearch: isEquipment ? equipment.onSearch : setSearch }}
         allowClear
         disabled={disabled}
-        loading={isFetching}
-        placeholder={placeholder ?? (type === 'equipment' ? 'Type to search equipment' : `Choose a ${type}`)}
-        notFoundContent={needsSearch ? 'Type a name or SKU' : isFetching ? 'Searching…' : 'No match'}
+        loading={isEquipment ? equipment.loading : isFetching}
+        placeholder={placeholder ?? (isEquipment ? 'Choose, or type a name or SKU' : `Choose a ${type}`)}
+        notFoundContent={isEquipment ? equipment.emptyText : isFetching ? 'Searching…' : 'No match'}
+        onOpenChange={isEquipment ? equipment.onOpenChange : undefined}
+        onPopupScroll={isEquipment ? equipment.onPopupScroll : undefined}
+        popupRender={isEquipment ? equipment.popupRender : undefined}
         value={value && value.type === type ? value.id : undefined}
         options={options}
         onChange={(id) => {

@@ -1,62 +1,45 @@
-import { useMemo, useState } from 'react';
-import { useLabsEquipmentRetrieveQuery } from '@/shared/api/generated/api';
-import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
+import { useMemo } from 'react';
+import { usePagedOptions } from '@/shared/hooks/usePagedOptions';
 
 /** One selectable equipment item: the SKU is shown, the name appears as the hover title. */
 export type EquipmentOption = { value: number; label: string; title: string; name: string };
 
 type Known = { id: number; sku?: string; name: string };
 
-/** Rows fetched per request: enough to browse, small enough to stay fast on a large catalog. */
-export const EQUIPMENT_PICKER_PAGE_SIZE = 20;
-
 const NO_KNOWN: readonly Known[] = [];
+
+const toEquipmentOption = (row: { id: number; sku?: string | null; name?: string | null }): EquipmentOption => ({
+  value: row.id,
+  label: row.sku || `#${row.id}`,
+  title: row.name ?? '',
+  name: row.name ?? '',
+});
 
 /**
  * Equipment options for the license-carrier multi-select.
  *
- * Uses the paginated equipment list rather than the `/equipment/options` selector: that selector
- * refuses to answer without a search term (large catalog) and rejects short terms that match more
- * than its cap, so the picker showed nothing. The list answers with the first page when the
- * dropdown opens, and with the first page of matches while the user types.
- *
- * Nothing is requested until the dropdown has been opened once (`onOpenChange`).
+ * Browses the paginated equipment list (the `/equipment/options` selector refuses to answer without
+ * a search term): the first page loads when the dropdown opens, the next pages load as the user
+ * scrolls, so every item can be reached without typing; typing narrows the list.
  */
 export function useEquipmentSearchOptions(known: readonly Known[] = NO_KNOWN) {
-  const [search, setSearch] = useState('');
-  const [active, setActive] = useState(false);
-  const query = useDebouncedValue(search.trim(), 300);
-  const { data, isFetching, isError } = useLabsEquipmentRetrieveQuery(
-    { q: query || undefined, page: 1, pageSize: EQUIPMENT_PICKER_PAGE_SIZE },
-    { skip: !active },
-  );
+  const equipment = usePagedOptions({ path: '/api/labs/equipment', noun: 'equipment', toOption: toEquipmentOption });
   const options = useMemo<EquipmentOption[]>(() => {
-    // Only what the server returned for the current search (plus the carriers already on the row).
-    // A picked item that leaves the list keeps its SKU: the select caches labels of its values.
-    const items = new Map<number, { sku: string; name: string }>();
-    for (const item of data?.data ?? []) items.set(item.id, { sku: item.sku ?? '', name: item.name ?? '' });
-    for (const item of known) if (!items.has(item.id)) items.set(item.id, { sku: item.sku ?? '', name: item.name });
-    return [...items].map(([value, item]) => ({ value, label: item.sku || `#${value}`, title: item.name, name: item.name }));
-  }, [known, data]);
-
-  const total = data?.meta?.pagination?.count;
-
-  const emptyText = isError
-    ? 'Could not load equipment. Type a SKU or name to try again.'
-    : query
-      ? `No equipment matches "${query}".`
-      : 'No equipment registered yet.';
-  // When there are more matches than one page, say so instead of silently cutting the list.
-  const moreHint = total != null && total > EQUIPMENT_PICKER_PAGE_SIZE
-    ? `Showing ${EQUIPMENT_PICKER_PAGE_SIZE} of ${total}. Type a SKU or name to narrow the list.`
-    : null;
+    // What the server returned so far, plus the carriers already on the row (so they keep their SKU).
+    const items = new Map<number, EquipmentOption>();
+    for (const option of equipment.options) items.set(option.value, option);
+    for (const item of known) if (!items.has(item.id)) items.set(item.id, toEquipmentOption(item));
+    return [...items.values()];
+  }, [known, equipment.options]);
 
   return {
     options,
-    onSearch: setSearch,
-    onOpenChange: (open: boolean) => { if (open) setActive(true); },
-    loading: isFetching,
-    emptyText,
-    moreHint,
+    onSearch: equipment.onSearch,
+    onOpenChange: equipment.onOpenChange,
+    onPopupScroll: equipment.onPopupScroll,
+    loading: equipment.loading,
+    emptyText: equipment.emptyText,
+    /** "50 of 120 shown · scroll down for more" while more pages exist. */
+    moreHint: equipment.footer,
   };
 }

@@ -11,6 +11,7 @@ import {
   Typography,
   message,
 } from 'antd';
+import { usePagedOptions } from '@/shared/hooks/usePagedOptions';
 import type { ICreatePurchaseItemPayload, ResourceKind } from '../types';
 import styles from '@/features/finance/components/FinanceWorkspace.module.css';
 import {
@@ -19,10 +20,8 @@ import {
   useGetPurchasePrioritiesQuery,
 } from '../api';
 import {
-  useLabsEquipmentRetrieveQuery,
   useLabsBenchesOptionsRetrieveQuery,
   useLabsStationsOptionsRetrieveQuery,
-  useLabsLicensesRetrieveQuery,
 } from '@/shared/api/generated/api';
 
 interface AddPurchaseItemModalProps {
@@ -72,20 +71,12 @@ export const AddPurchaseItemModal: React.FC<AddPurchaseItemModalProps> = ({
   const [form] = Form.useForm<FormValues>();
   const [mode, setMode] = useState<'catalog' | 'custom'>('catalog');
   const [selectedKind, setSelectedKind] = useState<ResourceKind>('equipment');
-  const [search, setSearch] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   const [createItem] = useCreatePurchaseItemMutation();
   const [allocateResource] = useCreatePurchaseItemResourceMutation();
   const { data: priorities = [], isFetching: loadingPriorities } =
     useGetPurchasePrioritiesQuery(undefined, { skip: !open });
-
-  // Dynamic catalog queries
-  const { data: equipmentData, isFetching: loadingEquipment } =
-    useLabsEquipmentRetrieveQuery(
-      { q: search || undefined },
-      { skip: !open || mode !== 'catalog' || selectedKind !== 'equipment' },
-    );
 
   const { data: benchOptions, isFetching: loadingBenches } =
     useLabsBenchesOptionsRetrieveQuery(
@@ -99,22 +90,34 @@ export const AddPurchaseItemModal: React.FC<AddPurchaseItemModalProps> = ({
       { skip: !open || mode !== 'catalog' || selectedKind !== 'station' },
     );
 
-  const { data: licenseData, isFetching: loadingLicenses } =
-    useLabsLicensesRetrieveQuery(
-      {},
-      { skip: !open || mode !== 'catalog' || selectedKind !== 'license' },
-    );
+  // Equipment and licenses are paginated lists: the first page loads when the list opens and the
+  // next pages load as the user scrolls, so every item can be reached; typing searches the server.
+  const equipmentPaged = usePagedOptions({
+    path: '/api/labs/equipment',
+    noun: 'equipment',
+    enabled: open && mode === 'catalog' && selectedKind === 'equipment',
+    toOption: (row: { id: number; name?: string | null; sku?: string | null }) => ({
+      label: `${row.name ?? ''}${row.sku ? ` (${row.sku})` : ''} — ID #${row.id}`,
+      value: row.id,
+        name: row.name ?? '',
+        sku: row.sku ?? '',
+    }),
+  });
+  const licensePaged = usePagedOptions({
+    path: '/api/labs/licenses',
+    noun: 'licenses',
+    enabled: open && mode === 'catalog' && selectedKind === 'license',
+    toOption: (row: { id: number; name?: string | null; key?: string | null }) => ({
+      label: `${row.name || row.key || 'License'} — ID #${row.id}`,
+      value: row.id,
+        name: row.name || row.key || 'License',
+        sku: '',
+    }),
+  });
+  const paged = selectedKind === 'equipment' ? equipmentPaged : selectedKind === 'license' ? licensePaged : null;
 
   const getSelectOptions = () => {
-    if (selectedKind === 'equipment') {
-      const list = equipmentData?.data ?? [];
-      return list.map((item) => ({
-        label: `${item.name}${item.sku ? ` (${item.sku})` : ''} — ID #${item.id}`,
-        value: item.id,
-        name: item.name,
-        sku: item.sku,
-      }));
-    }
+    if (paged) return paged.options;
     if (selectedKind === 'bench') {
       const list = benchOptions?.data ?? [];
       return list.map((item) => ({
@@ -133,23 +136,13 @@ export const AddPurchaseItemModal: React.FC<AddPurchaseItemModalProps> = ({
         sku: item.sku,
       }));
     }
-    if (selectedKind === 'license') {
-      const list = (licenseData?.data as unknown as { id: number; name?: string; key?: string }[]) ?? [];
-      return list.map((item) => ({
-        label: `${item.name || item.key || 'License'} — ID #${item.id}`,
-        value: item.id,
-        name: item.name || item.key || 'License',
-        sku: '',
-      }));
-    }
     return [];
   };
 
   const isOptionsLoading =
-    (selectedKind === 'equipment' && loadingEquipment) ||
+    (paged?.loading ?? false) ||
     (selectedKind === 'bench' && loadingBenches) ||
-    (selectedKind === 'station' && loadingStations) ||
-    (selectedKind === 'license' && loadingLicenses);
+    (selectedKind === 'station' && loadingStations);
 
   const handleResourceSelect = (val: number) => {
     const opts = getSelectOptions();
@@ -288,17 +281,19 @@ export const AddPurchaseItemModal: React.FC<AddPurchaseItemModalProps> = ({
               help="Selecting an asset auto-populates the description and links the acquisition price"
             >
               <Select
-                showSearch
-                filterOption={(input, option) =>
-                  (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-                }
-                onSearch={setSearch}
+                showSearch={paged
+                  // Server-searched: the paged list answers the typed text.
+                  ? { filterOption: false, onSearch: paged.onSearch }
+                  : { filterOption: (input, option) => String(option?.label ?? '').toLowerCase().includes(input.toLowerCase()) }}
+                onOpenChange={paged?.onOpenChange}
+                onPopupScroll={paged?.onPopupScroll}
+                popupRender={paged?.popupRender}
                 onChange={handleResourceSelect}
                 loading={isOptionsLoading}
                 options={getSelectOptions()}
                 placeholder={`Search ${selectedKind} name or SKU...`}
                 style={{ width: '100%' }}
-                notFoundContent={isOptionsLoading ? 'Loading resources...' : 'No matching resources found'}
+                notFoundContent={paged ? paged.emptyText : isOptionsLoading ? 'Loading resources...' : 'No matching resources found'}
               />
             </Form.Item>
           </div>

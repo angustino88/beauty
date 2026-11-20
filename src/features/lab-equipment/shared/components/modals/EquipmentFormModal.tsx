@@ -55,7 +55,9 @@ export interface FieldConfig {
     onOpenChange?:   (open: boolean) => void;
     /** Server-searched selects: a request is in flight. */
     loading?:        boolean;
-    /** Shown under the options, e.g. "Showing 20 of 340. Type to narrow the list." */
+    /** Server-searched selects: load the next page when the list is scrolled to its end. */
+    onPopupScroll?:  React.UIEventHandler<HTMLDivElement>;
+    /** Shown under the options, e.g. "50 of 340 shown · scroll down for more". */
     popupHint?:      React.ReactNode;
     placeholder?:    string;
     disabled?:       boolean;
@@ -139,7 +141,7 @@ function FormFields({ fields, form, mode, professionalForm }: FormFieldsProps) {
             case 'multi-select':
                 return <Select mode="multiple" showSearch allowClear placeholder={field.placeholder ?? `Select ${field.label}`}
                     disabled={disabled} options={field.options} onSearch={field.onSearch}
-                    onOpenChange={field.onOpenChange} loading={field.loading}
+                    onOpenChange={field.onOpenChange} onPopupScroll={field.onPopupScroll} loading={field.loading}
                     notFoundContent={field.loading ? <Spin size="small" /> : field.searchHint}
                     popupRender={field.popupHint ? (menu) => (
                         <>

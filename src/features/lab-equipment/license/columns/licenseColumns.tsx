@@ -1,6 +1,6 @@
 import { CarrierCell } from './CarrierCells';
 import type { EquipmentOption } from '../hooks/useEquipmentSearchOptions';
-import type { Key, ReactNode } from 'react';
+import type { Key, ReactNode, UIEventHandler } from 'react';
 import { DatePicker, Input, Select } from 'antd';
 import dayjs, { type Dayjs } from 'dayjs';
 import {
@@ -66,6 +66,8 @@ interface BuildColumnsArgs {
   carrierOptions: EquipmentOption[];
   onCarrierSearch: (query: string) => void;
   onCarrierOpenChange: (open: boolean) => void;
+  onCarrierPopupScroll: UIEventHandler<HTMLDivElement>;
+  carrierMoreHint: string | null;
   carrierLoading: boolean;
   carrierEmptyText: string;
   isEditing: (record: ILicense) => boolean;
@@ -114,6 +116,8 @@ export const buildLicenseColumns = ({
   carrierOptions,
   onCarrierSearch,
   onCarrierOpenChange,
+  onCarrierPopupScroll,
+  carrierMoreHint,
   carrierLoading,
   carrierEmptyText,
   isEditing,
@@ -267,6 +271,8 @@ export const buildLicenseColumns = ({
         options={carrierOptions}
         onSearch={onCarrierSearch}
         onOpenChange={onCarrierOpenChange}
+        onPopupScroll={onCarrierPopupScroll}
+        moreHint={carrierMoreHint}
         loading={carrierLoading}
         emptyText={carrierEmptyText}
       />

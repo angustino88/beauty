@@ -10,13 +10,12 @@ import {
   Typography,
   message,
 } from 'antd';
+import { usePagedOptions } from '@/shared/hooks/usePagedOptions';
 import type { IAllocateResourcePayload, ResourceKind } from '../types';
 import { useCreatePurchaseItemResourceMutation } from '../api';
 import {
-  useLabsEquipmentRetrieveQuery,
   useLabsBenchesOptionsRetrieveQuery,
   useLabsStationsOptionsRetrieveQuery,
-  useLabsLicensesRetrieveQuery,
 } from '@/shared/api/generated/api';
 
 interface AllocateResourceModalProps {
@@ -54,16 +53,8 @@ export const AllocateResourceModal: React.FC<AllocateResourceModalProps> = ({
   const [form] = Form.useForm<FormValues>();
   const [selectedKind, setSelectedKind] = useState<ResourceKind>('equipment');
   const [inputMode, setInputMode] = useState<'select' | 'manual'>('select');
-  const [search, setSearch] = useState('');
 
   const [allocateResource, { isLoading }] = useCreatePurchaseItemResourceMutation();
-
-  // 1. Equipment query (uses full equipment catalog list, does not 400 when empty)
-  const { data: equipmentData, isFetching: loadingEquipment } =
-    useLabsEquipmentRetrieveQuery(
-      { q: search || undefined },
-      { skip: !open || selectedKind !== 'equipment' || inputMode !== 'select' },
-    );
 
   // 2. Benches options query
   const { data: benchOptions, isFetching: loadingBenches } =
@@ -77,13 +68,6 @@ export const AllocateResourceModal: React.FC<AllocateResourceModalProps> = ({
     useLabsStationsOptionsRetrieveQuery(
       {},
       { skip: !open || selectedKind !== 'station' || inputMode !== 'select' },
-    );
-
-  // 4. Licenses query
-  const { data: licenseData, isFetching: loadingLicenses } =
-    useLabsLicensesRetrieveQuery(
-      {},
-      { skip: !open || selectedKind !== 'license' || inputMode !== 'select' },
     );
 
   const handleFinish = async (values: FormValues) => {
@@ -111,14 +95,30 @@ export const AllocateResourceModal: React.FC<AllocateResourceModalProps> = ({
     }
   };
 
+  // Equipment and licenses are paginated lists: the first page loads when the list opens and the
+  // next pages load as the user scrolls, so every item can be reached; typing searches the server.
+  const equipmentPaged = usePagedOptions({
+    path: '/api/labs/equipment',
+    noun: 'equipment',
+    enabled: open && inputMode === 'select' && selectedKind === 'equipment',
+    toOption: (row: { id: number; name?: string | null; sku?: string | null }) => ({
+      label: `${row.name ?? ''}${row.sku ? ` (${row.sku})` : ''} — ID #${row.id}`,
+      value: row.id,
+    }),
+  });
+  const licensePaged = usePagedOptions({
+    path: '/api/labs/licenses',
+    noun: 'licenses',
+    enabled: open && inputMode === 'select' && selectedKind === 'license',
+    toOption: (row: { id: number; name?: string | null; key?: string | null }) => ({
+      label: `${row.name || row.key || 'License'} — ID #${row.id}`,
+      value: row.id,
+    }),
+  });
+  const paged = selectedKind === 'equipment' ? equipmentPaged : selectedKind === 'license' ? licensePaged : null;
+
   const getSelectOptions = () => {
-    if (selectedKind === 'equipment') {
-      const list = equipmentData?.data ?? [];
-      return list.map((item) => ({
-        label: `${item.name}${item.sku ? ` (${item.sku})` : ''} — ID #${item.id}`,
-        value: item.id,
-      }));
-    }
+    if (paged) return paged.options;
     if (selectedKind === 'bench') {
       const list = benchOptions?.data ?? [];
       return list.map((item) => ({
@@ -133,21 +133,13 @@ export const AllocateResourceModal: React.FC<AllocateResourceModalProps> = ({
         value: item.id,
       }));
     }
-    if (selectedKind === 'license') {
-      const list = (licenseData?.data as unknown as { id: number; name?: string; key?: string }[]) ?? [];
-      return list.map((item) => ({
-        label: `${item.name || item.key || 'License'} — ID #${item.id}`,
-        value: item.id,
-      }));
-    }
     return [];
   };
 
   const isOptionsLoading =
-    (selectedKind === 'equipment' && loadingEquipment) ||
+    (paged?.loading ?? false) ||
     (selectedKind === 'bench' && loadingBenches) ||
-    (selectedKind === 'station' && loadingStations) ||
-    (selectedKind === 'license' && loadingLicenses);
+    (selectedKind === 'station' && loadingStations);
 
   const initialPrice = parseFloat(defaultAcquisitionPrice || '0');
   const options = getSelectOptions();
@@ -227,17 +219,19 @@ export const AllocateResourceModal: React.FC<AllocateResourceModalProps> = ({
             }
           >
             <Select
-              showSearch
-              filterOption={(input, option) =>
-                (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-              }
-              onSearch={setSearch}
+              showSearch={paged
+                // Server-searched: the paged list answers the typed text.
+                ? { filterOption: false, onSearch: paged.onSearch }
+                : { filterOption: (input, option) => String(option?.label ?? '').toLowerCase().includes(input.toLowerCase()) }}
+              onOpenChange={paged?.onOpenChange}
+              onPopupScroll={paged?.onPopupScroll}
+              popupRender={paged?.popupRender}
               loading={isOptionsLoading}
               options={options}
               placeholder={`Search and select ${selectedKind}...`}
               style={{ width: '100%' }}
               notFoundContent={
-                isOptionsLoading ? 'Loading resources...' : 'No matching resources found'
+                paged ? paged.emptyText : isOptionsLoading ? 'Loading resources...' : 'No matching resources found'
               }
             />
           </Form.Item>
