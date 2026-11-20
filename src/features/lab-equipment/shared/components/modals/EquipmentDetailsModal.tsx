@@ -28,6 +28,7 @@ import EquipmentStatus from '../status/EquipmentStatus';
 import { useGetEquipmentDetailQuery } from '../../../api/equipmentApi';
 import presentation from './EquipmentDetailsModal.module.css';
 import { resourcePageIcon } from '@/components/layout/pageIcons';
+import { TargetTelemetryPanel } from '@/features/telemetry/components/TargetTelemetryPanel';
 
 type EquipmentRecord = Record<string, unknown> & { id: number | string };
 
@@ -744,6 +745,13 @@ export default function EquipmentDetailsModal({
                   />
                 ),
               },
+              ...(isAdmin && Number.isFinite(recordId)
+                ? [{
+                    key: 'telemetry',
+                    label: 'Telemetry',
+                    children: <TargetTelemetryPanel type={normalizedSpaceType} id={recordId} name={name} />,
+                  }]
+                : []),
             ]}
           />
         ) : isEquipment ? (
