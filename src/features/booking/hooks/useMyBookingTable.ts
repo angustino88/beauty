@@ -50,9 +50,7 @@ export function useMyBookingTable(
     return params;
   }, [currentPage, pageSize, filterParams, sorts, orders, search, isShowingAll, currentUserId]);
 
-  const { data, isFetching, refetch } = useGetBenchBookingsQuery(queryParams, {
-    refetchOnMountOrArgChange: true,
-  });
+  const { data, isFetching, refetch } = useGetBenchBookingsQuery(queryParams);
 
   const bookings: BenchBookingItem[] = useMemo(() => {
     if (!data?.data) return [];

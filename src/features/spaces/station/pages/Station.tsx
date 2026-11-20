@@ -55,8 +55,6 @@ export default function StationPage() {
   // Slots arrive 100 per page; read up to three pages so large rooms stay selectable.
   const roomSlotsPage1 = useLabsRoomsSlotsRetrieveByRoomIdQuery(
     formRoomId == null ? skipToken : { roomId: formRoomId, pageSize: 100, page: 1 },
-    // Slots can be generated from the Rooms page at any time; never trust an older cached list.
-    { refetchOnMountOrArgChange: true },
   );
   const roomSlotsPage2 = useLabsRoomsSlotsRetrieveByRoomIdQuery(
     formRoomId == null || !roomSlotsPage1.data?.meta.pagination.next ? skipToken : { roomId: formRoomId, pageSize: 100, page: 2 },

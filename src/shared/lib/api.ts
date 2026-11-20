@@ -132,6 +132,11 @@ export const baseApi = createApi({
   // Keep cached data for 5 minutes after last subscriber unmounts.
   // Prevents "empty table" flash when user switches tabs and returns.
   keepUnusedDataFor: 300,
+  // The cache only renders instantly: every mount (returning to a page) and every window focus or
+  // reconnect refetches in the background, so a page never shows stale data without updating.
+  refetchOnMountOrArgChange: true,
+  refetchOnFocus: true,
+  refetchOnReconnect: true,
   tagTypes: [
     // Auth
     'Me',
