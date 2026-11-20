@@ -34,7 +34,7 @@ const LICENSE_DEFAULT_COLUMNS = [
 ];
 
 function LicenseInventory() {
-  const isAdmin = usePermission('lab_operations.manage');
+  const canManageLabOperations = usePermission('lab_operations.manage');
 
   const table = useLicenseTable();
   const form = useLicenseForm();
@@ -173,7 +173,7 @@ function LicenseInventory() {
   };
 
   const defaultActionsRenderer = createActionsRenderer<ILicense>({
-    isAdmin,
+    canManageLabOperations,
     deleting: form.deleting,
     onEdit: handleEdit,
     onDelete: form.deleteById,
@@ -220,7 +220,7 @@ function LicenseInventory() {
     editingDraft,
     updateDraftField,
     actionsRenderer,
-    onImageChange: isAdmin ? handleImageChange : undefined,
+    onImageChange: canManageLabOperations ? handleImageChange : undefined,
     onStatusChange: handleStatusChange,
   });
 
@@ -270,7 +270,7 @@ function LicenseInventory() {
           />
         </>}
         extraControls={<WorkbookImportButton />}
-        showCreate={isAdmin}
+        showCreate={canManageLabOperations}
         createLabel="New License"
         onCreate={() => setModalOpen(true)}
         scrollX={3200}
@@ -299,7 +299,7 @@ const LICENSE_TABS: readonly LicenseTab[] = ['inventory', 'checks', 'found'];
 
 /** Licenses: the inventory, the license checks agents run, and what they found on lab hardware. */
 export default function LicensePage() {
-  const isLabsAdmin = usePermission('license_check.manage');
+  const canManageLicenseChecks = usePermission('license_check.manage');
   const isLabOperator = usePermission('lab_operations.manage');
   const [searchParams, setSearchParams] = useSearchParams();
   const requested = searchParams.get('tab') as LicenseTab | null;
@@ -330,7 +330,7 @@ export default function LicensePage() {
           label: 'License checks',
           children: (
             <div style={{ padding: 16 }}>
-              <LicenseChecksPanel isAdmin={isLabsAdmin} onShowFound={(id) => update({ tab: 'found', check: String(id) })} />
+              <LicenseChecksPanel canManageLicenseChecks={canManageLicenseChecks} onShowFound={(id) => update({ tab: 'found', check: String(id) })} />
             </div>
           ),
         },

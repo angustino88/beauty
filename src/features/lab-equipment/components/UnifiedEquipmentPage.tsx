@@ -72,8 +72,7 @@ const toSelectOptions = (items?: Array<{ id: number; name: string }>) =>
 
 /** Shared equipment category controller; default export is the route entry point. */
 export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ config }) => {
-  const canManage = usePermission('lab_operations.manage');
-  const canManageAgents = usePermission('agent.manage');
+  const canManageLabOperations = usePermission('lab_operations.manage');
 
   // Table state: pagination, search, column filters
   const [page, setPage] = useState(1);
@@ -391,7 +390,7 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
   // Action button renderer matching the previous UI/UX design
   const actionsRenderer = useMemo(() => {
     return createActionsRenderer<EquipmentItem>({
-      isAdmin: canManage,
+      canManageLabOperations,
       deleting: isDeleting,
       onEdit: handleOpenEdit,
       onDelete: handleDelete,
@@ -434,7 +433,7 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
         },
       ],
     });
-  }, [canManage, isDeleting, handleOpenEdit, handleDelete, handleOpenStatus, placementForm, setHistoryPage, setHistoryPageSize, setHistoryId, config.supportsAgent, openAgent]);
+  }, [canManageLabOperations, isDeleting, handleOpenEdit, handleDelete, handleOpenStatus, placementForm, setHistoryPage, setHistoryPageSize, setHistoryId, config.supportsAgent, openAgent]);
 
   // Columns definition matching complete field parity with all equipment fields
   const columns = useMemo<ColumnsType<EquipmentItem>>(() => {
@@ -800,11 +799,11 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
           setFilters(next);
           setPage(1);
         }}
-        showCreate={canManage}
+        showCreate={canManageLabOperations}
         createLabel={`New ${config.singular}`}
         onCreate={handleOpenCreate}
         scrollX={columns.reduce((total, column) => total + (typeof column.width === 'number' ? column.width : 160), 0)}
-        onEditRecord={canManage ? handleOpenEdit : undefined}
+        onEditRecord={canManageLabOperations ? handleOpenEdit : undefined}
         searchPlaceholder="Search SKU, name or serial number"
       />
 
@@ -881,7 +880,7 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
       />
 
       {config.supportsAgent && (
-        <ComputingAgentDialog key={agentComputer?.id ?? 'closed'} computer={agentComputer} canManage={canManageAgents} onClose={() => setAgentComputer(null)} />
+        <ComputingAgentDialog key={agentComputer?.id ?? 'closed'} computer={agentComputer} onClose={() => setAgentComputer(null)} />
       )}
 
       {/* Equipment lifecycle change-status action */}

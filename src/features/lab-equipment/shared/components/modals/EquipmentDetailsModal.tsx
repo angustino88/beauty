@@ -541,7 +541,7 @@ export default function EquipmentDetailsModal({
   const getPopupContainer = useCallback((trigger?: HTMLElement) => (
     (trigger && trigger !== document.body ? trigger.parentElement : null) ?? overlayHost.current ?? document.body
   ), []);
-  const isAdmin = usePermission('lab_operations.manage');
+  const canManageLabOperations = usePermission('lab_operations.manage');
 
   const isEquipment = ['computing', 'display', 'debugging', 'networking', 'power', 'accessory', 'sample', 'furniture', 'instrument', 'laboratory', 'mechanical', 'other'].includes(equipmentType);
   const selectedId = Number(selectedRecord?.id);
@@ -675,7 +675,7 @@ export default function EquipmentDetailsModal({
           <SheetTitle className="tw:m-0 tw:text-base tw:font-semibold">{isEquipment ? 'Equipment details' : `${displayType} summary`}</SheetTitle>
           <SheetDescription className="tw:mt-1 tw:text-xs tw:text-muted-foreground">{name}{sku && name !== sku ? ` · ${sku}` : ''}</SheetDescription>
           <div className="tw:mt-3 tw:flex tw:flex-wrap tw:gap-2">
-          {isAdmin && normalizedSpaceType && (
+          {canManageLabOperations && normalizedSpaceType && (
             <UiButton variant="outline" size="sm" onClick={() => setLifecycleModalOpen(true)}><Settings2 />Change lifecycle</UiButton>
           )}
           {onEdit && (
@@ -752,11 +752,10 @@ export default function EquipmentDetailsModal({
                     resourceType={normalizedSpaceType}
                     resourceId={recordId}
                     resourceName={name}
-                    canManage={isAdmin}
                   />
                 ),
               },
-              ...(isAdmin && Number.isFinite(recordId)
+              ...(canManageLabOperations && Number.isFinite(recordId)
                 ? [{
                     key: 'telemetry',
                     label: 'Telemetry',
@@ -795,7 +794,7 @@ export default function EquipmentDetailsModal({
               onRetryMapping={() => void equipmentMappingQuery.refetch()}
             />
             {equipmentType !== 'computing' && Number.isFinite(recordId) && (
-              <EquipmentHardwareIds equipmentId={recordId} canEdit={isAdmin} />
+              <EquipmentHardwareIds equipmentId={recordId} canEdit={canManageLabOperations} />
             )}
           </>
         ) : (

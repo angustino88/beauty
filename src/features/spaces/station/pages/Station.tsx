@@ -21,7 +21,7 @@ import { facetToAntdFilters, getFacetOptions } from "@/features/lab-equipment/sh
 import { usePermission } from '@/features/auth/hooks/useCan';
 
 export default function StationPage() {
-  const isAdmin = usePermission("lab_operations.manage");
+  const canManageLabOperations = usePermission("lab_operations.manage");
 
   const table = useStationTable();
   const form = useStationForm();
@@ -126,7 +126,7 @@ export default function StationPage() {
   );
 
   const actionsRenderer = createActionsRenderer<IStation>({
-    isAdmin,
+    canManageLabOperations,
     onEdit: (id) => setEditingStation(table.rows.find((station) => station.id === id) ?? null),
     deleting: form.deleting,
     onDelete: form.deleteById,
@@ -139,7 +139,7 @@ export default function StationPage() {
   });
 
   const columns = buildStationColumns({
-    isAdmin,
+    canManageLabOperations,
     activeFilters: table.filters,
     roomFilters,
     ownerFilters,
@@ -171,7 +171,7 @@ export default function StationPage() {
         onSearchChange={table.setSearch}
         filters={table.filters}
         onFiltersChange={table.setFilters as (filters: Record<string, import("react").Key[] | null>) => void}
-        showCreate={isAdmin}
+        showCreate={canManageLabOperations}
         createLabel="New Station"
         onCreate={() => setCreateModalOpen(true)}
         scrollX={1800}

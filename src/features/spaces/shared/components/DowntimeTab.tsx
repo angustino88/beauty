@@ -12,6 +12,7 @@ import {
   UnlockOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import { usePermission } from '@/features/auth/hooks/useCan';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import type { ColumnsType } from 'antd/es/table';
 import {
@@ -48,8 +49,6 @@ interface DowntimeTabProps {
   resourceType: ResourceType;
   resourceId: number;
   resourceName?: string;
-  /** lab_operations.manage: schedule, end and cancel windows, and change who may still book. */
-  canManage?: boolean;
 }
 
 interface ApiErrorShape {
@@ -101,8 +100,9 @@ export const DowntimeTab: React.FC<DowntimeTabProps> = ({
   resourceType,
   resourceId,
   resourceName,
-  canManage = false,
 }) => {
+  // lab_operations.manage: schedule, end and cancel windows, and change who may still book.
+  const canManageLabOperations = usePermission('lab_operations.manage');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [filterState, setFilterState] = useState<FilterState>('all');
@@ -325,7 +325,7 @@ export const DowntimeTab: React.FC<DowntimeTabProps> = ({
     },
   ];
 
-  if (canManage) {
+  if (canManageLabOperations) {
     columns.push({
       title: 'Actions',
       key: 'actions',
@@ -395,7 +395,7 @@ export const DowntimeTab: React.FC<DowntimeTabProps> = ({
             Maintenance and out-of-service periods recorded for this resource.
           </span>
         </div>
-        {canManage && (
+        {canManageLabOperations && (
           <Button
             type="primary"
             icon={<PlusOutlined />}
@@ -459,7 +459,7 @@ export const DowntimeTab: React.FC<DowntimeTabProps> = ({
             </div>
           </div>
 
-          {canManage && (
+          {canManageLabOperations && (
             <Popconfirm
               title="End Downtime"
               description="End this downtime window right now and restore normal operations?"
@@ -502,7 +502,7 @@ export const DowntimeTab: React.FC<DowntimeTabProps> = ({
           image={Empty.PRESENTED_IMAGE_SIMPLE}
           description="No downtime records found for this resource. All systems are operating normally."
         >
-          {canManage && (
+          {canManageLabOperations && (
             <Button
               type="primary"
               size="small"

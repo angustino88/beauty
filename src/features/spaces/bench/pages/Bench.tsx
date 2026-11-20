@@ -21,7 +21,7 @@ import { facetToAntdFilters, getFacetOptions } from "@/features/lab-equipment/sh
 import { usePermission } from '@/features/auth/hooks/useCan';
 
 export default function BenchPage() {
-  const isAdmin = usePermission("lab_operations.manage");
+  const canManageLabOperations = usePermission("lab_operations.manage");
 
   const table = useBenchTable();
   const form = useBenchForm();
@@ -110,7 +110,7 @@ export default function BenchPage() {
   );
 
   const actionsRenderer = createActionsRenderer<IBench>({
-    isAdmin,
+    canManageLabOperations,
     onEdit: (id) => setEditingBench(table.rows.find((bench) => bench.id === id) ?? null),
     deleting: form.deleting,
     onDelete: form.deleteById,
@@ -118,7 +118,7 @@ export default function BenchPage() {
   });
 
   const columns = buildBenchColumns({
-    isAdmin,
+    canManageLabOperations,
     activeFilters: table.filters,
     groupFilters,
     typeFilters,
@@ -152,7 +152,7 @@ export default function BenchPage() {
         onSearchChange={table.setSearch}
         filters={table.filters}
         onFiltersChange={table.setFilters as (filters: Record<string, import("react").Key[] | null>) => void}
-        showCreate={isAdmin}
+        showCreate={canManageLabOperations}
         createLabel="New Bench"
         onCreate={() => setCreateModalOpen(true)}
         scrollX={1600}
