@@ -147,10 +147,10 @@ export default function GameWidgetView({ state, record, arcade, unlocked, jump, 
             disabled={playing} onClick={() => selectMode(mode)}>{modes[mode].label}</button>)}
         </nav>
         <div className={css.main}>
-          <section className={css.board} data-panorama={chapter === 4 || chapter === 5 || undefined} data-active={playing || undefined} style={{
-            backgroundImage: `url("${scenes[chapter]}")`,
-            backgroundPositionX: `${50 + 44 * Math.sin(state.distance / 1450)}%`,
-          }} aria-label={level.name}>
+          <section className={css.board} data-active={playing || undefined} aria-label={level.name}>
+            <div aria-hidden="true" className={css.scenery}
+              data-detailed={scenes[chapter] === glassworks || scenes[chapter] === railway || scenes[chapter] === bells || undefined}
+              style={{ backgroundImage: `url("${scenes[chapter]}")`, backgroundPositionX: `${50 + 10 * Math.sin(state.distance / 2400)}%` }} />
             <div className={css.hud}>
               <span><Flag size={13} /> Stop {chapterNumber(chapter)}</span>
               {campaign ? <span aria-label={`Route distance: ${routePercent}%`}>Route {routePercent}%</span> : <span><img src={watch} alt="Time" />{timeLimits[state.mode] ? Math.ceil(timeLimits[state.mode] - state.elapsed) : Math.floor(state.elapsed)}s</span>}
