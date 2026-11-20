@@ -98,8 +98,10 @@ export interface BuildMyBookingColumnsParams {
     project?: (string | number)[];
   };
   projects?: IProjectOption[];
-  permissionGroups: Record<string, unknown>;
-  isCoordinator: boolean;
+  /** bench_booking.manage_any: sees and edits everyone's bookings. */
+  canSeeAll: boolean;
+  /** bench_booking.approve: approves or rejects bookings that need approval. */
+  canApprove: boolean;
   showAll: boolean;
   onToggleShowAll: (value: boolean) => void;
   onEditBooking: (bookingId: number) => void;
@@ -110,8 +112,8 @@ export interface BuildMyBookingColumnsParams {
 export function buildMyBookingColumns({
   filterParams,
   projects,
-  permissionGroups,
-  isCoordinator,
+  canSeeAll,
+  canApprove: canDecide,
   showAll,
   onToggleShowAll,
   onEditBooking,
@@ -178,7 +180,7 @@ export function buildMyBookingColumns({
       },
     },
     {
-      title: isCoordinator ? (
+      title: canSeeAll ? (
         <Space align="center" size={4}>
           <Typography.Text style={{ fontSize: 'inherit', color: 'inherit' }}>Creator</Typography.Text>
           <Space size={6}>
@@ -380,9 +382,9 @@ export function buildMyBookingColumns({
         const canApprove =
           record.approval_status === 'pending' &&
           (record.status === 'reserved' || record.status === 'available') &&
-          (!!permissionGroups['lab-coordinator'] || !!permissionGroups['admin']);
-        const approvalBlockedReason = !(permissionGroups['lab-coordinator'] || permissionGroups['admin'])
-          ? 'Only lab coordinators and admins can approve or reject bookings'
+          canDecide;
+        const approvalBlockedReason = !canDecide
+          ? 'Only lab coordinators and administrators can approve or reject bookings'
           : 'Only pending, upcoming bookings can be approved or rejected';
 
         return (

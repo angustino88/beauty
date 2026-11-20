@@ -40,13 +40,13 @@ interface CheckFormModalProps {
   open: boolean;
   /** Edit this check; create a new one when absent. */
   check?: LicenseCheckRead;
-  isAdmin: boolean;
+  canManageLicenseChecks: boolean;
   onClose: () => void;
 }
 
 /**
  * Create a check (from a preset or from scratch) or change one. What the agent runs (vendor,
- * probe, extraction, carrier) is for administrators; coordinators change name, schedule, targets.
+ * probe, extraction, carrier) needs license_check.manage; without it, only name, schedule and targets change.
  */
 export function CheckFormModal(props: CheckFormModalProps) {
   if (!props.open) return null;
@@ -54,7 +54,7 @@ export function CheckFormModal(props: CheckFormModalProps) {
   return <CheckFormDialog key={props.check?.id ?? 'new'} {...props} />;
 }
 
-function CheckFormDialog({ open, check, isAdmin, onClose }: CheckFormModalProps) {
+function CheckFormDialog({ open, check, canManageLicenseChecks, onClose }: CheckFormModalProps) {
   const presets = useGetLicenseCheckPresetsQuery(undefined, { skip: !open || Boolean(check) });
   const [create, creating] = useCreateLicenseCheckMutation();
   const [update, updating] = useUpdateLicenseCheckMutation();
@@ -102,7 +102,7 @@ function CheckFormDialog({ open, check, isAdmin, onClose }: CheckFormModalProps)
     if (!check && source === 'preset') {
       if (!presetKey) return;
       body = { ...shared, preset_key: presetKey, key: key.trim() || undefined, interval_minutes: undefined };
-    } else if (isAdmin) {
+    } else if (canManageLicenseChecks) {
       const parsed = parsedConfig();
       if (!parsed) return;
       body = { ...shared, ...parsed, vendor: vendor.trim(), key: check ? undefined : key.trim() };
@@ -193,7 +193,7 @@ function CheckFormDialog({ open, check, isAdmin, onClose }: CheckFormModalProps)
           </span>
         </div>
         {!usesPreset && (
-          isAdmin ? (
+          canManageLicenseChecks ? (
             <>
               <div className={styles.field}>
                 <span className={styles.fieldLabel}>Vendor</span>

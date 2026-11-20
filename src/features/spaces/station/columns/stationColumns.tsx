@@ -10,7 +10,7 @@ import { SpaceLocationEmpty, SpaceLocationRow, SpaceLocationStack } from "@/feat
 import { buildStateColumns } from "@/features/spaces/shared/stateColumns";
 
 interface BuildStationColumnsArgs {
-  isAdmin: boolean;
+  canManageLabOperations: boolean;
   activeFilters: Record<string, Key[] | null>;
   roomFilters: Array<{ text: string; value: string }>;
   ownerFilters: Array<{ text: string; value: string }>;

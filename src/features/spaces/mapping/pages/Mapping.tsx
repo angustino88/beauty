@@ -9,8 +9,6 @@ import {
   ReloadOutlined,
   TableOutlined,
 } from "@ant-design/icons";
-import { useSelector } from "react-redux";
-import type { RootState } from "@/app/store";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { FullTextSearch } from "@/components/inputs/FullTextSearch";
 import { TooltipButton } from "@/components/layout/TooltipButton";
@@ -26,11 +24,9 @@ import { BenchPlacementModal } from "../components/modals/BenchPlacementModal";
 import { EquipmentAssignmentModal } from "../components/modals/EquipmentAssignmentModal";
 import tableStyles from "@/features/lab-equipment/shared/components/layout/EquipmentTable.module.css";
 import styles from "../columns/MappingTable.module.css";
+import { usePermission } from '@/features/auth/hooks/useCan';
 
 type MappingViewMode = "table" | "visualization";
-
-const isGroupMap = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
 
 const STATE_CARDS: Array<{ state: MappingState; hint: string }> = [
   { state: "fully_mapped", hint: "In a room, on a station, with equipment" },
@@ -46,8 +42,7 @@ const printLabels = (row: ResourceMappingRow) => {
 };
 
 export default function MappingPage() {
-  const permissionGroups = useSelector((state: RootState) => state.me.permissionGroups);
-  const canEdit = isGroupMap(permissionGroups) && ("admin" in permissionGroups || "lab-coordinator" in permissionGroups);
+  const canEdit = usePermission("lab_operations.manage");
 
   const [viewMode, setViewMode] = useState<MappingViewMode>("table");
   const [placementTarget, setPlacementTarget] = useState<ResourceMappingRow | null>(null);

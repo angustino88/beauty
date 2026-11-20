@@ -1,8 +1,6 @@
 ﻿import { useMemo, useState } from "react";
 import { WorkbookImportButton } from "@/features/data-import";
 import { skipToken } from "@reduxjs/toolkit/query";
-import { useSelector } from "react-redux";
-import type { RootState } from "@/app/store";
 import { useGetRoomHistoryQuery } from "../api";
 import {
   EquipmentPageLayout,
@@ -15,9 +13,7 @@ import SpaceOverview from "../../shared/SpaceOverview";
 import { useRoomTable } from "../hooks/useRoomTable";
 import { useRoomForm } from "../hooks/useRoomForm";
 import { buildRoomColumns, buildRoomFormFields, toRoomFormValues } from "../columns/roomColumns";
-
-const isAdminGroupMap = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
+import { usePermission } from '@/features/auth/hooks/useCan';
 
 const nullableNumber = (value: unknown): number | null =>
   value == null || value === "" || Number.isNaN(Number(value)) ? null : Number(value);
@@ -41,11 +37,7 @@ const toRoomUpdatePayload = (values: Record<string, unknown>): IRoomPayload & Re
 });
 
 export default function RoomPage() {
-  const permissionGroups = useSelector(
-    (state: RootState) => state.me.permissionGroups,
-  );
-  const isAdmin =
-    isAdminGroupMap(permissionGroups) && ("admin" in permissionGroups || "lab-coordinator" in permissionGroups);
+  const canManageLabOperations = usePermission("lab_operations.manage");
 
   const table = useRoomTable();
   const form = useRoomForm();
@@ -64,7 +56,7 @@ export default function RoomPage() {
   const editValues = useMemo(() => (editingRoom ? toRoomFormValues(editingRoom) : undefined), [editingRoom]);
 
   const actionsRenderer = createActionsRenderer<IRoom>({
-    isAdmin,
+    canManageLabOperations,
     deleting: form.deleting,
     onEdit: (id) => setEditingRoom(table.rows.find((room) => room.id === id) ?? null),
     onDelete: form.deleteById,
@@ -107,7 +99,7 @@ export default function RoomPage() {
         onSearchChange={table.setSearch}
         filters={table.filters}
         onFiltersChange={table.setFilters}
-        showCreate={isAdmin}
+        showCreate={canManageLabOperations}
         createLabel="New Room"
         onCreate={() => setCreateOpen(true)}
         scrollX={2200}

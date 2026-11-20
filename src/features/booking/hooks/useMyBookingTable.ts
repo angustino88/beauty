@@ -19,7 +19,7 @@ export interface MyBookingTableState {
 export function useMyBookingTable(
   search: string,
   user: { id?: number | null; username?: string } | null,
-  isCoordinator = false,
+  canSeeAll = false,
 ) {
   const [showAll, setShowAll] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -32,7 +32,7 @@ export function useMyBookingTable(
   const [rejectBooking] = useRejectBenchBookingMutation();
   const currentUsername = user?.username;
   const currentUserId = user?.id;
-  const isShowingAll = isCoordinator && showAll;
+  const isShowingAll = canSeeAll && showAll;
 
   const queryParams = useMemo<IBenchBookingListParams>(() => {
     const params: IBenchBookingListParams = {

@@ -20,6 +20,7 @@ import { userLabel } from '@/shared/utils/userRef';
 import { useUploadSupportAttachmentMutation } from '../api';
 import { SUPPORT_ATTACHMENT_ACCEPT, apiErrorMessage, toSupportAttachments } from '../attachments';
 import { TicketAttachments } from '../components/TicketAttachments';
+import { usePermission } from '@/features/auth/hooks/useCan';
 
 const formatDate = (value?: string | null) => value ? new Date(value).toLocaleString() : '–';
 
@@ -37,8 +38,8 @@ const UNASSIGN = 0;
 
 export default function SupportTicketDetail() {
   const { key } = useParams<{ key: string }>();
-  const { id: currentUserId, isCoordinator, permissionGroups } = useAuthState();
-  const canManage = isCoordinator || Boolean(permissionGroups['support-agent'] || permissionGroups['support_agent']);
+  const { id: currentUserId } = useAuthState();
+  const canManage = usePermission('support.handle');
   const [comment, setComment] = useState('');
   const [replyFiles, setReplyFiles] = useState<UploadFile[]>([]);
   const [assigneeId, setAssigneeId] = useState<number | undefined>();  // 0 = unassign (antd select values cannot be null)

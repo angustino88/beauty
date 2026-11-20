@@ -2,26 +2,22 @@ import { type ReactNode } from 'react';
 import { Spin } from 'antd';
 import { useAppSelector } from '@/app/store';
 import { useGetMeQuery } from '@/features/auth/api';
+import { holds, type LabsPermission } from '@/features/auth/permissions';
 import AccessDenied from '@/pages/errors/AccessDenied';
 
 interface PermissionRouteProps {
   children: ReactNode;
-  /** One or more group names — user must belong to at least one */
-  groups: string[];
+  /** The Labs permission the page needs (`GET /api/users/me` → `effective_permissions`). */
+  permission: LabsPermission;
 }
 
-export default function PermissionRoute({ children, groups }: PermissionRouteProps) {
+export default function PermissionRoute({ children, permission }: PermissionRouteProps) {
   const isLoggedIn = useAppSelector((state) => state.auth.isLoggedIn);
   const bootstrapStatus = useAppSelector((state) => state.auth.bootstrapStatus);
   const { isLoading, isFetching, isUninitialized } = useGetMeQuery(undefined, {
     skip: !isLoggedIn || bootstrapStatus !== 'authenticated',
   });
-  const permissionGroups = useAppSelector((state) => state.me.permissionGroups);
-  const hasAccess = groups.some((g) => {
-    if (permissionGroups[g]) return true;
-    const slug = g.toLowerCase().replace(/[\s_]+/g, '-');
-    return Boolean(permissionGroups[slug]);
-  });
+  const hasAccess = useAppSelector((state) => holds(state.me.permissions, permission));
 
   if (isLoggedIn && (bootstrapStatus === 'loading' || isUninitialized || isLoading || isFetching)) {
     return (

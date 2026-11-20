@@ -55,13 +55,13 @@ function RunsDrawer({ check, onClose }: { check: LicenseCheckRead | null; onClos
 
 /**
  * License checks configured for the lab's agents: what each runs, where, and what it found.
- * Administrators create and delete checks; coordinators enable them and change their targets.
+ * Creating and deleting checks needs license_check.manage; without it, checks can be enabled and retargeted.
  */
 export function LicenseChecksPanel({
-  isAdmin,
+  canManageLicenseChecks,
   onShowFound,
 }: {
-  isAdmin: boolean;
+  canManageLicenseChecks: boolean;
   onShowFound: (checkId: number) => void;
 }) {
   const [q, setQ] = useState('');
@@ -154,7 +154,7 @@ export function LicenseChecksPanel({
         <div className={styles.toolbarGroup}>
           <Button size="small" onClick={() => setRunsOf(check)}>Runs</Button>
           <Button size="small" onClick={() => setEditing(check)}>Edit</Button>
-          {isAdmin && (
+          {canManageLicenseChecks && (
             <Popconfirm
               title="Delete this check?"
               description="Agents stop running it, and its runs and found licenses are deleted. Licenses in the inventory stay."
@@ -179,7 +179,7 @@ export function LicenseChecksPanel({
       </p>
       <div className={styles.toolbar}>
         <Input.Search allowClear placeholder="Name, key or vendor" onSearch={setQ} style={{ maxWidth: 320 }} aria-label="Search checks" />
-        {isAdmin && <Button type="primary" onClick={() => setCreating(true)}>New check</Button>}
+        {canManageLicenseChecks && <Button type="primary" onClick={() => setCreating(true)}>New check</Button>}
       </div>
       {isError && <Alert type="warning" showIcon title="License checks could not be loaded" action={<Button size="small" onClick={() => void refetch()}>Retry</Button>} />}
       <Table
@@ -194,12 +194,12 @@ export function LicenseChecksPanel({
           emptyText: (
             <Empty
               image={Empty.PRESENTED_IMAGE_SIMPLE}
-              description={isAdmin ? 'No license check yet. Start from the Vector License Client preset.' : 'No license check yet. An administrator can add one.'}
+              description={canManageLicenseChecks ? 'No license check yet. Start from the Vector License Client preset.' : 'No license check yet. An administrator can add one.'}
             />
           ),
         }}
       />
-      <CheckFormModal open={creating || Boolean(editing)} check={editing ?? undefined} isAdmin={isAdmin} onClose={() => { setCreating(false); setEditing(null); }} />
+      <CheckFormModal open={creating || Boolean(editing)} check={editing ?? undefined} canManageLicenseChecks={canManageLicenseChecks} onClose={() => { setCreating(false); setEditing(null); }} />
       <RunsDrawer check={runsOf} onClose={() => setRunsOf(null)} />
     </div>
   );

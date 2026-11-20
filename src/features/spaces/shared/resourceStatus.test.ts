@@ -4,6 +4,7 @@ import {
   resourceBadge,
   parseDowntimeBookingConflicts,
   getAllowedLifecycleTransitions,
+  mapAvailability,
   type ResourceState,
 } from './resourceStatus.ts';
 
@@ -135,4 +136,15 @@ test('getAllowedLifecycleTransitions returns only valid target transitions', () 
   assert.deepEqual(getAllowedLifecycleTransitions('in_service'), ['retired']);
   assert.deepEqual(getAllowedLifecycleTransitions('retired'), []);
   assert.deepEqual(getAllowedLifecycleTransitions(undefined), []);
+});
+
+test('mapAvailability reads booking access as a value or a choice, and ignores anything else', () => {
+  assert.equal(mapAvailability({ value: 'unavailable', booking_access: 'lab_operators' }).booking_access, 'lab_operators');
+  assert.equal(
+    mapAvailability({ value: 'unavailable', booking_access: { value: 'closed', label: 'Closed to all bookings' } })
+      .booking_access,
+    'closed',
+  );
+  assert.equal(mapAvailability({ value: 'unavailable', booking_access: 'everyone' }).booking_access, null);
+  assert.equal(mapAvailability(null).booking_access, null);
 });
