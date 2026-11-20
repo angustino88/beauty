@@ -7,7 +7,7 @@ import AppSideNav from "./AppSideNav";
 import styleCss from "./layout.module.css";
 import { OfflineNotification } from "./OfflineNotification";
 import { useGetMeQuery } from "@/features/auth/api";
-import { meActions, flattenEffectiveRoles } from "@/features/auth/meSlice";
+import { meActions, meFromUser } from "@/features/auth/meSlice";
 import { useAuthState } from "@/features/auth/hooks/useAuthState";
 import { ChatWidget } from "@/features/chat-widget";
 import { useNotificationsWebSocket } from "@/features/notifications/hooks/useNotificationsWebSocket";
@@ -58,19 +58,7 @@ export function AppLayout() {
   useEffect(() => {
     if (meData) {
       const user = meData.data;
-      const { permissions, permissionGroups } = flattenEffectiveRoles(
-        user.effective_roles,
-      );
-      dispatch(
-        meActions.setMe({
-          id: user.id,
-          username: user.username,
-          displayName: user.display_name ?? '',
-          avatar: user.avatar_url,
-          permissions,
-          permissionGroups,
-        }),
-      );
+      dispatch(meActions.setMe(meFromUser(user)));
     }
   }, [meData, dispatch]);
 

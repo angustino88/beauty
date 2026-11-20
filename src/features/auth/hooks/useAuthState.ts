@@ -1,7 +1,9 @@
 // useAuthState.ts — convenience selector combining auth + me slices.
 // Spread order: auth first (lower priority), me second (higher priority).
 // No key collisions exist between the two slices as of today.
+// Access checks use permissions (`useCan`, `usePermission`), never roles.
 import { useAppSelector } from '@/app/store';
+import type { PermissionSet } from '../permissions';
 
 export interface AuthStateResult {
   // from auth slice
@@ -15,25 +17,13 @@ export interface AuthStateResult {
   username: string;
   displayName: string;
   avatar: string | null;
-  permissions: Record<string, boolean>;
-  permissionGroups: Record<string, boolean>;
-  // derived
-  isCoordinator: boolean;
+  permissions: PermissionSet;
+  roles: string[];
 }
 
 export function useAuthState(): AuthStateResult {
   const auth = useAppSelector((s) => s.auth);
-  const me   = useAppSelector((s) => s.me);
+  const me = useAppSelector((s) => s.me);
 
-  return {
-    ...auth,
-    ...me,
-    isCoordinator:
-      Boolean(me.permissionGroups['lab-coordinator']) ||
-      Boolean(me.permissionGroups['coordinator']) ||
-      Boolean(me.permissionGroups['admin']) ||
-      Boolean(me.permissionGroups['administrator']) ||
-      Boolean(me.permissionGroups['lab_coordinator']) ||
-      Boolean(me.permissionGroups['Lab Coordinator']),
-  };
+  return { ...auth, ...me };
 }

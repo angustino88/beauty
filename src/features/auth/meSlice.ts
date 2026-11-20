@@ -1,20 +1,15 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
-
-export interface MePermissions {
-  [codename: string]: boolean;
-}
-
-export interface MePermissionGroups {
-  [groupName: string]: boolean;
-}
+import { permissionSetFrom, type PermissionSet } from './permissions.ts';
 
 interface MeState {
   id: number | null;
   username: string;
   displayName: string;
   avatar: string | null;
-  permissions: MePermissions;
-  permissionGroups: MePermissionGroups;
+  /** Labs permission codes the user holds (`effective_permissions.labs`). Check with `useCan`. */
+  permissions: PermissionSet;
+  /** Labs role codes (`admin`, `coord`, `user`), for display only. Never gate an action on a role. */
+  roles: string[];
 }
 
 const initialState: MeState = {
@@ -23,59 +18,36 @@ const initialState: MeState = {
   displayName: '',
   avatar: null,
   permissions: {},
-  permissionGroups: {},
+  roles: [],
 };
 
-export interface EffectiveRoles {
-  labs: string[];
+/** The subset of `GET /api/users/me` the slice reads. */
+export interface MeUser {
+  id: number;
+  username: string;
+  display_name?: string;
+  avatar_url: string | null;
+  effective_roles?: { labs?: string[] } | null;
+  effective_permissions?: { labs?: ReadonlyArray<{ value?: unknown } | string> | null } | null;
 }
 
-/**
- * Builds the lab role map from the authoritative effective_roles.labs values
- * returned by /api/users/me. Group membership is not an effective permission.
- */
-export function flattenEffectiveRoles(effectiveRoles?: EffectiveRoles | null): {
-  permissions: MePermissions;
-  permissionGroups: MePermissionGroups;
-} {
-  const permissions: MePermissions = {};
-  const permissionGroups: MePermissionGroups = {};
-
-  if (!effectiveRoles || !Array.isArray(effectiveRoles.labs)) {
-    return { permissions, permissionGroups };
-  }
-
-  for (const rawRole of effectiveRoles.labs) {
-    if (typeof rawRole !== 'string' || !rawRole.trim()) continue;
-
-    const trimmed = rawRole.trim();
-    const slug = trimmed.toLowerCase().replace(/[\s_]+/g, '-');
-    permissionGroups[trimmed] = true;
-    permissionGroups[slug] = true;
-
-    if (slug === 'admin' || slug === 'administrator') {
-      permissionGroups.admin = true;
-      permissionGroups.administrator = true;
-    }
-    if (slug === 'lab-coordinator' || slug === 'coordinator') {
-      permissionGroups['lab-coordinator'] = true;
-      permissionGroups.coordinator = true;
-    }
-  }
-
-  return { permissions, permissionGroups };
+/** Builds the slice payload from `GET /api/users/me`. */
+export function meFromUser(user: MeUser): MeState {
+  return {
+    id: user.id,
+    username: user.username,
+    displayName: user.display_name ?? '',
+    avatar: user.avatar_url,
+    permissions: permissionSetFrom(user.effective_permissions),
+    roles: Array.isArray(user.effective_roles?.labs) ? [...user.effective_roles.labs] : [],
+  };
 }
 
 const meSlice = createSlice({
   name: 'me',
   initialState,
   reducers: {
-    setMe: (state, action: PayloadAction<Omit<MeState, 'permissions' | 'permissionGroups'> & {
-      permissions: MePermissions;
-      permissionGroups: MePermissionGroups;
-    }>) => {
-      return { ...state, ...action.payload };
-    },
+    setMe: (state, action: PayloadAction<MeState>) => ({ ...state, ...action.payload }),
     clearMe: () => initialState,
     setAvatar: (state, action: PayloadAction<string | null>) => {
       state.avatar = action.payload;

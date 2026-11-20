@@ -85,7 +85,6 @@ const FinanceReportPage = lazy(
   () => import("@/features/finance/pages/FinanceReportPage"),
 );
 
-const COORDINATOR_AND_ADMIN = ["lab-coordinator", "admin"];
 
 export default function AppRoutes() {
   return (
@@ -120,7 +119,7 @@ export default function AppRoutes() {
         <Route
           path="/spaces"
           element={
-            <PermissionRoute groups={COORDINATOR_AND_ADMIN}>
+            <PermissionRoute permission="lab_operations.manage">
               <Mapping />
             </PermissionRoute>
           }
@@ -128,7 +127,7 @@ export default function AppRoutes() {
         <Route
           path="/spaces/mapping"
           element={
-            <PermissionRoute groups={COORDINATOR_AND_ADMIN}>
+            <PermissionRoute permission="lab_operations.manage">
               <Mapping />
             </PermissionRoute>
           }
@@ -136,7 +135,7 @@ export default function AppRoutes() {
         <Route
           path="/spaces/room"
           element={
-            <PermissionRoute groups={COORDINATOR_AND_ADMIN}>
+            <PermissionRoute permission="lab_operations.manage">
               <Room />
             </PermissionRoute>
           }
@@ -144,7 +143,7 @@ export default function AppRoutes() {
         <Route
           path="/spaces/station"
           element={
-            <PermissionRoute groups={COORDINATOR_AND_ADMIN}>
+            <PermissionRoute permission="lab_operations.manage">
               <Station />
             </PermissionRoute>
           }
@@ -152,7 +151,7 @@ export default function AppRoutes() {
         <Route
           path="/spaces/bench"
           element={
-            <PermissionRoute groups={COORDINATOR_AND_ADMIN}>
+            <PermissionRoute permission="lab_operations.manage">
               <Bench />
             </PermissionRoute>
           }
@@ -172,7 +171,7 @@ export default function AppRoutes() {
         <Route
           path="/telemetry/devices"
           element={
-            <PermissionRoute groups={COORDINATOR_AND_ADMIN}>
+            <PermissionRoute permission="lab_operations.manage">
               <TelemetryDevicesPage />
             </PermissionRoute>
           }
@@ -180,7 +179,7 @@ export default function AppRoutes() {
         <Route
           path="/telemetry/profiles"
           element={
-            <PermissionRoute groups={COORDINATOR_AND_ADMIN}>
+            <PermissionRoute permission="lab_operations.manage">
               <DeviceProfilesPage />
             </PermissionRoute>
           }
@@ -190,7 +189,7 @@ export default function AppRoutes() {
         <Route
           path="/lab-equipment/license"
           element={
-            <PermissionRoute groups={COORDINATOR_AND_ADMIN}>
+            <PermissionRoute permission="lab_operations.manage">
               <License />
             </PermissionRoute>
           }
@@ -200,7 +199,7 @@ export default function AppRoutes() {
         <Route
           path="/lab-equipment/computing"
           element={
-            <PermissionRoute groups={COORDINATOR_AND_ADMIN}>
+            <PermissionRoute permission="lab_operations.manage">
               <ComputingPage />
             </PermissionRoute>
           }
@@ -208,7 +207,7 @@ export default function AppRoutes() {
         <Route
           path="/lab-equipment/display"
           element={
-            <PermissionRoute groups={COORDINATOR_AND_ADMIN}>
+            <PermissionRoute permission="lab_operations.manage">
               <DisplayPage />
             </PermissionRoute>
           }
@@ -216,7 +215,7 @@ export default function AppRoutes() {
         <Route
           path="/lab-equipment/debugging"
           element={
-            <PermissionRoute groups={COORDINATOR_AND_ADMIN}>
+            <PermissionRoute permission="lab_operations.manage">
               <DebuggingPage />
             </PermissionRoute>
           }
@@ -224,7 +223,7 @@ export default function AppRoutes() {
         <Route
           path="/lab-equipment/networking"
           element={
-            <PermissionRoute groups={COORDINATOR_AND_ADMIN}>
+            <PermissionRoute permission="lab_operations.manage">
               <NetworkingPage />
             </PermissionRoute>
           }
@@ -232,7 +231,7 @@ export default function AppRoutes() {
         <Route
           path="/lab-equipment/power"
           element={
-            <PermissionRoute groups={COORDINATOR_AND_ADMIN}>
+            <PermissionRoute permission="lab_operations.manage">
               <PowerPage />
             </PermissionRoute>
           }
@@ -240,7 +239,7 @@ export default function AppRoutes() {
         <Route
           path="/lab-equipment/accessory"
           element={
-            <PermissionRoute groups={COORDINATOR_AND_ADMIN}>
+            <PermissionRoute permission="lab_operations.manage">
               <AccessoryPage />
             </PermissionRoute>
           }
@@ -248,7 +247,7 @@ export default function AppRoutes() {
         <Route
           path="/lab-equipment/sample"
           element={
-            <PermissionRoute groups={COORDINATOR_AND_ADMIN}>
+            <PermissionRoute permission="lab_operations.manage">
               <SamplePage />
             </PermissionRoute>
           }
@@ -256,7 +255,7 @@ export default function AppRoutes() {
         <Route
           path="/lab-equipment/furniture"
           element={
-            <PermissionRoute groups={COORDINATOR_AND_ADMIN}>
+            <PermissionRoute permission="lab_operations.manage">
               <FurniturePage />
             </PermissionRoute>
           }
@@ -264,7 +263,7 @@ export default function AppRoutes() {
         <Route
           path="/lab-equipment/instrument"
           element={
-            <PermissionRoute groups={COORDINATOR_AND_ADMIN}>
+            <PermissionRoute permission="lab_operations.manage">
               <InstrumentPage />
             </PermissionRoute>
           }
@@ -272,7 +271,7 @@ export default function AppRoutes() {
         <Route
           path="/lab-equipment/laboratory"
           element={
-            <PermissionRoute groups={COORDINATOR_AND_ADMIN}>
+            <PermissionRoute permission="lab_operations.manage">
               <LaboratoryPage />
             </PermissionRoute>
           }
@@ -280,7 +279,7 @@ export default function AppRoutes() {
         <Route
           path="/lab-equipment/mechanical"
           element={
-            <PermissionRoute groups={COORDINATOR_AND_ADMIN}>
+            <PermissionRoute permission="lab_operations.manage">
               <MechanicalPage />
             </PermissionRoute>
           }
@@ -288,7 +287,7 @@ export default function AppRoutes() {
         <Route
           path="/lab-equipment/other"
           element={
-            <PermissionRoute groups={COORDINATOR_AND_ADMIN}>
+            <PermissionRoute permission="lab_operations.manage">
               <OtherPage />
             </PermissionRoute>
           }
@@ -306,7 +305,7 @@ export default function AppRoutes() {
         <Route
           path="/lab-analytics"
           element={
-            <PermissionRoute groups={COORDINATOR_AND_ADMIN}>
+            <PermissionRoute permission="lab_operations.manage">
               <LabAnalytics />
             </PermissionRoute>
           }
@@ -314,7 +313,7 @@ export default function AppRoutes() {
         <Route
           path="/lab-monitoring"
           element={
-            <PermissionRoute groups={COORDINATOR_AND_ADMIN}>
+            <PermissionRoute permission="lab_operations.manage">
               <LabMonitoring />
             </PermissionRoute>
           }
@@ -324,7 +323,7 @@ export default function AppRoutes() {
         <Route
           path="/purchases"
           element={
-            <PermissionRoute groups={COORDINATOR_AND_ADMIN}>
+            <PermissionRoute permission="finance.manage">
               <PurchasesPage />
             </PermissionRoute>
           }
@@ -333,7 +332,7 @@ export default function AppRoutes() {
         <Route
           path="/expenses"
           element={
-            <PermissionRoute groups={COORDINATOR_AND_ADMIN}>
+            <PermissionRoute permission="finance.manage">
               <ExpensesPage />
             </PermissionRoute>
           }
@@ -341,7 +340,7 @@ export default function AppRoutes() {
         <Route
           path="/finance-report"
           element={
-            <PermissionRoute groups={COORDINATOR_AND_ADMIN}>
+            <PermissionRoute permission="finance.manage">
               <FinanceReportPage />
             </PermissionRoute>
           }

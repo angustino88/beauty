@@ -7,7 +7,7 @@ import { Button, Card, Spin } from "antd";
 import { useAppDispatch, useAppSelector } from "@/app/store";
 import { LogoBosch } from "@/components/svg";
 import { authActions } from "../authSlice";
-import { meActions, flattenEffectiveRoles } from "../meSlice";
+import { meActions, meFromUser } from "../meSlice";
 import { useGetMeQuery } from "../api";
 import { useLogin } from "../hooks/useLogin";
 import lockImage from "@/assets/lock.svg";
@@ -77,19 +77,7 @@ export default function SsoLoginPage() {
   useEffect(() => {
     if (!meData) return;
     const user = meData.data;
-    const { permissions, permissionGroups } = flattenEffectiveRoles(
-      user.effective_roles,
-    );
-    dispatch(
-      meActions.setMe({
-        id: user.id,
-        username: user.username,
-        displayName: user.display_name ?? '',
-        avatar: user.avatar_url,
-        permissions,
-        permissionGroups,
-      }),
-    );
+    dispatch(meActions.setMe(meFromUser(user)));
     const returnPath = resolveReturnPath();
     sessionStorage.removeItem(RETURN_TO_KEY);
     navigate(returnPath, { replace: true });

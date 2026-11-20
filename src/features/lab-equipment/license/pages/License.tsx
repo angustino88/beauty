@@ -4,8 +4,6 @@ import { Alert, Badge, Tabs } from 'antd';
 import { useSearchParams } from 'react-router-dom';
 import { FoundLicensesPanel, LicenseChecksPanel, useGetLicenseObservationsQuery } from '@/features/lab-equipment/license-checks';
 import { skipToken } from '@reduxjs/toolkit/query';
-import { useSelector } from 'react-redux';
-import type { RootState } from '@/app/store';
 import { useGetLicenseHistoryQuery } from '../api';
 import {
   EquipmentPageLayout,
@@ -27,6 +25,7 @@ import {
   toLicenseInlineDraft,
   type LicenseInlineDraft,
 } from '../columns/licenseColumns';
+import { usePermission } from '@/features/auth/hooks/useCan';
 
 /** Shown until the user changes View options; every one of these can be hidden there. */
 const LICENSE_DEFAULT_COLUMNS = [
@@ -34,12 +33,8 @@ const LICENSE_DEFAULT_COLUMNS = [
   'assigned_equipment', 'expiry_date', 'primary_owner', 'status', 'actions',
 ];
 
-const isAdminGroupMap = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
-
 function LicenseInventory() {
-  const permissionGroups = useSelector((state: RootState) => state.me.permissionGroups);
-  const isAdmin = isAdminGroupMap(permissionGroups) && ('admin' in permissionGroups || 'lab-coordinator' in permissionGroups);
+  const isAdmin = usePermission('lab_operations.manage');
 
   const table = useLicenseTable();
   const form = useLicenseForm();
@@ -300,12 +295,11 @@ const LICENSE_TABS: readonly LicenseTab[] = ['inventory', 'checks', 'found'];
 
 /** Licenses: the inventory, the license checks agents run, and what they found on lab hardware. */
 export default function LicensePage() {
-  const permissionGroups = useSelector((state: RootState) => state.me.permissionGroups);
-  const isLabsAdmin = isAdminGroupMap(permissionGroups) && 'admin' in permissionGroups;
-  const isStaff = isAdminGroupMap(permissionGroups) && ('admin' in permissionGroups || 'lab-coordinator' in permissionGroups);
+  const isLabsAdmin = usePermission('license_check.manage');
+  const isLabOperator = usePermission('lab_operations.manage');
   const [searchParams, setSearchParams] = useSearchParams();
   const requested = searchParams.get('tab') as LicenseTab | null;
-  const tab: LicenseTab = requested && LICENSE_TABS.includes(requested) && (requested === 'inventory' || isStaff) ? requested : 'inventory';
+  const tab: LicenseTab = requested && LICENSE_TABS.includes(requested) && (requested === 'inventory' || isLabOperator) ? requested : 'inventory';
   const checkParam = Number(searchParams.get('check'));
   const checkId = Number.isInteger(checkParam) && checkParam > 0 ? checkParam : undefined;
 
@@ -315,10 +309,10 @@ export default function LicensePage() {
     setSearchParams(next, { replace: true });
   };
 
-  const attention = useGetLicenseObservationsQuery({ isAttentionRequired: true, pageSize: 1 }, { skip: !isStaff, pollingInterval: 300_000 });
+  const attention = useGetLicenseObservationsQuery({ isAttentionRequired: true, pageSize: 1 }, { skip: !isLabOperator, pollingInterval: 300_000 });
   const attentionCount = attention.data?.meta.pagination.count ?? 0;
 
-  if (!isStaff) return <LicenseInventory />;
+  if (!isLabOperator) return <LicenseInventory />;
   return (
     <Tabs
       activeKey={tab}

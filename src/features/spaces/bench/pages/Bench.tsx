@@ -3,9 +3,7 @@ import { WorkbookImportButton } from "@/features/data-import";
 import { useGetUsersQuery } from "@/features/lab-equipment/shared";
 import { toResourceOption } from "@/components/inputs/ResourceOption";
 import { useCallback, useMemo, useState } from "react";
-import { useSelector } from "react-redux";
 import { skipToken } from "@reduxjs/toolkit/query";
-import type { RootState } from "@/app/store";
 import {
   EquipmentPageLayout,
   EquipmentFormModal,
@@ -20,14 +18,10 @@ import { useBenchTable } from "../hooks/useBenchTable";
 import { useBenchForm } from "../hooks/useBenchForm";
 import { buildBenchColumns } from "../columns/benchColumns";
 import { facetToAntdFilters, getFacetOptions } from "@/features/lab-equipment/shared/facets/filterFacets";
-
-const isAdminGroupMap = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
+import { usePermission } from '@/features/auth/hooks/useCan';
 
 export default function BenchPage() {
-  const permissionGroups = useSelector((state: RootState) => state.me.permissionGroups);
-  const isAdmin =
-    isAdminGroupMap(permissionGroups) && ("admin" in permissionGroups || "lab-coordinator" in permissionGroups);
+  const isAdmin = usePermission("lab_operations.manage");
 
   const table = useBenchTable();
   const form = useBenchForm();

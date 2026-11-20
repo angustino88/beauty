@@ -6,7 +6,6 @@ import { Pencil, Settings2 } from 'lucide-react';
 import { AppstoreOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { useMemo, useState } from 'react';
-import { useAuthState } from '@/features/auth/hooks/useAuthState';
 import { useGetBenchMappingQuery, useGetEquipmentMappingQuery } from '@/features/spaces/mapping/api';
 import { MappingVisualization } from '@/features/spaces/mapping/components/MappingVisualization';
 import type { ResourceMappingRow } from '@/features/spaces/mapping/types';
@@ -29,6 +28,7 @@ import { useGetEquipmentDetailQuery } from '../../../api/equipmentApi';
 import presentation from './EquipmentDetailsModal.module.css';
 import { resourcePageIcon } from '@/components/layout/pageIcons';
 import { TargetTelemetryPanel } from '@/features/telemetry/components/TargetTelemetryPanel';
+import { usePermission } from '@/features/auth/hooks/useCan';
 
 type EquipmentRecord = Record<string, unknown> & { id: number | string };
 
@@ -533,10 +533,7 @@ export default function EquipmentDetailsModal({
 }: EquipmentDetailsModalProps) {
   const [mappingExpanded, setMappingExpanded] = useState(true);
   const [lifecycleModalOpen, setLifecycleModalOpen] = useState(false);
-  const { permissionGroups } = useAuthState();
-  const isAdmin = Boolean(
-    permissionGroups && (permissionGroups['admin'] || permissionGroups['lab-coordinator']),
-  );
+  const isAdmin = usePermission('lab_operations.manage');
 
   const isEquipment = ['computing', 'display', 'debugging', 'networking', 'power', 'accessory', 'sample', 'furniture', 'instrument', 'laboratory', 'mechanical', 'other'].includes(equipmentType);
   const selectedId = Number(selectedRecord?.id);

@@ -1,3 +1,5 @@
+import type { LabsPermission } from '@/features/auth/permissions';
+
 export interface NavigationPage {
   path: string;
   label: string;
@@ -8,7 +10,8 @@ export interface NavigationPage {
 export interface NavigationSection {
   key: string;
   label: string;
-  coordinatorOnly?: boolean;
+  /** The permission the section's pages need; omitted for pages every signed-in user sees. */
+  requires?: LabsPermission;
   pages: NavigationPage[];
 }
 
@@ -28,13 +31,13 @@ export const navigationSections: NavigationSection[] = [
   { key: 'my-bookings', label: 'My Bookings', pages: [
     { path: '/my-bookings', label: 'My Bookings', icon: 'my-bookings' },
   ] },
-  { key: 'spaces', label: 'Spaces', coordinatorOnly: true, pages: [
+  { key: 'spaces', label: 'Spaces', requires: 'lab_operations.manage', pages: [
     { path: '/spaces/mapping', label: 'Mapping', icon: 'mapping' },
     { path: '/spaces/room', label: 'Rooms', icon: 'rooms' },
     { path: '/spaces/station', label: 'Stations', icon: 'stations' },
     { path: '/spaces/bench', label: 'Benches', icon: 'benches' },
   ] },
-  { key: 'equipment', label: 'Equipment', coordinatorOnly: true, pages: [
+  { key: 'equipment', label: 'Equipment', requires: 'lab_operations.manage', pages: [
     { path: '/lab-equipment/computing', label: 'Computing', icon: 'computing', aliases: ['/lab-equipment/computer'] },
     { path: '/lab-equipment/display', label: 'Display', icon: 'display', aliases: ['/lab-equipment/monitor'] },
     { path: '/lab-equipment/debugging', label: 'Debugging', icon: 'debugging', aliases: ['/lab-equipment/debug-hardware'] },
@@ -49,16 +52,16 @@ export const navigationSections: NavigationSection[] = [
     { path: '/lab-equipment/other', label: 'Other', icon: 'other' },
     { path: '/lab-equipment/license', label: 'Licenses', icon: 'licenses' },
   ] },
-  { key: 'telemetry', label: 'Telemetry', coordinatorOnly: true, pages: [
+  { key: 'telemetry', label: 'Telemetry', requires: 'lab_operations.manage', pages: [
     { path: '/telemetry/devices', label: 'Sensors & gateways', icon: 'telemetry-devices' },
     { path: '/telemetry/profiles', label: 'Device profiles', icon: 'device-profiles' },
   ] },
-  { key: 'finance', label: 'Finance', coordinatorOnly: true, pages: [
+  { key: 'finance', label: 'Finance', requires: 'finance.manage', pages: [
     { path: '/purchases', label: 'Purchases', icon: 'purchases', aliases: ['/procurement'] },
     { path: '/expenses', label: 'Expenses', icon: 'expenses' },
     { path: '/finance-report', label: 'Finance Report', icon: 'finance-report', aliases: ['/finance'] },
   ] },
-  { key: 'insights', label: 'Insights', coordinatorOnly: true, pages: [
+  { key: 'insights', label: 'Insights', requires: 'lab_operations.manage', pages: [
     { path: '/lab-analytics', label: 'Analytics', icon: 'analytics' },
     { path: '/lab-monitoring', label: 'Monitoring', icon: 'monitoring' },
   ] },
@@ -67,8 +70,8 @@ export const navigationSections: NavigationSection[] = [
   ] },
 ];
 
-export function getNavigationSections(isCoordinator: boolean) {
-  return navigationSections.filter((section) => !section.coordinatorOnly || isCoordinator);
+export function getNavigationSections(can: (permission: LabsPermission) => boolean) {
+  return navigationSections.filter((section) => !section.requires || can(section.requires));
 }
 
 export function findNavigationPage(pathname: string, sections: NavigationSection[]) {
@@ -86,4 +89,4 @@ export function searchNavigationPages(query: string, sections: NavigationSection
       const text = `${section.label} ${page.label}`.toLowerCase();
       return terms.every((term) => text.includes(term));
     });
-}
+}

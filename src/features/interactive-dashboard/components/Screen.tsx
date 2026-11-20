@@ -13,12 +13,12 @@ import { TopBar } from "./topbar/TopBar";
 import { Sidebar } from "./sidebar/Sidebar";
 import { theme } from "../theme";
 import { ensureAnimations } from "../animations";
-import { useAuthState } from "@/features/auth/hooks/useAuthState";
+import { usePermission } from '@/features/auth/hooks/useCan';
 
 export function Screen() {
   ensureAnimations();
   const navigate = useNavigate();
-  const { isCoordinator } = useAuthState();
+  const canEditLayout = usePermission('lab_operations.manage');
   const {
     racks,
     loading,
@@ -254,7 +254,7 @@ export function Screen() {
             racks={visibleRacks}
             onClose={() => setSidebarOpen(false)}
             isEditMode={isEditMode}
-            canEdit={isCoordinator}
+            canEdit={canEditLayout}
             isDeleteMode={isDeleteMode}
             unplacedCount={unplacedCount}
             onAdd={handleAdd}

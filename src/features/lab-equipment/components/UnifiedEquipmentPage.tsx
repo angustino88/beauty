@@ -6,7 +6,6 @@ import { Tag, Tooltip, message, Popover, Progress, Modal, Form, Select, Input, I
 import type { ColumnsType } from 'antd/es/table';
 import { CloudServerOutlined, DesktopOutlined, SwapOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
-import { useAuthState } from '@/features/auth/hooks/useAuthState';
 import type { EquipmentCategoryConfig } from '../categories/registry';
 import type {
   EquipmentItem,
@@ -61,6 +60,7 @@ import { equipmentStatusTone } from '../shared/utils/equipmentStatus';
 import { userLabel } from '@/shared/utils/userRef';
 import { AgentHealthCell, ComputingAgentDialog, liveAgentsByEquipment, useGetComputingAgentsQuery, type AgentComputer } from '../agents';
 import MonitoredDevicesPopover from './MonitoredDevicesPopover';
+import { usePermission } from '@/features/auth/hooks/useCan';
 
 export interface UnifiedEquipmentPageProps {
   config: EquipmentCategoryConfig;
@@ -72,7 +72,8 @@ const toSelectOptions = (items?: Array<{ id: number; name: string }>) =>
 
 /** Shared equipment category controller; default export is the route entry point. */
 export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ config }) => {
-  const { isCoordinator } = useAuthState();
+  const canManage = usePermission('lab_operations.manage');
+  const canManageAgents = usePermission('agent.manage');
 
   // Table state: pagination, search, column filters
   const [page, setPage] = useState(1);
@@ -392,7 +393,7 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
   // Action button renderer matching the previous UI/UX design
   const actionsRenderer = useMemo(() => {
     return createActionsRenderer<EquipmentItem>({
-      isAdmin: isCoordinator,
+      isAdmin: canManage,
       deleting: isDeleting,
       onEdit: handleOpenEdit,
       onDelete: handleDelete,
@@ -435,7 +436,7 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
         },
       ],
     });
-  }, [isCoordinator, isDeleting, handleOpenEdit, handleDelete, handleOpenStatus, placementForm, setHistoryPage, setHistoryPageSize, setHistoryId, config.supportsAgent, openAgent]);
+  }, [canManage, isDeleting, handleOpenEdit, handleDelete, handleOpenStatus, placementForm, setHistoryPage, setHistoryPageSize, setHistoryId, config.supportsAgent, openAgent]);
 
   // Columns definition matching complete field parity with all equipment fields
   const columns = useMemo<ColumnsType<EquipmentItem>>(() => {
@@ -801,11 +802,11 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
           setFilters(next);
           setPage(1);
         }}
-        showCreate={isCoordinator}
+        showCreate={canManage}
         createLabel={`New ${config.singular}`}
         onCreate={handleOpenCreate}
         scrollX={columns.reduce((total, column) => total + (typeof column.width === 'number' ? column.width : 160), 0)}
-        onEditRecord={isCoordinator ? handleOpenEdit : undefined}
+        onEditRecord={canManage ? handleOpenEdit : undefined}
         searchPlaceholder="Search SKU, name or serial number"
       />
 
@@ -882,7 +883,7 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
       />
 
       {config.supportsAgent && (
-        <ComputingAgentDialog key={agentComputer?.id ?? 'closed'} computer={agentComputer} canManage={isCoordinator} onClose={() => setAgentComputer(null)} />
+        <ComputingAgentDialog key={agentComputer?.id ?? 'closed'} computer={agentComputer} canManage={canManageAgents} onClose={() => setAgentComputer(null)} />
       )}
 
       {/* Equipment lifecycle change-status action */}
