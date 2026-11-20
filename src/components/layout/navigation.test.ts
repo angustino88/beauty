@@ -13,9 +13,9 @@ test('regular users see only public navigation, including in search', () => {
 
 test('coordinator navigation retains all destinations and promotes frequent pages', () => {
   const sections = getNavigationSections(true);
-  assert.equal(sections.length, 10);
+  assert.equal(sections.length, 11);
   const paths = sections.flatMap(({ pages }) => pages.map(({ path }) => path));
-  assert.equal(paths.length, 28);
+  assert.equal(paths.length, 30);
   assert.equal(new Set(paths).size, paths.length);
   assert.deepEqual(sections.slice(0, 5).map(({ pages }) => pages[0].path), [
     '/dashboard', '/dashboard/3d', '/leaderboard', '/booking-calendar', '/my-bookings',

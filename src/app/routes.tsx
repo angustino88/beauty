@@ -66,6 +66,14 @@ const Leaderboard = lazy(
   () => import("@/features/leaderboard/pages/Leaderboard"),
 );
 
+// Telemetry (sensors, gateways, device profiles)
+const TelemetryDevicesPage = lazy(
+  () => import("@/features/telemetry/pages/TelemetryDevicesPage"),
+);
+const DeviceProfilesPage = lazy(
+  () => import("@/features/telemetry/pages/DeviceProfilesPage"),
+);
+
 // Finance & Procurement
 const PurchasesPage = lazy(
   () => import("@/features/purchase/pages/PurchasesPage"),
@@ -158,6 +166,25 @@ export default function AppRoutes() {
         <Route path="/lab-equipment/station" element={<Navigate to="/spaces/station" replace />} />
         <Route path="/lab-equipment/lab-info" element={<Navigate to="/spaces/bench" replace />} />
         <Route path="/lab-equipment/bench" element={<Navigate to="/spaces/bench" replace />} />
+
+        {/* Telemetry (coordinator + admin; approving profiles is admin-only on the server) */}
+        <Route path="/telemetry" element={<Navigate to="/telemetry/devices" replace />} />
+        <Route
+          path="/telemetry/devices"
+          element={
+            <PermissionRoute groups={COORDINATOR_AND_ADMIN}>
+              <TelemetryDevicesPage />
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="/telemetry/profiles"
+          element={
+            <PermissionRoute groups={COORDINATOR_AND_ADMIN}>
+              <DeviceProfilesPage />
+            </PermissionRoute>
+          }
+        />
 
         {/* Licenses */}
         <Route

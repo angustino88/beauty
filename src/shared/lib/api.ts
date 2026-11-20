@@ -158,6 +158,8 @@ export const baseApi = createApi({
     'SupportTicket',
     // Analytics
     'Analytics',
+    // Telemetry (sensors, gateways, device profiles)
+    'TelemetryDevice', 'TelemetryProfile', 'TelemetryTarget',
     // Procurement & Finance
     'Purchase',
     'Expense',

@@ -5,7 +5,7 @@ import {
   DesktopOutlined, ExperimentOutlined, FileProtectOutlined, HeatMapOutlined,
   HistoryOutlined, HomeOutlined, InboxOutlined, LaptopOutlined, LayoutOutlined,
   PieChartOutlined, SafetyOutlined, SettingOutlined, ShoppingCartOutlined, SkinOutlined,
-  ThunderboltOutlined, ToolOutlined, TrophyOutlined, WalletOutlined,
+  ThunderboltOutlined, ToolOutlined, TrophyOutlined, WalletOutlined, WifiOutlined, ProfileOutlined,
 } from '@ant-design/icons';
 import { navigationSections } from './navigation';
 
@@ -13,6 +13,7 @@ import { navigationSections } from './navigation';
 export const sectionIcons: Record<string, React.ReactNode> = {
   spaces: <BankOutlined />,
   equipment: <DesktopOutlined />, finance: <WalletOutlined />, insights: <BarChartOutlined />,
+  telemetry: <WifiOutlined />,
 };
 
 export const pageIcons: Record<string, React.ReactNode> = {
@@ -27,6 +28,7 @@ export const pageIcons: Record<string, React.ReactNode> = {
   purchases: <ShoppingCartOutlined />, expenses: <WalletOutlined />, 'finance-report': <PieChartOutlined />,
   analytics: <BarChartOutlined />, monitoring: <SafetyOutlined />,
   'support-tickets': <CustomerServiceOutlined />,
+  'telemetry-devices': <WifiOutlined />, 'device-profiles': <ProfileOutlined />,
 };
 
 /** The symbol of the page a resource lives on: `room`, `station`, `bench`, `license`, or an equipment category key. */

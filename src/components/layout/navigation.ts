@@ -49,6 +49,10 @@ export const navigationSections: NavigationSection[] = [
     { path: '/lab-equipment/other', label: 'Other', icon: 'other' },
     { path: '/lab-equipment/license', label: 'Licenses', icon: 'licenses' },
   ] },
+  { key: 'telemetry', label: 'Telemetry', coordinatorOnly: true, pages: [
+    { path: '/telemetry/devices', label: 'Sensors & gateways', icon: 'telemetry-devices' },
+    { path: '/telemetry/profiles', label: 'Device profiles', icon: 'device-profiles' },
+  ] },
   { key: 'finance', label: 'Finance', coordinatorOnly: true, pages: [
     { path: '/purchases', label: 'Purchases', icon: 'purchases', aliases: ['/procurement'] },
     { path: '/expenses', label: 'Expenses', icon: 'expenses' },
