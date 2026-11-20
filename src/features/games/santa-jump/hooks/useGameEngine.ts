@@ -1,20 +1,21 @@
 import { useCallback, useEffect, useState } from 'react';
 import { chapters } from '../constants';
 import { createRun, jump as performJump, step } from '../simulation';
-import type { Run } from '../types';
+import type { Mode, Run } from '../types';
 
 const SAVE_KEY = 'labmango:santa-post:v1';
-function readRecord(): number[] {
+const ARCADE_KEY = 'labmango:santa-arcade:v1';
+function readRecord(key = SAVE_KEY, length: number = chapters.length): number[] {
   let saved: unknown;
-  try { saved = JSON.parse(localStorage.getItem(SAVE_KEY) ?? 'null'); } catch { /* Storage is optional. */ }
-  return chapters.map((_, i) => Array.isArray(saved) && Number.isSafeInteger(saved[i]) && saved[i] > 0 ? saved[i] : 0);
+  try { saved = JSON.parse(localStorage.getItem(key) ?? 'null'); } catch { /* Storage is optional. */ }
+  return Array.from({ length }, (_, i) => Array.isArray(saved) && Number.isSafeInteger(saved[i]) && saved[i] > 0 ? saved[i] : 0);
 }
 
 export function useGameEngine() {
-  const [{ state, record }, setSession] = useState(() => {
+  const [{ state, record, arcade }, setSession] = useState(() => {
     const record = readRecord();
     const firstIncomplete = record.indexOf(0);
-    return { state: createRun(firstIncomplete < 0 ? chapters.length - 1 : firstIncomplete), record };
+    return { state: createRun(firstIncomplete < 0 ? chapters.length - 1 : firstIncomplete), record, arcade: readRecord(ARCADE_KEY, 2) };
   });
   const firstIncomplete = record.indexOf(0);
   const unlocked = firstIncomplete < 0 ? chapters.length - 1 : firstIncomplete;
@@ -22,17 +23,22 @@ export function useGameEngine() {
     setSession(session => {
       const state = update(session.state);
       if (state === session.state) return session;
-      const record = state.phase === 'delivered'
+      const record = state.phase === 'delivered' && state.mode === 'campaign'
         ? session.record.map((n, i) => i === state.chapter ? Math.max(n, state.score) : n)
         : session.record;
-      return { state, record };
+      const finished = state.phase === 'lost' || state.phase === 'delivered';
+      const arcade = finished && state.mode !== 'campaign'
+        ? session.arcade.map((n, i) => i === (state.mode === 'rush' ? 0 : 1) ? Math.max(n, state.score) : n)
+        : session.arcade;
+      return { state, record, arcade };
     });
   }, []);
   const jump = useCallback(() => setState(performJump), [setState]);
   const pause = useCallback(() => setState(s => s.phase === 'playing' ? { ...s, phase: 'paused' } : s), [setState]);
-  const play = () => setState(s => s.phase === 'paused' ? { ...s, phase: 'playing' } : { ...createRun(s.chapter, unlocked), phase: 'playing' });
+  const play = () => setState(s => s.phase === 'paused' ? { ...s, phase: 'playing' } : { ...createRun(s.chapter, unlocked, s.mode), phase: 'playing' });
+  const selectMode = (mode: Mode) => setState(s => createRun(s.chapter, unlocked, mode));
   const select = (chapter: number) => {
-    if (chapter >= 0 && chapter <= unlocked) setState(() => createRun(chapter, unlocked));
+    if (chapter >= 0 && chapter <= unlocked) setState(s => createRun(chapter, unlocked, s.mode));
   };
 
   useEffect(() => {
@@ -65,5 +71,10 @@ export function useGameEngine() {
       document.removeEventListener('visibilitychange', hidden);
     };
   }, [pause]);
-  return { state, record, unlocked, jump, pause, play, select };
+  useEffect(() => {
+    if (!arcade.some(Boolean)) return;
+    const saved = readRecord(ARCADE_KEY, 2);
+    try { localStorage.setItem(ARCADE_KEY, JSON.stringify(arcade.map((n, i) => Math.max(n, saved[i])))); } catch { /* Session-only storage. */ }
+  }, [arcade]);
+  return { state, record, arcade, unlocked, jump, pause, play, select, selectMode };
 }

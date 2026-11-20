@@ -1,3 +1,8 @@
+export const modes = {
+  campaign: { label: 'Story route', description: 'Deliver every letter to unlock the next stop.' },
+  rush: { label: 'Score rush', description: 'Earn as many points as you can in 60 seconds. A hit costs 15 points.' },
+  endless: { label: 'Endless night', description: 'Survive an accelerating route. Every ten seconds earns a distance bonus.' },
+} as const;
 export const WORLD_WIDTH = 760;
 export const WORLD_HEIGHT = 320;
 export const FLOOR = 264;
