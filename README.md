@@ -83,6 +83,19 @@ The equipment collection response includes pagination metadata, but the current 
 
 The code generator reads the local contract by default. To generate from another contract, set `OPENAPI_SPEC` before running the command.
 
+## Access Control
+
+The backend decides who may do what and sends the signed-in user's permissions in `GET /api/users/me` →
+`effective_permissions.labs` (`{ value, label }` items, for example `bench_booking.approve`). The full list and
+which role holds each one is Lab Mango's `docs/architecture/access-matrix.md`; the codes are mirrored in
+`src/features/auth/permissions.ts`.
+
+- Gate actions with `useCan()` / `usePermission('area.action')`, pages with `<PermissionRoute permission="...">`,
+  and navigation sections with `requires`.
+- Never check a role (`admin`, `coord`, `user`) or a group name: roles are shown for information only
+  (`state.me.roles`). Changing who may do something is a backend change; the UI follows automatically.
+- The server stays authoritative: every action still handles 403.
+
 ## Repository Structure
 
 Top-level structure:

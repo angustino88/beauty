@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Button, Empty, Popconfirm, Segmented, Table, Tag, Tooltip, message } from 'antd';
+import { Alert, Button, Empty, Popconfirm, Segmented, Space, Table, Tag, Tooltip, message } from 'antd';
 import {
   PlusOutlined,
   StopOutlined,
@@ -8,21 +8,29 @@ import {
   UserOutlined,
   ToolOutlined,
   ExclamationCircleOutlined,
+  LockOutlined,
+  UnlockOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import type { ColumnsType } from 'antd/es/table';
 import {
   type Downtime,
+  type DowntimeBookingAccess,
+  type DowntimeConflictBooking,
   type ResourceType,
+  BOOKING_ACCESS_LABELS,
   CONDITION_LABELS,
   DOWNTIME_REASON_LABELS,
+  parseDowntimeBookingConflicts,
 } from '../resourceStatus';
 import {
   useCancelDowntimeMutation,
+  useChangeDowntimeBookingAccessMutation,
   useEndDowntimeMutation,
   useGetDowntimesQuery,
 } from '../downtimeApi';
+import { FormDialog } from '@/components/ui/form-dialog';
 import ScheduleDowntimeModal from './ScheduleDowntimeModal';
 import styles from './Downtime.module.css';
 import { StatusBadge } from '@/shared/components/StatusBadge';
@@ -40,7 +48,23 @@ interface DowntimeTabProps {
   resourceType: ResourceType;
   resourceId: number;
   resourceName?: string;
-  isAdminOrCoordinator?: boolean;
+  /** lab_operations.manage: schedule, end and cancel windows, and change who may still book. */
+  canManage?: boolean;
+}
+
+interface ApiErrorShape {
+  data?: { error?: { code?: string; message?: string; details?: Parameters<typeof parseDowntimeBookingConflicts>[0] } };
+}
+
+/** Who may still book during a window: a tag for the table and the active banner. */
+function BookingAccessTag({ access }: { access: DowntimeBookingAccess }) {
+  return access === 'lab_operators' ? (
+    <Tooltip title="Lab Coordinators and Lab Administrators can still book the covered benches.">
+      <Tag icon={<UnlockOutlined />} color="processing">{BOOKING_ACCESS_LABELS.lab_operators}</Tag>
+    </Tooltip>
+  ) : (
+    <Tag icon={<LockOutlined />}>{BOOKING_ACCESS_LABELS.closed}</Tag>
+  );
 }
 
 type FilterState = 'all' | 'active_scheduled' | 'history';
@@ -77,7 +101,7 @@ export const DowntimeTab: React.FC<DowntimeTabProps> = ({
   resourceType,
   resourceId,
   resourceName,
-  isAdminOrCoordinator = false,
+  canManage = false,
 }) => {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -93,6 +117,66 @@ export const DowntimeTab: React.FC<DowntimeTabProps> = ({
 
   const [endDowntime, { isLoading: ending }] = useEndDowntimeMutation();
   const [cancelDowntime, { isLoading: cancelling }] = useCancelDowntimeMutation();
+  const [changeBookingAccess, { isLoading: changingAccess }] = useChangeDowntimeBookingAccessMutation();
+  // Closing a window that lab operators have booked into: the bookings to confirm before cancelling them.
+  const [accessConflict, setAccessConflict] = useState<{
+    downtimeId: number;
+    message: string;
+    bookings: DowntimeConflictBooking[];
+  } | null>(null);
+  // Equipment reservations are not bench bookings: their windows always close to everyone.
+  const supportsBookingAccess = resourceType !== 'equipment';
+
+  const handleChangeBookingAccess = async (
+    downtimeId: number,
+    access: DowntimeBookingAccess,
+    cancelConflictingBookings = false,
+  ) => {
+    try {
+      await changeBookingAccess({
+        downtimeId,
+        booking_access: access,
+        cancel_conflicting_bookings: cancelConflictingBookings,
+      }).unwrap();
+      setAccessConflict(null);
+      message.success(
+        access === 'lab_operators'
+          ? 'Lab operators can now book during this downtime.'
+          : cancelConflictingBookings
+            ? 'Downtime closed to everyone; the overlapping bookings were cancelled.'
+            : 'Downtime closed to everyone.',
+      );
+      void refetch();
+    } catch (err: unknown) {
+      const error = (err as ApiErrorShape).data?.error;
+      if (error?.code === 'downtime_booking_conflict') {
+        setAccessConflict({
+          downtimeId,
+          message: error.message || 'Bookings overlap the rest of this downtime window.',
+          bookings: parseDowntimeBookingConflicts(error.details),
+        });
+        return;
+      }
+      message.error(error?.message || 'Failed to change who can book during this downtime.');
+    }
+  };
+
+  const renderAccessSwitch = (r: Downtime) => {
+    if (!supportsBookingAccess || (r.state !== 'current' && r.state !== 'scheduled')) return null;
+    const isOpen = r.booking_access.value === 'lab_operators';
+    return (
+      <Tooltip title={isOpen ? 'Close this window to every booking' : 'Let lab operators keep booking during this window'}>
+        <Button
+          size="small"
+          icon={isOpen ? <LockOutlined /> : <UnlockOutlined />}
+          loading={changingAccess}
+          onClick={() => void handleChangeBookingAccess(r.id, isOpen ? 'closed' : 'lab_operators')}
+        >
+          {isOpen ? 'Close' : 'Open to operators'}
+        </Button>
+      </Tooltip>
+    );
+  };
 
   const handleEnd = async (downtimeId: number) => {
     try {
@@ -194,6 +278,16 @@ export const DowntimeTab: React.FC<DowntimeTabProps> = ({
         </div>
       ),
     },
+    ...(supportsBookingAccess
+      ? [
+          {
+            title: 'Who can book',
+            key: 'booking_access',
+            width: 170,
+            render: (_: unknown, r: Downtime) => <BookingAccessTag access={r.booking_access.value} />,
+          },
+        ]
+      : []),
     {
       title: 'Duration',
       key: 'duration',
@@ -231,16 +325,17 @@ export const DowntimeTab: React.FC<DowntimeTabProps> = ({
     },
   ];
 
-  if (isAdminOrCoordinator) {
+  if (canManage) {
     columns.push({
       title: 'Actions',
       key: 'actions',
-      width: 120,
+      width: supportsBookingAccess ? 260 : 120,
       align: 'center',
       fixed: 'right',
       render: (_, r) => {
         if (r.state === 'current') {
           return (
+            <Space size={4}>
             <Popconfirm
               title="End Downtime"
               description="End this downtime window right now and restore normal operations?"
@@ -258,10 +353,13 @@ export const DowntimeTab: React.FC<DowntimeTabProps> = ({
                 End Now
               </Button>
             </Popconfirm>
+            {renderAccessSwitch(r)}
+            </Space>
           );
         }
         if (r.state === 'scheduled') {
           return (
+            <Space size={4}>
             <Popconfirm
               title="Cancel Scheduled Downtime"
               description="Cancel this planned downtime window?"
@@ -278,6 +376,8 @@ export const DowntimeTab: React.FC<DowntimeTabProps> = ({
                 Cancel
               </Button>
             </Popconfirm>
+            {renderAccessSwitch(r)}
+            </Space>
           );
         }
         return <span style={{ color: 'var(--lm-text-disabled)' }}>—</span>;
@@ -295,7 +395,7 @@ export const DowntimeTab: React.FC<DowntimeTabProps> = ({
             Maintenance and out-of-service periods recorded for this resource.
           </span>
         </div>
-        {isAdminOrCoordinator && (
+        {canManage && (
           <Button
             type="primary"
             icon={<PlusOutlined />}
@@ -334,6 +434,7 @@ export const DowntimeTab: React.FC<DowntimeTabProps> = ({
                     DOWNTIME_REASON_LABELS[activeDowntime.reason.value] ||
                     activeDowntime.reason.value}
                 </Tag>
+                {supportsBookingAccess && <BookingAccessTag access={activeDowntime.booking_access.value} />}
               </div>
               <div className={styles.activeMeta}>
                 <span>
@@ -358,7 +459,7 @@ export const DowntimeTab: React.FC<DowntimeTabProps> = ({
             </div>
           </div>
 
-          {isAdminOrCoordinator && (
+          {canManage && (
             <Popconfirm
               title="End Downtime"
               description="End this downtime window right now and restore normal operations?"
@@ -401,7 +502,7 @@ export const DowntimeTab: React.FC<DowntimeTabProps> = ({
           image={Empty.PRESENTED_IMAGE_SIMPLE}
           description="No downtime records found for this resource. All systems are operating normally."
         >
-          {isAdminOrCoordinator && (
+          {canManage && (
             <Button
               type="primary"
               size="small"
@@ -435,7 +536,35 @@ export const DowntimeTab: React.FC<DowntimeTabProps> = ({
         />
       )}
 
-      {/* 5. Schedule Modal */}
+      {/* 5. Closing a window lab operators booked into */}
+      <FormDialog
+        open={Boolean(accessConflict)}
+        title="Close downtime to everyone"
+        description="Lab operators have bookings in the rest of this window."
+        submitLabel="Cancel bookings & close"
+        destructive
+        busy={changingAccess}
+        cancelLabel="Keep it open"
+        onSubmit={() =>
+          accessConflict && void handleChangeBookingAccess(accessConflict.downtimeId, 'closed', true)
+        }
+        onCancel={() => setAccessConflict(null)}
+      >
+        <Alert type="warning" showIcon message="Overlapping bookings" description={accessConflict?.message} />
+        <div style={{ marginTop: 12 }}>
+          <strong>These bookings will be cancelled:</strong>
+          <ul className={styles.conflictList}>
+            {accessConflict?.bookings.map((c) => (
+              <li key={`${c.kind}-${c.id}`} className={styles.conflictItem}>
+                <span className={styles.conflictBookingLink}>#{c.id}: </span>
+                {c.message}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </FormDialog>
+
+      {/* 6. Schedule Modal */}
       <ScheduleDowntimeModal
         open={scheduleModalOpen}
         resourceType={resourceType}

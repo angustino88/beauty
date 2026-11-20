@@ -1,5 +1,11 @@
 import { baseApi } from '@/shared/lib/api';
-import type { Downtime, DowntimeState, ResourceType, ScheduleDowntimeRequest } from './resourceStatus.ts';
+import type {
+  ChangeDowntimeBookingAccessRequest,
+  Downtime,
+  DowntimeState,
+  ResourceType,
+  ScheduleDowntimeRequest,
+} from './resourceStatus.ts';
 import {
   mapDowntimeItem,
   mapDowntimeListResponse,
@@ -106,6 +112,29 @@ export const downtimeApi = baseApi.injectEndpoints({
         { type: 'Equipment', id: 'LIST' },
       ],
     }),
+
+    // Open a scheduled or current window to lab operator bookings, or close it to everyone. Closing answers 409
+    // downtime_booking_conflict while bookings overlap the rest of the window, unless the caller confirms with
+    // cancel_conflicting_bookings.
+    changeDowntimeBookingAccess: build.mutation<Downtime, ChangeDowntimeBookingAccessRequest>({
+      query: ({ downtimeId, ...body }) => ({
+        url: `/api/labs/downtimes/${downtimeId}/actions/change-booking-access`,
+        method: 'POST',
+        body,
+      }),
+      transformResponse: (res: unknown) => {
+        const envelope = isRecord(res) ? res : {};
+        const data = envelope.data ?? envelope;
+        return mapDowntimeItem(data);
+      },
+      invalidatesTags: (_res, _err, { downtimeId }) => [
+        { type: 'Downtime', id: downtimeId },
+        { type: 'Downtime', id: 'LIST' },
+        { type: 'Room', id: 'LIST' },
+        { type: 'Station', id: 'LIST' },
+        { type: 'Bench', id: 'LIST' },
+      ],
+    }),
   }),
   overrideExisting: false,
 });
@@ -117,4 +146,5 @@ export const {
   useCreateDowntimeMutation,
   useCancelDowntimeMutation,
   useEndDowntimeMutation,
+  useChangeDowntimeBookingAccessMutation,
 } = downtimeApi;

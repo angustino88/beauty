@@ -1,4 +1,4 @@
-import { ClockCircleOutlined, DesktopOutlined, ExclamationCircleOutlined, FileTextOutlined, TagOutlined, ToolOutlined } from '@ant-design/icons';
+import { ClockCircleOutlined, DesktopOutlined, ExclamationCircleOutlined, FileTextOutlined, TagOutlined, ToolOutlined, UnlockOutlined } from '@ant-design/icons';
 import { Typography } from 'antd';
 import dayjs from 'dayjs';
 import { useGetBookingBenchChoicesQuery } from '../../api';
@@ -13,6 +13,8 @@ export interface DowntimeEventInfo {
   state?: string;
   resourceType?: string;
   resourceId?: number;
+  /** The window stays open to lab operator bookings. */
+  labOperatorsMayBook?: boolean;
   start?: Date | null;
   end?: Date | null;
 }
@@ -70,6 +72,9 @@ export function DowntimeEventDetail({ info }: { info: DowntimeEventInfo }) {
         <Typography.Text style={lineStyle}><TagOutlined /> {info.reason || 'Maintenance'}</Typography.Text>
         <Typography.Text style={lineStyle}><ClockCircleOutlined /> {formatWindow(info.start, info.end, info.openEnded)}</Typography.Text>
         {resourceLabel && <Typography.Text style={lineStyle}><DesktopOutlined /> {resourceLabel}</Typography.Text>}
+        {info.labOperatorsMayBook && (
+          <Typography.Text style={lineStyle}><UnlockOutlined /> Lab operators can still book</Typography.Text>
+        )}
         {info.notes && (
           <Typography.Text style={{ ...lineStyle, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
             <FileTextOutlined /> {info.notes}

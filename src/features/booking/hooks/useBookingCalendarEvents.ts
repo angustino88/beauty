@@ -160,6 +160,7 @@ export function useBookingCalendarEvents() {
                     state: d.state,
                     resourceType: d.resource.type,
                     resourceId: d.resource.id,
+                    labOperatorsMayBook: d.booking_access.value === 'lab_operators',
                   },
                 },
               ];

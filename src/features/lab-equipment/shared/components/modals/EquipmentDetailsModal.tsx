@@ -738,7 +738,7 @@ export default function EquipmentDetailsModal({
                     resourceType={normalizedSpaceType}
                     resourceId={recordId}
                     resourceName={name}
-                    isAdminOrCoordinator={isAdmin}
+                    canManage={isAdmin}
                   />
                 ),
               },
