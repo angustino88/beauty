@@ -141,3 +141,19 @@ test('each photograph opens with a decoded image and its own download', async ({
     await expect(dialog).toBeHidden();
   }
 });
+
+test('real dawn advances a watered crop and rotates the destination', async ({page}) => {
+  await page.locator('.plot').first().click();
+  await expect(page.locator('.plot-feedback').first()).toBeVisible();
+  await page.click('#water-all');
+  await page.evaluate(() => {
+    const farm = JSON.parse(localStorage.getItem('little-acre-v1'));
+    farm.nextDawn = Date.now() - 1000;
+    localStorage.setItem('little-acre-v1',JSON.stringify(farm));
+  });
+  await page.reload();
+  await expect(page.locator('#day')).toHaveText('2');
+  await expect(page.locator('.plot').first()).toHaveAttribute('aria-label', /ready to harvest/);
+  await page.click('#market-visit');
+  await expect(page.locator('#place-name')).toHaveText('Clover Meadow');
+});

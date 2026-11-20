@@ -67,6 +67,18 @@
       phrase();
     }catch{toggle.checked=false;}
   }
+  let lastAction = 0;
+  document.addEventListener("farm-action", event => {
+    if (!toggle.checked || audio?.state !== "running" || performance.now()-lastAction<100) return;
+    lastAction=performance.now();
+    const now=audio.currentTime;
+    if(event.detail==="water") tone(930,380,now,.16,.19);
+    else if(event.detail==="plant") tone(180,85,now,.09,.24,"triangle");
+    else {
+      tone(520,660,now,.11,.17);
+      tone(660,870,now+.09,.14,.15);
+    }
+  });
   toggle.onchange=synchronize;
   document.addEventListener("visibilitychange",synchronize);
   document.addEventListener("valley-visit",()=>{if(toggle.checked)phrase();});

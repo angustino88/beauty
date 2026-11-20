@@ -165,3 +165,7 @@ footer span { padding: 0 5px; }
 #photo > div { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; padding: 10px 2px 0; }
 #photo-caption { flex: 1; font-size: 18px; }
 #photo a, #photo button { border: 1px solid var(--line); border-radius: 6px; background: #eef0e3; color: #304936; padding: 7px 10px; text-decoration: none; font-size: 13px; }
+.plot-feedback { position:absolute; z-index:4; pointer-events:none; transform:translateX(-50%); padding:3px 8px; border-radius:12px; background:#244535; color:white; font-weight:700; animation:plot-rise 1.1s ease-out forwards; }
+@keyframes plot-rise { to { margin-top:-28px; opacity:0; } }
+@media(prefers-reduced-motion:reduce){ .plot-feedback { animation:none; } }
+#clock { color:var(--muted); }

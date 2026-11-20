@@ -58,6 +58,7 @@ const seedButtons = Object.entries(crops).map(([id, crop]) => {
 
 function render(message) {
   renderValley();
+  showMarket();
   renderCampaign();
   renderEstate();
   const rain = rainyDay(farm.day);
@@ -133,8 +134,10 @@ byId("mill").onclick = () => {
 };
 
 byId("water-all").addEventListener("click", () => {
-  for (const plot of farm.plots) {
-    if (plot && plot.age < crops[plot.crop].days) plot.wet = true;
+  for (const [index,plot] of farm.plots.entries()) {
+    if (!plot || plot.wet || plot.age >= crops[plot.crop].days) continue;
+    plot.wet = true;
+    if (!plotButtons[index].hidden) plotFeedback(index,"💧","water");
   }
   commit("All growing crops are watered for today.");
 });
@@ -152,6 +155,19 @@ function commit(message) {
   render(message);
 }
 
+function plotFeedback(index, label, action) {
+  document.dispatchEvent(new CustomEvent("farm-action",{detail:action}));
+  const plot = plotButtons[index];
+  const marker = document.createElement("span");
+  marker.className = "plot-feedback";
+  marker.textContent = label;
+  marker.style.left = (plot.offsetLeft + plot.offsetWidth / 2) + "px";
+  marker.style.top = plot.offsetTop + "px";
+  const field = document.querySelector(".field");
+  field.append(marker);
+  setTimeout(() => marker.remove(), 1100);
+}
+
 function tend(index) {
   const plot = farm.plots[index];
   if (tool === "plant") {
@@ -160,6 +176,7 @@ function tend(index) {
     if (farm.coins < crop.cost) return render("You need more coins to plant this seed.");
     farm.coins -= crop.cost;
     farm.plots[index] = { crop: selected, age: 0, wet: rainyDay(farm.day) };
+    plotFeedback(index, "🌱 −" + crop.cost + " 🪙","plant");
     return commit(`Planted ${crop.name.toLowerCase()}. ${rainyDay(farm.day) ? "Today’s rain has watered it." : "Water it before ending the day."}`);
   }
 
@@ -171,12 +188,14 @@ function tend(index) {
     if (ripe) return render("This crop is ready to harvest.");
     if (plot.wet) return render("This plot has already been watered today.");
     plot.wet = true;
+    plotFeedback(index, "💧","water");
     return commit(`Watered ${crop.name.toLowerCase()}. It will grow when the day ends.`);
   }
 
   if (!ripe) return render("This crop needs more time. Water it and end the day.");
   farm.basket[plot.crop] = (farm.basket[plot.crop] ?? 0) + 1;
   farm.plots[index] = null;
+  plotFeedback(index, "+1 " + crop.icon,"harvest");
   commit(`Harvested ${crop.name.toLowerCase()}. Sell it from your basket when you’re ready.`);
 }
 
@@ -193,7 +212,7 @@ for (const button of tools) {
   });
 }
 
-byId("next").addEventListener("click", () => {
+function advanceDay() {
   let ready = 0;
   for (const plot of farm.plots) {
     if (!plot || plot.age >= crops[plot.crop].days || (!plot.wet && !farm.irrigated && !rainyDay(farm.day))) continue;
@@ -209,6 +228,12 @@ byId("next").addEventListener("click", () => {
   if (rainyDay(farm.day)) {
     for (const plot of farm.plots) if(plot && plot.age < crops[plot.crop].days) plot.wet = true;
   }
+  return ready;
+}
+
+byId("next").addEventListener("click", () => {
+  farm.nextDawn = Date.now() + dayLength;
+  const ready = advanceDay();
   commit(ready ? `${ready} ${ready === 1 ? "crop is" : "crops are"} ready to harvest!` : (rainyDay(farm.day) ? "Rain is watering the fields today." : "A new day begins. Water your crops to keep them growing."));
 });
 
@@ -286,6 +311,54 @@ for (const [id, animal] of Object.entries(species)) {
     commit(`Fed your ${animal.name.toLowerCase()}. Its ${animal.product} will be ready tomorrow.`);
   };
 }
+const dayLength = 5 * 60 * 1000;
+const markets = [
+  {place:"orchard", item:"carrot", count:2, pay:21},
+  {place:"apiary", item:"apples", count:3, pay:16},
+  {place:"quay", item:"honey", count:1, pay:13},
+  {place:"home", item:"fish", count:2, pay:18}
+];
+function showMarket() {
+  const deal = markets[(farm.day-1) % markets.length];
+  const here = document.body.dataset.district === deal.place;
+  const stock = stockFor(deal.item,farm);
+  const button = byId("market-visit");
+  byId("market-route").textContent = districts[deal.place].name + " · " + deal.count + " " + deal.item + " → " + deal.pay + " coins";
+  const sold = farm.marketDay === farm.day;
+  button.textContent = sold ? "Delivered today" : here ? "Deliver · " + (stock[deal.item] || 0) + "/" + deal.count : "Visit " + districts[deal.place].name;
+  button.disabled = sold || (here && (stock[deal.item] || 0) < deal.count);
+  button.onclick = () => {
+    if (!here) return document.dispatchEvent(new CustomEvent("valley-visit",{detail:deal.place}));
+    if (farm.marketDay === farm.day || !(stock[deal.item] >= deal.count)) return;
+    stock[deal.item] -= deal.count;
+    if (!stock[deal.item] && stock === farm.basket) delete stock[deal.item];
+    farm.marketDay = farm.day;
+    farm.coins += deal.pay;
+    commit("Market delivery complete · +" + deal.pay + " coins");
+  };
+}
+function tick() {
+  const now = Date.now();
+  if (!Number.isFinite(farm.nextDawn)) {
+    farm.nextDawn = now + dayLength;
+    commit("A new farm day begins every five minutes.");
+  }
+  if (now >= farm.nextDawn) {
+    const days = Math.floor((now-farm.nextDawn)/dayLength)+1;
+    // Within 45 days every crop receives enough rain to reach maturity.
+    const simulated = Math.min(days,45);
+    for (let i=0;i<simulated;i++) advanceDay();
+    farm.day += days-simulated;
+    farm.nextDawn += days*dayLength;
+    commit("Dawn in the valley · Day " + farm.day);
+  }
+  const seconds = Math.ceil((farm.nextDawn-now)/1000);
+  byId("clock").textContent = "Next dawn · " + Math.floor(seconds/60) + ":" + String(seconds%60).padStart(2,"0");
+}
+tick();
+setInterval(tick,1000);
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)tick();});
+
 render();
 
 const managementButtons = document.querySelectorAll("[data-view]");
