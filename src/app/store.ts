@@ -1,4 +1,5 @@
 import { configureStore, combineReducers } from '@reduxjs/toolkit';
+import { setupListeners } from '@reduxjs/toolkit/query';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   persistStore,
@@ -36,6 +37,9 @@ export const store = configureStore({
       },
     }).concat(baseApi.middleware),
 });
+
+// Enables refetchOnFocus / refetchOnReconnect for every query.
+setupListeners(store.dispatch);
 
 export const persistor = persistStore(store);
 

@@ -51,7 +51,7 @@ export function useMappingTable() {
     () => toMappingParams(filters as TableFilters, debouncedSearch, page, pageSize),
     [filters, debouncedSearch, page, pageSize],
   );
-  const listQuery = useGetMappingsQuery(params, { refetchOnMountOrArgChange: true });
+  const listQuery = useGetMappingsQuery(params);
   const filterOptionsQuery = useGetMappingFilterOptionsQuery();
 
   // The server answers a page beyond the last one with 404 (rows removed meanwhile): go back to the first page.

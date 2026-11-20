@@ -48,8 +48,6 @@ export default function BenchPage() {
   const [formStationId, setFormStationId] = useState<number | null>(null);
   const { data: slotsData, isFetching: slotsLoading, isSuccess: slotsLoaded } = useLabsStationsSlotsRetrieveByStationIdQuery(
     formStationId == null ? skipToken : { stationId: formStationId, pageSize: 100 },
-    // Slots are created from the Stations page at any time; never trust an older cached list.
-    { refetchOnMountOrArgChange: true },
   );
   const slotOptions = useMemo(
     () => (slotsData?.data ?? [])

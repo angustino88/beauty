@@ -40,7 +40,7 @@ export default function MonitoredDevicesPopover({ computingId, computingName }: 
   const [openId, setOpenId] = useState<number | null>(null);
   const { currentData, isFetching, isError, refetch } = useGetDeviceConnectionsQuery(
     { computingId, page: 1, pageSize: POPOVER_PAGE_SIZE },
-    { skip: !open, pollingInterval: open ? POLLING_INTERVAL_MS : 0, skipPollingIfUnfocused: true, refetchOnMountOrArgChange: true },
+    { skip: !open, pollingInterval: open ? POLLING_INTERVAL_MS : 0, skipPollingIfUnfocused: true },
   );
   const rows = currentData?.data ?? [];
   const total = currentData?.meta.pagination.count ?? 0;
