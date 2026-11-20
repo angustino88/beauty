@@ -116,6 +116,13 @@ function setupValley(farm, commit, render) {
         button.disabled = !action.available(v,farm.day,farm);
       }
     }
+    const hints = {
+      pick: v.picked === farm.day ? "Hôm nay đã hái. Cây có táo mới sau 00:00." : "Bấm để hái 3 quả táo.",
+      fish: v.fished === farm.day ? "Hôm nay đã kéo lưới. Lưới sẵn sàng lại sau 00:00." : "Bấm để lấy 2 con cá.",
+      "tend-hives": v.hives ? "Tổ đã được chăm. Xem nút Thu mật." : "Chăm tổ hôm nay để có mật vào ngày mai.",
+      "collect-honey": !v.hives ? "Bấm Chăm tổ ong trước." : v.hives > farm.day ? "Ong đang làm mật. Quay lại sau 00:00." : "Mật đã sẵn sàng. Bấm để lấy 2 hũ."
+    };
+    for (const [id,hint] of Object.entries(hints)) get(id).querySelector("small").textContent = hint;
     const cargo=cargoOrder(v);
     const requirements=Object.entries(cargo.goods).map(([item,count])=>item+" "+Math.min(stockFor(item,farm)[item]||0,count)+"/"+count);
     get("journal-order").textContent=cargo.name+" · "+cargo.reward+" coins";
@@ -131,7 +138,8 @@ function setupValley(farm, commit, render) {
       active === "apiary" && v.hives ? (v.hives <= farm.day ? "Honey ready to extract." : "Honey ready on day "+v.hives+".") :
       active === "quay" ? "Crates shipped: "+v.shipped+(v.fished===farm.day?" · Nets reset tomorrow.":"") :
       active === "orchard" && v.picked===farm.day ? "Apple trees replenish tomorrow." : "";
-    get("production").textContent = production;
+    const stockLabel = {orchard: "Táo trong kho: " + v.apples, quay: "Cá trong kho: " + v.fish, apiary: "Mật trong kho: " + v.honey};
+    get("production").textContent = [stockLabel[active],production].filter(Boolean).join(" · ");
     get("stores").textContent = Object.entries(valleyItems).map(([key,name])=>name+" × "+v[key]).join(" · ");
   };
 }
