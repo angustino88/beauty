@@ -10,7 +10,7 @@ export const chapters = [
   {
     name: 'North Pole Mailroom', short: 'Mailroom', recipient: 'The packing elves', time: '20:15',
     story: 'A gust blows the wish letters out of the mailroom. Gather the first bundle so the elves know which gifts to wrap.',
-    ending: 'The elves tie the last ribbon. Beyond the workshop door, a trail of envelopes leads into the pines.',
+    ending: 'The elves tie the last ribbon. Beyond the workshop door, a trail of envelopes leads into the pines. Double jump unlocked! Tap again in midair.',
     hazard: 'Gift crate', speed: 215, spacing: 400, routeLength: 12900, letters: 10, jumps: 1,
   },
   {
@@ -22,12 +22,12 @@ export const chapters = [
   {
     name: 'Moonlit Rooftops', short: 'Rooftops', recipient: 'The village children', time: '23:25',
     story: 'The village is fast asleep. Leap from roof to roof, clear the chimneys and gather the letters left beside the glowing windows.',
-    ending: 'A gift waits under every tree. The last envelope bears the wax seal of the observatory.',
+    ending: 'A gift waits under every tree. The last envelope bears the wax seal of the observatory. Triple jump unlocked! Tap twice in midair.',
     hazard: 'Brick chimney', speed: 270, spacing: 365, routeLength: 24300, letters: 20, jumps: 2,
   },
   {
     name: 'Daybreak Observatory', short: 'Observatory', recipient: 'The star keeper', time: '05:10',
-    story: 'Carry the last wishes to the observatory before sunrise. Watch for ice crystals on the climb to the star keeper’s lantern.',
+    story: 'Carry the last wishes to the observatory before sunrise. The Frost King guards the summit. Dodge his ice volleys and catch three high stars to break his crown.',
     ending: 'The North Star shines again. From the smallest attic to the cabin at the edge of the woods, every wish has found its way home.',
     hazard: 'Ice crystal', speed: 300, spacing: 350, routeLength: 31500, letters: 26, jumps: 3,
   },

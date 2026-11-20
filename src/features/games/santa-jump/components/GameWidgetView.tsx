@@ -20,12 +20,14 @@ import workshopFloor from '../art/workshop-timber.webp';
 import forestFloor from '../art/forest-bank.webp';
 import roof from '../art/roof-tiles.webp';
 import marble from '../art/observatory-stone.webp';
+import goblin from '../art/pine-goblin.webp';
+import king from '../art/frost-king.webp';
 import css from './GameWidget.module.css';
 
 const scenes = [workshop, forest, village, tower];
 const grounds = [workshopFloor, forestFloor, roof, marble];
 const hazards = [present, stump, chimney, ice];
-const items = { letter, star, shield };
+const items = { letter, star, shield, goblin, blast: ice, counterStar: star };
 const chapterNumber = (index: number) => String(index + 1).padStart(2, '0');
 
 function spriteStyle(x: number, height: number, size: number): CSSProperties {
@@ -62,7 +64,7 @@ export default function GameWidgetView({ state, record, unlocked, jump, pause, p
   }, [playing, phase, chapter]);
 
   const title = briefing ? level.name : complete ? finale ? 'Every wish delivered' : 'Mail delivered' : phase === 'paused' ? 'Paused' : 'Delivery interrupted';
-  const message = briefing ? level.story : complete ? level.ending : phase === 'paused' ? 'Your letters are safe. Resume here when you’re ready.' : `Santa hit the ${level.hazard.toLowerCase()}. Try this stop again.`;
+  const message = briefing ? level.story : complete ? level.ending : phase === 'paused' ? 'Your letters are safe. Resume here when you’re ready.' : 'Santa took a hit. Try this stop again.';
   const action = complete ? finale ? 'Back to the mailroom' : 'Next stop' : briefing ? 'Set off' : phase === 'paused' ? 'Resume' : 'Retry this stop';
 
   return (
@@ -91,6 +93,7 @@ export default function GameWidgetView({ state, record, unlocked, jump, pause, p
               <span><Flag size={13} /> Stop {chapterNumber(chapter)}</span>
               <span aria-label={`Route distance: ${routePercent}%`}>Route {routePercent}%</span>
               <span><img src={star} alt="Score" />{score}</span>
+              {state.bossHP !== null && <span aria-label="Frost seals remaining">♛ {state.bossHP}/3</span>}
               {state.shield && <span><img src={shield} alt="Shield active" /></span>}
               {playing && <button onClick={pause} aria-label="Pause"><Pause size={14} /></button>}
             </div>
@@ -98,10 +101,11 @@ export default function GameWidgetView({ state, record, unlocked, jump, pause, p
               <div className={css.ground} style={{backgroundImage: `url("${grounds[chapter]}")`, backgroundPositionX: `-${state.distance % 260 / WORLD_WIDTH * 100}cqw`}} />
               <img src={santa} alt="Santa" data-runner data-running={playing && state.height === 0 || undefined} className={state.shield ? css.protected : css.sprite}
                 style={spriteStyle(SANTA_X, state.height, SANTA_SIZE)} />
+              {state.bossHP !== null && <img className={css.sprite} src={king} alt="Frost King" style={spriteStyle(618, 0, 136)} />}
               {state.entities.map(e => <img key={e.id}
-                className={css.sprite} alt={e.kind === 'hazard' ? level.hazard : ''}
+                className={css.sprite} alt={e.kind === 'hazard' ? level.hazard : e.kind === 'goblin' ? 'Pine goblin' : ''}
                 src={e.kind === 'hazard' ? hazards[chapter] : items[e.kind]}
-                style={spriteStyle(e.x, e.bottom, e.kind === 'hazard' ? HAZARD_SIZE : ITEM_SIZE)} />)}
+                style={spriteStyle(e.x, e.bottom, ['hazard', 'goblin', 'blast'].includes(e.kind) ? HAZARD_SIZE : ITEM_SIZE)} />)}
             </>}
             {playing ? <button ref={field} className={css.field} onClick={jump} aria-label="Jump" /> :
               <div className={css.sceneOverlay}>
@@ -116,13 +120,15 @@ export default function GameWidgetView({ state, record, unlocked, jump, pause, p
           </section>
           <aside className={css.dispatch}>
             <div className={css.eyebrow}><Mail size={14} /> Delivery slip</div>
-            <h2>Your delivery</h2>
+            <h2>{state.bossHP !== null ? 'Frost King' : 'Your delivery'}</h2>
+            {state.bossHP !== null && <p role="status">Frost seals: {state.bossHP}/3. Jump over ice blasts and catch the high stars to break his crown.</p>}
             <div className={css.delivery}><span>Wish letters</span><strong>{letters} / {level.letters}</strong></div>
             <progress value={letters} max={level.letters} aria-label="Letters collected" />
             <div className={css.gear}>
               <div><img src={letter} alt=""/><span><b>Sealed letter</b><small>Fill the bag and finish the route</small></span></div>
               <div><img src={star} alt=""/><span><b>Gold star</b><small>Worth 5 points</small></span></div>
               <div><img src={shield} alt=""/><span><b>Ice shield</b><small>Blocks one hit</small></span></div>
+              <div><img src={goblin} alt=""/><span><b>Pine goblin</b><small>Jumps must clear its charge</small></span></div>
               <div><img src={hazards[chapter]} alt=""/><span><b>{level.hazard}</b><small>Jump over it</small></span></div>
             </div>
           </aside>
@@ -136,7 +142,7 @@ export default function GameWidgetView({ state, record, unlocked, jump, pause, p
           </button>)}
         </nav>
         <footer className={css.footer}>
-          <span><kbd>Space</kbd> or tap to jump{level.jumps > 1 ? ` · Up to ${level.jumps} jumps in a row` : ''}</span>
+          <span><kbd>Space</kbd> or tap to jump{state.jumpLimit > 1 ? ` · ${state.jumpLimit === 2 ? "Double jump" : "Triple jump"} ready` : ''}</span>
           <span><Trophy size={13}/> Stop record <b>{record[chapter]}</b></span>
         </footer>
       </div>

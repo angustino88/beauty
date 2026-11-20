@@ -30,9 +30,9 @@ export function useGameEngine() {
   }, []);
   const jump = useCallback(() => setState(performJump), [setState]);
   const pause = useCallback(() => setState(s => s.phase === 'playing' ? { ...s, phase: 'paused' } : s), [setState]);
-  const play = () => setState(s => s.phase === 'paused' ? { ...s, phase: 'playing' } : { ...createRun(s.chapter), phase: 'playing' });
+  const play = () => setState(s => s.phase === 'paused' ? { ...s, phase: 'playing' } : { ...createRun(s.chapter, unlocked), phase: 'playing' });
   const select = (chapter: number) => {
-    if (chapter >= 0 && chapter <= unlocked) setState(() => createRun(chapter));
+    if (chapter >= 0 && chapter <= unlocked) setState(() => createRun(chapter, unlocked));
   };
 
   useEffect(() => {
