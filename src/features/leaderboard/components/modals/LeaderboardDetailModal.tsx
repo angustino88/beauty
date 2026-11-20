@@ -116,7 +116,7 @@ export function LeaderboardDetailModal({ open, type, userRow, labRow, filter, on
     { icon: <FieldTimeOutlined />,   title: 'Active Usage',        value: minutesAsHours(userRow?.active_usage_minutes) },
     { icon: <FieldTimeOutlined />,   title: 'Avg Session',         value: minutesAsHours(userRow?.avg_session_minutes) },
     { icon: <FieldTimeOutlined />,   title: 'Longest Session',     value: minutesAsHours(userRow?.longest_session_minutes) },
-    { icon: <FieldTimeOutlined />,   title: 'Off-hours Usage Rate', value: toPercent(userRow?.late_rate) },
+    { icon: <FieldTimeOutlined />,   title: 'Extended-Hours Activity', value: toPercent(userRow?.late_rate) },
     { icon: <RadarChartOutlined />,  title: 'Active Time Ratio',   value: toPercent(userRow?.active_rate) },
     { icon: <RadarChartOutlined />,  title: 'Workday Utilization Rate', value: toPercent(userRow?.usage_efficiency) },
     { icon: <EnvironmentOutlined />, title: 'Labs Accessed',       value: toNumber(userRow?.labs_accessed) },
