@@ -11,6 +11,7 @@ const valleyCamera = (() => {
     canvas=replacement;
   }
   if(!gpu)ctx=canvas.getContext("2d");
+  canvas.classList.toggle("software-world",!gpu);
   let triangles;
   let terrain, bakedScene, sceneKey;
   let selectedDistrict="home";
@@ -717,7 +718,7 @@ const valleyCamera = (() => {
       view={axes:[[sx*c,0,-sx*s],[-sy*s*v,sy*u,-sy*c*v],[-s*u/100,-v/100,-c*u/100]],
         origin:[-sx*(c*centerX-s*centerZ),-.16+sy*v*(s*centerX+c*centerZ),u*(s*centerX+c*centerZ)/100],
         eye:[s*u,v,c*u], x:centerX,z:centerZ,extent:Math.max(width,height)/scale*.84+4,
-        light:lightSelect.value,rain:weatherWet};
+        light:localLight(),rain:weatherWet};
       drawAtmosphere();
       return;
     }
@@ -774,14 +775,17 @@ const valleyCamera = (() => {
 
   let weatherWet=false,view,inView=false,timer=0,animationFrame=0;
   let visualTime=0,lastPaint=performance.now();
-  const lightSelect=document.getElementById("daylight");
+  function localLight(){
+    const hour=new Date().getHours();
+    if(hour<6 || hour>=20)return "night";
+    if(hour<11)return "morning";
+    return hour<17?"noon":"evening";
+  }
   const animate=document.getElementById("animate");
   const reduced=matchMedia("(prefers-reduced-motion: reduce)");
   const dialog=document.getElementById("letters");
   let motionPreference="auto";
   try{
-    const choice=localStorage.getItem("little-acre-light");
-    if(["morning","noon","evening"].includes(choice))lightSelect.value=choice;
     motionPreference=localStorage.getItem("little-acre-motion")||"auto";
   }catch{}
   function syncMotion(){
@@ -849,7 +853,6 @@ const valleyCamera = (() => {
     drawAtmosphere();
   });
   function saveDisplay(key,value){try{localStorage.setItem(key,value);}catch{}}
-  lightSelect.onchange=()=>{saveDisplay("little-acre-light",lightSelect.value);refresh();};
   animate.onchange=()=>{
     motionPreference=animate.checked?"on":"off";
     saveDisplay("little-acre-motion",motionPreference);drawAtmosphere();
@@ -863,7 +866,7 @@ const valleyCamera = (() => {
   canvas.addEventListener("webglcontextlost",()=>{
     cancelAnimation();
     const replacement=canvas.cloneNode(false);
-    canvas.replaceWith(replacement);canvas=replacement;gpu=null;ctx=canvas.getContext("2d");
+    canvas.replaceWith(replacement);canvas=replacement;canvas.classList.add("software-world");gpu=null;ctx=canvas.getContext("2d");
     terrain=null;sceneKey=null;view=null;
     if(lastFarm)paint(lastFarm.farm,lastFarm.crops,lastFarm.buttons);
   });
@@ -945,5 +948,5 @@ const valleyCamera = (() => {
   field.addEventListener("pointercancel",finish);
   field.addEventListener("pointerleave",e=>{if(drag && !drag.moved)finish(e);});
   new ResizeObserver(refresh).observe(field);
-  return {paint,visit,selectDistrict(id){selectedDistrict=id;}};
+  return {paint,visit,localLight,selectDistrict(id){selectedDistrict=id;}};
 })();

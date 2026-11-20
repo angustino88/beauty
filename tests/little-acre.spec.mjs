@@ -13,6 +13,7 @@ test.beforeEach(async ({ page, baseURL }) => {
       return route.fulfill({ path: fileURLToPath(file) });
     });
   }
+  await page.clock.install({time:new Date(2026,5,15,12)});
   await page.goto(origin + '/farm-game/index.html');
 });
 
@@ -32,7 +33,7 @@ for (const { line, fare } of [{ line: 'passenger', fare: 16 }, { line: 'freight'
     await plots.nth(0).click();
     await plots.nth(1).click();
     await click('water-all');
-    await click('next');
+    await page.clock.fastForward(86400000);
     await page.locator('[data-tool="harvest"]').click();
     await plots.nth(0).click();
     await plots.nth(1).click();
@@ -57,7 +58,7 @@ for (const { line, fare } of [{ line: 'passenger', fare: 16 }, { line: 'freight'
     await click('press');
     await go('Clover Meadow');
     await click('tend-hives');
-    await click('next');
+    await page.clock.fastForward(86400000);
     await click('collect-honey');
     await go('Cider Orchard');
     await click('bottle');
@@ -69,7 +70,7 @@ for (const { line, fare } of [{ line: 'passenger', fare: 16 }, { line: 'freight'
     await go('Homestead');
     await click('cook');
     await expect(page.locator('#cook')).toBeDisabled();
-    await click('next');
+    await page.clock.fastForward(86400000);
     await click('cook');
     await go('Willow Wharf');
     await click('read-letter');
@@ -89,7 +90,7 @@ for (const { line, fare } of [{ line: 'passenger', fare: 16 }, { line: 'freight'
     await page.reload();
     await go('Willow Wharf');
     await expect(page.locator('#sail')).toBeDisabled();
-    await click('next');
+    await page.clock.fastForward(86400000);
     await click('sail');
     await expect(coins).toHaveText(String(106 + fare));
     await page.reload();
@@ -108,7 +109,7 @@ test('mill a wheat harvest across a saved day', async ({ page }) => {
   await plots.nth(1).click();
   for (let day = 0; day < 2; day++) {
     await page.click('#water-all');
-    await page.click('#next');
+    await page.clock.fastForward(86400000);
   }
   await page.locator('[data-tool="harvest"]').click();
   await plots.nth(0).click();
@@ -117,7 +118,7 @@ test('mill a wheat harvest across a saved day', async ({ page }) => {
   await expect(page.locator('#sell')).toBeDisabled();
   await page.reload();
   await expect(mill).toBeDisabled();
-  await page.click('#next');
+  await page.clock.fastForward(86400000);
   await mill.click();
   await expect(page.locator('#coins')).toHaveText('50');
   await expect(mill).toBeDisabled();
@@ -127,7 +128,7 @@ test('each photograph opens with a decoded image and its own download', async ({
   const dialog = page.locator('#photo');
   let previous;
   for (const light of ['morning', 'evening']) {
-    await page.selectOption('#daylight', light);
+    await page.clock.setSystemTime(new Date(2026,5,15,light === 'morning' ? 8 : 18));
     await page.click('#take-photo');
     await expect(dialog).toBeVisible();
     expect(await dialog.locator('img').evaluate(img => img.complete && img.naturalWidth > 0)).toBe(true);
@@ -148,7 +149,7 @@ test('real dawn advances a watered crop and rotates the destination', async ({pa
   await page.click('#water-all');
   await page.evaluate(() => {
     const farm = JSON.parse(localStorage.getItem('little-acre-v1'));
-    farm.nextDawn = Date.now() - 1000;
+    farm.calendarDay -= 1;
     localStorage.setItem('little-acre-v1',JSON.stringify(farm));
   });
   await page.reload();

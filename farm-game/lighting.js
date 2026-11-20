@@ -256,6 +256,7 @@ function createFarmRenderer(canvas, invalidate) {
   const sky={
     morning:{sun:unit([-.87,.75,.52]),color:[1.69,1.43,1.11],dusk:0},
     noon:{sun:unit([-.39,1.35,.4]),color:[1.45,1.48,1.39],dusk:0},
+    night:{sun:unit([.46,.82,-.36]),color:[.18,.25,.48],dusk:1},
     evening:{sun:unit([.94,.47,-.34]),color:[1.92,1.22,.79],dusk:.72}
   };
   // The river reflects the actual opposite bank from a camera mirrored about the water plane.

@@ -177,7 +177,7 @@ function tend(index) {
     farm.coins -= crop.cost;
     farm.plots[index] = { crop: selected, age: 0, wet: rainyDay(farm.day) };
     plotFeedback(index, "🌱 −" + crop.cost + " 🪙","plant");
-    return commit(`Planted ${crop.name.toLowerCase()}. ${rainyDay(farm.day) ? "Today’s rain has watered it." : "Water it before ending the day."}`);
+    return commit(`Planted ${crop.name.toLowerCase()}. ${rainyDay(farm.day) ? "Today’s rain has watered it." : "Water it before midnight."}`);
   }
 
   if (!plot) return render("Plant a seed here first.");
@@ -192,7 +192,7 @@ function tend(index) {
     return commit(`Watered ${crop.name.toLowerCase()}. It will grow when the day ends.`);
   }
 
-  if (!ripe) return render("This crop needs more time. Water it and end the day.");
+  if (!ripe) return render("This crop needs more time. Water it and check back tomorrow.");
   farm.basket[plot.crop] = (farm.basket[plot.crop] ?? 0) + 1;
   farm.plots[index] = null;
   plotFeedback(index, "+1 " + crop.icon,"harvest");
@@ -230,12 +230,6 @@ function advanceDay() {
   }
   return ready;
 }
-
-byId("next").addEventListener("click", () => {
-  farm.nextDawn = Date.now() + dayLength;
-  const ready = advanceDay();
-  commit(ready ? `${ready} ${ready === 1 ? "crop is" : "crops are"} ready to harvest!` : (rainyDay(farm.day) ? "Rain is watering the fields today." : "A new day begins. Water your crops to keep them growing."));
-});
 
 byId("sell").addEventListener("click", () => {
   const value = saleValue();
@@ -311,7 +305,7 @@ for (const [id, animal] of Object.entries(species)) {
     commit(`Fed your ${animal.name.toLowerCase()}. Its ${animal.product} will be ready tomorrow.`);
   };
 }
-const dayLength = 5 * 60 * 1000;
+let previousLight;
 const markets = [
   {place:"orchard", item:"carrot", count:2, pay:21},
   {place:"apiary", item:"apples", count:3, pay:16},
@@ -338,22 +332,29 @@ function showMarket() {
   };
 }
 function tick() {
-  const now = Date.now();
-  if (!Number.isFinite(farm.nextDawn)) {
-    farm.nextDawn = now + dayLength;
-    commit("A new farm day begins every five minutes.");
-  }
-  if (now >= farm.nextDawn) {
-    const days = Math.floor((now-farm.nextDawn)/dayLength)+1;
-    // Within 45 days every crop receives enough rain to reach maturity.
+  const now = new Date();
+  // Compare local calendar dates independently of daylight-saving transitions.
+  const today = Date.UTC(now.getFullYear(),now.getMonth(),now.getDate()) / 86400000;
+  if (!Number.isInteger(farm.calendarDay)) {
+    farm.calendarDay = today;
+    delete farm.nextDawn;
+    commit("Your farm follows local time. A new day starts at midnight.");
+  } else if (today > farm.calendarDay) {
+    const days = today - farm.calendarDay;
     const simulated = Math.min(days,45);
     for (let i=0;i<simulated;i++) advanceDay();
     farm.day += days-simulated;
-    farm.nextDawn += days*dayLength;
-    commit("Dawn in the valley · Day " + farm.day);
+    farm.calendarDay = today;
+    commit("A new day in the valley · Day " + farm.day);
   }
-  const seconds = Math.ceil((farm.nextDawn-now)/1000);
-  byId("clock").textContent = "Next dawn · " + Math.floor(seconds/60) + ":" + String(seconds%60).padStart(2,"0");
+  const light = valleyCamera.localLight();
+  if (previousLight !== light) {
+    previousLight = light;
+    document.body.dataset.light = light;
+    render();
+  }
+  byId("clock").textContent = now.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}) + " · Local time";
+
 }
 tick();
 setInterval(tick,1000);

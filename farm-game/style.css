@@ -169,3 +169,6 @@ footer span { padding: 0 5px; }
 @keyframes plot-rise { to { margin-top:-28px; opacity:0; } }
 @media(prefers-reduced-motion:reduce){ .plot-feedback { animation:none; } }
 #clock { color:var(--muted); }
+body[data-light="night"] .software-world { filter:brightness(.55) saturate(.7); }
+body[data-light="evening"] .software-world { filter:sepia(.15) brightness(.88); }
+#district-panel { margin-bottom:12px; }

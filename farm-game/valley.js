@@ -17,23 +17,23 @@ function cargoOrder(v){ return cargoManifest[v.shipped % cargoManifest.length]; 
 function stockFor(item,farm){ return Object.hasOwn(valleyItems,item) ? farm.valley : farm.basket; }
 const valleyActions = {
   orchard: [
-    { id: "pick", title: "Pick orchard apples", detail: "Gather 3 apples once per day.",
+    { id: "pick", title: "Hái táo · Pick orchard apples", detail: "Gather 3 apples once per day.",
       available: (v,d) => v.picked !== d, run(v,d) { v.apples += 3; v.picked = d; return "Gathered 3 apples."; } },
-    { id: "press", title: "Start the cider press", detail: "3 apples → 2 cider, ready tomorrow.",
+    { id: "press", title: "Ép táo · Start the cider press", detail: "3 apples → 2 cider, ready tomorrow.",
       available: v => v.apples >= 3 && !v.batch, run(v,d) { v.apples -= 3; v.batch = d+1; return "The cider press will finish tomorrow."; } },
-    { id: "bottle", title: "Bottle the cider", detail: "Collect the finished batch from the press.",
+    { id: "bottle", title: "Đóng chai · Bottle the cider", detail: "Collect the finished batch from the press.",
       available: (v,d) => v.batch > 0 && v.batch <= d, run(v) { v.batch = 0; v.cider += 2; return "Bottled 2 cider."; } }
   ],
   apiary: [
-    { id: "tend-hives", title: "Tend the hives", detail: "Prepare the frames for tomorrow’s honey.",
+    { id: "tend-hives", title: "Chăm tổ ong · Tend the hives", detail: "Prepare the frames for tomorrow’s honey.",
       available: v => !v.hives, run(v,d) { v.hives = d+1; return "The bees are working. Return tomorrow."; } },
-    { id: "collect-honey", title: "Extract honey", detail: "Collect 2 jars from the filled frames.",
+    { id: "collect-honey", title: "Thu mật · Extract honey", detail: "Collect 2 jars from the filled frames.",
       available: (v,d) => v.hives > 0 && v.hives <= d, run(v) { v.hives = 0; v.honey += 2; return "Collected 2 jars of honey."; } }
   ],
   quay: [
-    { id: "fish", title: "Haul the fishing nets", detail: "Land 2 river fish once per day.",
+    { id: "fish", title: "Kéo lưới cá · Haul the fishing nets", detail: "Land 2 river fish once per day.",
       available: (v,d) => v.fished !== d, run(v,d) { v.fish += 2; v.fished = d; return "Landed 2 fresh river fish."; } },
-    { id: "ship", title: "Ship a valley crate", detail: "Fill the merchant’s next order.",
+    { id: "ship", title: "Giao hàng · Ship a valley crate", detail: "Fill the merchant’s next order.",
       available: (v,d,farm) => Object.entries(cargoOrder(v).goods).every(([item,n])=>(stockFor(item,farm)[item] || 0)>=n),
       run(v,d,farm) {
         const order=cargoOrder(v);

@@ -20,8 +20,9 @@
   </header>
   <main>
     <section class="farm">
-      <div class="farm-header"><div><h1 id="place-name">Homestead</h1><small id="clock"></small><p id="district-hint">Plant, tend and harvest your fields.</p></div><button id="next" class="primary">End day <span aria-hidden="true">→</span></button></div>
+      <div class="farm-header"><div><h1 id="place-name">Homestead</h1><small id="clock"></small><p id="district-hint">Plant, tend and harvest your fields.</p></div></div>
       <nav id="destinations" aria-label="Travel to district"></nav>
+      <section id="district-panel" class="panel" hidden><h2 id="district-title"></h2><p id="production"></p><div id="district-actions"></div></section>
       <div class="field" tabindex="0" aria-label="Valley map. Drag or use arrow keys to pan.">
         <canvas id="world" aria-label="Three-dimensional farm"></canvas>
         <div class="camera"><button id="atlas" aria-pressed="false">Valley map</button><button id="zoom-out" aria-label="Zoom out">−</button><button id="zoom-in" aria-label="Zoom in">+</button><button id="left" aria-label="Rotate left">↶</button><button id="right" aria-label="Rotate right">↷</button></div>
@@ -36,7 +37,7 @@
         <button id="water-all">💦 Water all</button>
         <label class="seed-picker">Seed <select id="quick-seed"></select></label>
       </div>
-      <div class="display-settings"><label for="daylight">Light</label><select id="daylight"><option value="morning">Morning</option><option value="noon">Midday</option><option value="evening">Golden hour</option></select><label><input id="animate" type="checkbox"> Ambient motion</label><label><input id="sound" type="checkbox"> Valley sounds</label><button id="take-photo">Take photo</button></div>
+      <div class="display-settings"><label><input id="animate" type="checkbox"> Ambient motion</label><label><input id="sound" type="checkbox"> Valley sounds</label><button id="take-photo">Take photo</button></div>
       <p class="status" id="status" role="status">Pick a seed and select an empty plot to plant it.</p>
     </section>
     <aside>
@@ -47,10 +48,9 @@
       <section id="galley" class="panel workshop" hidden><h2 id="galley-name">Farm kitchen</h2><p id="galley-stock"></p><button id="cook" class="primary"></button></section>
       <section id="crossings" class="panel workshop" hidden><h2 id="crossing-name"></h2><p id="crossing-stock"></p><button id="sail" class="primary"></button></section>
       <section class="panel"><h2>Valley market</h2><p id="market-route"></p><button class="primary" id="market-visit"></button></section>
-      <section id="district-panel" class="panel" hidden><h2 id="district-title"></h2><p id="production"></p><div id="district-actions"></div></section>
       <section class="panel stores"><h2>Valley stores</h2><p id="stores"></p><details id="journal"><summary>Shipping journal</summary><p id="journal-order"></p><div id="supply-route"></div></details></section>
       <nav class="management" aria-label="Farm management"><button data-view="seeds" aria-pressed="true">Seeds</button><button data-view="ranch" aria-pressed="false">Animals</button><button data-view="land" aria-pressed="false">Land</button></nav>
-      <section class="panel ranch" data-panel="ranch" hidden><h2>Pasture</h2><p>Feed your animals, then end the day to collect their produce.</p><div id="livestock"></div></section>
+      <section class="panel ranch" data-panel="ranch" hidden><h2>Pasture</h2><p>Feed your animals, then collect their produce on the next calendar day.</p><div id="livestock"></div></section>
       <section class="panel" data-panel="land" hidden><h2>Land office</h2><p id="acreage"></p><button id="expand" class="primary"></button><button id="irrigate" class="primary"></button><p>Sprinklers water every planted bed at the end of each day.</p></section>
       <section class="panel order"><h2>Market order</h2><p id="order"></p><button class="primary" id="deliver">Deliver order</button><button class="primary" id="mill"></button></section>
       <section class="panel" data-panel="seeds"><h2>Seed shop</h2><p>Choose a crop to plant. Seeds are paid for when you plant them.</p><div id="seeds"></div></section>
