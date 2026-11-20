@@ -9,12 +9,14 @@
   <script defer src="lighting.js"></script>
   <script defer src="valley.js"></script>
   <script defer src="scene.js"></script>
+  <script defer src="campaign.js"></script>
+  <script defer src="ambience.js"></script>
   <script defer src="game.js"></script>
 </head>
 <body>
   <header class="top">
-    <div class="brand"><span aria-hidden="true">🌱</span> Little Acre</div>
-    <div class="stats"><span id="weather" aria-live="polite">☀ Day <b id="day">1</b></span><span>🪙 <b id="coins">30</b> coins</span></div>
+    <div class="brand"><span aria-hidden="true">❧</span> Little Acre</div>
+    <div class="stats"><button id="pocket-journal">Field journal</button><span id="weather" aria-live="polite">☀ Day <b id="day">1</b></span><span>🪙 <b id="coins">30</b> coins</span></div>
   </header>
   <main>
     <section class="farm">
@@ -32,20 +34,44 @@
         <button data-tool="water" aria-pressed="false">💧 <span>Water</span></button>
         <button data-tool="harvest" aria-pressed="false">🧺 <span>Harvest</span></button>
         <button id="water-all">💦 Water all</button>
+        <label class="seed-picker">Seed <select id="quick-seed"></select></label>
       </div>
+      <div class="display-settings"><label for="daylight">Light</label><select id="daylight"><option value="morning">Morning</option><option value="noon">Midday</option><option value="evening">Golden hour</option></select><label><input id="animate" type="checkbox"> Ambient motion</label><label><input id="sound" type="checkbox"> Valley sounds</label><button id="take-photo">Take photo</button></div>
       <p class="status" id="status" role="status">Pick a seed and select an empty plot to plant it.</p>
     </section>
     <aside>
+      <section class="panel story-card">
+        <div class="story-illustration"></div>
+        <div class="story-note"><small id="letter-count"></small><h2 id="story-title"></h2><p id="story-task"></p><button id="read-letter" class="primary">Read the letter</button></div>
+      </section>
+      <section id="galley" class="panel workshop" hidden><h2 id="galley-name">Farm kitchen</h2><p id="galley-stock"></p><button id="cook" class="primary"></button></section>
+      <section id="crossings" class="panel workshop" hidden><h2 id="crossing-name"></h2><p id="crossing-stock"></p><button id="sail" class="primary"></button></section>
       <section id="district-panel" class="panel" hidden><h2 id="district-title"></h2><p id="production"></p><div id="district-actions"></div></section>
       <section class="panel stores"><h2>Valley stores</h2><p id="stores"></p><details id="journal"><summary>Shipping journal</summary><p id="journal-order"></p><div id="supply-route"></div></details></section>
       <nav class="management" aria-label="Farm management"><button data-view="seeds" aria-pressed="true">Seeds</button><button data-view="ranch" aria-pressed="false">Animals</button><button data-view="land" aria-pressed="false">Land</button></nav>
       <section class="panel ranch" data-panel="ranch" hidden><h2>Pasture</h2><p>Feed your animals, then end the day to collect their produce.</p><div id="livestock"></div></section>
       <section class="panel" data-panel="land" hidden><h2>Land office</h2><p id="acreage"></p><button id="expand" class="primary"></button><button id="irrigate" class="primary"></button><p>Sprinklers water every planted bed at the end of each day.</p></section>
-      <section class="panel order"><h2>Market order</h2><p id="order"></p><button class="primary" id="deliver">Deliver order</button></section>
+      <section class="panel order"><h2>Market order</h2><p id="order"></p><button class="primary" id="deliver">Deliver order</button><button class="primary" id="mill"></button></section>
       <section class="panel" data-panel="seeds"><h2>Seed shop</h2><p>Choose a crop to plant. Seeds are paid for when you plant them.</p><div id="seeds"></div></section>
       <section class="panel"><h2>Harvest basket</h2><p id="basket">Your basket is empty.</p><button id="sell" class="primary" disabled>Sell harvest</button></section>
     </aside>
   </main>
+  <dialog id="photo" aria-labelledby="photo-caption">
+    <img id="photo-print" alt="In-game photograph of the valley">
+    <div><h2 id="photo-caption"></h2><a id="download-photo" download>Save PNG</a><button id="close-photo">Back to farm</button></div>
+  </dialog>
+  <dialog id="letters" aria-labelledby="letter-heading">
+    <div class="letter-art"><button id="close-letter" aria-label="Close journal">×</button></div>
+    <div class="letter-paper">
+      <div class="journal-nav"><select id="archive" aria-label="Letters"></select><select id="letter-language" aria-label="Letter language"><option value="en">English</option><option value="vi">Tiếng Việt</option></select></div>
+      <small id="letter-from"></small><h2 id="letter-heading"></h2><p id="letter-body"></p>
+      <div class="assignment"><p id="letter-goal"></p><small id="letter-stock"></small></div>
+      <div id="lock-gates" hidden><label for="lock-meter"><span id="lock-caption"></span> · <b id="lock-level"></b></label>
+        <progress id="lock-meter" max="6" value="2"></progress><button id="inlet"></button><button id="sluice"></button></div>
+      <fieldset id="route-choice" aria-label="Ferry route" hidden><label><input type="radio" name="ferry-line" value="passenger" checked> <span id="passenger-label"></span></label><label><input type="radio" name="ferry-line" value="freight"> <span id="freight-label"></span></label></fieldset>
+      <div class="letter-actions"><button id="letter-travel"></button><button id="sign-letter" class="primary"></button><button id="next-letter" class="primary"></button></div>
+    </div>
+  </dialog>
   <footer>Little Acre <span>·</span> Progress saves on this device</footer>
 </body>
 </html>

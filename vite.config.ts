@@ -2,10 +2,30 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
+import { readdirSync, readFileSync } from 'node:fs'
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [
+    react(),
+    tailwindcss(),
+    {
+      name: 'little-acre-static',
+      apply: 'build',
+      generateBundle() {
+        // Preserve the standalone game's relative script and texture URLs in production.
+        const root = path.resolve(import.meta.dirname, 'farm-game')
+        for (const file of readdirSync(root, { recursive: true, encoding: 'utf8' })) {
+          if (!/\.(html|js|css|webp)$/i.test(file)) continue
+          this.emitFile({
+            type: 'asset',
+            fileName: 'farm-game/' + file.split(path.sep).join('/'),
+            source: readFileSync(path.join(root, file)),
+          })
+        }
+      },
+    },
+  ],
   resolve: {
     alias: { '@': path.resolve(import.meta.dirname, './src') },
   },

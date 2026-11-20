@@ -1,8 +1,16 @@
 // Orthographic 3D scene. The same camera projects meshes and accessible plot hit areas.
 const valleyCamera = (() => {
-  const canvas = document.getElementById("world");
-  const gpu = createFarmRenderer(canvas);
-  const ctx = gpu ? null : canvas.getContext("2d");
+  let canvas = document.getElementById("world");
+  let gpu,ctx;
+  try {
+    gpu=createFarmRenderer(canvas,()=>refresh());
+  } catch(error) {
+    console.warn("Little Acre is using the canvas renderer.",error);
+    const replacement=canvas.cloneNode(false);
+    canvas.replaceWith(replacement);
+    canvas=replacement;
+  }
+  if(!gpu)ctx=canvas.getContext("2d");
   let triangles;
   let terrain, bakedScene, sceneKey;
   let selectedDistrict="home";
@@ -20,13 +28,44 @@ const valleyCamera = (() => {
       height*0.58 + scale*(forward*Math.sin(pitch)-y*Math.cos(pitch)),
       forward*Math.cos(pitch)+y*Math.sin(pitch)];
   }
-  function face(points, color, light) {
+  // Architectural parts reuse a material even when their pigments differ.
+  const palette=new Map();
+  function register(surface,colors){for(const color of colors)palette.set(color,surface);}
+  register(SURFACE.grass,[0xa7c96d,0x9fc575]);
+  register(SURFACE.water,[0x52bcb1]);
+  register(SURFACE.sand,[0xd7c58d,0xe3bf82,0xe8c991,0xe2c48a,0xe4c48b]);
+  register(SURFACE.soil,[0x995e3a,0x634733,0xb67e4d,0x76573d,0xa68a51]);
+  register(SURFACE.timber,[0x86492f,0x4b8b83,0xb77c4e,0x935e3c,0xd5a66a,0x866345,0x92653e,0xf2d9a5,0xe3c08b,0x97623b,0xa86f42,0xd59f5c,0xb47e4b,0x8d6645,0x7b624a,0x567768,0xb57d45,0x896447,0xa77a49,0xc89554,0xb49268,0x886c50,0xc8a77b,0x856746,0xb58b5f,0x88684e,0x826448]);
+  register(SURFACE.stone,[0xffda9b,0xe9d5af,0xa07158,0xb9aa8f,0xb5a38b,0xb7afa0,0xf4d4a3,0xe2bd70,0xa1beb2]);
+  register(SURFACE.roof,[0xc35e3d,0xdc7747,0xd46944,0xe18350,0x914b39,0x577e79,0x466f78,0xb97052,0x51828b]);
+  register(SURFACE.glass,[0x537b85,0x6e9a9f]);
+  register(SURFACE.lamp,[0xffbc50]);
+  register(SURFACE.coat,[0xf0dfbd,0x5a493d,0xddc6a6,0x6b5344]);
+  register(SURFACE.feathers,[0xe5bc82,0xf1cb90,0xb67d49,0x93653f,0x745641]);
+  const quadUV=[[0,0],[1,0],[1,1],[0,1]];
+  let motionGroup=0;
+  function unit(x,y,z){
+    const length=Math.hypot(x,y,z)||1;
+    return [x/length,y/length,z/length];
+  }
+  function polygonNormal(points){
+    // Newell's method also handles rings that converge to a single vertex at a pole.
+    let x=0,y=0,z=0;
+    for(let i=0;i<points.length;i++){
+      const u=points[i],v=points[(i+1)%points.length];
+      x+=(u[1]-v[1])*(u[2]+v[2]);y+=(u[2]-v[2])*(u[0]+v[0]);z+=(u[0]-v[0])*(u[1]+v[1]);
+    }
+    return unit(x,y,z);
+  }
+  function face(points, color, light, material=palette.get(color)||SURFACE.plain, normals=null) {
     if(gpu){
-      const rgb=[16,8,0].map(shift => ((color>>shift)&255)/255 * (.75+.25*light));
-      for(let i=1;i<points.length-1;i++) for(const point of [points[0],points[i],points[i+1]]) triangles.push(...point,...rgb);
+      const rgb=[16,8,0].map(shift => ((color>>shift)&255)/255 * (.87+.13*light));
+      const normal=normals?null:polygonNormal(points);
+      for(let i=1;i<points.length-1;i++){
+        for(const j of [0,i,i+1])triangles.push(...points[j],...rgb,...(normals?normals[j]:normal),material,...quadUV[j%4],motionGroup);
+      }
       return;
     }
-
     const rgb = [16,8,0].map(shift => Math.min(255, Math.round(((color >> shift)&255)*light)));
     const ground = points.every(p=>p[1] <= .085);
     faces.push({points, ground, color:'rgb('+rgb.join(',')+')'});
@@ -45,8 +84,11 @@ const valleyCamera = (() => {
       const a=(i/5-.5)*Math.PI,b=j*Math.PI/5;
       return [x+rx*Math.cos(a)*Math.cos(b),y+ry*Math.sin(a),z+rz*Math.cos(a)*Math.sin(b)];
     };
-    for(let i=0;i<5;i++) for(let j=0;j<10;j++)
-      face([ring(i,j),ring(i+1,j),ring(i+1,j+1),ring(i,j+1)],c,.78+.24*i/4+.13*Math.cos(j*Math.PI/5+2));
+    for(let i=0;i<5;i++) for(let j=0;j<10;j++){
+      const points=[ring(i,j),ring(i+1,j),ring(i+1,j+1),ring(i,j+1)];
+      const normals=gpu?points.map(p=>unit((p[0]-x)/(rx*rx),(p[1]-y)/(ry*ry),(p[2]-z)/(rz*rz))):null;
+      face(points,c,.78+.24*i/4+.13*Math.cos(j*Math.PI/5+2),undefined,normals);
+    }
   }
   // Both renderers use this deterministic model, including its planting beds.
   function beam(start,end,r,color,topRadius=r,sides=8) {
@@ -97,6 +139,16 @@ const valleyCamera = (() => {
     box(-5.02,4.18,-4.68,.55,.16,.62,cream);
     for(let j=0;j<3;j++) box(-4.38,.01,-2.31+j*.22,.98,.26-j*.075,.3,0xb9aa8f);
   }
+  function boatHull(x,z,outline,height,paint){
+    const deck=outline.map(([dx,dz])=>[x+dx,height,z+dz]);
+    const waterline=outline.map(([dx,dz])=>[x+.73*dx,.015,z+.86*dz]);
+    face(deck,0xc8a77b,1);
+    deck.forEach((point,i)=>{
+      const j=(i+1)%deck.length;
+      face([point,deck[j],waterline[j],waterline[i]],paint,.94);
+      beam(point,deck[j],.034,0xb49268,.034,5);
+    });
+  }
   function estate(){
     let seed=145;
     const random=()=>((seed=(Math.imul(seed,1664525)+1013904223)>>>0)/4294967296);
@@ -110,24 +162,29 @@ const valleyCamera = (() => {
         [a+wa+.23,70,b+wb+.23,70,0x9fc575]]){
         face([[l,-.04,z],[r,-.04,z],[r2,-.04,z+1],[l2,-.04,z+1]],color,1);
       }
-      box(a+random()-.5,.005,z+.4,.48,.012,.035,0xb1e1cb);
+      if(!gpu)box(a+random()-.5,.005,z+.4,.48,.012,.035,0xb1e1cb);
     }
     // Walkways link the beds, cottage steps, bridge and pasture.
-    box(1.98,-.015,.2,1.15,.055,14,0xe3bf82);
-    box(-1.6,-.015,-1.68,8.1,.06,.85,0xe8c991);
-    box(5,-.015,3.5,5.2,.06,.88,0xe2c48a);
+    let laneLayer=0;
+    lane(1.98,-6.8,1.98,7.17,1.16);
+    lane(-5.75,-1.65,2.47,-1.62,.88);
+    lane(1.98,3.5,7.53,3.5,.94);
     for(let i=0;i<12;i++)box(7.45+i*.26,.09,3.5,.25,.14,1.18,0xb77c4e);
     for(const z of [2.86,4.14]){
       for(const x of [7.49,8.9,10.26]) box(x,.02,z,.13,.75,.13,0x935e3c);
       beam([7.49,.71,z],[10.26,.71,z],.065,0xd5a66a);
     }
     cottage();
+    resident(-5.51,-2.22,0x647568,0xa88558);
+    resident(-13.15,13.63,0xc79356,0xd0b583);
+    resident(14.65,7.45,0x485b67,0x6c6352);
     // Stone mill, canvas sails and a little timber grain door.
     const mx=.05,mz=-5.35;
     beam([mx,0,mz],[mx,3.1,mz],.91,0xe9d5af,.65,12);
     beam([mx,3.04,mz],[mx,3.96,mz],.93,0x51828b,.04,12);
     box(mx,.02,mz+.85,.49,.94,.14,0x866345);
     const hub=[mx,2.7,mz+.89];
+    motionGroup=1;
     for(let i=0;i<4;i++){
       const t=.47+i*Math.PI/2;
       const point=(r,w)=>[hub[0]+r*Math.cos(t)-w*Math.sin(t),hub[1]+r*Math.sin(t)+w*Math.cos(t),hub[2]];
@@ -135,6 +192,7 @@ const valleyCamera = (() => {
       face([point(.63,.03),point(1.71,.03),point(1.71,.34),point(.63,.2)],0xffedc6,1);
       for(const r of [.7,1.1,1.5])beam(point(r,0),point(r,.25),.02,0xaa7c4f);
     }
+    motionGroup=0;
     oval(mx,2.7,mz+.97,.13,.13,.13,0xbc884c);
     function fence(x,z,x2,z2){
       const count=Math.ceil(Math.hypot(x2-x,z2-z)/1.15);
@@ -173,13 +231,34 @@ const valleyCamera = (() => {
       if(i%3===0) for(let j=0;j<3;j++)beam([x+j*.08,.02,z],[x+j*.11,.43+j*.1,z+.06],.023,0x829349,.014,4);
     }
     function tree(x,z,size,fruit){
-      beam([x,0,z],[x,size*1.7,z],.22*size,0x8d6645,.12*size);
-      for(let i=0;i<5;i++){
-        const t=i*2.4;
-        const px=x+.56*size*Math.cos(t),pz=z+.53*size*Math.sin(t);
-        oval(px,(1.62+i*.13)*size,pz,.86*size,.86*size,.81*size,
-          [0x679644,0x80a64b,0x719c48,0x96b954,0x86ae4b][i]);
-        if(fruit) oval(px+.5*size,(1.52+i*.13)*size,pz+.58*size,.12,.13,.12,0xcf5538);
+      const bark=0x8d6645;
+      const base=[x,0,z], crown=[x+.08*size,1.55*size,z-.06*size];
+      beam(base,crown,.18*size,bark,.105*size,9);
+      for(let i=0;i<9;i++){
+        const a=i*2.399+x*.23, reach=(i<6?.94:.52)*size;
+        const px=crown[0]+Math.cos(a)*reach,pz=crown[2]+Math.sin(a)*reach;
+        const py=(1.87+.18*(i%3)+(i>=6?.66:0))*size;
+        const fork=[x+Math.cos(a)*.28*size,1.52*size,z+Math.sin(a)*.28*size];
+        beam([x,1.03*size,z],fork,.076*size,bark,.054*size);
+        beam(fork,[px,py,pz],.054*size,bark,.018*size,6);
+        if(gpu){
+          // Interlocking crossed leaf sprays give the crown an irregular silhouette at every angle.
+          for(let j=0;j<4;j++){
+            const t=a+j*1.85, w=(.58+.06*(j%2))*size, h=(.79+.09*j)*size;
+            const ox=px+.23*size*Math.cos(t),oz=pz+.23*size*Math.sin(t);
+            const dx=Math.cos(t)*w,dz=Math.sin(t)*w;
+            const lean=.30*size;
+            const topX=ox-Math.sin(t)*lean,topZ=oz+Math.cos(t)*lean;
+            face([[ox-dx,py-.2*size,oz-dz],[ox+dx,py-.2*size,oz+dz],
+              [topX+dx,py+h,topZ+dz],[topX-dx,py+h,topZ-dz]],0x8eaa57,1,SURFACE.leaf);
+          }
+        }else{
+          oval(px,py+.25*size,pz,.63*size,.67*size,.57*size,[0x698f46,0x77984e,0x88a55b][i%3]);
+        }
+        if(fruit && i%2===0){
+          oval(px+.16*size,py-.09*size,pz+.18*size,.10*size,.112*size,.1*size,0xb34930);
+          oval(px+.32*size,py+.02*size,pz,.08*size,.09*size,.08*size,0xd2793b);
+        }
       }
     }
     for(const [x,z,size] of [[-7,-4,1.15],[-6.95,-.6,.87],[-9,3,.9],[5,-6,1],[7,-7,1.15],[-2,-8,1.15],[-6,-8,1.3],[10,-4,1.22],[12,1,1.04],[-9,-7,1.1],[-9,7,.85],[12,7,.85]])tree(x,z,size,true);
@@ -187,7 +266,18 @@ const valleyCamera = (() => {
     function lane(x,z,endX,endZ,w=1.08) {
       const length=Math.hypot(endX-x,endZ-z);
       const dx=(endZ-z)/length*w/2,dz=(x-endX)/length*w/2;
-      face([[x+dx,.025,z+dz],[endX+dx,.025,endZ+dz],[endX-dx,.025,endZ-dz],[x-dx,.025,z-dz]],0xe4c48b,1);
+      const divisions=Math.max(1,Math.ceil(length/.9));
+      const y=.012+.003*laneLayer++;
+      let prev;
+      for(let i=0;i<=divisions;i++){
+        const t=i/divisions;
+        const drift=.13*Math.sin(t*Math.PI)*Math.sin(t*7+x);
+        const midX=x+(endX-x)*t+dx*drift,midZ=z+(endZ-z)*t+dz*drift;
+        const width=1+.045*Math.sin(i*2.72+endZ);
+        const left=[midX+dx*width,y,midZ+dz*width],right=[midX-dx*width,y,midZ-dz*width];
+        if(prev)face([prev.left,left,right,prev.right],0xe4c48b,1);
+        prev={left,right};
+      }
     }
     lane(1.98,-6.55,-6.7,-10.6);
     lane(-6.7,-10.6,-19,-9);
@@ -243,17 +333,13 @@ const valleyCamera = (() => {
     for(let i=0;i<22;i++)box(10.6+i*.23,.19,7.3,.22,.18,1.52,0xb49268);
     for(const x of [10.6,12.3,14,15.45])for(const z of [6.57,8.03])
       beam([x,-.15,z],[x,.62,z],.09,0x886c50);
-    const bx=10.3,bz=9.7;
-    const hull=[[-.64,-1.35],[.64,-1.35],[.77,.65],[0,1.77],[-.77,.65]];
-    const rim=hull.map(([x,z])=>[bx+x,.54,bz+z]);
-    face(rim,0xc8a77b,1);
-    for(let i=0;i<hull.length;i++){
-      const j=(i+1)%hull.length;
-      face([rim[i],rim[j],[bx+hull[j][0]*.7,.06,bz+hull[j][1]*.84],[bx+hull[i][0]*.7,.06,bz+hull[i][1]*.84]],0x386d79,.92);
-    }
+    motionGroup=2;
+    const bx=9.45,bz=9.7;
+    boatHull(bx,bz,[[-.64,-1.35],[.64,-1.35],[.77,.65],[0,1.77],[-.77,.65]],.54,0x386d79);
     beam([bx,.5,bz],[bx,3.35,bz],.065,0x856746);
     face([[bx,3.22,bz],[bx,.98,bz],[bx+1.04,1.24,bz+.3]],0xfaf0cf,1);
     face([[bx-.1,2.87,bz],[bx-.12,1.2,bz],[bx-.88,1.12,bz-.27]],0xd7845b,.94);
+    motionGroup=0;
     for(const [x,z] of [[15,5.7],[15.8,5.7],[15.35,6.45],[18.6,6.1]]){
       box(x,0,z,.7,.58,.68,0xb58b5f);
       for(const h of [.09,.47]) box(x,h,z,.73,.08,.71,0x88684e);
@@ -293,14 +379,25 @@ const valleyCamera = (() => {
     beam([wx-.73,1.58,wz],[wx+.73,1.58,wz],.075,0x80674e);
     for(const sign of [-1,1])face([[wx-.82,2,wz],[wx+.82,2,wz],[wx+.82,1.54,wz+sign*.66],[wx-.82,1.54,wz+sign*.66]],0xb97052,.97);
 
+    // The slopes rise outside the working valley and fall back down at the watercourse.
+    function ridgeHeight(x,z){
+      const rim=clamp(Math.max((Math.abs(x)-25)/12,(Math.abs(z)-20)/11),0,1);
+      const bank=clamp((Math.abs(x-waterX(z))-4)/6,0,1);
+      return rim*rim*bank*(2.8+1.55*Math.sin(x*.16+z*.08)+.97*Math.cos(z*.3));
+    }
+    for(let x=-46;x<46;x+=2)for(let z=-36;z<36;z+=2){
+      const tile=[[x,z],[x+2,z],[x+2,z+2],[x,z+2]].map(([px,pz])=>[px,ridgeHeight(px,pz)-.045,pz]);
+      if(tile.some(point=>point[1]>.025))face(tile,0x9fc575,1);
+    }
     // Dark spruces and pale outcrops form the valley's distant ridgeline.
     for(let i=0;i<160;i++){
       const x=random()*84-42,z=random()*64-32;
       if(Math.abs(x)<28 && Math.abs(z)<22)continue;
       if(Math.abs(x-waterX(z))<3)continue;
       const h=1.6+random()*2.3;
-      beam([x,0,z],[x,h*.36,z],.16,0x826448);
-      for(let j=0;j<3;j++)beam([x,h*(.18+.19*j),z],[x,h*(.72+.17*j),z],h*(.27-.045*j),[0x547a52,0x628a57,0x70965d][j],.02,7);
+      const baseY=ridgeHeight(x,z);
+      beam([x,baseY,z],[x,baseY+h*.36,z],.16,0x826448);
+      for(let j=0;j<3;j++)beam([x,baseY+h*(.18+.19*j),z],[x,baseY+h*(.72+.17*j),z],h*(.27-.045*j),[0x547a52,0x628a57,0x70965d][j],.02,7);
     }
     for(const [x,z] of [[-29,-20],[-33,4],[27,-13],[24,18],[-4,25]]){
       for(let i=0;i<5;i++)oval(x+random()*3,.22,z+random()*2,1+random(),.68+random(),.87+random(),0xa9ac93);
@@ -314,6 +411,18 @@ const valleyCamera = (() => {
       face([[x-.05,0,z],[x-.03,h,z],[x+.06,0,z]],0x799f46,1);
       if(i%4===0)oval(x,h,z,.095,.066,.09,[0xffda5a,0xfff3cc,0xef9aa5][i%3]);
     }
+    // Grass tussocks and seed heads cluster along the verge, clear of farm plots.
+    for(let i=0;i<1300;i++){
+      const x=random()*32-15,z=random()*24-12;
+      if(Math.abs(x-waterX(z))<riverWidth(z)+.34 ||
+        (x>-6.7 && x<6.6 && z>-6.5 && z<6.3) || Math.abs(x-2)<1 || Math.abs(z-3.5)<.9)continue;
+      const h=.09+.17*random();
+      for(let j=0;j<3;j++){
+        const a=random()*6.28,bx=x+Math.cos(a)*.09,bz=z+Math.sin(a)*.09;
+        face([[bx-.022,.01,bz],[bx+.024,.01,bz],[bx+.084*Math.cos(a),h,bz+.078*Math.sin(a)]],
+          [0x6f803f,0x8b9454,0x9d9f60][j],1);
+      }
+    }
     // A lavender border running alongside the beds.
     for(let i=0;i<17;i++){
       const z=-1.05+i*.34,x=-6.24+.12*Math.sin(i);
@@ -326,34 +435,207 @@ const valleyCamera = (() => {
 
   function chicken(x,z) {
     for(const side of [-1,1]){
-      box(x+.1,.04,z+side*.24,.13,.47,.12,0xcd8631);
-      box(x+.21,.03,z+side*.24,.33,.09,.15,0xe9a63b);
+      const foot=[x+.01,.065,z+side*.16];
+      beam(foot,[x-.05,.41,foot[2]],.033,0xb6853d,.052,6);
+      for(const toe of [-1,0,1])beam(foot,[x+.21-Math.abs(toe)*.04,.028,foot[2]+toe*.086],.024,0xc69346,.009,5);
     }
-    oval(x,.87,z,.78,.6,.51,0xf3d29d);
-    oval(x-.65,1.12,z,.34,.47,.28,0xa66a3c);
-    for(const side of [-1,1]) oval(x-.13,.9,z+.4*side,.47,.31,.17,0xcc8e53);
-    oval(x+.47,1.45,z,.39,.43,.36,0xffe6b6);
-    oval(x+.49,1.86,z,.22,.16,.1,0xdb4d38);
-    oval(x+.84,1.4,z,.2,.1,.14,0xf0a338);
-    for(const side of [-1,1]) oval(x+.63,1.53,z+side*.28,.065,.067,.045,0x292a29);
+    oval(x,.58,z,.57,.37,.34,0xe5bc82);
+    for(const side of [-1,1]){
+      oval(x-.10,.62,z+side*.255,.41,.24,.12,0xb67d49);
+      for(let i=0;i<4;i++)beam([x-.06,.59+i*.057,z+side*.34],[x-.46-i*.026,.52+i*.042,z+side*.26],.069,0x93653f,.012,6);
+    }
+    for(let i=-2;i<=2;i++)beam([x-.31,.59,z+i*.057],[x-.77+Math.abs(i)*.053,1.04-Math.abs(i)*.09,z+i*.093],.093,0x745641,.008,7);
+    beam([x+.24,.63,z],[x+.39,.99,z],.227,0xf1cb90,.126,9);
+    oval(x+.41,1.02,z,.185,.181,.177,0xf1cb90);
+    for(let i=0;i<3;i++)oval(x+.33+i*.079,1.17,z,.053,.059+i*.008,.038,0xba3b2e);
+    oval(x+.48,.936,z,.067,.10,.068,0xb43a32);
+    beam([x+.535,1.015,z],[x+.717,.987,z],.071,0xc48a36,.005,6);
+    for(const side of [-1,1])oval(x+.483,1.059,z+side*.151,.033,.035,.021,0x292a29);
   }
   function cow(x,z) {
     for(const dx of [-.6,.6]) for(const dz of [-.32,.32]){
       box(x+dx,.08,z+dz,.23,.8,.22,0xddc6a6);
       box(x+dx,.02,z+dz,.24,.17,.24,0x524941);
     }
-    oval(x,1.03,z,1.08,.59,.54,0xffe9c6);
-    for(const side of [-1,1]) oval(x-.28,1.13,z+.44*side,.4,.33,.13,0x594c43);
-    oval(x+.91,1.46,z,.48,.46,.42,0x695544);
-    oval(x+1.25,1.29,z,.33,.23,.35,0xe2a396);
+    oval(x,1.02,z,1.04,.53,.51,0xf0dfbd);
     for(const side of [-1,1]){
-      oval(x+.85,1.77,z+.4*side,.22,.12,.22,0x674936);
-      oval(x+1.1,1.55,z+.33*side,.07,.07,.055,0x201d19);
+      oval(x-.40,1.12,z+.409*side,.37,.32,.115,0x5a493d);
+      oval(x+.35,1.29,z+.362*side,.19,.16,.11,0x5a493d);
+    }
+    beam([x-.92,1.19,z+.07],[x-1.05,.58,z+.23],.037,0xddc6a6,.026,6);
+    oval(x-1.05,.52,z+.23,.067,.129,.057,0x5a493d);
+    beam([x+.52,1.08,z],[x+.91,1.38,z],.37,0xf0dfbd,.26,10);
+    oval(x+.97,1.40,z,.36,.39,.31,0x6b5344);
+    oval(x+1.23,1.26,z,.24,.15,.235,0xd8ab94);
+    for(const side of [-1,1]){
+      oval(x+.85,1.57,z+.33*side,.18,.085,.18,0x6b5344);
+      beam([x+.91,1.66,z+.14*side],[x+.84,1.84,z+.24*side],.065,0xc3aa80,.012,7);
+      oval(x+1.103,1.48,z+.269*side,.052,.058,.034,0x201d19);
+      oval(x+1.415,1.29,z+.125*side,.034,.03,.027,0x72574b);
     }
   }
+  function resident(x,z,coat,hat){
+    // Scale and stance are shared by the three villagers, with individual clothes and headwear.
+    const skin=0xb98363,boots=0x4d4439,trousers=0x52605a;
+    for(const side of [-1,1]){
+      const footX=x+side*.135,footZ=z+side*.05;
+      oval(footX,.11,footZ+.06,.095,.10,.175,boots);
+      beam([footX,.17,footZ],[x+side*.10,.83,z],.079,trousers,.104,8);
+      beam([x+side*.19,1.18,z],[x+side*.27,.92,z+.035],.088,coat,.065,8);
+      beam([x+side*.27,.92,z+.035],[x+side*.24,.77,z+.10],.064,skin,.047,8);
+      oval(x+side*.24,.755,z+.1,.058,.077,.059,skin);
+    }
+    oval(x,1.03,z,.24,.33,.16,coat);
+    oval(x,1.485,z,.151,.185,.145,skin);
+    oval(x,1.48,z+.133,.043,.05,.047,skin);
+    for(const side of [-1,1])oval(x+side*.058,1.51,z+.134,.018,.013,.012,0x463c36);
+    beam([x,1.59,z],[x,1.62,z],.212,hat,.215,14);
+    oval(x,1.665,z,.153,.09,.152,hat);
+  }
+  function lockAndGauge(story){
+    const x=9.52,z=5.82;
+    for(const side of [-1,1])box(x+side*.68,.01,z,.18,.76,1.63,0xb7afa0);
+    box(x,.01,z-.7,1.42,.67,.16,0x886c50);
+    box(x,.03,z+.7,1.42,.3+story.level*.055,.14,0x886c50);
+    box(x,.035+story.level*.068,z,1.16,.035,1.29,0x52bcb1);
+    box(x-.51,.04,z+.45,.075,1.1,.082,0xc8a77b);
+    for(let i=1;i<=6;i++)box(x-.51,.14+i*.12,z+.496,.08,.019,.025,i===4?0xb54932:0x5d574c);
+  }
+  function seedBed(x,z,wet){
+    const colour=wet?0x634733:0x995e3a;
+    const nx=8,nz=16;
+    const rows=[];
+    for(let j=0;j<=nz;j++){
+      const v=j/nz;
+      const row=[];
+      for(let i=0;i<=nx;i++){
+        const u=i/nx;
+        const edge=Math.min(1,Math.min(u,1-u)*9,Math.min(v,1-v)*13);
+        const bend=.035*Math.sin(x*2+u*5+z);
+        const ridge=Math.pow(.5+.5*Math.cos(v*Math.PI*8+bend),1.4);
+        const y=.032+edge*(.11+.104*ridge+.011*Math.sin(i*3+j*1.7+x));
+        row.push([x+(u-.5)*(1.77-.17*Math.pow(Math.abs(2*v-1),7)),y,z+(v-.5)*1.24]);
+      }
+      rows.push(row);
+    }
+    for(let j=0;j<nz;j++)for(let i=0;i<nx;i++){
+      const lower=rows[j],upper=rows[j+1];
+      face([lower[i],lower[i+1],upper[i+1],upper[i]],colour,.84+.16*Math.cos(j*Math.PI/2));
+    }
+  }
+
+  function drawBeacon(story,day){
+    const x=11.8,z=6.33,stage=story.signed.length;
+    // A missing lens, a repaired housing and a lit beacon mark the player's work at the landing.
+    beam([x,-.12,z],[x,.32,z],.55,0xb7afa0,.42,10);
+    beam([x,.32,z],[x,2.23,z],.19,0x886c50,.12,9);
+    box(x,2.23,z,.56,.11,.56,0x515e56);
+    if(stage>=2){
+      for(const dx of [-.21,.21])for(const dz of [-.21,.21])
+        box(x+dx,2.32,z+dz,.04,.55,.04,0x936f41);
+      if(stage>=3)oval(x,2.55,z,.18,.24,.18,stage===4?0xffbc50:0xc8a669);
+      beam([x,2.87,z],[x,3.1,z],.43,0x52756f,.025,4);
+    }
+    if(stage===4 && story.returnDay<=day){
+      const px=11.0,pz=9.62;
+      motionGroup=2;
+      boatHull(px,pz,[[-.47,-1.42],[.47,-1.42],[.60,-.8],[.60,.64],[.38,1.25],[0,1.64],[-.38,1.25],[-.60,.64],[-.60,-.8]],.40,0x4c796d);
+      if(story.line==="passenger"){
+        for(const dz of [-.71,-.05,.61]) box(px,.49,pz+dz,.95,.085,.22,0xb49268);
+        for(const side of [-1,1]){
+          for(const end of [-1,1])beam([px+side*.49,.40,pz+end*.86],[px+side*.49,1.32,pz+end*.86],.035,0x886c50);
+          face([[px,1.48,pz-.98],[px+side*.57,1.34,pz-.98],[px+side*.57,1.34,pz+.98],[px,1.48,pz+.98]],0xf3dba5,.99);
+        }
+      }else{
+        for(const [dx,dz] of [[-.23,-.59],[.24,-.59],[0,.22]]){
+          box(px+dx,.40,pz+dz,.43,.45,.65,0xb58b5f);
+          for(const edge of [-.21,.21])box(px+dx,.40,pz+dz+edge,.45,.47,.048,0x776449);
+        }
+      }
+      motionGroup=0;
+    }
+  }
+
   function plotLocation(i) {
     return i<20 ? [-4.9+i%4*1.93,-.7+Math.floor(i/4)*1.43] :
       [-22.4+i%4*1.93,-6.4+Math.floor((i-20)/4)*1.43];
+  }
+  // Fold each leaf along its midrib so both sides catch the light as the camera turns.
+  function blade(x,y,z,a,length,width,rise,tip,color){
+    const dx=Math.cos(a),dz=Math.sin(a),root=[x,y,z];
+    const cx=x+dx*length*.52,cz=z+dz*length*.52;
+    const mid=[cx,y+rise+.018,cz],end=[x+dx*length,y+tip,z+dz*length];
+    for(const side of [-1,1]){
+      const edge=[cx-side*dz*width,y+rise-width*.36,cz+side*dx*width];
+      face([root,edge,mid],color,side<0?.87:1.04);
+      face([mid,edge,end],color,side<0?.91:1.08);
+    }
+  }
+  function wheatBed(x,z,growth){
+    const ripe=growth>=1, straw=ripe?0xc8a052:0x7d9847;
+    for(let i=0;i<14;i++){
+      const angle=i*2.4;
+      const px=x+(i%5-2)*.29+.035*Math.sin(angle);
+      const pz=z+(Math.floor(i/5)-1)*.33+.055*Math.cos(angle);
+      const top=.29+growth*(.55+.17*Math.cos(angle)),lean=.07*growth;
+      beam([px,.17,pz],[px+lean,top,pz],.016,straw,.009,4);
+      for(const side of [-1,1])blade(px,.22+growth*.15,pz,angle+side,.13+growth*.14,.027,.09,.075,straw);
+      if(!ripe)continue;
+      for(let k=0;k<5;k++){
+        const side=k%2?1:-1, base=top-.14+k*.034;
+        blade(px+lean,base,pz,angle+side*1.57,.079,.027,.034,.098,0xdcb565);
+      }
+      beam([px+lean,top,pz],[px+lean+.028,top+.14,pz],.012,0xe6c77c,.003,4);
+    }
+  }
+  function carrot(x,z,turn){
+    beam([x,.13,z],[x,.30,z],.055,0xc97232,.132,9);
+    oval(x,.285,z,.143,.08,.135,0xe08737);
+    for(let i=0;i<5;i++){
+      const angle=i*1.26+turn, dx=Math.cos(angle), dz=Math.sin(angle);
+      beam([x,.32,z],[x+dx*.23,.67,z+dz*.23],.015,0x60853e,.007,4);
+      for(let j=1;j<=3;j++){
+        for(const side of [-1,1])blade(x+dx*j*.056,.33+j*.082,z+dz*j*.056,angle+side*.87,.089,.026,.037,.072,0x54823d);
+      }
+    }
+  }
+  function cabbage(x,z,turn,growth){
+    const size=.58+.42*growth;
+    oval(x,.24+size*.10,z,.218*size,.18*size,.212*size,0x97b373);
+    for(let i=0;i<10;i++){
+      const angle=i*2.4+turn;
+      if(i<6)blade(x,.26,z,angle,.38*size,.14*size,.10*size,.052*size,0x5b865c);
+      else blade(x,.26,z,angle,.24*size,.102*size,.23*size,.25*size,0x86a96c);
+    }
+  }
+  function strawberry(x,z,turn,growth){
+    for(let i=0;i<8;i++)blade(x,.23,z,i*2.4,.21+growth*.14,.095,.12+growth*.07,.074,i%2?0x517e43:0x638b4c);
+    for(let i=0;i<3;i++){
+      const angle=i*2.15+turn, bx=x+.25*Math.cos(angle), bz=z+.25*Math.sin(angle);
+      if(growth<1){
+        for(let j=0;j<5;j++)blade(bx,.37,bz,j*1.26,.067,.028,.013,.021,0xf4eede);
+        oval(bx,.381,bz,.028,.016,.028,0xe8b54a);
+      }else{
+        oval(bx,.29,bz,.083,.11,.084,0xb93832);
+        for(let j=0;j<4;j++){
+          const a=j*1.57;
+          blade(bx,.392,bz,a,.076,.027,.008,-.028,0x437141);
+          oval(bx+.078*Math.cos(a),.286,bz+.078*Math.sin(a),.011,.016,.011,0xe7c179);
+        }
+      }
+    }
+  }
+  const gardenPlants={carrot,cabbage,strawberry};
+  function plantCrop(x,z,plot,days){
+    const growth=plot.age/days;
+    motionGroup=4;
+    if(plot.crop==="wheat")wheatBed(x,z,growth);
+    else for(const side of [-1,1]){
+      const px=x+side*.405, pz=z+side*.053;
+      if(plot.age)gardenPlants[plot.crop](px,pz,side,growth);
+      else for(let i=0;i<3;i++)blade(px,.19,pz,i*2.1,.17,.055,.081,.075,0x6a9848);
+    }
+    motionGroup=0;
   }
   function bake(farm,crops){
     triangles=[]; faces=[];
@@ -362,34 +644,22 @@ const valleyCamera = (() => {
       terrain=gpu?new Float32Array(triangles):faces;
       triangles=[]; faces=[];
     }
+    lockAndGauge(farm.story);
+    drawBeacon(farm.story,farm.day);
+    motionGroup=3;
     if(farm.animals.hen) chicken(3.2,-1.7);
     if(farm.animals.cow) cow(5.6,-2.1);
+    motionGroup=0;
     farm.plots.forEach((plot,i)=>{
       const [x,z]=plotLocation(i);
-      box(x,.02,z,1.78,.18,1.26,plot?.wet?0x634733:0x995e3a);
-      for(const dz of [-.36,0,.36]) box(x,.2,z+dz,1.58,.08,.16,plot?.wet?0x76573d:0xb67e4d);
+      seedBed(x,z,plot?.wet);
       if(plot && plot.age >= crops[plot.crop].days){
-        for(const side of [-1,1]){
-          box(x,.21,z+side*.59,1.73,.045,.044,0xf0c16a);
-          box(x+side*.85,.21,z,.044,.045,1.21,0xf0c16a);
+        for(const edge of [-1,1])for(const end of [-1,1]){
+          box(x+edge*.69,.16,z+end*.56,.28,.034,.045,0xd9ae64);
+          box(x+edge*.81,.16,z+end*.46,.045,.034,.21,0xd9ae64);
         }
       }
-      if(plot) for(const dx of [-.4,.4]){
-        const ripe=plot.age>=crops[plot.crop].days;
-        const color=ripe?{carrot:0xe58332,cabbage:0x67a740,strawberry:0xd84441}[plot.crop]:0x609341;
-        if(!ripe){
-          for(const side of [-1,1]) oval(x+dx+side*.085,.38,z,.14,.09,.065,0x74a444);
-        } else if(plot.crop==="carrot"){
-          oval(x+dx,.36,z,.21,.23,.19,color);
-          for(const side of [-1,0,1]) beam([x+dx,.46,z],[x+dx+side*.14,.81-Math.abs(side)*.08,z+.03],.065,0x52843e,.018,5);
-        } else if(plot.crop==="cabbage"){
-          oval(x+dx,.46,z,.24,.22,.24,0x9dc663);
-          for(let j=0;j<5;j++)oval(x+dx+.17*Math.cos(j*1.26),.4,z+.17*Math.sin(j*1.26),.15,.15,.16,color);
-        } else {
-          oval(x+dx,.47,z,.27,.22,.25,0x547e41);
-          for(let j=0;j<3;j++)oval(x+dx+.17*Math.cos(j*2.1),.49,z+.17*Math.sin(j*2.1),.13,.15,.13,color);
-        }
-      }
+      if(plot)plantCrop(x,z,plot,crops[plot.crop].days);
     });
     if(!gpu)return terrain.concat(faces);
     const all=new Float32Array(terrain.length+triangles.length);
@@ -398,14 +668,16 @@ const valleyCamera = (() => {
   }
 
   function paint(farm,crops,buttons){
-    const key=JSON.stringify([farm.plots,Object.keys(farm.animals)]);
+    const key=JSON.stringify([farm.plots,Object.keys(farm.animals),farm.story.signed.length,farm.story.returnDay>farm.day,farm.story.level]);
+    lastFarm={farm,crops,buttons};
+    weatherWet=rainyDay(farm.day);
     if(key!==sceneKey){bakedScene=bake(farm,crops);sceneKey=key;}
     redraw=()=>frame(buttons);
     redraw();
   }
   function frame(buttons){
     width=canvas.clientWidth;height=canvas.clientHeight;
-    const ratio=Math.min(devicePixelRatio,2);
+    const ratio=Math.min(devicePixelRatio,1.75,1680/Math.max(1,width));
     const w=Math.round(width*ratio),h=Math.round(height*ratio);
     if(canvas.width!==w || canvas.height!==h){canvas.width=w;canvas.height=h;}
     ctx?.setTransform(ratio,0,0,ratio,0,0);
@@ -425,15 +697,28 @@ const valleyCamera = (() => {
       button.hidden=!overview;
       button.style.left=x+'px';button.style.top=y+'px';
     }
+    const letter=ferryLetters[lastFarm.farm.story.signed.length];
+    const subject=letter && {home:[-5.51,1.9,-2.22],apiary:[-13.15,1.9,13.63],quay:[14.65,1.92,7.45]}[letter.district];
+    if(subject){
+      const [x,y]=project(subject);
+      letterPin.hidden=overview || letter.district!==selectedDistrict || x<38 || x>width-38 || y<38 || y>height-8;
+      letterPin.style.left=x+"px";letterPin.style.top=y+"px";
+      letterPin.textContent="✉ "+letter.author.split(" ")[0];
+      letterPin.setAttribute("aria-label","Read the letter from "+letter.author);
+    }else letterPin.hidden=true;
     for(const [button,station] of stations){
       const [x,y]=project([station.x,station.y,station.z]);
-      button.hidden=overview || station.district!==selectedDistrict || x<40 || x>width-40 || y<42 || y>height-12;
+      button.hidden=overview || station.district!==selectedDistrict || (station.availableOnMap && !station.availableOnMap(lastFarm.farm)) || x<40 || x>width-40 || y<42 || y>height-12;
       button.style.left=x+"px";button.style.top=y+"px";
     }
     if(gpu){
       const c=Math.cos(angle),s=Math.sin(angle),v=Math.sin(pitch),u=Math.cos(pitch);
       const sx=2*scale/width,sy=2*scale/height;
-      gpu(bakedScene,[[sx*c,0,-sx*s],[-sy*s*v,sy*u,-sy*c*v],[-s*u/100,-v/100,-c*u/100]],[-sx*(c*centerX-s*centerZ),-.16+sy*v*(s*centerX+c*centerZ),u*(s*centerX+c*centerZ)/100]);
+      view={axes:[[sx*c,0,-sx*s],[-sy*s*v,sy*u,-sy*c*v],[-s*u/100,-v/100,-c*u/100]],
+        origin:[-sx*(c*centerX-s*centerZ),-.16+sy*v*(s*centerX+c*centerZ),u*(s*centerX+c*centerZ)/100],
+        eye:[s*u,v,c*u], x:centerX,z:centerZ,extent:Math.max(width,height)/scale*.84+4,
+        light:lightSelect.value,rain:weatherWet};
+      drawAtmosphere();
       return;
     }
     const visible=[];
@@ -449,6 +734,10 @@ const valleyCamera = (() => {
       ctx.fillStyle=ctx.strokeStyle=f.color;ctx.lineWidth=.45;ctx.fill();ctx.stroke();
     }
   }
+  const letterPin=document.createElement("button");
+  letterPin.className="map-pin correspondent";letterPin.hidden=true;
+  letterPin.onclick=()=>document.getElementById("read-letter").click();
+  document.getElementById("map-pins").append(letterPin);
   const pins=new Map();
   for(const [id,place] of Object.entries(districts)){
     const pin=document.createElement("button");
@@ -460,6 +749,7 @@ const valleyCamera = (() => {
 
   const stations = new Map();
   for(const station of [
+    {district:"home",x:.05,y:2.8,z:-4.45,name:"Stone windmill",actions:["mill"],availableOnMap:farm=>farm.milling || farm.basket.wheat>=2},
     {district:"orchard",x:-22.6,y:2.6,z:-11.3,name:"Apple trees",actions:["pick"]},
     {district:"orchard",x:-17,y:2.3,z:-9.9,name:"Cider press",actions:["bottle","press"]},
     {district:"apiary",x:-13.2,y:1.4,z:15.9,name:"Beehives",actions:["collect-honey","tend-hives"]},
@@ -472,6 +762,7 @@ const valleyCamera = (() => {
       const options=station.actions.map(id=>document.getElementById(id));
       const available=options.find(action=>!action.disabled);
       if(available)available.click();
+      else if(station.district==="home")document.getElementById("status").textContent=options[0].textContent;
       else {
         document.getElementById("status").textContent=document.getElementById("production").textContent || "No work available here yet. Check the district panel for supplies and timing.";
         document.getElementById("district-panel").scrollIntoView({block:"nearest"});
@@ -481,6 +772,102 @@ const valleyCamera = (() => {
     stations.set(button,station);
   }
 
+  let weatherWet=false,view,inView=false,timer=0,animationFrame=0;
+  let visualTime=0,lastPaint=performance.now();
+  const lightSelect=document.getElementById("daylight");
+  const animate=document.getElementById("animate");
+  const reduced=matchMedia("(prefers-reduced-motion: reduce)");
+  const dialog=document.getElementById("letters");
+  let motionPreference="auto";
+  try{
+    const choice=localStorage.getItem("little-acre-light");
+    if(["morning","noon","evening"].includes(choice))lightSelect.value=choice;
+    motionPreference=localStorage.getItem("little-acre-motion")||"auto";
+  }catch{}
+  function syncMotion(){
+    animate.checked=motionPreference==="auto"?!reduced.matches:motionPreference==="on";
+  }
+  syncMotion();
+  function cancelAnimation(){
+    clearTimeout(timer);cancelAnimationFrame(animationFrame);timer=0;animationFrame=0;
+  }
+  function drawAtmosphere(){
+    cancelAnimation();
+    if(!gpu||!view)return;
+    const playing=animate.checked && inView && !document.hidden && !dialog.open && !photo.open;
+    const now=performance.now();
+    if(playing)visualTime+=Math.min((now-lastPaint)/1000,.25);
+    lastPaint=now;
+    gpu(bakedScene,view,visualTime);
+    if(playing){
+      // Camera input remains immediate. Ambient motion gets a bounded frame budget.
+      timer=setTimeout(()=>{animationFrame=requestAnimationFrame(drawAtmosphere);},canvas.clientWidth<650?95:74);
+    }
+  }
+  const photo=document.getElementById("photo");
+  const shutter=document.getElementById("take-photo");
+  const print=document.getElementById("photo-print");
+  const download=document.getElementById("download-photo");
+  let photoURL;
+  function releasePhoto(){
+    if(photoURL)URL.revokeObjectURL(photoURL);
+    photoURL=null;
+    print.removeAttribute("src");
+    download.removeAttribute("href");
+  }
+  shutter.onclick=async()=>{
+    if(shutter.disabled || photo.open || !lastFarm)return;
+    shutter.disabled=true;
+    shutter.textContent="Taking photo…";
+    releasePhoto();
+    cancelAnimation();
+    try{
+      if(gpu && view){
+        // Render directly at export resolution with the current camera. UI overlays are DOM elements.
+        canvas.width=Math.round(2048*Math.min(1,width/height));
+        canvas.height=Math.round(canvas.width*height/width);
+        gpu(bakedScene,view,visualTime);
+      }
+      const blob=await new Promise((resolve,reject)=>canvas.toBlob(
+        result=>result?resolve(result):reject(new Error("Capture unavailable")),"image/png"));
+      photoURL=URL.createObjectURL(blob);
+      print.src=photoURL;
+      await print.decode();
+      download.href=photoURL;
+      download.download="little-acre-"+selectedDistrict+"-day-"+lastFarm.farm.day+".png";
+      document.getElementById("photo-caption").textContent=districts[selectedDistrict].name+" · Day "+lastFarm.farm.day;
+      photo.showModal();
+    }catch{
+      releasePhoto();
+      document.getElementById("status").textContent="This browser could not capture the scene.";
+    }finally{shutter.textContent="Take photo";shutter.disabled=false;refresh();}
+  };
+  document.getElementById("close-photo").onclick=()=>photo.close();
+  photo.addEventListener("close",()=>{
+    if(photo.open || shutter.disabled)return;
+    releasePhoto();
+    drawAtmosphere();
+  });
+  function saveDisplay(key,value){try{localStorage.setItem(key,value);}catch{}}
+  lightSelect.onchange=()=>{saveDisplay("little-acre-light",lightSelect.value);refresh();};
+  animate.onchange=()=>{
+    motionPreference=animate.checked?"on":"off";
+    saveDisplay("little-acre-motion",motionPreference);drawAtmosphere();
+  };
+  reduced.addEventListener("change",()=>{syncMotion();drawAtmosphere();});
+  new IntersectionObserver(([entry])=>{inView=entry.isIntersecting;drawAtmosphere();}).observe(field);
+  new MutationObserver(drawAtmosphere).observe(dialog,{attributes:true,attributeFilter:["open"]});
+  document.addEventListener("visibilitychange",()=>document.hidden?cancelAnimation():drawAtmosphere());
+  window.addEventListener("pagehide",cancelAnimation);
+  window.addEventListener("pageshow",()=>refresh());
+  canvas.addEventListener("webglcontextlost",()=>{
+    cancelAnimation();
+    const replacement=canvas.cloneNode(false);
+    canvas.replaceWith(replacement);canvas=replacement;gpu=null;ctx=canvas.getContext("2d");
+    terrain=null;sceneKey=null;view=null;
+    if(lastFarm)paint(lastFarm.farm,lastFarm.crops,lastFarm.buttons);
+  });
+  let lastFarm;
   let previous,drag,pending=false;
   function refresh(){
     if(!pending){

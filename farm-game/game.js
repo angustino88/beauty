@@ -3,8 +3,11 @@
 const crops = {
   carrot: { name: "Carrot", icon: "🥕", cost: 3, days: 1, price: 7 },
   cabbage: { name: "Cabbage", icon: "🥬", cost: 5, days: 2, price: 13 },
-  strawberry: { name: "Strawberry", icon: "🍓", cost: 8, days: 3, price: 22 }
+  strawberry: { name: "Strawberry", icon: "🍓", cost: 8, days: 3, price: 22 },
+  wheat: { name: "Wheat", icon: "🌾", cost: 4, days: 2, price: 10 }
 };
+const vegetableOrders = ["carrot", "cabbage", "strawberry"];
+const flourPayment = 28;
 const rainyDay = day => day % 5 === 3 || day % 9 === 0;
 const saveKey = "little-acre-v1";
 const byId = (id) => document.getElementById(id);
@@ -23,6 +26,7 @@ function loadFarm() {
 
 const farm = loadFarm();
 const renderValley = setupValley(farm, commit, render);
+const renderCampaign = setupCampaign(farm, commit);
 let tool = "plant";
 let selected = "carrot";
 const tools = [...document.querySelectorAll("[data-tool]")];
@@ -35,21 +39,26 @@ function createPlot(index) {
 }
 const plotButtons = farm.plots.map((_, index) => createPlot(index));
 
+const seedPicker = byId("quick-seed");
+function chooseSeed(id) {
+  selected = id;
+  tool = "plant";
+  render(`Select an empty plot to plant ${crops[id].name.toLowerCase()}.`);
+}
+seedPicker.onchange = () => chooseSeed(seedPicker.value);
 const seedButtons = Object.entries(crops).map(([id, crop]) => {
+  seedPicker.add(new Option(crop.name + " · " + crop.cost + " 🪙", id));
   const button = document.createElement("button");
   button.className = "seed";
   button.innerHTML = `<span class="icon" aria-hidden="true">${crop.icon}</span><span><strong>${crop.name}</strong><small>${crop.days} watered ${crop.days === 1 ? "day" : "days"} · sells for ${crop.price}</small></span><b>${crop.cost} 🪙</b>`;
-  button.addEventListener("click", () => {
-    selected = id;
-    tool = "plant";
-    render(`Select an empty plot to plant ${crop.name.toLowerCase()}.`);
-  });
+  button.addEventListener("click", () => chooseSeed(id));
   byId("seeds").append(button);
   return [id, button];
 });
 
 function render(message) {
   renderValley();
+  renderCampaign();
   renderEstate();
   const rain = rainyDay(farm.day);
   document.body.classList.toggle("rainy",rain);
@@ -61,9 +70,14 @@ function render(message) {
   const held = farm.basket[order.id] || 0;
   byId("order").textContent = `${crops[order.id].name} · ${Math.min(held, order.count)}/${order.count} packed · ${order.reward} coins`;
   byId("deliver").disabled = held < order.count;
+  const mill = byId("mill");
+  mill.hidden = document.body.dataset.district !== "home";
+  mill.disabled = farm.milling ? farm.milling > farm.day : (farm.basket.wheat || 0) < 2;
+  mill.textContent = farm.milling ? (farm.milling > farm.day ? "Flour ready on day " + farm.milling : "Deliver milled flour · " + flourPayment + " coins") : "Mill 2 wheat · " + flourPayment + " coins tomorrow";
   byId("water-all").disabled = !farm.plots.some(plot => plot && !plot.wet && plot.age < crops[plot.crop].days);
   if (message) byId("status").textContent = message;
   for (const button of tools) button.setAttribute("aria-pressed", button.dataset.tool === tool);
+  seedPicker.value = selected;
   for (const [id, button] of seedButtons) button.setAttribute("aria-pressed", id === selected);
   plotButtons.forEach((button, index) => {
     const plot = farm.plots[index];
@@ -88,9 +102,8 @@ function render(message) {
 
 function currentOrder() {
   const completed = farm.orders || 0;
-  const ids = Object.keys(crops);
-  const id = ids[completed % ids.length];
-  const count = 2 + Math.min(4, Math.floor(completed / ids.length));
+  const id = vegetableOrders[completed % vegetableOrders.length];
+  const count = 2 + Math.min(4, Math.floor(completed / vegetableOrders.length));
   return { id, count, reward: count * (crops[id].price + 4) };
 }
 
@@ -103,6 +116,21 @@ byId("deliver").addEventListener("click", () => {
   farm.orders = (farm.orders || 0) + 1;
   commit(`Order delivered for ${reward} coins. A new order is available.`);
 });
+
+byId("mill").onclick = () => {
+  if (document.body.dataset.district !== "home") return;
+  if (farm.milling) {
+    if (farm.day < farm.milling) return;
+    farm.milling = 0;
+    farm.coins += flourPayment;
+    return commit("Delivered flour to the village baker for " + flourPayment + " coins.");
+  }
+  if ((farm.basket.wheat || 0) < 2) return;
+  farm.basket.wheat -= 2;
+  if (!farm.basket.wheat) delete farm.basket.wheat;
+  farm.milling = farm.day + 1;
+  commit("The millstones are turning. Deliver the flour tomorrow.");
+};
 
 byId("water-all").addEventListener("click", () => {
   for (const plot of farm.plots) {
@@ -155,7 +183,7 @@ function tend(index) {
 const toolHints = {
   plant: "Select an empty plot to sow your chosen seed.",
   water: "Select a planted plot to water it.",
-  harvest: "Select crops with a gold border to harvest them."
+  harvest: "Harvest ripe crops marked by golden corners."
 };
 
 for (const button of tools) {

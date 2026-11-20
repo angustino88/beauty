@@ -16,6 +16,9 @@ const NotFound = lazy(() => import("@/pages/errors/NotFound"));
 const ServerError = lazy(() => import("@/pages/errors/ServerError"));
 const AccessDenied = lazy(() => import("@/pages/errors/AccessDenied"));
 
+const GameHub = lazy(() => import("@/features/game-widget/components/GameHub"));
+const LittleAcrePlayer = lazy(() => import("@/features/game-widget/components/LittleAcrePlayer"));
+
 // Protected pages
 const Dashboard = lazy(() => import("@/features/dashboard/pages/Dashboard"));
 const InteractiveDashboard = lazy(
@@ -103,6 +106,7 @@ export default function AppRoutes() {
         <Route index element={<Navigate to="/dashboard" replace />} />
         {/* Dashboard */}
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/games" element={<GameHub />} />
 
         {/* Booking */}
         <Route path="/booking-calendar" element={<BookingCalendar />} />
@@ -336,6 +340,7 @@ export default function AppRoutes() {
           </PrivateRoute>
         }
       >
+        <Route path="/games/little-acre" element={<LittleAcrePlayer />} />
         <Route path="/dashboard/3d" element={<InteractiveDashboard />} />
         <Route
           path="/dashboard/3d/:roomSlug"

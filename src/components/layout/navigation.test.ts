@@ -5,17 +5,19 @@ import { findNavigationPage, getNavigationSections, searchNavigationPages } from
 test('regular users see only public navigation, including in search', () => {
   const sections = getNavigationSections(false);
   assert.deepEqual(sections.map(({ key }) => key), [
-    'dashboard', '3d-dashboard', 'leaderboard', 'booking-calendar', 'my-bookings', 'help',
+    'dashboard', '3d-dashboard', 'leaderboard', 'booking-calendar', 'my-bookings', 'games', 'help',
   ]);
   assert.equal(searchNavigationPages('equipment', sections).length, 0);
   assert.equal(findNavigationPage('/spaces/station', sections), undefined);
+  assert.equal(searchNavigationPages('game hub', sections)[0]?.page.path, '/games');
+  assert.equal(findNavigationPage('/games/little-acre', sections)?.section.key, 'games');
 });
 
 test('coordinator navigation retains all destinations and promotes frequent pages', () => {
   const sections = getNavigationSections(true);
-  assert.equal(sections.length, 10);
+  assert.equal(sections.length, 11);
   const paths = sections.flatMap(({ pages }) => pages.map(({ path }) => path));
-  assert.equal(paths.length, 28);
+  assert.equal(paths.length, 29);
   assert.equal(new Set(paths).size, paths.length);
   assert.deepEqual(sections.slice(0, 5).map(({ pages }) => pages[0].path), [
     '/dashboard', '/dashboard/3d', '/leaderboard', '/booking-calendar', '/my-bookings',

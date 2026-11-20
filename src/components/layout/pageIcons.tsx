@@ -1,4 +1,5 @@
 import React from 'react';
+import { Gamepad2 } from 'lucide-react';
 import {
   ApiOutlined, AppstoreOutlined, BankOutlined, BarChartOutlined, BuildOutlined,
   BugOutlined, CalendarOutlined, CustomerServiceOutlined, DatabaseOutlined,
@@ -18,6 +19,7 @@ export const sectionIcons: Record<string, React.ReactNode> = {
 export const pageIcons: Record<string, React.ReactNode> = {
   dashboard: <HomeOutlined />, '3d-dashboard': <HeatMapOutlined />, leaderboard: <TrophyOutlined />,
   'booking-calendar': <CalendarOutlined />, 'my-bookings': <HistoryOutlined />,
+  games: <Gamepad2 size={16} aria-hidden="true" />,
   mapping: <LayoutOutlined />, rooms: <BankOutlined />, stations: <DatabaseOutlined />,
   benches: <ExperimentOutlined />, computing: <LaptopOutlined />, display: <DesktopOutlined />,
   debugging: <BugOutlined />, networking: <ApiOutlined />, power: <ThunderboltOutlined />,

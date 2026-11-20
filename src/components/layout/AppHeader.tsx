@@ -1,7 +1,7 @@
 import { Layout, Tooltip } from 'antd';
 import { MoonOutlined, SunOutlined } from '@ant-design/icons';
 import { Gamepad2 } from 'lucide-react';
-import React, { Suspense, lazy, useState } from 'react';
+import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { LogoBosch, LogoLabMango } from '@/components/svg';
 import { useSeason } from '@/shared/season/useSeason';
@@ -10,7 +10,6 @@ import { SeasonDecor } from './SeasonDecor';
 import styleCss from './layout.module.css';
 
 const { Header: AntHeader } = Layout;
-const GameWidget = lazy(() => import('@/features/game-widget/components/GameWidget'));
 
 /**
  * App header: brand, the current season's decoration, theme toggle, partner logo.
@@ -18,7 +17,6 @@ const GameWidget = lazy(() => import('@/features/game-widget/components/GameWidg
  * surface so it sits on the same ground as the rest of the app.
  */
 const AppHeader = () => {
-  const [showGame, setShowGame] = useState(false);
   const { isDark, toggleTheme } = useTheme();
   const season = useSeason();
   const themeLabel = `Switch to ${isDark ? 'light' : 'dark'} mode`;
@@ -31,23 +29,21 @@ const AppHeader = () => {
       </NavLink>
 
       {season ? (
-        <Tooltip title="Play the mini game">
-          <button type="button" className={styleCss.seasonChip} onClick={() => setShowGame(true)}>
+        <Tooltip title="Game Hub">
+          <NavLink to="/games" className={styleCss.seasonChip} aria-label={`${season.label} games`}>
             {season.label}
-          </button>
+          </NavLink>
         </Tooltip>
       ) : null}
 
       {season ? <SeasonDecor season={season.id} /> : <div className={styleCss.headerSpacer} />}
 
       <div className={styleCss.headerActions}>
-        {season ? null : (
-          <Tooltip title="Play the mini game">
-            <button type="button" className={styleCss.headerIconButton} onClick={() => setShowGame(true)} aria-label="Play the mini game">
-              <Gamepad2 size={16} />
-            </button>
-          </Tooltip>
-        )}
+        <Tooltip title="Game Hub">
+          <NavLink to="/games" className={styleCss.headerIconButton} aria-label="Game Hub">
+            <Gamepad2 size={16} />
+          </NavLink>
+        </Tooltip>
         <Tooltip title={themeLabel}>
           <button type="button" className={styleCss.headerIconButton} onClick={toggleTheme} aria-label={themeLabel} aria-pressed={isDark}>
             {isDark ? <SunOutlined /> : <MoonOutlined />}
@@ -57,12 +53,6 @@ const AppHeader = () => {
           <LogoBosch />
         </span>
       </div>
-
-      {showGame && (
-        <Suspense fallback={null}>
-          <GameWidget onClose={() => setShowGame(false)} />
-        </Suspense>
-      )}
     </AntHeader>
   );
 };

@@ -28,6 +28,9 @@ export const navigationSections: NavigationSection[] = [
   { key: 'my-bookings', label: 'My Bookings', pages: [
     { path: '/my-bookings', label: 'My Bookings', icon: 'my-bookings' },
   ] },
+  { key: 'games', label: 'Game Hub', pages: [
+    { path: '/games', label: 'Game Hub', icon: 'games' },
+  ] },
   { key: 'spaces', label: 'Spaces', coordinatorOnly: true, pages: [
     { path: '/spaces/mapping', label: 'Mapping', icon: 'mapping' },
     { path: '/spaces/room', label: 'Rooms', icon: 'rooms' },
