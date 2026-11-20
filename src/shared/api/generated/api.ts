@@ -13894,7 +13894,7 @@ export type LeaderboardPersona = {
   points: number;
   wfo_rate?: number;
   wfh_rate?: number;
-  late_rate?: number;
+  extended_hours_rate?: number;
   /** Active lab time against 8 hours per weekday, 0-1. */
   usage_efficiency?: number;
   /** Active time against total session time, 0-1; null without sessions. */

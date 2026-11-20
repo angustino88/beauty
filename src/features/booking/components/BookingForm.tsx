@@ -87,7 +87,6 @@ export const BookingForm: React.FC<BookingFormProps> = ({ form, formProps }) => 
       statusOptions = [
         { label: 'In progress', value: 'in_progress' },
         { label: 'Completed', value: 'completed' },
-        { label: 'Cancelled', value: 'cancelled' },
       ];
     } else if (currentStatus === 'completed') {
       statusOptions = [{ label: 'Completed', value: 'completed' }];

@@ -8,7 +8,6 @@ import type { AssessmentKpiResult } from '../types';
 
 const POSITIVE_NAME: Record<string, string> = {
   ad_hoc_session_rate: 'Pre-booked Session Rate',
-  off_hours_usage_rate: 'On-hours Usage Rate',
 };
 
 export interface OrientedKpi {
