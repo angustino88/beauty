@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import type { CSSProperties } from 'react';
 import { ArrowRight, Check, ChevronRight, Clock3, Flag, LockKeyhole, Mail, MapPinned, Pause, Play, RotateCcw, Trophy, X } from 'lucide-react';
-import { chapters, modes, FLOOR, HAZARD_SIZE, ITEM_SIZE, SANTA_SIZE, SANTA_X, WORLD_HEIGHT, WORLD_WIDTH } from '../constants';
+import { arcadeSlots, chapters, modes, timeLimits, FLOOR, HAZARD_SIZE, ITEM_SIZE, SANTA_SIZE, SANTA_X, WORLD_HEIGHT, WORLD_WIDTH } from '../constants';
 import type { useGameEngine } from '../hooks/useGameEngine';
 import santa from './santa-runner.webp';
 import workshop from '../art/workshop.webp';
@@ -30,14 +30,21 @@ import prism from '../art/prism-brooch.webp';
 import owl from '../art/snow-owl.webp';
 import hare from '../art/horned-hare.webp';
 import watch from '../art/pocket-watch.webp';
-import type { Mode } from '../types';
+import type { Item, Mode } from '../types';
 import { isThreat } from '../simulation';
+import railway from '../art/ribbon-railway.webp';
+import bells from '../art/bell-tower.webp';
+import caverns from '../art/violet-caverns.webp';
+import summit from '../art/solstice-peak.webp';
+import ram from '../art/clockwork-ram.webp';
+import bat from '../art/crystal-bat.webp';
+import mole from '../art/lantern-mole.webp';
 import css from './GameWidget.module.css';
 
-const scenes = [workshop, forest, village, tower, glassworks, harbor];
-const grounds = [workshopFloor, forestFloor, roof, marble, marble, workshopFloor];
-const hazards = [present, stump, chimney, ice, ice, present];
-const items = { letter, star, shield, goblin, magnet, hourglass, prism, owl, hare, blast: ice, counterStar: star };
+const scenes = [workshop, forest, village, tower, glassworks, harbor, railway, bells, caverns, summit];
+const grounds = [workshopFloor, forestFloor, roof, marble, marble, workshopFloor, workshopFloor, marble, forestFloor, marble];
+const hazards = [present, stump, chimney, ice, ice, present, present, chimney, ice, ice];
+const items = { letter, star, shield, goblin, magnet, hourglass, prism, owl, hare, ram, bat, mole, blast: ice, counterStar: star };
 const equipment = [
   [letter, 'Wish letter', '10 points; fills the mailbag in Story route.'],
   [star, 'Gold star', 'Worth 5 points.'],
@@ -47,10 +54,18 @@ const equipment = [
   [prism, 'Prism brooch', 'Doubles letter and star points for 8s.'],
 ];
 const creatures = [
+  [ram, 'Clockwork ram', 'Accelerates halfway across the track.'],
+  [bat, 'Crystal bat', 'Flies in a wave. Run underneath.'],
+  [mole, 'Lantern mole', 'Look for its lamp before it surfaces.'],
   [goblin, 'Pine goblin', 'Charges faster than the scenery. Jump early.'],
   [owl, 'Snow owl', 'Flies overhead. Stay low to pass underneath.'],
   [hare, 'Horned hare', 'Bounds along the track. Clear it at the top of your jump.'],
 ];
+const foeNames: Partial<Record<Item, string>> = {
+  ram: 'Clockwork ram', mole: 'Lantern mole', bat: 'Crystal bat', goblin: 'Pine goblin', owl: 'Snow owl', hare: 'Horned hare',
+};
+const duration = (seconds: number) => `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+const baseDuration = chapters.reduce((total, c) => total + c.routeLength / c.speed, 0);
 const chapterNumber = (index: number) => String(index + 1).padStart(2, '0');
 
 function spriteStyle(x: number, height: number, size: number): CSSProperties {
@@ -74,7 +89,7 @@ export default function GameWidgetView({ state, record, arcade, unlocked, jump, 
   const playing = phase === 'playing';
   const briefing = phase === 'briefing';
   const complete = phase === 'delivered';
-  const finale = complete && chapter === chapters.length - 1;
+  const finale = state.mode === 'campaign' && complete && chapter === chapters.length - 1;
   const routeOpen = briefing || complete || phase === 'lost';
   useEffect(() => {
     const node = dialog.current;
@@ -87,7 +102,7 @@ export default function GameWidgetView({ state, record, arcade, unlocked, jump, 
   }, [playing, phase, chapter]);
 
   const campaign = state.mode === 'campaign';
-  const best = campaign ? record[chapter] : arcade[state.mode === 'rush' ? 0 : 1];
+  const best = state.mode === 'campaign' ? record[chapter] : arcade[arcadeSlots[state.mode]];
   let title: string = level.name;
   let message: string = level.story;
   let action = 'Set off';
@@ -96,7 +111,8 @@ export default function GameWidgetView({ state, record, arcade, unlocked, jump, 
     message = 'Resume when you’re ready, or choose another mode to start a new run.';
     action = 'Resume';
   } else if (!campaign && (complete || phase === 'lost')) {
-    title = complete ? 'Time’s up!' : 'Run complete';
+    title = 'Run complete';
+    if (complete) title = state.mode === 'duel' ? 'Crown shattered!' : state.mode === 'whiteout' ? 'Storm survived!' : 'Time’s up!';
     message = `Final score: ${score} · Personal best: ${best}`;
     action = 'Play again';
   } else if (complete) {
@@ -131,13 +147,13 @@ export default function GameWidgetView({ state, record, arcade, unlocked, jump, 
             disabled={playing} onClick={() => selectMode(mode)}>{modes[mode].label}</button>)}
         </nav>
         <div className={css.main}>
-          <section className={css.board} data-panorama={chapter >= 4 || undefined} data-active={playing || undefined} style={{
+          <section className={css.board} data-panorama={chapter === 4 || chapter === 5 || undefined} data-active={playing || undefined} style={{
             backgroundImage: `url("${scenes[chapter]}")`,
             backgroundPositionX: `${50 + 44 * Math.sin(state.distance / 1450)}%`,
           }} aria-label={level.name}>
             <div className={css.hud}>
               <span><Flag size={13} /> Stop {chapterNumber(chapter)}</span>
-              {campaign ? <span aria-label={`Route distance: ${routePercent}%`}>Route {routePercent}%</span> : <span><img src={watch} alt="Time" />{state.mode === 'rush' ? Math.ceil(60 - state.elapsed) : Math.floor(state.elapsed)}s</span>}
+              {campaign ? <span aria-label={`Route distance: ${routePercent}%`}>Route {routePercent}%</span> : <span><img src={watch} alt="Time" />{timeLimits[state.mode] ? Math.ceil(timeLimits[state.mode] - state.elapsed) : Math.floor(state.elapsed)}s</span>}
               <span><img src={star} alt="Score" />{score}</span>
               {state.bossHP !== null && <span aria-label="Frost seals remaining">♛ {state.bossHP}/3</span>}
               {state.magnet > 0 && <span><img src={magnet} alt="Magnet" />{Math.ceil(state.magnet)}s</span>}
@@ -152,7 +168,7 @@ export default function GameWidgetView({ state, record, arcade, unlocked, jump, 
                 style={spriteStyle(SANTA_X, state.height, SANTA_SIZE)} />
               {state.bossHP !== null && <img className={css.sprite} src={king} alt="Frost King" style={spriteStyle(618, 0, 136)} />}
               {state.entities.map(e => <img key={e.id}
-                className={css.sprite} data-foe={e.kind === 'goblin' ? 'goblin' : undefined} alt={e.kind === 'hazard' ? level.hazard : e.kind === 'goblin' ? 'Pine goblin' : e.kind === 'owl' ? 'Snow owl' : e.kind === 'hare' ? 'Horned hare' : ''}
+                className={css.sprite} data-foe={e.kind === 'goblin' ? 'goblin' : undefined} alt={e.kind === 'hazard' ? level.hazard : foeNames[e.kind] ?? ''}
                 src={e.kind === 'hazard' ? hazards[chapter] : items[e.kind]}
                 style={spriteStyle(e.x, e.bottom, isThreat(e.kind) ? HAZARD_SIZE : ITEM_SIZE)} />)}
             </>}
@@ -183,11 +199,11 @@ export default function GameWidgetView({ state, record, arcade, unlocked, jump, 
             ))}
           </aside>
         </div>
-        <div className={css.routeTitle}><h2><MapPinned size={17}/> Delivery route</h2><span>{record.filter(Boolean).length} / {chapters.length} stops complete</span></div>
+        <div className={css.routeTitle}><h2><MapPinned size={17}/> Delivery route</h2><span>{record.filter(Boolean).length} / {chapters.length} stops complete · Base route {duration(baseDuration)}</span></div>
         <nav className={css.route} aria-label="Choose a delivery stop">
           {chapters.map((c, i) => <button key={c.short} className={css.routeCard} aria-current={chapter === i ? 'step' : undefined}
             disabled={!routeOpen || i > unlocked} onClick={() => select(i)} aria-label={`${c.short}${i > unlocked ? ', locked' : ''}`}>
-            <img src={scenes[i]} alt="" /><div><small>Stop {chapterNumber(i)}</small><strong>{c.short}</strong></div>
+            <img src={scenes[i]} alt="" /><div><small>Stop {chapterNumber(i)} · {duration(c.routeLength / c.speed)}</small><strong>{c.short}</strong></div>
             {i > unlocked ? <LockKeyhole size={13}/> : record[i] ? <Check size={15}/> : <ChevronRight size={15}/>}
           </button>)}
         </nav>

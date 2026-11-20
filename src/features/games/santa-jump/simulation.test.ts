@@ -9,7 +9,7 @@ for (const [chapter, level] of chapters.entries()) {
     let run: Run = { ...createRun(chapter), phase: 'playing' };
     for (let frame = 0; frame < (level.routeLength / level.speed + 30) * 60 && run.phase === 'playing'; frame++) {
       const target = run.entities.filter(e => e.x > SANTA_X + 45).sort((a, b) => a.x - b.x)[0];
-      const owlAhead = run.entities.some(e => e.kind === 'owl' && e.x > SANTA_X - 45 && e.x < SANTA_X + 230);
+      const owlAhead = run.entities.some(e => (e.kind === 'owl' || e.kind === 'bat') && e.x > SANTA_X - 45 && e.x < SANTA_X + 230);
       if (!owlAhead && run.height === 0 && target && target.x - SANTA_X < level.speed * 0.32 + 32) run = jump(run);
       const highPickup = run.entities.some(e => e.bottom >= 178 && e.x > SANTA_X && e.x < SANTA_X + 145);
       if (!owlAhead && highPickup && run.height > 58 && run.velocity < 390 && run.jumps < run.jumpLimit) run = jump(run);
@@ -94,4 +94,25 @@ test('magnet collects a distant star, prism doubles it and hourglass slows trave
   assert.ok(next.distance - armed.distance < armed.distance);
   assert.equal(step({ ...base, entities: [star] }, 0.02).score, 0);
   assert.equal(step({ ...next, phase: 'paused' }, 0.02).magnet, next.magnet);
+});
+
+test('whiteout survives at 90 seconds and never schedules defensive supplies', () => {
+  for (let wave = 0; wave < 28; wave++) {
+    const run: Run = { ...createRun(0, 0, 'whiteout'), phase: 'playing', wave };
+    const next = step(run, 1 / 60);
+    assert.ok(next.distance > chapters[0].speed / 60);
+    assert.ok(next.entities.every(e => e.kind !== 'shield' && e.kind !== 'hourglass'));
+  }
+  const lastFrame: Run = { ...createRun(0, 0, 'whiteout'), phase: 'playing', elapsed: 89.99 };
+  assert.equal(step(lastFrame, 0.02).phase, 'delivered');
+});
+
+test('crown duel grants three jumps, fires paired blasts and enforces the deadline', () => {
+  const run: Run = { ...createRun(0, 0, 'duel'), phase: 'playing' };
+  assert.equal(run.jumpLimit, 3);
+  assert.equal(run.bossHP, 3);
+  assert.equal(step(run, 1 / 60).entities.filter(e => e.kind === 'blast').length, 2);
+  assert.equal(step({ ...run, elapsed: 23.99 }, 0.02).phase, 'lost');
+  const finalStar: Run = { ...run, bossHP: 1, entities: [{ kind: 'counterStar', x: SANTA_X, bottom: 0, id: 99 }] };
+  assert.equal(step(finalStar, 1 / 60).phase, 'delivered');
 });

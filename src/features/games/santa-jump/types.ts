@@ -1,6 +1,6 @@
 export type Phase = 'briefing' | 'playing' | 'paused' | 'lost' | 'delivered';
-export type Mode = 'campaign' | 'rush' | 'endless';
-export type Item = 'magnet' | 'hourglass' | 'prism' | 'owl' | 'hare' | 'letter' | 'star' | 'shield' | 'hazard' | 'goblin' | 'blast' | 'counterStar';
+export type Mode = 'campaign' | 'rush' | 'endless' | 'whiteout' | 'duel';
+export type Item = 'ram' | 'bat' | 'mole' | 'magnet' | 'hourglass' | 'prism' | 'owl' | 'hare' | 'letter' | 'star' | 'shield' | 'hazard' | 'goblin' | 'blast' | 'counterStar';
 export interface Entity {
   id: number;
   kind: Item;

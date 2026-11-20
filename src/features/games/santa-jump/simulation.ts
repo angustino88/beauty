@@ -1,14 +1,14 @@
-import { chapters, HAZARD_SIZE, ITEM_SIZE, SANTA_SIZE, SANTA_X, WORLD_WIDTH } from './constants.ts';
+import { chapters, timeLimits, HAZARD_SIZE, ITEM_SIZE, SANTA_SIZE, SANTA_X, WORLD_WIDTH } from './constants.ts';
 import type { Entity, Item, Mode, Run } from './types.ts';
 
 export function isThreat(kind: Item) {
-  return ['hazard', 'blast', 'goblin', 'owl', 'hare'].includes(kind);
+  return ['hazard', 'blast', 'goblin', 'owl', 'hare', 'ram', 'bat', 'mole'].includes(kind);
 }
 
 const supplies: Item[] = ['shield', 'star', 'magnet', 'prism', 'shield', 'hourglass', 'star'];
 export function createRun(chapter: number, unlockedChapter = chapter, mode: Mode = 'campaign'): Run {
   return {
-    mode, elapsed: 0, magnet: 0, slow: 0, multiplier: 0, phase: 'briefing', chapter, jumpLimit: chapters[unlockedChapter].jumps, bossHP: null, height: 0, velocity: 0, jumps: 0, distance: 0,
+    mode, elapsed: 0, magnet: 0, slow: 0, multiplier: 0, phase: 'briefing', chapter, jumpLimit: mode === 'duel' ? 3 : chapters[unlockedChapter].jumps, bossHP: mode === 'duel' ? 3 : null, height: 0, velocity: 0, jumps: 0, distance: 0,
     wave: 0, nextWave: 0, letters: 0, score: 0, shield: false, entities: [],
   };
 }
@@ -23,8 +23,11 @@ export function step(run: Run, dt: number): Run {
   if (run.phase !== 'playing') return run;
   const level = chapters[run.chapter];
   const elapsed = run.elapsed + dt;
-  if (run.mode === 'rush' && elapsed >= 60) return { ...run, elapsed: 60, phase: 'delivered' };
-  const pace = run.mode === 'endless' ? 1 + Math.min(0.65, elapsed / 180) : 1;
+  const limit = timeLimits[run.mode];
+  if (limit && elapsed >= limit) {
+    return { ...run, elapsed: limit, phase: run.mode === 'duel' ? 'lost' : 'delivered' };
+  }
+  const pace = run.mode === 'endless' ? 1 + Math.min(0.65, elapsed / 180) : run.mode === 'whiteout' ? 1.25 : 1;
   const motionDt = dt * (run.slow > 0 ? 0.65 : 1);
   const travel = level.speed * motionDt * pace;
   const distance = run.distance + travel;
@@ -46,13 +49,15 @@ export function step(run: Run, dt: number): Run {
       { id: volley * 3, kind: 'blast', x: WORLD_WIDTH - 90, bottom: 0 },
       { id: volley * 3 + 1, kind: 'counterStar', x: WORLD_WIDTH - 65, bottom: [0, 225, 199, 178][run.bossHP] },
     ];
-    if (run.bossHP === 1) shots.push({ id: volley * 3 + 2, kind: 'blast', x: WORLD_WIDTH + 40, bottom: 0 });
+    const elite = run.mode === 'duel' || ('boss' in level && level.boss === 'summit-king');
+    if (elite || run.bossHP === 1) shots.push({ id: volley * 3 + 2, kind: 'blast', x: elite ? WORLD_WIDTH - 90 + level.speed * 0.30 : WORLD_WIDTH + 40, bottom: 0 });
     entities = [...entities, ...shots];
-    next.nextWave += level.speed * (2.8 + run.bossHP * 0.25);
+    next.nextWave += level.speed * ((elite ? 2.1 : 2.8) + run.bossHP * 0.25);
     next.wave++;
   } else if (run.bossHP === null && distance >= run.nextWave) {
     const wave = run.wave;
-    const supply = supplies[Math.floor(wave / 2) % supplies.length];
+    const scheduled = supplies[Math.floor(wave / 2) % supplies.length];
+    const supply = run.mode === 'whiteout' && (scheduled === 'shield' || scheduled === 'hourglass') ? 'star' : scheduled;
     const sendLetter = wave % 2 === 0 && (run.mode !== 'campaign' || run.letters < level.letters);
     const pickup: Entity = {
       id: wave * 2, kind: sendLetter ? 'letter' : supply,
@@ -62,17 +67,24 @@ export function step(run: Run, dt: number): Run {
     entities = [...entities, pickup];
     if (wave > 0) {
       const goblin = wave % Math.max(2, 5 - run.chapter) === 1;
-      const kind = wave % 8 === 5 ? 'owl' : wave % 8 === 3 ? 'hare' : goblin ? 'goblin' : 'hazard';
-      entities.push({ id: wave * 2 + 1, kind, x: WORLD_WIDTH + 5, bottom: kind === 'owl' ? 154 : 0 });
+      const expert = run.mode === 'whiteout';
+      let kind: Item = wave % 8 === 5 ? 'owl' : wave % 8 === 3 ? 'hare' : goblin ? 'goblin' : 'hazard';
+      if ((expert || run.chapter >= 6) && wave % 9 === 1) kind = 'ram';
+      if ((expert || run.chapter >= 7) && wave % 9 === 4) kind = 'mole';
+      if ((expert || run.chapter >= 8) && wave % 9 === 7) kind = 'bat';
+      entities.push({ id: wave * 2 + 1, kind, x: WORLD_WIDTH + 5, bottom: kind === 'owl' || kind === 'bat' ? 154 : 0 });
     }
     next.nextWave += level.spacing * [1, 1.18, 0.94, 1.34][wave % 4];
     next.wave++;
   }
   for (const original of entities) {
-    const entity = original.kind === 'hare'
+    let entity = original.kind === 'hare'
       ? { ...original, bottom: 26 * Math.abs(Math.sin((WORLD_WIDTH - original.x) / 70)) }
       : original;
-    const x = entity.x - travel * (entity.kind === 'goblin' ? 1.12 : 1);
+    if (entity.kind === 'bat') entity = { ...entity, bottom: 138 + 32 * Math.sin(entity.x / 65) };
+    if (entity.kind === 'mole') entity = { ...entity, bottom: Math.max(-32, Math.min(0, (296 - entity.x) / 2)) };
+    const stride = entity.kind === 'ram' && entity.x < WORLD_WIDTH / 2 ? 1.32 : entity.kind === 'goblin' ? 1.12 : 1;
+    const x = entity.x - travel * stride;
     const dangerous = isThreat(entity.kind);
     const size = dangerous ? HAZARD_SIZE : ITEM_SIZE;
     if (x + size < 0) continue;

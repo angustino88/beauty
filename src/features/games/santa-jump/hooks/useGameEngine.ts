@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { chapters } from '../constants';
+import { arcadeSlots, chapters } from '../constants';
 import { createRun, jump as performJump, step } from '../simulation';
 import type { Mode, Run } from '../types';
 
@@ -15,7 +15,7 @@ export function useGameEngine() {
   const [{ state, record, arcade }, setSession] = useState(() => {
     const record = readRecord();
     const firstIncomplete = record.indexOf(0);
-    return { state: createRun(firstIncomplete < 0 ? chapters.length - 1 : firstIncomplete), record, arcade: readRecord(ARCADE_KEY, 2) };
+    return { state: createRun(firstIncomplete < 0 ? chapters.length - 1 : firstIncomplete), record, arcade: readRecord(ARCADE_KEY, Object.keys(arcadeSlots).length) };
   });
   const firstIncomplete = record.indexOf(0);
   const unlocked = firstIncomplete < 0 ? chapters.length - 1 : firstIncomplete;
@@ -27,8 +27,9 @@ export function useGameEngine() {
         ? session.record.map((n, i) => i === state.chapter ? Math.max(n, state.score) : n)
         : session.record;
       const finished = state.phase === 'lost' || state.phase === 'delivered';
+      const slot = state.mode === 'campaign' ? -1 : arcadeSlots[state.mode];
       const arcade = finished && state.mode !== 'campaign'
-        ? session.arcade.map((n, i) => i === (state.mode === 'rush' ? 0 : 1) ? Math.max(n, state.score) : n)
+        ? session.arcade.map((n, i) => i === slot ? Math.max(n, state.score) : n)
         : session.arcade;
       return { state, record, arcade };
     });
@@ -73,7 +74,7 @@ export function useGameEngine() {
   }, [pause]);
   useEffect(() => {
     if (!arcade.some(Boolean)) return;
-    const saved = readRecord(ARCADE_KEY, 2);
+    const saved = readRecord(ARCADE_KEY, Object.keys(arcadeSlots).length);
     try { localStorage.setItem(ARCADE_KEY, JSON.stringify(arcade.map((n, i) => Math.max(n, saved[i])))); } catch { /* Session-only storage. */ }
   }, [arcade]);
   return { state, record, arcade, unlocked, jump, pause, play, select, selectMode };
