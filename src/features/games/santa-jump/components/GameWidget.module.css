@@ -56,11 +56,7 @@
 .scenery {
   position: absolute; inset: -3px; z-index: -1; pointer-events: none;
   background: #20353e center 56% / cover no-repeat;
-  filter: saturate(.79) contrast(.89) brightness(.86) blur(.55px);
-}
-.scenery[data-detailed] {
-  background-position-x: center !important;
-  filter: saturate(.60) contrast(.77) brightness(.81) blur(1.35px);
+  filter: saturate(.60) contrast(.77) brightness(.891) blur(1.35px);
 }
 .ground {
   position: absolute; inset: 82.5% 0 0; border-top: 2px solid #eee3c2;
