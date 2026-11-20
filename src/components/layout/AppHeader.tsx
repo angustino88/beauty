@@ -10,7 +10,7 @@ import { SeasonDecor } from './SeasonDecor';
 import styleCss from './layout.module.css';
 
 const { Header: AntHeader } = Layout;
-const GameWidget = lazy(() => import('@/features/game-widget/components/GameWidget'));
+const GameLauncher = lazy(() => import('@/features/games/GameLauncher'));
 
 /**
  * App header: brand, the current season's decoration, theme toggle, partner logo.
@@ -60,7 +60,7 @@ const AppHeader = () => {
 
       {showGame && (
         <Suspense fallback={null}>
-          <GameWidget onClose={() => setShowGame(false)} />
+          <GameLauncher onClose={() => setShowGame(false)} />
         </Suspense>
       )}
     </AntHeader>

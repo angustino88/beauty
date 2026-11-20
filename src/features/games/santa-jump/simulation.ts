@@ -29,13 +29,13 @@ export function step(run: Run, dt: number): Run {
   if (distance >= run.nextWave) {
     const wave = run.wave;
     const pickup: Entity = {
-      id: wave * 2, kind: wave % 2 === 0 ? 'letter' : wave % 4 === 1 ? 'shield' : 'star',
+      id: wave * 2, kind: wave % 2 === 0 && run.letters < level.letters ? 'letter' : wave % 4 === 1 ? 'shield' : 'star',
       x: WORLD_WIDTH, bottom: 67 + (wave % 3) * 9,
     };
     // The first pickup teaches the arc before any obstacle enters the lane.
     entities = [...entities, pickup];
     if (wave > 0) entities.push({ id: wave * 2 + 1, kind: 'hazard', x: WORLD_WIDTH + 5, bottom: 0 });
-    next.nextWave += level.spacing;
+    next.nextWave += level.spacing * [1, 1.18, 0.94, 1.34][wave % 4];
     next.wave++;
   }
   for (const entity of entities) {
@@ -59,9 +59,9 @@ export function step(run: Run, dt: number): Run {
       next.shield = true;
     } else {
       next.score += entity.kind === 'letter' ? 10 : 5;
-      if (entity.kind === 'letter') next.letters++;
+      if (entity.kind === 'letter') next.letters = Math.min(level.letters, next.letters + 1);
     }
   }
-  if (next.letters >= level.letters) next.phase = 'delivered';
+  if (distance >= level.routeLength && next.letters >= level.letters) next.phase = 'delivered';
   return next;
 }

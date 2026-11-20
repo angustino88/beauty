@@ -7,12 +7,13 @@ import type { Run } from './types.ts';
 for (const [chapter, level] of chapters.entries()) {
   test(`delivers the required letters in ${level.short} using ordinary jumps`, () => {
     let run: Run = { ...createRun(chapter), phase: 'playing' };
-    for (let frame = 0; frame < 4800 && run.phase === 'playing'; frame++) {
+    for (let frame = 0; frame < (level.routeLength / level.speed + 30) * 60 && run.phase === 'playing'; frame++) {
       const target = run.entities.find(e => e.x > SANTA_X + 45);
       if (run.height === 0 && target && target.x - SANTA_X < level.speed * 0.32 + 32) run = jump(run);
       run = step(run, 1 / 60);
     }
     assert.equal(run.phase, 'delivered');
+    assert.ok(run.distance >= level.routeLength);
     assert.equal(run.letters, level.letters);
     assert.ok(run.score >= 10 * level.letters);
   });

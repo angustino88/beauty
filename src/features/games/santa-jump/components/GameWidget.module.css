@@ -67,6 +67,19 @@
   .board { background-position-x: center !important; }
 }
 .sprite,.protected { position: absolute; object-fit: contain; object-position: center bottom; pointer-events: none; filter: drop-shadow(0 2px 2px #10212f96); }
+.board img[data-runner] {
+  scale: 1.24;
+  transform-origin: center bottom;
+  filter: drop-shadow(1px 0 0 #fff5d5) drop-shadow(-1px -1px 0 #fff5d5) drop-shadow(0 2px 2px #091823);
+}
+.board[data-active]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, #10223660, #10223619 45%, transparent);
+  pointer-events: none;
+}
+.field { z-index: 2; }
 .protected { border-radius: 50%; box-shadow: 0 0 0 2px #bbfff7,0 0 16px #61dfe7,inset 0 0 12px #a7f4ff; }
 .dispatch { color: #243a30; background: linear-gradient(130deg,#fff2cd,#f1e5cb 75%); border-radius: 7px; padding: 15px 16px; }
 .dispatch .eyebrow { color: #84603e; font-size: 9px; }

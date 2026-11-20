@@ -45,6 +45,7 @@ export default function GameWidgetView({ state, record, unlocked, jump, pause, p
   const field = useRef<HTMLButtonElement>(null);
   const { phase, chapter, letters, score } = state;
   const level = chapters[chapter];
+  const routePercent = Math.min(100, Math.floor(state.distance / level.routeLength * 100));
   const playing = phase === 'playing';
   const briefing = phase === 'briefing';
   const complete = phase === 'delivered';
@@ -88,13 +89,14 @@ export default function GameWidgetView({ state, record, unlocked, jump, pause, p
           }} aria-label={level.name}>
             <div className={css.hud}>
               <span><Flag size={13} /> Stop {chapterNumber(chapter)}</span>
+              <span aria-label={`Route distance: ${routePercent}%`}>Route {routePercent}%</span>
               <span><img src={star} alt="Score" />{score}</span>
               {state.shield && <span><img src={shield} alt="Shield active" /></span>}
               {playing && <button onClick={pause} aria-label="Pause"><Pause size={14} /></button>}
             </div>
             {!briefing && <>
               <div className={css.ground} style={{backgroundImage: `url("${grounds[chapter]}")`, backgroundPositionX: `-${state.distance % 260 / WORLD_WIDTH * 100}cqw`}} />
-              <img src={santa} alt="Santa" data-running={playing && state.height === 0 || undefined} className={state.shield ? css.protected : css.sprite}
+              <img src={santa} alt="Santa" data-runner data-running={playing && state.height === 0 || undefined} className={state.shield ? css.protected : css.sprite}
                 style={spriteStyle(SANTA_X, state.height, SANTA_SIZE)} />
               {state.entities.map(e => <img key={e.id}
                 className={css.sprite} alt={e.kind === 'hazard' ? level.hazard : ''}
@@ -118,7 +120,7 @@ export default function GameWidgetView({ state, record, unlocked, jump, pause, p
             <div className={css.delivery}><span>Wish letters</span><strong>{letters} / {level.letters}</strong></div>
             <progress value={letters} max={level.letters} aria-label="Letters collected" />
             <div className={css.gear}>
-              <div><img src={letter} alt=""/><span><b>Sealed letter</b><small>Collect to finish the stop</small></span></div>
+              <div><img src={letter} alt=""/><span><b>Sealed letter</b><small>Fill the bag and finish the route</small></span></div>
               <div><img src={star} alt=""/><span><b>Gold star</b><small>Worth 5 points</small></span></div>
               <div><img src={shield} alt=""/><span><b>Ice shield</b><small>Blocks one hit</small></span></div>
               <div><img src={hazards[chapter]} alt=""/><span><b>{level.hazard}</b><small>Jump over it</small></span></div>
