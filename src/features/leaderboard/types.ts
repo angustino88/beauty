@@ -19,7 +19,7 @@ export interface PersonaItem {
   points: number;
   wfo_rate: number;
   wfh_rate: number;
-  late_rate: number;
+  extended_hours_rate: number;
   labs_accessed: number;
   usage_efficiency: number;
   /** Active time against session time; null without sessions. */
@@ -86,7 +86,7 @@ export interface UserProfile {
   last_remote: string | null;
   wfo_rate: number;
   wfh_rate: number;
-  late_rate: number;
+  extended_hours_rate: number;
   labs_accessed: number;
   usage_efficiency: number;
   total_bookings: number;
