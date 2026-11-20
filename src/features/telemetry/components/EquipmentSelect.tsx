@@ -30,12 +30,13 @@ export function EquipmentSelect({ value, onChange, currentLabel, placeholder, al
       placeholder={placeholder ?? 'Choose, or type a name or SKU'}
       notFoundContent={equipment.emptyText}
       onOpenChange={equipment.onOpenChange}
+      onPopupScroll={equipment.onPopupScroll}
       popupRender={(menu) => (
         <>
           {menu}
-          {equipment.moreHint && (
+          {equipment.footer && (
             <Typography.Text type="secondary" style={{ display: 'block', padding: '6px 12px', fontSize: 12 }}>
-              {equipment.moreHint}
+              {equipment.footer}
             </Typography.Text>
           )}
         </>

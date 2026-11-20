@@ -82,12 +82,13 @@ export function TargetPicker({
         placeholder={placeholder ?? (isEquipment ? 'Choose, or type a name or SKU' : `Choose a ${type}`)}
         notFoundContent={isEquipment ? equipment.emptyText : isFetching ? 'Searching…' : 'No match'}
         onOpenChange={isEquipment ? equipment.onOpenChange : undefined}
+        onPopupScroll={isEquipment ? equipment.onPopupScroll : undefined}
         popupRender={(menu) => (
           <>
             {menu}
-            {isEquipment && equipment.moreHint && (
+            {isEquipment && equipment.footer && (
               <Typography.Text type="secondary" style={{ display: 'block', padding: '6px 12px', fontSize: 12 }}>
-                {equipment.moreHint}
+                {equipment.footer}
               </Typography.Text>
             )}
           </>

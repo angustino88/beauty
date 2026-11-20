@@ -39,6 +39,14 @@ function query(params: object): string {
   return text ? `?${text}` : '';
 }
 
+/** Equipment rows fetched per scroll step in the pickers. */
+export const EQUIPMENT_PICKER_PAGE_SIZE = 50;
+
+export interface EquipmentPickerPage {
+  data: { id: number; sku?: string | null; name?: string | null }[];
+  meta?: { pagination?: { count: number; next: string | null } };
+}
+
 export interface OptionItem {
   id: number;
   sku: string | null;
@@ -184,6 +192,18 @@ export const telemetryApi = baseApi.injectEndpoints({
       },
       transformResponse: (response: Page<OptionItem>) => response.data,
     }),
+
+    // Equipment for pickers: the paginated list, one page per scroll step (the /equipment/options
+    // selector refuses requests without a search term, so it cannot list the catalog).
+    getEquipmentPickerPages: build.infiniteQuery<EquipmentPickerPage, { q?: string }, number>({
+      infiniteQueryOptions: {
+        initialPageParam: 1,
+        getNextPageParam: (lastPage, _allPages, lastPageParam) =>
+          lastPage.meta?.pagination?.next ? lastPageParam + 1 : undefined,
+      },
+      query: ({ queryArg, pageParam }) =>
+        `/api/labs/equipment${query({ q: queryArg.q, page: pageParam, page_size: EQUIPMENT_PICKER_PAGE_SIZE })}`,
+    }),
   }),
 });
 
@@ -207,4 +227,5 @@ export const {
   useUnbindChannelMutation,
   useGetTargetTelemetryQuery,
   useGetTargetOptionsQuery,
+  useGetEquipmentPickerPagesInfiniteQuery,
 } = telemetryApi;
