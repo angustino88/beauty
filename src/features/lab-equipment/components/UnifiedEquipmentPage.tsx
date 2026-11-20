@@ -28,7 +28,7 @@ import {
   useUpdateEquipmentImageMutation,
   useDeleteEquipmentImageMutation,
 } from '../api/equipmentApi';
-import { useLabsDepartmentsOptionsRetrieveQuery, useLabsGroupsOptionsRetrieveQuery, useLabsRoomsOptionsRetrieveQuery, useLabsStationsOptionsRetrieveQuery, useLabsBenchesOptionsRetrieveQuery, useUsersRetrieveQuery, useLabsEquipmentReferenceDataRetrieveQuery, useLabsEquipmentCategoriesRetrieveByCategoryIdQuery, useLabsEquipmentPlacementUpdateByEquipmentIdMutation, useLabsEquipmentPlacementDestroyByEquipmentIdMutation, useLabsEquipmentActionsHandOverCreateByEquipmentIdMutation, useLabsEquipmentActionsReturnCreateByEquipmentIdMutation } from '@/shared/api/generated/api';
+import { useLabsDepartmentsOptionsRetrieveQuery, useLabsGroupsOptionsRetrieveQuery, useLabsRoomsOptionsRetrieveQuery, useLabsStationsOptionsRetrieveQuery, useLabsBenchesOptionsRetrieveQuery, useLabsEquipmentReferenceDataRetrieveQuery, useLabsEquipmentCategoriesRetrieveByCategoryIdQuery, useLabsEquipmentPlacementUpdateByEquipmentIdMutation, useLabsEquipmentPlacementDestroyByEquipmentIdMutation, useLabsEquipmentActionsHandOverCreateByEquipmentIdMutation, useLabsEquipmentActionsReturnCreateByEquipmentIdMutation } from '@/shared/api/generated/api';
 import { useLabsEquipmentStatusChangesRetrieveByEquipmentIdQuery } from '@/shared/api/generated/api';
 import type { EquipmentPlacementWrite } from '@/shared/api/generated/api';
 import { skipToken } from '@reduxjs/toolkit/query';
@@ -99,7 +99,6 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
   const [placementSearch, setPlacementSearch] = useState('');
   const [departmentSearch, setDepartmentSearch] = useState('');
   const [groupSearch, setGroupSearch] = useState('');
-  const [borrowerSearch, setBorrowerSearch] = useState('');
   const [statusLocationSearch, setStatusLocationSearch] = useState('');
 
   // Reference data
@@ -129,7 +128,6 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
   const { data: statusRoomOptions, isFetching: loadingStatusRooms } = useLabsRoomsOptionsRetrieveQuery(statusLocationArgs, { skip: !statusModalOpen });
   const { data: statusStationOptions, isFetching: loadingStatusStations } = useLabsStationsOptionsRetrieveQuery(statusLocationArgs, { skip: !statusModalOpen });
   const { data: benchOptions, isFetching: loadingBenches } = useLabsBenchesOptionsRetrieveQuery(statusModalOpen ? statusLocationArgs : placementArgs, { skip: (!placementItem && !statusModalOpen) || (!statusModalOpen && placementTarget !== 'bench') });
-  const { data: borrowerData, isFetching: loadingBorrowers } = useUsersRetrieveQuery({ username: borrowerSearch || undefined }, { skip: !statusModalOpen });
   const placementOptions = placementTarget === 'room' ? roomOptions?.data : placementTarget === 'station' ? stationOptions?.data : benchOptions?.data;
   const normalizedFilters = useMemo(() => Object.fromEntries(
     Object.entries(filters).map(([key, values]) => [key, values?.map((value) => String(value)) ?? null]),
@@ -896,11 +894,9 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
           key={statusItem.id}
           capabilities={categoryDetail?.data.capabilities?.map((capability) => capability.value) ?? []}
           benchOptions={benchOptions?.data ?? []}
-          borrowerOptions={borrowerData?.data.map((user) => ({ id: user.id, name: user.display_name || user.username })) ?? []}
           roomOptions={statusRoomOptions?.data ?? []}
           stationOptions={statusStationOptions?.data ?? []}
-          loadingOptions={loadingBenches || loadingBorrowers || loadingStatusRooms || loadingStatusStations}
-          onSearchBorrowers={setBorrowerSearch}
+          loadingOptions={loadingBenches || loadingStatusRooms || loadingStatusStations}
           onSearchLocations={setStatusLocationSearch}
           onCancel={() => {
             setStatusModalOpen(false);

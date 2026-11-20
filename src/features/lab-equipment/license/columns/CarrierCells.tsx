@@ -1,4 +1,5 @@
 import { Select, Spin } from 'antd';
+import type { UIEventHandler } from 'react';
 import type { EquipmentOption } from '../hooks/useEquipmentSearchOptions';
 import type { IAssignedEquipment } from '../types';
 
@@ -24,12 +25,15 @@ interface CarrierCellProps {
   options: EquipmentOption[];
   onSearch: (query: string) => void;
   onOpenChange: (open: boolean) => void;
+  onPopupScroll: UIEventHandler<HTMLDivElement>;
+  /** Shown under the options while more pages exist. */
+  moreHint: string | null;
   loading: boolean;
   emptyText: string;
 }
 
 /** License carrier: the equipment holding the license's seats; while editing, a searchable multi-select. */
-export function CarrierCell({ assigned, editing, value, onChange, seats, options, onSearch, onOpenChange, loading, emptyText }: CarrierCellProps) {
+export function CarrierCell({ assigned, editing, value, onChange, seats, options, onSearch, onOpenChange, onPopupScroll, moreHint, loading, emptyText }: CarrierCellProps) {
   if (editing) {
     return (
       <Select
@@ -38,10 +42,17 @@ export function CarrierCell({ assigned, editing, value, onChange, seats, options
         showSearch
         filterOption={false}
         style={{ width: '100%' }}
-        placeholder="Pick or search equipment"
+        placeholder="Pick equipment, or type a SKU or name"
         notFoundContent={loading ? <Spin size="small" /> : emptyText}
         loading={loading}
         onOpenChange={onOpenChange}
+        onPopupScroll={onPopupScroll}
+        popupRender={(menu) => (
+          <>
+            {menu}
+            {moreHint && <div style={{ ...muted, padding: '6px 12px', fontSize: 12 }}>{moreHint}</div>}
+          </>
+        )}
         value={value}
         options={options}
         // Picked items show the SKU; the dropdown rows show SKU with the name beneath.
