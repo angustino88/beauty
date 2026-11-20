@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Alert, Button, Empty, Input, Popconfirm, Segmented, Select, Skeleton, Tag, message } from 'antd';
-import { skipToken } from '@reduxjs/toolkit/query';
-import { useLabsEquipmentOptionsRetrieveQuery, type EquipmentHardwareIdKindEnum } from '@/shared/api/generated/api';
+import { equipmentPagedConfig, usePagedOptions } from '@/shared/hooks/usePagedOptions';
+import { type EquipmentHardwareIdKindEnum } from '@/shared/api/generated/api';
 import {
   useDeleteEquipmentHardwareIdMutation,
   useGetEquipmentHardwareIdsQuery,
@@ -27,24 +27,16 @@ function problemMessage(error: unknown, fallback: string): string {
 
 /** Computing unit a port-bound PnP ID is valid on. */
 function ComputingSelect({ value, onChange }: { value?: number; onChange: (id?: number) => void }) {
-  const [search, setSearch] = useState('');
-  const options = useLabsEquipmentOptionsRetrieveQuery(search.trim().length >= 2 ? { q: search.trim() } : skipToken);
+  const equipment = usePagedOptions(equipmentPagedConfig);
   return (
     <Select
-      showSearch
       allowClear
       placeholder="Computing unit the device is plugged into"
       aria-label="Computing unit"
-      filterOption={false}
-      onSearch={setSearch}
       value={value}
       onChange={onChange}
-      loading={options.isFetching}
-      notFoundContent={search.trim().length < 2 ? 'Type at least 2 characters' : 'No equipment found'}
-      options={(options.data?.data ?? []).map((option) => ({
-        value: option.id,
-        label: option.sku ? `${option.name} · ${option.sku}` : option.name,
-      }))}
+      {...equipment.selectProps}
+      options={equipment.options}
     />
   );
 }

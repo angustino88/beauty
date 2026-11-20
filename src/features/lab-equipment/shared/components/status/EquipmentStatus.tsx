@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Alert, DatePicker, Form, Input, Select, message } from 'antd';
+import { usePagedOptions } from '@/shared/hooks/usePagedOptions';
 import { FormDialog } from '@/components/ui/form-dialog';
 import { equipmentStatusLabel, equipmentStatusTone, equipmentStatusValue } from '../../utils/equipmentStatus';
 import {
@@ -41,9 +42,7 @@ interface UpdateEquipmentStatusModalProps {
   benchOptions: Array<{ id: number; name: string; sku?: string | null }>;
   roomOptions: Array<{ id: number; name: string; sku?: string | null }>;
   stationOptions: Array<{ id: number; name: string; sku?: string | null }>;
-  borrowerOptions: Array<{ id: number; name: string }>;
   loadingOptions?: boolean;
-  onSearchBorrowers: (value: string) => void;
   onSearchLocations: (value: string) => void;
   onSave: (payload: EquipmentStatusAction) => Promise<void>;
   onCancel: () => void;
@@ -95,13 +94,25 @@ const getSuccessMessage = (action: DisplayAction, itemName: string) => {
 };
 
 export function UpdateEquipmentStatusModal({
-  open, record, capabilities, benchOptions, roomOptions, stationOptions, borrowerOptions, loadingOptions = false,
-  onSearchBorrowers, onSearchLocations, onSave, onCancel,
+  open, record, capabilities, benchOptions, roomOptions, stationOptions, loadingOptions = false,
+  onSearchLocations, onSave, onCancel,
 }: UpdateEquipmentStatusModalProps) {
   const [form] = Form.useForm<FormValues>();
   const action = Form.useWatch('action', form);
   const returnTarget = Form.useWatch('return_target', form);
   const borrowerId = Form.useWatch('borrower_id', form);
+  // Accounts are a paginated list: the first page loads when the list opens, more load on scroll,
+  // and typing searches usernames on the server.
+  const borrowers = usePagedOptions({
+    path: '/api/users',
+    searchParam: 'username',
+    noun: 'accounts',
+    enabled: open,
+    toOption: (user: { id: number; username: string; display_name?: string | null }) => ({
+      value: user.id,
+      label: user.display_name || user.username,
+    }),
+  });
   const [saving, setSaving] = useState(false);
   const [confirmation, setConfirmation] = useState<{ text: string; resolve: (confirmed: boolean) => void } | null>(null);
   const itemName = record.name?.trim() || record.sku || `Equipment #${record.id}`;
@@ -305,7 +316,7 @@ export function UpdateEquipmentStatusModal({
         {action === 'borrowed' && <>
           {borrowBlocker && <Alert type="warning" showIcon message={borrowBlocker} />}
           <div className={styles.fieldGrid}>
-            <Form.Item name="borrower_id" label="Account borrower" extra="Choose an account or enter a borrower name."><Select allowClear showSearch filterOption={false} onSearch={onSearchBorrowers} placeholder="Search accounts (optional)" options={borrowerOptions.map(({ id, name }) => ({ value: id, label: name }))} loading={loadingOptions} /></Form.Item>
+            <Form.Item name="borrower_id" label="Account borrower" extra="Choose an account or enter a borrower name."><Select allowClear {...borrowers.selectProps} placeholder="Choose an account, or type a username (optional)" options={borrowers.options} /></Form.Item>
             <Form.Item name="borrower_name" label="Borrower name" rules={[{ required: borrowerId == null, whitespace: true, message: 'Enter a borrower name' }]}><Input placeholder="Full name" /></Form.Item>
             <Form.Item name="borrower_contact" label="Contact"><Input placeholder="Email or phone (optional)" /></Form.Item>
             <Form.Item name="due_at" label="Due date and time" rules={[{ required: true, validator: (_, value: Dayjs | undefined) => value?.isAfter(dayjs()) ? Promise.resolve() : Promise.reject(new Error('Choose a future due date')) }]}><DatePicker showTime={{ format: 'HH:mm' }} format="YYYY-MM-DD HH:mm" style={{ width: '100%' }} /></Form.Item>

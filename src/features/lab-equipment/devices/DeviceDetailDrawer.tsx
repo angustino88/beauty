@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Alert, Button, Descriptions, Drawer, Empty, Select, Skeleton, Switch, Timeline, Tooltip, message } from 'antd';
+import { equipmentPagedConfig, usePagedOptions } from '@/shared/hooks/usePagedOptions';
 import dayjs from 'dayjs';
 import { skipToken } from '@reduxjs/toolkit/query';
-import { useLabsEquipmentOptionsRetrieveQuery } from '@/shared/api/generated/api';
 import {
   useCreateExpectedDeviceMutation,
   useDeleteExpectedDeviceMutation,
@@ -24,9 +24,8 @@ function problemMessage(error: unknown, fallback: string): string {
 }
 
 function LinkToInventory({ connectionId, hardwareId }: { connectionId: number; hardwareId: string }) {
-  const [search, setSearch] = useState('');
   const [equipmentId, setEquipmentId] = useState<number>();
-  const options = useLabsEquipmentOptionsRetrieveQuery(search.trim().length >= 2 ? { q: search.trim() } : skipToken);
+  const equipment = usePagedOptions(equipmentPagedConfig);
   const [link, { isLoading }] = useLinkDeviceConnectionMutation();
 
   const submit = async () => {
@@ -49,20 +48,13 @@ function LinkToInventory({ connectionId, hardwareId }: { connectionId: number; h
         sync. An ID already registered on another unit is never moved.
       </span>
       <Select
-        showSearch
         allowClear
         placeholder="Search equipment by name or SKU"
         aria-label="Equipment to link"
-        filterOption={false}
-        onSearch={setSearch}
         value={equipmentId}
         onChange={setEquipmentId}
-        loading={options.isFetching}
-        notFoundContent={search.trim().length < 2 ? 'Type at least 2 characters' : 'No equipment found'}
-        options={(options.data?.data ?? []).map((option) => ({
-          value: option.id,
-          label: option.sku ? `${option.name} · ${option.sku}` : option.name,
-        }))}
+        {...equipment.selectProps}
+        options={equipment.options}
       />
       <div>
         <Button type="primary" onClick={() => void submit()} loading={isLoading} disabled={!equipmentId}>

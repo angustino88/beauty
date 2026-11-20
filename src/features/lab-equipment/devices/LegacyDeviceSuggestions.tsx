@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Button, Select, Tag, message } from 'antd';
-import { skipToken } from '@reduxjs/toolkit/query';
-import { useLabsEquipmentOptionsRetrieveQuery, type LegacyDeviceSuggestionRead } from '@/shared/api/generated/api';
+import { equipmentPagedConfig, usePagedOptions } from '@/shared/hooks/usePagedOptions';
+import { type LegacyDeviceSuggestionRead } from '@/shared/api/generated/api';
 import {
   useCreateExpectedDeviceMutation,
   useGetLegacyDeviceSuggestionsQuery,
@@ -15,9 +15,8 @@ function problemMessage(error: unknown, fallback: string): string {
 }
 
 function SuggestionRow({ computingId, suggestion }: { computingId: number; suggestion: LegacyDeviceSuggestionRead }) {
-  const [search, setSearch] = useState('');
   const [equipmentId, setEquipmentId] = useState<number>();
-  const options = useLabsEquipmentOptionsRetrieveQuery(search.trim().length >= 2 ? { q: search.trim() } : skipToken);
+  const equipment = usePagedOptions(equipmentPagedConfig);
   const [register, registering] = useRegisterEquipmentHardwareIdMutation();
   const [expect, expecting] = useCreateExpectedDeviceMutation();
   const status = suggestion.status.value;
@@ -62,21 +61,14 @@ function SuggestionRow({ computingId, suggestion }: { computingId: number; sugge
       {status === 'unregistered' && (
         <div className={styles.suggestionAction}>
           <Select
-            showSearch
             allowClear
             size="small"
             placeholder="Which unit is it?"
             aria-label={`Equipment for ${suggestion.label || suggestion.pnp_id}`}
-            filterOption={false}
-            onSearch={setSearch}
             value={equipmentId}
             onChange={setEquipmentId}
-            loading={options.isFetching}
-            notFoundContent={search.trim().length < 2 ? 'Type at least 2 characters' : 'No equipment found'}
-            options={(options.data?.data ?? []).map((option) => ({
-              value: option.id,
-              label: option.sku ? `${option.name} · ${option.sku}` : option.name,
-            }))}
+            {...equipment.selectProps}
+            options={equipment.options}
             style={{ minWidth: 220 }}
           />
           <Button size="small" type="primary" disabled={!equipmentId} loading={registering.isLoading || expecting.isLoading} onClick={() => void registerAndExpect()}>

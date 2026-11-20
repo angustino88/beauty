@@ -1,11 +1,11 @@
-import { Select, Space, Typography } from 'antd';
+import { Select, Space } from 'antd';
 import { useMemo, useState } from 'react';
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
+import { equipmentPagedConfig, usePagedOptions } from '@/shared/hooks/usePagedOptions';
 import { useGetTargetOptionsQuery } from '../api';
 import { TARGET_TYPE_LABEL } from '../format';
 import type { TargetType } from '../types';
-import { useEquipmentOptions } from './useEquipmentOptions';
 
 export interface TargetValue {
   type: TargetType;
@@ -42,7 +42,7 @@ export function TargetPicker({
   const { data, isFetching } = useGetTargetOptionsQuery(
     isEquipment ? skipToken : { type, q: q || undefined, room_id: type === 'station' ? roomId : undefined },
   );
-  const equipment = useEquipmentOptions({ enabled: isEquipment });
+  const equipment = usePagedOptions({ ...equipmentPagedConfig, enabled: isEquipment });
 
   const options = useMemo(() => {
     const items = isEquipment
@@ -83,16 +83,7 @@ export function TargetPicker({
         notFoundContent={isEquipment ? equipment.emptyText : isFetching ? 'Searching…' : 'No match'}
         onOpenChange={isEquipment ? equipment.onOpenChange : undefined}
         onPopupScroll={isEquipment ? equipment.onPopupScroll : undefined}
-        popupRender={(menu) => (
-          <>
-            {menu}
-            {isEquipment && equipment.footer && (
-              <Typography.Text type="secondary" style={{ display: 'block', padding: '6px 12px', fontSize: 12 }}>
-                {equipment.footer}
-              </Typography.Text>
-            )}
-          </>
-        )}
+        popupRender={isEquipment ? equipment.popupRender : undefined}
         value={value && value.type === type ? value.id : undefined}
         options={options}
         onChange={(id) => {
