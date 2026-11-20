@@ -54,6 +54,7 @@
 .startButton { display: flex; align-items: center; gap: 9px; border: 1px solid #f5ce92; border-radius: 5px; color: #24362d; background: #f4d99d; padding: 9px 13px; font-weight: 750 !important; }
 .startButton:hover { background: #ffe8b5; }
 .board[data-active] { background-size: 112% auto; }
+.board[data-panorama][data-active] { background-size: auto 110%; background-repeat: no-repeat; }
 .ground {
   position: absolute; inset: 82.5% 0 0; border-top: 2px solid #eee3c2;
   background-size: 34.210526% 100%; background-repeat: repeat-x;
@@ -99,7 +100,7 @@
 .routeTitle { margin: 17px 0 9px; }
 .routeTitle h2 { gap: 8px; font-size: 19px; } .routeTitle svg,.footer svg { color: var(--gold); }
 .routeTitle > span,.footer { color: var(--muted); font-size: 11px; }
-.route { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 8px; }
+.route { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px; }
 .routeCard { display: flex; align-items: center; gap: 9px; min-width: 0; color: #ece8da; text-align: left; background: #1c3736; border: 1px solid #435b53; border-radius: 7px; padding: 6px; }
 .routeCard[aria-current] { border-color: #ccac71; background: #32473c; }
 .routeCard:disabled { cursor: default; }
@@ -128,4 +129,11 @@
   .gear img { width: 25px; height: 25px; } .gear b { font-size: 11px; }
   .route { grid-template-columns: 1fr 1fr; gap: 4px; } .routeCard img { width: 29px; height: 29px; }
   .routeTitle { margin-top: 9px; } .footer { flex-wrap: wrap; margin-top: 7px; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .board[data-active] [data-foe="goblin"] { animation: scamper .21s ease-in-out infinite alternate; transform-origin: center bottom; }
+  .board[data-active] [data-foe="king"] { animation: hover 2.2s ease-in-out infinite alternate; }
+  @keyframes scamper { to { transform: translateY(-4%) rotate(-4deg); } }
+  @keyframes hover { to { transform: translateY(-3%); } }
 }

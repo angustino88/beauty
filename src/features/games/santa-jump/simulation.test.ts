@@ -15,7 +15,7 @@ for (const [chapter, level] of chapters.entries()) {
       run = step(run, 1 / 60);
     }
     assert.equal(run.phase, 'delivered', JSON.stringify(run));
-    if (chapter === 3) assert.equal(run.bossHP, 0);
+    assert.equal(run.bossHP, 'boss' in level ? 0 : null);
     assert.ok(run.distance >= level.routeLength);
     assert.equal(run.letters, level.letters);
     assert.ok(run.score >= 10 * level.letters);
@@ -53,7 +53,7 @@ test('earned air jumps carry back to earlier stops', () => {
   }
 });
 
-test('reaching the last stop starts the boss fight and cannot skip it', () => {
+test('reaching the observatory starts the boss fight and cannot skip it', () => {
   const level = chapters[3];
   let state: Run = { ...createRun(3), phase: 'playing', letters: level.letters, distance: level.routeLength };
   state = step(state, 1 / 60);

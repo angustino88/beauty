@@ -26,9 +26,21 @@ export const chapters = [
     hazard: 'Brick chimney', speed: 270, spacing: 365, routeLength: 24300, letters: 20, jumps: 2,
   },
   {
-    name: 'Daybreak Observatory', short: 'Observatory', recipient: 'The star keeper', time: '05:10',
+    name: 'Daybreak Observatory', short: 'Observatory', boss: 'frost-king', recipient: 'The star keeper', time: '05:10',
     story: 'Carry the last wishes to the observatory before sunrise. The Frost King guards the summit. Dodge his ice volleys and catch three high stars to break his crown.',
-    ending: 'The North Star shines again. From the smallest attic to the cabin at the edge of the woods, every wish has found its way home.',
+    ending: 'The North Star shines again. From the smallest attic to the cabin at the edge of the woods, a line of lanterns flickers toward the coast. The glassmakers need a new lens for the harbor beacon.',
     hazard: 'Ice crystal', speed: 300, spacing: 350, routeLength: 31500, letters: 26, jumps: 3,
+  },
+  {
+    name: 'Aurora Glassworks', short: 'Glassworks', recipient: 'The glassmakers', time: '05:35',
+    story: 'The furnaces are warm again. Follow the letters above the cooling glass and take the lens order to the master glassmaker.',
+    ending: 'The last furnace opens. Santa wraps the emerald lens in wool and follows the harbor bells down to the docks.',
+    hazard: 'Glass shard', speed: 308, spacing: 362, routeLength: 33264, letters: 27, jumps: 3,
+  },
+  {
+    name: 'Starlight Harbor', short: 'Harbor', recipient: 'The lighthouse keeper', time: '06:10',
+    story: 'Fishing boats wait beyond the breakwater. Leap the cargo on the dock and collect the last letters before the morning tide turns.',
+    ending: 'The new lens catches the first ray of sun. One by one, the boats follow its green light home for Christmas.',
+    hazard: 'Cargo crate', speed: 316, spacing: 358, routeLength: 36024, letters: 29, jumps: 3,
   },
 ] as const;

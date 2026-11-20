@@ -41,12 +41,12 @@ export function step(run: Run, dt: number): Run {
     const wave = run.wave;
     const pickup: Entity = {
       id: wave * 2, kind: wave % 2 === 0 && run.letters < level.letters ? 'letter' : wave % 4 === 1 ? 'shield' : 'star',
-      x: WORLD_WIDTH, bottom: run.chapter > 0 && wave % 4 === 2 ? 182 : 67 + (wave % 3) * 9,
+      x: WORLD_WIDTH, bottom: run.chapter >= 4 && wave % 6 === 4 ? 225 : run.chapter > 0 && wave % 4 === 2 ? 182 : 67 + (wave % 3) * 9,
     };
     // The first pickup teaches the arc before any obstacle enters the lane.
     entities = [...entities, pickup];
     if (wave > 0) {
-      const goblin = wave % (5 - run.chapter) === 1;
+      const goblin = wave % Math.max(2, 5 - run.chapter) === 1;
       entities.push({ id: wave * 2 + 1, kind: goblin ? 'goblin' : 'hazard', x: WORLD_WIDTH + 5, bottom: 0 });
     }
     next.nextWave += level.spacing * [1, 1.18, 0.94, 1.34][wave % 4];
@@ -85,7 +85,7 @@ export function step(run: Run, dt: number): Run {
     }
   }
   if (run.bossHP === null && distance >= level.routeLength && next.letters >= level.letters) {
-    if (run.chapter === chapters.length - 1) {
+    if ('boss' in level) {
       next.bossHP = 3;
       next.entities = [];
       next.nextWave = distance + level.speed;

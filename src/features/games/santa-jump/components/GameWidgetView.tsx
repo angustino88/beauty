@@ -7,6 +7,8 @@ import santa from './santa-runner.webp';
 import workshop from '../art/workshop.webp';
 import forest from '../art/evergreen-forest.webp';
 import village from '../art/village-rooftops.webp';
+import glassworks from '../art/aurora-glassworks.webp';
+import harbor from '../art/starlight-harbor.webp';
 import tower from '../art/star-observatory.webp';
 import letter from '../art/sealed-letter.webp';
 import star from '../art/gold-star.webp';
@@ -24,9 +26,9 @@ import goblin from '../art/pine-goblin.webp';
 import king from '../art/frost-king.webp';
 import css from './GameWidget.module.css';
 
-const scenes = [workshop, forest, village, tower];
-const grounds = [workshopFloor, forestFloor, roof, marble];
-const hazards = [present, stump, chimney, ice];
+const scenes = [workshop, forest, village, tower, glassworks, harbor];
+const grounds = [workshopFloor, forestFloor, roof, marble, marble, workshopFloor];
+const hazards = [present, stump, chimney, ice, ice, present];
 const items = { letter, star, shield, goblin, blast: ice, counterStar: star };
 const chapterNumber = (index: number) => String(index + 1).padStart(2, '0');
 
@@ -85,7 +87,7 @@ export default function GameWidgetView({ state, record, unlocked, jump, pause, p
 
       <div className={css.body}>
         <div className={css.main}>
-          <section className={css.board} data-active={playing || undefined} style={{
+          <section className={css.board} data-panorama={chapter >= 4 || undefined} data-active={playing || undefined} style={{
             backgroundImage: `url("${scenes[chapter]}")`,
             backgroundPositionX: `${50 + 44 * Math.sin(state.distance / 1450)}%`,
           }} aria-label={level.name}>
@@ -103,7 +105,7 @@ export default function GameWidgetView({ state, record, unlocked, jump, pause, p
                 style={spriteStyle(SANTA_X, state.height, SANTA_SIZE)} />
               {state.bossHP !== null && <img className={css.sprite} src={king} alt="Frost King" style={spriteStyle(618, 0, 136)} />}
               {state.entities.map(e => <img key={e.id}
-                className={css.sprite} alt={e.kind === 'hazard' ? level.hazard : e.kind === 'goblin' ? 'Pine goblin' : ''}
+                className={css.sprite} data-foe={e.kind === 'goblin' ? 'goblin' : undefined} alt={e.kind === 'hazard' ? level.hazard : e.kind === 'goblin' ? 'Pine goblin' : ''}
                 src={e.kind === 'hazard' ? hazards[chapter] : items[e.kind]}
                 style={spriteStyle(e.x, e.bottom, ['hazard', 'goblin', 'blast'].includes(e.kind) ? HAZARD_SIZE : ITEM_SIZE)} />)}
             </>}
@@ -133,7 +135,7 @@ export default function GameWidgetView({ state, record, unlocked, jump, pause, p
             </div>
           </aside>
         </div>
-        <div className={css.routeTitle}><h2><MapPinned size={17}/> Delivery route</h2><span>{record.filter(Boolean).length} / 4 stops complete</span></div>
+        <div className={css.routeTitle}><h2><MapPinned size={17}/> Delivery route</h2><span>{record.filter(Boolean).length} / {chapters.length} stops complete</span></div>
         <nav className={css.route} aria-label="Choose a delivery stop">
           {chapters.map((c, i) => <button key={c.short} className={css.routeCard} aria-current={chapter === i ? 'step' : undefined}
             disabled={!routeOpen || i > unlocked} onClick={() => select(i)} aria-label={`${c.short}${i > unlocked ? ', locked' : ''}`}>
