@@ -8,7 +8,7 @@ interface MeState {
   avatar: string | null;
   /** Labs permission codes the user holds (`effective_permissions.labs`). Check with `useCan`. */
   permissions: PermissionSet;
-  /** Labs role codes (`admin`, `coord`, `user`), for display only. Never gate an action on a role. */
+  /** Labs role codes (`admin`, `coord`, `member`), for display only. Never gate an action on a role. */
   roles: string[];
 }
 

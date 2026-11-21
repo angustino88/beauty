@@ -8,7 +8,7 @@ const user = {
   username: 'carol',
   display_name: 'Carol',
   avatar_url: null,
-  effective_roles: { labs: ['coord', 'user'] },
+  effective_roles: { labs: ['coord'] },
   effective_permissions: {
     labs: [
       { value: 'bench_booking.approve', label: 'Approve or reject bench bookings that need approval' },
@@ -23,7 +23,7 @@ test('meFromUser keeps the permissions the backend grants and the roles for disp
   assert.equal(holds(me.permissions, 'bench_booking.approve'), true);
   assert.equal(holds(me.permissions, 'lab_operations.manage'), true);
   assert.equal(holds(me.permissions, 'workbook.import'), false);
-  assert.deepEqual(me.roles, ['coord', 'user']);
+  assert.deepEqual(me.roles, ['coord']);
   assert.equal(me.displayName, 'Carol');
 });
 
