@@ -31,7 +31,7 @@ const UserAvatarToggle: React.FC<UserAvatarToggleProps> = ({
 
   const avatarSrc = getAvatarUrl(avatar, username);
   const hasRealAvatar = !!avatar;
-  const accountName = displayName || username;
+  const accountName = displayName.trim() || username;
   const accountEmail = username.includes('@') ? username : `${username}@bosch.com`;
 
   const beforeUpload = (file: File): boolean | typeof Upload.LIST_IGNORE | Promise<boolean | typeof Upload.LIST_IGNORE> => {

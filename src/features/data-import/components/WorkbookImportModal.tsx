@@ -19,6 +19,10 @@ interface Props {
 }
 
 function apiErrorMessage(error: unknown): string {
+  const status = (error as { status?: unknown })?.status;
+  if (status === 'TIMEOUT_ERROR') {
+    return 'The workbook check or import timed out because the file is very large. Try again or split the workbook into smaller batches.';
+  }
   const body = (error as { data?: { error?: { message?: string } } })?.data;
   return body?.error?.message ?? 'The request failed. Try again.';
 }
