@@ -4,6 +4,7 @@ import { useAppSelector } from '@/app/store';
 import { useGetMeQuery } from '@/features/auth/api';
 import { holds, type LabsPermission } from '@/features/auth/permissions';
 import AccessDenied from '@/pages/errors/AccessDenied';
+import { resolvePermissionRouteState } from './permissionRouteState';
 
 interface PermissionRouteProps {
   children: ReactNode;
@@ -14,12 +15,20 @@ interface PermissionRouteProps {
 export default function PermissionRoute({ children, permission }: PermissionRouteProps) {
   const isLoggedIn = useAppSelector((state) => state.auth.isLoggedIn);
   const bootstrapStatus = useAppSelector((state) => state.auth.bootstrapStatus);
-  const { isLoading, isFetching, isUninitialized } = useGetMeQuery(undefined, {
+  const meLoaded = useAppSelector((state) => state.me.id !== null);
+  const { data, isLoading, isFetching, isUninitialized } = useGetMeQuery(undefined, {
     skip: !isLoggedIn || bootstrapStatus !== 'authenticated',
   });
   const hasAccess = useAppSelector((state) => holds(state.me.permissions, permission));
+  const decision = resolvePermissionRouteState({
+    isLoggedIn,
+    bootstrapStatus,
+    meLoaded,
+    hasAccess,
+    query: { isUninitialized, isLoading, isFetching, hasData: Boolean(data) },
+  });
 
-  if (isLoggedIn && (bootstrapStatus === 'loading' || isUninitialized || isLoading || isFetching)) {
+  if (decision === 'loading') {
     return (
       <div style={{ minHeight: '40vh', display: 'grid', placeItems: 'center' }}>
         <Spin size="large" />
@@ -27,7 +36,7 @@ export default function PermissionRoute({ children, permission }: PermissionRout
     );
   }
 
-  if (!hasAccess) {
+  if (decision === 'denied') {
     return <AccessDenied />;
   }
 

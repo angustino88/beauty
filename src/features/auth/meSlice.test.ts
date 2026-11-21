@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { meFromUser } from './meSlice.ts';
+import { meActions, meFromUser, meReducer } from './meSlice.ts';
 import { holds, permissionSetFrom } from './permissions.ts';
 
 const user = {
@@ -44,4 +44,14 @@ test('plain string codes and unknown future codes are accepted', () => {
   const set = permissionSetFrom({ labs: ['dashboard.read', { value: 'future.permission' }] });
   assert.equal(set['dashboard.read'], true);
   assert.equal(set['future.permission'], true);
+});
+
+test('auth/logout resets meSlice so a new login waits for its own /api/users/me response', () => {
+  const populated = meReducer(undefined, meActions.setMe(meFromUser(user)));
+  assert.equal(populated.id, 7);
+
+  const cleared = meReducer(populated, { type: 'auth/logout' });
+  assert.equal(cleared.id, null);
+  assert.deepEqual(cleared.permissions, {});
+  assert.deepEqual(cleared.roles, []);
 });

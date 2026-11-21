@@ -53,6 +53,9 @@ const meSlice = createSlice({
       state.avatar = action.payload;
     },
   },
+  extraReducers: (builder) => {
+    builder.addMatcher((action) => action.type === 'auth/logout', () => initialState);
+  },
 });
 
 export const meActions = meSlice.actions;
