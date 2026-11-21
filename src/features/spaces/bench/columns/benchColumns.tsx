@@ -11,7 +11,7 @@ import { buildStateColumns } from "@/features/spaces/shared/stateColumns";
 import { BenchLocationCell } from "./BenchLocationCell";
 
 interface BuildBenchColumnsArgs {
-  isAdmin: boolean;
+  canManageLabOperations: boolean;
   activeFilters: Record<string, Key[] | null>;
   groupFilters: Array<{ text: string; value: string }>;
   typeFilters: Array<{ text: string; value: string }>;

@@ -1,18 +1,16 @@
-import { lazy, Suspense, useState } from 'react';
+import { useState } from 'react';
 import { Button as AntButton } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
 import { FileSpreadsheet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useSelector } from 'react-redux';
-import type { RootState } from '@/app/store';
+import { usePermission } from '@/features/auth/hooks/useCan';
+import WorkbookImportModal from './WorkbookImportModal';
 
-const WorkbookImportModal = lazy(() => import('./WorkbookImportModal'));
-
-/** Excel import / export (workbook covers every resource, licenses included) for Labs administrators; renders nothing for everyone else (the API enforces it too). */
+/** Excel import / export (workbook covers every resource, licenses included) for holders of workbook.import (Lab Administrators); renders nothing for everyone else (the API enforces it too). */
 export default function WorkbookImportButton({ variant = 'professional' }: { variant?: 'professional' | 'antd' }) {
-  const isAdmin = useSelector((state: RootState) => Boolean(state.me.permissionGroups?.admin));
+  const canImport = usePermission('workbook.import');
   const [open, setOpen] = useState(false);
-  if (!isAdmin) return null;
+  if (!canImport) return null;
   return (
     <>
       {variant === 'antd' ? (
@@ -21,11 +19,7 @@ export default function WorkbookImportButton({ variant = 'professional' }: { var
         // Same control as the neighbouring "View options" button (outline, 36px high).
         <Button variant="outline" onClick={() => setOpen(true)}><FileSpreadsheet />Excel import / export</Button>
       )}
-      {open && (
-        <Suspense fallback={null}>
-          <WorkbookImportModal open={open} onClose={() => setOpen(false)} />
-        </Suspense>
-      )}
+      {open && <WorkbookImportModal open={open} onClose={() => setOpen(false)} />}
     </>
   );
 }

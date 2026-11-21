@@ -23,6 +23,7 @@ import { WeeklyUsageHeatmap } from '../charts/WeeklyUsageHeatmap';
 import { useAppSelector } from '@/app/store';
 import { AssessmentReport } from '../assessment/AssessmentView';
 import styles from './LeaderboardDetailModal.module.css';
+import { usePermission } from '@/features/auth/hooks/useCan';
 
 const { Text } = Typography;
 
@@ -143,12 +144,11 @@ export function LeaderboardDetailModal({ open, type, userRow, labRow, filter, on
     { icon: <DesktopOutlined />,     title: 'Early Release Rate',  value: toPercent(labRow?.early_release_rate) },
   ], [labRow]);
 
-  // Coordinators and admins see every assessment; a user sees their own. The API enforces the same rule.
-  const permissionGroups = useAppSelector((state) => state.me.permissionGroups) as Record<string, unknown> | null;
+  // Holders of assessment.read_any (lab operators) see every assessment; a user sees their own. The API enforces the same rule.
   const myId = useAppSelector((state) => state.me.id);
-  const isStaff = Boolean(permissionGroups?.['admin'] || permissionGroups?.['lab-coordinator']);
+  const canReadAnyAssessment = usePermission('assessment.read_any');
   const isOwn = type === 'persona' && myId != null && userRow?.id === myId;
-  const canSeeAssessment = isStaff || isOwn;
+  const canSeeAssessment = canReadAnyAssessment || isOwn;
   const assessmentArg = { id: selectedId ?? 0, filter };
   // The chosen tab belongs to the subject shown: opening another user or bench starts on Overview.
   const subjectKey = `${type}:${selectedId ?? ''}`;

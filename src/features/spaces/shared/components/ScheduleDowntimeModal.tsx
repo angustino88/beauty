@@ -12,9 +12,11 @@ import {
 import { ToolOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import dayjs, { type Dayjs } from 'dayjs';
 import {
+  BOOKING_ACCESS_LABELS,
   CONDITION_LABELS,
   DOWNTIME_REASON_LABELS,
   parseDowntimeBookingConflicts,
+  type DowntimeBookingAccess,
   type DowntimeConflictBooking,
   type DowntimeKind,
   type DowntimeReason,
@@ -55,6 +57,7 @@ interface FormValues {
   starts_at?: Dayjs;
   ends_at?: Dayjs;
   notes?: string;
+  booking_access?: DowntimeBookingAccess;
 }
 
 interface ApiProblemDetail {
@@ -92,6 +95,8 @@ export const ScheduleDowntimeModal: React.FC<ScheduleDowntimeModalProps> = ({
   const [activePreset, setActivePreset] = useState<string | null>(null);
 
   const watchedCondition = Form.useWatch('condition', form) ?? 'in_maintenance';
+  // Lab operators can keep booking the benches of a room, station or bench; equipment windows always close.
+  const supportsBookingAccess = resourceType !== 'equipment';
   const watchedStartsAt = Form.useWatch('starts_at', form);
 
   const resetState = () => {
@@ -138,6 +143,7 @@ export const ScheduleDowntimeModal: React.FC<ScheduleDowntimeModalProps> = ({
       ends_at: endsAtIso,
       notes: values.notes ? values.notes.slice(0, 2000) : undefined,
       cancel_conflicting_bookings: false,
+      booking_access: supportsBookingAccess ? values.booking_access ?? 'closed' : 'closed',
     };
 
     setLastPayload(payload);
@@ -226,6 +232,7 @@ export const ScheduleDowntimeModal: React.FC<ScheduleDowntimeModalProps> = ({
             condition: 'in_maintenance',
             reason: 'maintenance',
             starts_at: dayjs(),
+            booking_access: 'closed',
           }}
           onFinish={handleSubmit}
         >
@@ -289,6 +296,19 @@ export const ScheduleDowntimeModal: React.FC<ScheduleDowntimeModalProps> = ({
               <Radio value="unplanned">Unplanned Incident</Radio>
             </Radio.Group>
           </Form.Item>
+
+          {supportsBookingAccess && (
+            <Form.Item
+              name="booking_access"
+              label="Who can still book?"
+              tooltip="Lab operators (Lab Coordinators and Lab Administrators) can keep booking the covered benches, for example to do the maintenance work. Their existing bookings are kept."
+            >
+              <Radio.Group>
+                <Radio value="closed">{BOOKING_ACCESS_LABELS.closed}</Radio>
+                <Radio value="lab_operators">{BOOKING_ACCESS_LABELS.lab_operators}</Radio>
+              </Radio.Group>
+            </Form.Item>
+          )}
 
           <Form.Item
             name="starts_at"

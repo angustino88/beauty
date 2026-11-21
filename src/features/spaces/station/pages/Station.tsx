@@ -4,8 +4,6 @@ import { toResourceOption } from "@/components/inputs/ResourceOption";
 import { useCallback, useMemo, useState } from "react";
 import { skipToken } from "@reduxjs/toolkit/query";
 import { useLabsRoomsSlotsRetrieveByRoomIdQuery } from "@/shared/api/generated/api";
-import { useSelector } from "react-redux";
-import type { RootState } from "@/app/store";
 import {
   EquipmentPageLayout,
   EquipmentFormModal,
@@ -20,14 +18,10 @@ import { useStationTable } from "../hooks/useStationTable";
 import { useStationForm } from "../hooks/useStationForm";
 import { buildStationColumns } from "../columns/stationColumns";
 import { facetToAntdFilters, getFacetOptions } from "@/features/lab-equipment/shared/facets/filterFacets";
-
-const isAdminGroupMap = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
+import { usePermission } from '@/features/auth/hooks/useCan';
 
 export default function StationPage() {
-  const permissionGroups = useSelector((state: RootState) => state.me.permissionGroups);
-  const isAdmin =
-    isAdminGroupMap(permissionGroups) && ("admin" in permissionGroups || "lab-coordinator" in permissionGroups);
+  const canManageLabOperations = usePermission("lab_operations.manage");
 
   const table = useStationTable();
   const form = useStationForm();
@@ -132,7 +126,7 @@ export default function StationPage() {
   );
 
   const actionsRenderer = createActionsRenderer<IStation>({
-    isAdmin,
+    canManageLabOperations,
     onEdit: (id) => setEditingStation(table.rows.find((station) => station.id === id) ?? null),
     deleting: form.deleting,
     onDelete: form.deleteById,
@@ -145,7 +139,7 @@ export default function StationPage() {
   });
 
   const columns = buildStationColumns({
-    isAdmin,
+    canManageLabOperations,
     activeFilters: table.filters,
     roomFilters,
     ownerFilters,
@@ -177,7 +171,7 @@ export default function StationPage() {
         onSearchChange={table.setSearch}
         filters={table.filters}
         onFiltersChange={table.setFilters as (filters: Record<string, import("react").Key[] | null>) => void}
-        showCreate={isAdmin}
+        showCreate={canManageLabOperations}
         createLabel="New Station"
         onCreate={() => setCreateModalOpen(true)}
         scrollX={1800}

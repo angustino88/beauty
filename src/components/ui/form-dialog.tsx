@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useCallback, useRef, type ReactNode } from 'react';
 import { ConfigProvider } from 'antd';
 import { LoaderCircle } from 'lucide-react';
 import { Button } from './button';
@@ -21,8 +21,17 @@ interface FormDialogProps {
 }
 
 /** Compatibility boundary: only the shell changes, not Ant Form validation.
- * Keep select/date popups inside Radix's focus scope and pointer-event boundary. */
+ * Mount popups on an in-dialog host (outside overflow:hidden labels and the scroll body, but inside Radix's focus scope). */
 export function FormDialog({ open, title, description, children, onCancel, onSubmit, submitLabel, cancelLabel = 'Cancel', busy = false, submitDisabled, wide, className, destructive }: FormDialogProps) {
+  const overlayHost = useRef<HTMLDivElement>(null);
+  const getPopupContainer = useCallback(
+    (trigger?: HTMLElement) =>
+      overlayHost.current ??
+      trigger?.closest<HTMLElement>('[data-slot="dialog-content"]') ??
+      document.body,
+    [],
+  );
+
   return <Dialog open={open} onOpenChange={(next) => { if (!next && !busy) onCancel(); }}>
     <DialogContent className={`${wide ? 'tw:max-w-[820px]' : 'tw:max-w-[640px]'} ${className ?? ''}`} closeDisabled={busy} onPointerDownOutside={(event) => event.preventDefault()} onEscapeKeyDown={(event) => {
       // Radix captures Escape before Ant's popup handlers. Let an open
@@ -37,7 +46,7 @@ export function FormDialog({ open, title, description, children, onCancel, onSub
         <DialogTitle className="tw:m-0 tw:text-lg tw:font-semibold tw:tracking-tight">{title}</DialogTitle>
         <DialogDescription className="tw:mt-1 tw:text-xs tw:text-muted-foreground">{description}</DialogDescription>
       </header>
-      <ConfigProvider getPopupContainer={(trigger) => trigger?.parentElement ?? document.body}>
+      <ConfigProvider getPopupContainer={getPopupContainer}>
         <div className="tw:min-h-0 tw:overflow-y-auto tw:px-6 tw:py-5" aria-busy={busy}>{children}</div>
       </ConfigProvider>
       <footer className="tw:flex tw:shrink-0 tw:items-center tw:justify-end tw:gap-2 tw:border-0 tw:border-t tw:border-solid tw:border-border tw:bg-muted/50 tw:px-6 tw:py-4">
@@ -46,6 +55,7 @@ export function FormDialog({ open, title, description, children, onCancel, onSub
           {busy && <LoaderCircle className="tw:animate-spin tw:motion-reduce:animate-none" />}{submitLabel}
         </Button>
       </footer>
+      <div ref={overlayHost} />
     </DialogContent>
   </Dialog>;
 }

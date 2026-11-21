@@ -11,6 +11,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useGetBookingBenchChoicesQuery, useLazyGetBenchBookingByIdQuery } from '../../api';
 import { formatBenchLabel } from '../../utils/benchChoiceOption';
 import { useAuthState } from '@/features/auth/hooks/useAuthState';
+import { usePermission } from '@/features/auth/hooks/useCan';
 import { BenchBookingEdit } from '../BenchBookingEdit';
 import type { BenchBookingItem } from '../../types';
 
@@ -29,7 +30,8 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
   refetchBooking,
   listedBooking,
 }) => {
-  const { id: myUserId, permissionGroups } = useAuthState();
+  const { id: myUserId } = useAuthState();
+  const canManageAny = usePermission('bench_booking.manage_any');
   const [fetchBooking, { data: fetchedBooking, isFetching }] = useLazyGetBenchBookingByIdQuery();
   const booking = listedBooking ?? fetchedBooking;
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
@@ -44,9 +46,8 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
     () =>
       !!booking &&
       ((myUserId != null && booking.creator?.id === myUserId) ||
-        !!permissionGroups['admin'] ||
-        !!permissionGroups['lab-coordinator']),
-    [booking, myUserId, permissionGroups],
+        canManageAny),
+    [booking, myUserId, canManageAny],
   );
 
   const formatBookingDuration = () => {

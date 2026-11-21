@@ -221,7 +221,7 @@ export function renderLicenseName(licenses: Array<{ id: number; name?: string | 
 
 /** Standard actions column renderer */
 export function createActionsRenderer<TRecord extends { id: number }>(options: {
-  isAdmin: boolean;
+  canManageLabOperations: boolean;
   deleting: boolean;
   onEdit: (id: number) => void;
   onDelete: (id: number) => void;
@@ -268,7 +268,7 @@ export function createActionsRenderer<TRecord extends { id: number }>(options: {
             }}
           />
         </Tooltip>
-        {options.isAdmin && (
+        {options.canManageLabOperations && (
           <Popconfirm
             title={options.deleteConfirmText ?? `Delete ${label}?`}
             description="This cannot be undone."

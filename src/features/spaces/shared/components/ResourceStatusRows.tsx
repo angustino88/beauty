@@ -142,6 +142,11 @@ export const ResourceStatusRows: React.FC<ResourceStatusRowsProps> = ({
               </span>
             )
           }
+          description={
+            availability?.booking_access === 'lab_operators'
+              ? 'Lab operators (Lab Coordinators and Lab Administrators) can still book it.'
+              : undefined
+          }
         />
       )}
 

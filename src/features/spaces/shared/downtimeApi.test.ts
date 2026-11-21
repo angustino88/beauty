@@ -55,3 +55,13 @@ test('mapDowntimeListResponse handles data array and paged envelopes', () => {
   assert.equal(res.data[0].state, 'current');
   assert.equal(res.data[0].ends_at, null);
 });
+
+test('mapDowntimeItem reads who may still book, closed when the backend sends nothing', () => {
+  const open = mapDowntimeItem({
+    id: 5,
+    resource: { type: 'bench', id: 3 },
+    booking_access: { value: 'lab_operators', label: 'Lab operators only' },
+  });
+  assert.deepEqual(open.booking_access, { value: 'lab_operators', label: 'Lab operators only' });
+  assert.equal(mapDowntimeItem({ id: 6 }).booking_access.value, 'closed');
+});

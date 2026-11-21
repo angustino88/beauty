@@ -7,6 +7,7 @@ import type { EnrollmentGrantRead } from '@/shared/api/generated/api';
 import { StatusBadge } from '@/shared/components/StatusBadge';
 import { userLabel } from '@/shared/utils/userRef';
 import { useAppDispatch } from '@/app/store';
+import { usePermission } from '@/features/auth/hooks/useCan';
 import {
   agentApi,
   agentErrorMessage,
@@ -49,11 +50,11 @@ interface ActivityItem { key: string; at: string; tone: AgentTone; text: ReactNo
  * activity); the setup view walks through Download, Configure and Verify while the footer reports
  * progress live. Render with `key={computer?.id}` so the in-memory grant is forgotten on close.
  */
-export function ComputingAgentDialog({ computer, canManage, onClose }: {
+export function ComputingAgentDialog({ computer, onClose }: {
   computer: AgentComputer | null;
-  canManage: boolean;
   onClose: () => void;
 }) {
+  const canManageAgents = usePermission('agent.manage');
   const open = computer !== null;
   const [issued, setIssued] = useState<IssuedGrant | null>(null);
   const [view, setView] = useState<'auto' | 'info' | 'setup'>('auto');
@@ -76,7 +77,7 @@ export function ComputingAgentDialog({ computer, canManage, onClose }: {
   const grant = issued && live && issued.agentUid === live.agent_uid ? issued : null;
   const remaining = useCountdown(grant?.expiresAt);
   const phase = setupPhase(live, { hasGrant: Boolean(grant), grantExpired: Boolean(grant) && remaining === 0 });
-  const resolvedView = view !== 'auto' ? view : state === 'active' || !canManage ? 'info' : 'setup';
+  const resolvedView = view !== 'auto' ? view : state === 'active' || !canManageAgents ? 'info' : 'setup';
   const settingUp = resolvedView === 'setup' && (phase === 'waiting' || phase === 'enrolled');
 
   // A second subscription polls quickly while a setup is in flight, so the footer advances on its
@@ -140,7 +141,7 @@ export function ComputingAgentDialog({ computer, canManage, onClose }: {
           at: row.created_at,
           tone: 'info',
           text: <>Enrollment grant issued · expires <Ago value={row.expires_at} /></>,
-          action: canManage && live ? (
+          action: canManageAgents && live ? (
             <Popconfirm
               title="Revoke this grant?"
               okButtonProps={{ danger: true }}
@@ -167,7 +168,7 @@ export function ComputingAgentDialog({ computer, canManage, onClose }: {
       text: <>Agent <span className={styles.mono}>{shortUid(row.agent_uid)}</span> {row.state.label.toLowerCase()}</>,
     }));
     return [...grants, ...previous].sort((a, b) => b.at.localeCompare(a.at));
-  }, [grantsQuery.data, agents, agent?.id, canManage, live, revokeGrant]);
+  }, [grantsQuery.data, agents, agent?.id, canManageAgents, live, revokeGrant]);
 
   const status = agentStatus(live);
   const title = computer?.sku || computer?.name || (computer ? `Computer #${computer.id}` : '');
@@ -204,7 +205,7 @@ export function ComputingAgentDialog({ computer, canManage, onClose }: {
       {!live && !agentsQuery.isLoading && (
         <div className={styles.empty}>
           <p>No agent is installed on this computer.</p>
-          <span>{canManage ? 'Set one up to report health, sessions and booking check-ins.' : 'A lab coordinator can set one up.'}</span>
+          <span>{canManageAgents ? 'Set one up to report health, sessions and booking check-ins.' : 'A lab coordinator can set one up.'}</span>
         </div>
       )}
 
@@ -264,7 +265,7 @@ export function ComputingAgentDialog({ computer, canManage, onClose }: {
         </Button>
       )}
     </div>
-  ) : canManage ? (
+  ) : canManageAgents ? (
     <div className={styles.footer}>
       {live && state === 'active' ? (
         <Dropdown

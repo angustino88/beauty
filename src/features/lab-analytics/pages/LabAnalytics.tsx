@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import { useAppSelector } from "@/app/store";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Statistics } from "../components/Statistics";
 import { LabSessionLogTable } from "../components/LabSessionLogTable";
@@ -15,12 +14,12 @@ import {
   UserStorageQuotaCard,
 } from "../components";
 import styles from "./LabAnalytics.module.css";
+import { usePermission } from '@/features/auth/hooks/useCan';
 
 export function LabAnalytics() {
   const [modalOpen, setModalOpen] = useState<number | null>(null);
-  // The session list is for lab coordinators and admins only; the API refuses everyone else.
-  const permissionGroups = useAppSelector((state) => state.me.permissionGroups) as Record<string, unknown> | null;
-  const canSeeSessions = Boolean(permissionGroups?.["admin"] || permissionGroups?.["lab-coordinator"]);
+  // The session list is for lab operators only; the API refuses everyone else.
+  const canSeeSessions = usePermission("lab_operations.manage");
 
   const makeHandlers = useMemo(
     () => (id: number) => ({

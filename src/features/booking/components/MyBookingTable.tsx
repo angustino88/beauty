@@ -2,6 +2,7 @@ import { Table } from "antd";
 import { forwardRef, useImperativeHandle, useState } from "react";
 import { useGetProjectOptionsQuery } from "../api";
 import { useAuthState } from "@/features/auth/hooks/useAuthState";
+import { useCan } from "@/features/auth/hooks/useCan";
 import { useMyBookingTable } from "../hooks/useMyBookingTable";
 import { BenchBookingEdit } from "./BenchBookingEdit";
 import { buildMyBookingColumns } from "./MyBookingTable.columns";
@@ -22,7 +23,9 @@ export const MyBookingTable = forwardRef<
   MyBookingTableHandle,
   MyBookingTableProps
 >(({ search }, ref) => {
-  const { id, username, permissionGroups, isCoordinator } = useAuthState();
+  const { id, username } = useAuthState();
+  const can = useCan();
+  const canSeeAll = can("bench_booking.manage_any");
 
   const { data: projects = [] } = useGetProjectOptionsQuery();
 
@@ -43,7 +46,7 @@ export const MyBookingTable = forwardRef<
     handleRejectBooking,
     resetFilters,
     refetch,
-  } = useMyBookingTable(search, { id, username }, isCoordinator);
+  } = useMyBookingTable(search, { id, username }, canSeeAll);
 
   useImperativeHandle(ref, () => ({
     refetch,
@@ -63,8 +66,8 @@ export const MyBookingTable = forwardRef<
   const columns = buildMyBookingColumns({
     filterParams,
     projects,
-    permissionGroups,
-    isCoordinator,
+    canSeeAll,
+    canApprove: can("bench_booking.approve"),
     showAll,
     onToggleShowAll: handleToggleShowAll,
     onEditBooking: handleEditBooking,

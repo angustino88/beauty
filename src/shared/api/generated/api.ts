@@ -1332,6 +1332,7 @@ const injectedRtkApi = api.injectEndpoints({
       query: (queryArg) => ({
         url: `/api/labs/downtimes`,
         params: {
+          booking_access: queryArg.bookingAccess,
           page: queryArg.page,
           page_size: queryArg.pageSize,
           resource_id: queryArg.resourceId,
@@ -1365,6 +1366,16 @@ const injectedRtkApi = api.injectEndpoints({
       query: (queryArg) => ({
         url: `/api/labs/downtimes/${queryArg.downtimeId}/actions/cancel`,
         method: "POST",
+      }),
+    }),
+    labsDowntimesActionsChangeBookingAccessCreateByDowntimeId: build.mutation<
+      LabsDowntimesActionsChangeBookingAccessCreateByDowntimeIdApiResponse,
+      LabsDowntimesActionsChangeBookingAccessCreateByDowntimeIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/downtimes/${queryArg.downtimeId}/actions/change-booking-access`,
+        method: "POST",
+        body: queryArg.downtimeChangeBookingAccess,
       }),
     }),
     labsDowntimesActionsEndCreateByDowntimeId: build.mutation<
@@ -4598,6 +4609,222 @@ const injectedRtkApi = api.injectEndpoints({
     >({
       query: () => ({ url: `/api/labs/stations/status-summary` }),
     }),
+    labsTelemetryChannelsRetrieveByChannelId: build.query<
+      LabsTelemetryChannelsRetrieveByChannelIdApiResponse,
+      LabsTelemetryChannelsRetrieveByChannelIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/telemetry/channels/${queryArg.channelId}`,
+      }),
+    }),
+    labsTelemetryChannelsPartialUpdateByChannelId: build.mutation<
+      LabsTelemetryChannelsPartialUpdateByChannelIdApiResponse,
+      LabsTelemetryChannelsPartialUpdateByChannelIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/telemetry/channels/${queryArg.channelId}`,
+        method: "PATCH",
+        body: queryArg.patchedChannelUpdate,
+      }),
+    }),
+    labsTelemetryChannelsActionsBindTargetCreateByChannelId: build.mutation<
+      LabsTelemetryChannelsActionsBindTargetCreateByChannelIdApiResponse,
+      LabsTelemetryChannelsActionsBindTargetCreateByChannelIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/telemetry/channels/${queryArg.channelId}/actions/bind-target`,
+        method: "POST",
+        body: queryArg.bindTarget,
+      }),
+    }),
+    labsTelemetryChannelsActionsUnbindCreateByChannelId: build.mutation<
+      LabsTelemetryChannelsActionsUnbindCreateByChannelIdApiResponse,
+      LabsTelemetryChannelsActionsUnbindCreateByChannelIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/telemetry/channels/${queryArg.channelId}/actions/unbind`,
+        method: "POST",
+      }),
+    }),
+    labsTelemetryDeviceProfilesRetrieve: build.query<
+      LabsTelemetryDeviceProfilesRetrieveApiResponse,
+      LabsTelemetryDeviceProfilesRetrieveApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/telemetry/device-profiles`,
+        params: {
+          key: queryArg.key,
+          page: queryArg.page,
+          page_size: queryArg.pageSize,
+          protocol: queryArg.protocol,
+          q: queryArg.q,
+          status: queryArg.status,
+        },
+      }),
+    }),
+    labsTelemetryDeviceProfilesCreate: build.mutation<
+      LabsTelemetryDeviceProfilesCreateApiResponse,
+      LabsTelemetryDeviceProfilesCreateApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/telemetry/device-profiles`,
+        method: "POST",
+        body: queryArg.deviceProfileCreate,
+      }),
+    }),
+    labsTelemetryDeviceProfilesRetrieveByProfileId: build.query<
+      LabsTelemetryDeviceProfilesRetrieveByProfileIdApiResponse,
+      LabsTelemetryDeviceProfilesRetrieveByProfileIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/telemetry/device-profiles/${queryArg.profileId}`,
+      }),
+    }),
+    labsTelemetryDeviceProfilesActionsApproveCreateByProfileId: build.mutation<
+      LabsTelemetryDeviceProfilesActionsApproveCreateByProfileIdApiResponse,
+      LabsTelemetryDeviceProfilesActionsApproveCreateByProfileIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/telemetry/device-profiles/${queryArg.profileId}/actions/approve`,
+        method: "POST",
+      }),
+    }),
+    labsTelemetryDevicesRetrieve: build.query<
+      LabsTelemetryDevicesRetrieveApiResponse,
+      LabsTelemetryDevicesRetrieveApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/telemetry/devices`,
+        params: {
+          kind: queryArg.kind,
+          page: queryArg.page,
+          page_size: queryArg.pageSize,
+          q: queryArg.q,
+          role: queryArg.role,
+          room_id: queryArg.roomId,
+          state: queryArg.state,
+        },
+      }),
+    }),
+    labsTelemetryDevicesRetrieveByDeviceId: build.query<
+      LabsTelemetryDevicesRetrieveByDeviceIdApiResponse,
+      LabsTelemetryDevicesRetrieveByDeviceIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/telemetry/devices/${queryArg.deviceId}`,
+      }),
+    }),
+    labsTelemetryDevicesActionsClaimCreateByDeviceId: build.mutation<
+      LabsTelemetryDevicesActionsClaimCreateByDeviceIdApiResponse,
+      LabsTelemetryDevicesActionsClaimCreateByDeviceIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/telemetry/devices/${queryArg.deviceId}/actions/claim`,
+        method: "POST",
+        body: queryArg.sourceClaim,
+      }),
+    }),
+    labsTelemetryDevicesActionsRetireCreateByDeviceId: build.mutation<
+      LabsTelemetryDevicesActionsRetireCreateByDeviceIdApiResponse,
+      LabsTelemetryDevicesActionsRetireCreateByDeviceIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/telemetry/devices/${queryArg.deviceId}/actions/retire`,
+        method: "POST",
+      }),
+    }),
+    labsTelemetryGatewaysCreate: build.mutation<
+      LabsTelemetryGatewaysCreateApiResponse,
+      LabsTelemetryGatewaysCreateApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/telemetry/gateways`,
+        method: "POST",
+        body: queryArg.gatewayCreate,
+      }),
+    }),
+    labsTelemetryGatewaysActionsBindScopeCreateByDeviceId: build.mutation<
+      LabsTelemetryGatewaysActionsBindScopeCreateByDeviceIdApiResponse,
+      LabsTelemetryGatewaysActionsBindScopeCreateByDeviceIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/telemetry/gateways/${queryArg.deviceId}/actions/bind-scope`,
+        method: "POST",
+        body: queryArg.bindTarget,
+      }),
+    }),
+    labsTelemetryMetricsRetrieve: build.query<
+      LabsTelemetryMetricsRetrieveApiResponse,
+      LabsTelemetryMetricsRetrieveApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/telemetry/metrics`,
+        params: {
+          page: queryArg.page,
+          page_size: queryArg.pageSize,
+        },
+      }),
+    }),
+    labsTelemetrySourcesCreate: build.mutation<
+      LabsTelemetrySourcesCreateApiResponse,
+      LabsTelemetrySourcesCreateApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/telemetry/sources`,
+        method: "POST",
+        body: queryArg.sourceCreate,
+      }),
+    }),
+    labsTelemetrySourcesPartialUpdateByDeviceId: build.mutation<
+      LabsTelemetrySourcesPartialUpdateByDeviceIdApiResponse,
+      LabsTelemetrySourcesPartialUpdateByDeviceIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/telemetry/sources/${queryArg.deviceId}`,
+        method: "PATCH",
+        body: queryArg.patchedSourceUpdate,
+      }),
+    }),
+    labsTelemetrySourcesActionsBindTargetCreateByDeviceId: build.mutation<
+      LabsTelemetrySourcesActionsBindTargetCreateByDeviceIdApiResponse,
+      LabsTelemetrySourcesActionsBindTargetCreateByDeviceIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/telemetry/sources/${queryArg.deviceId}/actions/bind-target`,
+        method: "POST",
+        body: queryArg.bindTarget,
+      }),
+    }),
+    labsTelemetrySourcesChannelsRetrieveByDeviceId: build.query<
+      LabsTelemetrySourcesChannelsRetrieveByDeviceIdApiResponse,
+      LabsTelemetrySourcesChannelsRetrieveByDeviceIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/telemetry/sources/${queryArg.deviceId}/channels`,
+        params: {
+          page: queryArg.page,
+          page_size: queryArg.pageSize,
+        },
+      }),
+    }),
+    labsTelemetrySourcesChannelsCreateByDeviceId: build.mutation<
+      LabsTelemetrySourcesChannelsCreateByDeviceIdApiResponse,
+      LabsTelemetrySourcesChannelsCreateByDeviceIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/telemetry/sources/${queryArg.deviceId}/channels`,
+        method: "POST",
+        body: queryArg.channelsFromProfile,
+      }),
+    }),
+    labsTelemetryTargetsRetrieveByTargetTypeResourceId: build.query<
+      LabsTelemetryTargetsRetrieveByTargetTypeResourceIdApiResponse,
+      LabsTelemetryTargetsRetrieveByTargetTypeResourceIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/telemetry/targets/${queryArg.targetType}/${queryArg.resourceId}`,
+      }),
+    }),
     labsWorkbookImportsActionsApplyCreate: build.mutation<
       LabsWorkbookImportsActionsApplyCreateApiResponse,
       LabsWorkbookImportsActionsApplyCreateApiArg
@@ -6270,6 +6497,9 @@ export type LabsDeviceConnectionsSummaryRetrieveApiArg = {
 export type LabsDowntimesRetrieveApiResponse =
   /** status 200  */ DowntimeListSerializersDowntimePaginatedResponseRead;
 export type LabsDowntimesRetrieveApiArg = {
+  /** * `closed` - Closed to all bookings
+   * `lab_operators` - Lab operators only */
+  bookingAccess?: "closed" | "lab_operators";
   page?: number;
   pageSize?: number;
   resourceId?: number;
@@ -6298,6 +6528,12 @@ export type LabsDowntimesActionsCancelCreateByDowntimeIdApiResponse =
   /** status 200  */ DowntimeCancelSerializersDowntimeDetailResponseRead;
 export type LabsDowntimesActionsCancelCreateByDowntimeIdApiArg = {
   downtimeId: number;
+};
+export type LabsDowntimesActionsChangeBookingAccessCreateByDowntimeIdApiResponse =
+  /** status 200  */ DowntimeChangeBookingAccessSerializersDowntimeDetailResponseRead;
+export type LabsDowntimesActionsChangeBookingAccessCreateByDowntimeIdApiArg = {
+  downtimeId: number;
+  downtimeChangeBookingAccess: DowntimeChangeBookingAccess;
 };
 export type LabsDowntimesActionsEndCreateByDowntimeIdApiResponse =
   /** status 200  */ DowntimeEndSerializersDowntimeDetailResponseRead;
@@ -8440,6 +8676,148 @@ export type LabsStationsReferenceDataRetrieveApiArg = void;
 export type LabsStationsStatusSummaryRetrieveApiResponse =
   /** status 200  */ StationStatusSummaryDataSerializersStationStatusSummaryDetailResponse;
 export type LabsStationsStatusSummaryRetrieveApiArg = void;
+export type LabsTelemetryChannelsRetrieveByChannelIdApiResponse =
+  /** status 200  */ TelemetryChannelDetailSerializersChannelDetailResponseRead;
+export type LabsTelemetryChannelsRetrieveByChannelIdApiArg = {
+  channelId: number;
+};
+export type LabsTelemetryChannelsPartialUpdateByChannelIdApiResponse =
+  /** status 200  */ TelemetryChannelUpdateSerializersChannelDetailResponseRead;
+export type LabsTelemetryChannelsPartialUpdateByChannelIdApiArg = {
+  channelId: number;
+  patchedChannelUpdate: PatchedChannelUpdate;
+};
+export type LabsTelemetryChannelsActionsBindTargetCreateByChannelIdApiResponse =
+  /** status 200  */ TelemetryChannelBindTargetSerializersChannelDetailResponseRead;
+export type LabsTelemetryChannelsActionsBindTargetCreateByChannelIdApiArg = {
+  channelId: number;
+  bindTarget: BindTarget;
+};
+export type LabsTelemetryChannelsActionsUnbindCreateByChannelIdApiResponse =
+  /** status 200  */ TelemetryChannelUnbindSerializersChannelDetailResponseRead;
+export type LabsTelemetryChannelsActionsUnbindCreateByChannelIdApiArg = {
+  channelId: number;
+};
+export type LabsTelemetryDeviceProfilesRetrieveApiResponse =
+  /** status 200  */ TelemetryDeviceProfileListSerializersDeviceProfilePaginatedResponseRead;
+export type LabsTelemetryDeviceProfilesRetrieveApiArg = {
+  key?: string;
+  page?: number;
+  pageSize?: number;
+  /** * `modbus` - Modbus */
+  protocol?: "modbus";
+  /** Free-text search in key, manufacturer and model. */
+  q?: string;
+  /** * `draft` - Draft
+   * `approved` - Approved */
+  status?: "draft" | "approved";
+};
+export type LabsTelemetryDeviceProfilesCreateApiResponse =
+  /** status 201  */ TelemetryDeviceProfileCreateSerializersDeviceProfileDetailResponseRead;
+export type LabsTelemetryDeviceProfilesCreateApiArg = {
+  deviceProfileCreate: DeviceProfileCreate;
+};
+export type LabsTelemetryDeviceProfilesRetrieveByProfileIdApiResponse =
+  /** status 200  */ TelemetryDeviceProfileDetailSerializersDeviceProfileDetailResponseRead;
+export type LabsTelemetryDeviceProfilesRetrieveByProfileIdApiArg = {
+  profileId: number;
+};
+export type LabsTelemetryDeviceProfilesActionsApproveCreateByProfileIdApiResponse =
+  /** status 200  */ TelemetryDeviceProfileApproveSerializersDeviceProfileDetailResponseRead;
+export type LabsTelemetryDeviceProfilesActionsApproveCreateByProfileIdApiArg = {
+  profileId: number;
+};
+export type LabsTelemetryDevicesRetrieveApiResponse =
+  /** status 200  */ TelemetryDeviceListSerializersDevicePaginatedResponseRead;
+export type LabsTelemetryDevicesRetrieveApiArg = {
+  /** * `room_host` - Room gateway
+   * `station_pc` - Station gateway
+   * `equipment_agent` - Equipment self-reporting agent
+   * `modbus_tcp` - Modbus TCP endpoint */
+  kind?: "room_host" | "station_pc" | "equipment_agent" | "modbus_tcp";
+  page?: number;
+  pageSize?: number;
+  /** Free-text search: UID, model, asset, IP address. */
+  q?: string;
+  /** * `gateway` - Gateway
+   * `source` - Source */
+  role?: "gateway" | "source";
+  /** Installed in, or covering, this room. */
+  roomId?: number;
+  /** * `discovered` - Discovered
+   * `claimed` - Claimed
+   * `retired` - Retired */
+  state?: "discovered" | "claimed" | "retired";
+};
+export type LabsTelemetryDevicesRetrieveByDeviceIdApiResponse =
+  /** status 200  */ TelemetryDeviceDetailSerializersDeviceDetailDetailResponseRead;
+export type LabsTelemetryDevicesRetrieveByDeviceIdApiArg = {
+  deviceId: number;
+};
+export type LabsTelemetryDevicesActionsClaimCreateByDeviceIdApiResponse =
+  /** status 200  */ TelemetryDeviceClaimSerializersDeviceDetailDetailResponseRead;
+export type LabsTelemetryDevicesActionsClaimCreateByDeviceIdApiArg = {
+  deviceId: number;
+  sourceClaim: SourceClaim;
+};
+export type LabsTelemetryDevicesActionsRetireCreateByDeviceIdApiResponse =
+  /** status 200  */ TelemetryDeviceRetireSerializersDeviceDetailDetailResponseRead;
+export type LabsTelemetryDevicesActionsRetireCreateByDeviceIdApiArg = {
+  deviceId: number;
+};
+export type LabsTelemetryGatewaysCreateApiResponse =
+  /** status 201  */ TelemetryGatewayCreateSerializersDeviceDetailDetailResponseRead;
+export type LabsTelemetryGatewaysCreateApiArg = {
+  gatewayCreate: GatewayCreate;
+};
+export type LabsTelemetryGatewaysActionsBindScopeCreateByDeviceIdApiResponse =
+  /** status 200  */ TelemetryGatewayBindScopeSerializersScopeBindingDetailResponse;
+export type LabsTelemetryGatewaysActionsBindScopeCreateByDeviceIdApiArg = {
+  deviceId: number;
+  bindTarget: BindTarget;
+};
+export type LabsTelemetryMetricsRetrieveApiResponse =
+  /** status 200  */ TelemetryMetricListSerializersMetricPaginatedResponseRead;
+export type LabsTelemetryMetricsRetrieveApiArg = {
+  page?: number;
+  pageSize?: number;
+};
+export type LabsTelemetrySourcesCreateApiResponse =
+  /** status 201  */ TelemetrySourceCreateSerializersDeviceDetailDetailResponseRead;
+export type LabsTelemetrySourcesCreateApiArg = {
+  sourceCreate: SourceCreate;
+};
+export type LabsTelemetrySourcesPartialUpdateByDeviceIdApiResponse =
+  /** status 200  */ TelemetrySourceUpdateSerializersDeviceDetailDetailResponseRead;
+export type LabsTelemetrySourcesPartialUpdateByDeviceIdApiArg = {
+  deviceId: number;
+  patchedSourceUpdate: PatchedSourceUpdate;
+};
+export type LabsTelemetrySourcesActionsBindTargetCreateByDeviceIdApiResponse =
+  /** status 200  */ TelemetrySourceBindTargetSerializersDeviceDetailDetailResponseRead;
+export type LabsTelemetrySourcesActionsBindTargetCreateByDeviceIdApiArg = {
+  deviceId: number;
+  bindTarget: BindTarget;
+};
+export type LabsTelemetrySourcesChannelsRetrieveByDeviceIdApiResponse =
+  /** status 200  */ TelemetrySourceChannelListSerializersChannelPaginatedResponseRead;
+export type LabsTelemetrySourcesChannelsRetrieveByDeviceIdApiArg = {
+  deviceId: number;
+  page?: number;
+  pageSize?: number;
+};
+export type LabsTelemetrySourcesChannelsCreateByDeviceIdApiResponse =
+  /** status 201  */ TelemetrySourceChannelsFromProfileSerializersDeviceDetailDetailResponseRead;
+export type LabsTelemetrySourcesChannelsCreateByDeviceIdApiArg = {
+  deviceId: number;
+  channelsFromProfile: ChannelsFromProfile;
+};
+export type LabsTelemetryTargetsRetrieveByTargetTypeResourceIdApiResponse =
+  /** status 200  */ TelemetryTargetOverviewSerializersTargetOverviewDetailResponseRead;
+export type LabsTelemetryTargetsRetrieveByTargetTypeResourceIdApiArg = {
+  resourceId: number;
+  targetType: string;
+};
 export type LabsWorkbookImportsActionsApplyCreateApiResponse =
   /** status 200  */ WorkbookImportApplySerializersImportReportDetailResponseRead;
 export type LabsWorkbookImportsActionsApplyCreateApiArg = {
@@ -10257,6 +10635,8 @@ export type LabsAvailabilityRead = {
   condition: ChoiceRead | null;
   /** Lifecycle status, or the downtime reason, of blocked_by. */
   reason: ChoiceRead | null;
+  /** Who may still book while unavailable: lab_operators (coordinators and administrators, every blocker is downtime open to lab operators) or closed. Empty when available. */
+  booking_access: ChoiceRead | null;
 };
 export type BenchRead = {
   id: number;
@@ -11461,6 +11841,8 @@ export type DowntimeRead = {
   condition: LabsChoiceReferenceRead;
   kind: LabsChoiceReferenceRead;
   reason: LabsChoiceReferenceRead;
+  /** Who may still book the covered benches: closed (no one) or lab_operators (Lab Coordinators and Lab Administrators). */
+  booking_access: LabsChoiceReferenceRead;
   state: ChoiceRead;
   starts_at: string;
   /** Empty while the end is not known. */
@@ -11496,6 +11878,7 @@ export type ReasonEnum =
   | "other";
 export type KindEnum = "planned" | "unplanned";
 export type NullEnum = null;
+export type BookingAccessEnum = "closed" | "lab_operators";
 export type DowntimeCreate = {
   resource_type: DowntimeResourceTypeEnum;
   resource_id: number;
@@ -11513,6 +11896,11 @@ export type DowntimeCreate = {
   notes?: string;
   /** Cancel reserved and in-progress bookings that overlap the window, in the same transaction. */
   cancel_conflicting_bookings?: boolean;
+  /** closed (default): no one can book the covered benches. lab_operators: lab coordinators and administrators can still book them; their overlapping bookings are kept. Not for equipment.
+    
+    * `closed` - Closed to all bookings
+    * `lab_operators` - Lab operators only */
+  booking_access?: BookingAccessEnum;
 };
 export type DowntimeDetailSerializersDowntimeDetailResponse = {
   data: Downtime;
@@ -11525,6 +11913,17 @@ export type DowntimeCancelSerializersDowntimeDetailResponse = {
 };
 export type DowntimeCancelSerializersDowntimeDetailResponseRead = {
   data: DowntimeRead;
+};
+export type DowntimeChangeBookingAccessSerializersDowntimeDetailResponse = {
+  data: Downtime;
+};
+export type DowntimeChangeBookingAccessSerializersDowntimeDetailResponseRead = {
+  data: DowntimeRead;
+};
+export type DowntimeChangeBookingAccess = {
+  booking_access: BookingAccessEnum;
+  /** When closing a window, cancel the reserved and in-progress bookings that overlap the rest of it, in the same transaction. */
+  cancel_conflicting_bookings?: boolean;
 };
 export type DowntimeEndSerializersDowntimeDetailResponse = {
   data: Downtime;
@@ -16672,6 +17071,524 @@ export type StationStatusSummaryDataSerializersStationStatusSummaryDetailRespons
   {
     data: StationStatusSummary;
   };
+export type Channel = {};
+export type InstallLocationTypeEnum =
+  "room" | "station" | "bench" | "equipment";
+export type TelemetryTarget = {
+  id: number;
+  name: string;
+  type: InstallLocationTypeEnum;
+};
+export type TelemetryChannelMeasures = {
+  target: TelemetryTarget;
+  started_at: string;
+};
+export type ChannelRead = {
+  id: number;
+  label: string;
+  source: LabsNamedReferenceRead;
+  /** Relation `{id, name}`; `id` is the metric key. */
+  metric: {
+    [key: string]: any;
+  };
+  unit: string;
+  is_enabled: boolean;
+  /** Modbus unit ID (bus address). */
+  unit_id: number | null;
+  profile: LabsNamedReferenceRead | null;
+  measures: TelemetryChannelMeasures | null;
+  field_device: LabsNamedReferenceRead | null;
+  created_at: string;
+  updated_at: string;
+};
+export type TelemetryChannelDetailSerializersChannelDetailResponse = {
+  data: Channel;
+};
+export type TelemetryChannelDetailSerializersChannelDetailResponseRead = {
+  data: ChannelRead;
+};
+export type TelemetryChannelUpdateSerializersChannelDetailResponse = {
+  data: Channel;
+};
+export type TelemetryChannelUpdateSerializersChannelDetailResponseRead = {
+  data: ChannelRead;
+};
+export type PatchedChannelUpdate = {
+  is_enabled?: boolean;
+  field_device_equipment_id?: number | null;
+  label?: string;
+};
+export type TelemetryChannelBindTargetSerializersChannelDetailResponse = {
+  data: Channel;
+};
+export type TelemetryChannelBindTargetSerializersChannelDetailResponseRead = {
+  data: ChannelRead;
+};
+export type BindTarget = {
+  /** Room, station, bench or equipment.
+    
+    * `room` - Room
+    * `station` - Station
+    * `bench` - Bench
+    * `equipment` - Equipment */
+  target_type: InstallLocationTypeEnum;
+  target_id: number;
+};
+export type TelemetryChannelUnbindSerializersChannelDetailResponse = {
+  data: Channel;
+};
+export type TelemetryChannelUnbindSerializersChannelDetailResponseRead = {
+  data: ChannelRead;
+};
+export type TelemetryDeviceProfileListSerializersDeviceProfilePagination = {
+  count: number;
+  page: number;
+  page_size: number;
+  next: string | null;
+  previous: string | null;
+};
+export type TelemetryDeviceProfileListSerializersDeviceProfilePaginationMeta = {
+  pagination: TelemetryDeviceProfileListSerializersDeviceProfilePagination;
+};
+export type DeviceProfile = {};
+export type DeviceProfileRead = {
+  id: number;
+  /** Model code, e.g. chint_ddsu666. */
+  key: string;
+  version: number;
+  /** `key@version`, recorded on every reading. */
+  reference: string;
+  protocol: LabsChoiceReferenceRead;
+  manufacturer: string;
+  model: string;
+  status: LabsChoiceReferenceRead;
+  /** Per metric key, protocol-specific read instructions (validated per protocol). */
+  read_map: any;
+  /** Informational defaults, e.g. serial settings from the manual. */
+  comm_defaults: any;
+  notes: string;
+  approved_at: string | null;
+  channel_count: number;
+  created_by: UserReferenceRead | null;
+  updated_by: UserReferenceRead | null;
+  created_at: string;
+  updated_at: string;
+};
+export type TelemetryDeviceProfileListSerializersDeviceProfilePaginatedResponse =
+  {
+    meta: TelemetryDeviceProfileListSerializersDeviceProfilePaginationMeta;
+    data: DeviceProfile[];
+  };
+export type TelemetryDeviceProfileListSerializersDeviceProfilePaginatedResponseRead =
+  {
+    meta: TelemetryDeviceProfileListSerializersDeviceProfilePaginationMeta;
+    data: DeviceProfileRead[];
+  };
+export type TelemetryDeviceProfileCreateSerializersDeviceProfileDetailResponse =
+  {
+    data: DeviceProfile;
+  };
+export type TelemetryDeviceProfileCreateSerializersDeviceProfileDetailResponseRead =
+  {
+    data: DeviceProfileRead;
+  };
+export type ProtocolEnum = "modbus";
+export type DeviceProfileCreate = {
+  /** Model code; an existing key gets a new version. */
+  key: string;
+  protocol: ProtocolEnum;
+  manufacturer?: string;
+  model?: string;
+  /** Per metric key, how to read it (protocol-specific). */
+  read_map: {
+    [key: string]: {
+      [key: string]: any;
+    };
+  };
+  comm_defaults?: {
+    [key: string]: any;
+  };
+  notes?: string;
+};
+export type TelemetryDeviceProfileDetailSerializersDeviceProfileDetailResponse =
+  {
+    data: DeviceProfile;
+  };
+export type TelemetryDeviceProfileDetailSerializersDeviceProfileDetailResponseRead =
+  {
+    data: DeviceProfileRead;
+  };
+export type TelemetryDeviceProfileApproveSerializersDeviceProfileDetailResponse =
+  {
+    data: DeviceProfile;
+  };
+export type TelemetryDeviceProfileApproveSerializersDeviceProfileDetailResponseRead =
+  {
+    data: DeviceProfileRead;
+  };
+export type TelemetryDeviceListSerializersDevicePagination = {
+  count: number;
+  page: number;
+  page_size: number;
+  next: string | null;
+  previous: string | null;
+};
+export type TelemetryDeviceListSerializersDevicePaginationMeta = {
+  pagination: TelemetryDeviceListSerializersDevicePagination;
+};
+export type Device = {};
+export type TelemetryModbusSettings = {
+  network_host: string;
+  port: number;
+  baud_rate: number | null;
+  data_bits: number | null;
+  stop_bits: number | null;
+  request_timeout_ms: number;
+  has_shared_bus: boolean;
+};
+export type TelemetryModbusSettingsRead = {
+  network_host: string;
+  port: number;
+  framing: LabsChoiceReferenceRead;
+  serial_interface: LabsChoiceReferenceRead | null;
+  baud_rate: number | null;
+  parity: LabsChoiceReferenceRead | null;
+  data_bits: number | null;
+  stop_bits: number | null;
+  request_timeout_ms: number;
+  has_shared_bus: boolean;
+};
+export type DeviceRead = {
+  id: number;
+  role: LabsChoiceReferenceRead;
+  kind: LabsChoiceReferenceRead;
+  /** Source: normalized MAC or serial. Gateway: its agent_uid. */
+  device_uid: string;
+  state: LabsChoiceReferenceRead;
+  manufacturer: string;
+  model: string;
+  equipment: LabsNamedReferenceRead | null;
+  install_location: TelemetryTarget | null;
+  room: LabsNamedReferenceRead | null;
+  scope: TelemetryTarget | null;
+  modbus: TelemetryModbusSettingsRead | null;
+  channel_count: number;
+  /** Gateways: bumped on any change to its config. */
+  config_version: number;
+  /** Gateways: last config version the gateway reported using. */
+  config_version_applied: number | null;
+  reported_by: LabsNamedReferenceRead | null;
+  /** Informational address from the latest discovery report. */
+  last_seen_address: string;
+  first_seen_at: string | null;
+  last_seen_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+export type TelemetryDeviceListSerializersDevicePaginatedResponse = {
+  meta: TelemetryDeviceListSerializersDevicePaginationMeta;
+  data: Device[];
+};
+export type TelemetryDeviceListSerializersDevicePaginatedResponseRead = {
+  meta: TelemetryDeviceListSerializersDevicePaginationMeta;
+  data: DeviceRead[];
+};
+export type DeviceDetail = {};
+export type TelemetryEmbeddedChannel = {};
+export type TelemetryEmbeddedChannelRead = {
+  id: number;
+  label: string;
+  source: LabsNamedReferenceRead;
+  /** Relation `{id, name}`; `id` is the metric key. */
+  metric: {
+    [key: string]: any;
+  };
+  unit: string;
+  is_enabled: boolean;
+  /** Modbus unit ID (bus address). */
+  unit_id: number | null;
+  profile: LabsNamedReferenceRead | null;
+  measures: TelemetryChannelMeasures | null;
+  field_device: LabsNamedReferenceRead | null;
+  created_at: string;
+  updated_at: string;
+};
+export type DeviceDetailRead = {
+  id: number;
+  role: LabsChoiceReferenceRead;
+  kind: LabsChoiceReferenceRead;
+  /** Source: normalized MAC or serial. Gateway: its agent_uid. */
+  device_uid: string;
+  state: LabsChoiceReferenceRead;
+  manufacturer: string;
+  model: string;
+  equipment: LabsNamedReferenceRead | null;
+  install_location: TelemetryTarget | null;
+  room: LabsNamedReferenceRead | null;
+  scope: TelemetryTarget | null;
+  modbus: TelemetryModbusSettingsRead | null;
+  channel_count: number;
+  /** Gateways: bumped on any change to its config. */
+  config_version: number;
+  /** Gateways: last config version the gateway reported using. */
+  config_version_applied: number | null;
+  reported_by: LabsNamedReferenceRead | null;
+  /** Informational address from the latest discovery report. */
+  last_seen_address: string;
+  first_seen_at: string | null;
+  last_seen_at: string | null;
+  created_at: string;
+  updated_at: string;
+  channels: TelemetryEmbeddedChannelRead[];
+};
+export type TelemetryDeviceDetailSerializersDeviceDetailDetailResponse = {
+  data: DeviceDetail;
+};
+export type TelemetryDeviceDetailSerializersDeviceDetailDetailResponseRead = {
+  data: DeviceDetailRead;
+};
+export type TelemetryDeviceClaimSerializersDeviceDetailDetailResponse = {
+  data: DeviceDetail;
+};
+export type TelemetryDeviceClaimSerializersDeviceDetailDetailResponseRead = {
+  data: DeviceDetailRead;
+};
+export type FramingEnum = "mbap" | "rtu_over_tcp";
+export type SerialInterfaceEnum = "rs485" | "rs232";
+export type BlankEnum = "";
+export type ParityEnum = "N" | "E" | "O";
+export type TelemetryModbusSettingsInput = {
+  /** IP address or host name. */
+  network_host: string;
+  port?: number;
+  framing?: FramingEnum;
+  serial_interface?: SerialInterfaceEnum | BlankEnum;
+  baud_rate?: number | null;
+  parity?: ParityEnum | BlankEnum;
+  data_bits?: number | null;
+  stop_bits?: number | null;
+  request_timeout_ms?: number;
+  /** A half-duplex bus is behind the device: one request at a time. */
+  has_shared_bus?: boolean;
+};
+export type SourceClaim = {
+  modbus?: TelemetryModbusSettingsInput | null;
+  manufacturer?: string;
+  model?: string;
+  /** The device's inventory asset. */
+  equipment_id: number;
+  /** Where the device physically is.
+    
+    * `room` - Room
+    * `station` - Station
+    * `bench` - Bench
+    * `equipment` - Equipment */
+  install_location_type: InstallLocationTypeEnum;
+  install_location_id: number;
+};
+export type TelemetryDeviceRetireSerializersDeviceDetailDetailResponse = {
+  data: DeviceDetail;
+};
+export type TelemetryDeviceRetireSerializersDeviceDetailDetailResponseRead = {
+  data: DeviceDetailRead;
+};
+export type TelemetryGatewayCreateSerializersDeviceDetailDetailResponse = {
+  data: DeviceDetail;
+};
+export type TelemetryGatewayCreateSerializersDeviceDetailDetailResponseRead = {
+  data: DeviceDetailRead;
+};
+export type GatewayCreateKindEnum =
+  "room_host" | "station_pc" | "equipment_agent";
+export type GatewayCreate = {
+  /** The gateway PC's inventory asset. */
+  equipment_id: number;
+  kind: GatewayCreateKindEnum;
+};
+export type TelemetryScopeBinding = {
+  gateway_id: number;
+  target: TelemetryTarget;
+  started_at: string;
+};
+export type TelemetryGatewayBindScopeSerializersScopeBindingDetailResponse = {
+  data: TelemetryScopeBinding;
+};
+export type TelemetryMetricListSerializersMetricPagination = {
+  count: number;
+  page: number;
+  page_size: number;
+  next: string | null;
+  previous: string | null;
+};
+export type TelemetryMetricListSerializersMetricPaginationMeta = {
+  pagination: TelemetryMetricListSerializersMetricPagination;
+};
+export type Metric = {};
+export type MetricRead = {
+  /** Stable code, e.g. temperature_c. */
+  key: string;
+  name: string;
+  /** Display unit, e.g. °C, %, W. */
+  unit: string;
+  value_min: string | null;
+  value_max: string | null;
+  kind: LabsChoiceReferenceRead;
+  aggregation: LabsChoiceReferenceRead;
+  combine: LabsChoiceReferenceRead;
+  decimals: number;
+};
+export type TelemetryMetricListSerializersMetricPaginatedResponse = {
+  meta: TelemetryMetricListSerializersMetricPaginationMeta;
+  data: Metric[];
+};
+export type TelemetryMetricListSerializersMetricPaginatedResponseRead = {
+  meta: TelemetryMetricListSerializersMetricPaginationMeta;
+  data: MetricRead[];
+};
+export type TelemetrySourceCreateSerializersDeviceDetailDetailResponse = {
+  data: DeviceDetail;
+};
+export type TelemetrySourceCreateSerializersDeviceDetailDetailResponseRead = {
+  data: DeviceDetailRead;
+};
+export type SourceCreateKindEnum = "modbus_tcp";
+export type SourceCreate = {
+  modbus?: TelemetryModbusSettingsInput | null;
+  manufacturer?: string;
+  model?: string;
+  kind: SourceCreateKindEnum;
+  /** MAC address or serial number from the label. */
+  device_uid: string;
+  /** The device's inventory asset. */
+  equipment_id: number;
+  /** Where the device physically is.
+    
+    * `room` - Room
+    * `station` - Station
+    * `bench` - Bench
+    * `equipment` - Equipment */
+  install_location_type: InstallLocationTypeEnum;
+  install_location_id: number;
+};
+export type TelemetrySourceUpdateSerializersDeviceDetailDetailResponse = {
+  data: DeviceDetail;
+};
+export type TelemetrySourceUpdateSerializersDeviceDetailDetailResponseRead = {
+  data: DeviceDetailRead;
+};
+export type PatchedSourceUpdate = {
+  modbus?: TelemetryModbusSettingsInput;
+  manufacturer?: string;
+  model?: string;
+  /** Move the device.
+    
+    * `room` - Room
+    * `station` - Station
+    * `bench` - Bench
+    * `equipment` - Equipment */
+  install_location_type?: InstallLocationTypeEnum;
+  install_location_id?: number;
+};
+export type TelemetrySourceBindTargetSerializersDeviceDetailDetailResponse = {
+  data: DeviceDetail;
+};
+export type TelemetrySourceBindTargetSerializersDeviceDetailDetailResponseRead =
+  {
+    data: DeviceDetailRead;
+  };
+export type TelemetrySourceChannelListSerializersChannelPagination = {
+  count: number;
+  page: number;
+  page_size: number;
+  next: string | null;
+  previous: string | null;
+};
+export type TelemetrySourceChannelListSerializersChannelPaginationMeta = {
+  pagination: TelemetrySourceChannelListSerializersChannelPagination;
+};
+export type TelemetrySourceChannelListSerializersChannelPaginatedResponse = {
+  meta: TelemetrySourceChannelListSerializersChannelPaginationMeta;
+  data: Channel[];
+};
+export type TelemetrySourceChannelListSerializersChannelPaginatedResponseRead =
+  {
+    meta: TelemetrySourceChannelListSerializersChannelPaginationMeta;
+    data: ChannelRead[];
+  };
+export type TelemetrySourceChannelsFromProfileSerializersDeviceDetailDetailResponse =
+  {
+    data: DeviceDetail;
+  };
+export type TelemetrySourceChannelsFromProfileSerializersDeviceDetailDetailResponseRead =
+  {
+    data: DeviceDetailRead;
+  };
+export type ChannelsFromProfile = {
+  /** Modbus unit ID (bus address). */
+  unit_id: number;
+  profile_id: number;
+  /** Default: all profile metrics. */
+  metrics?: string[];
+  field_device_equipment_id?: number | null;
+  label?: string;
+  /** What the new channels measure.
+    
+    * `room` - Room
+    * `station` - Station
+    * `bench` - Bench
+    * `equipment` - Equipment */
+  target_type?: InstallLocationTypeEnum;
+  target_id?: number;
+};
+export type TelemetryEmbeddedDevice = {};
+export type TelemetryEmbeddedDeviceRead = {
+  id: number;
+  role: LabsChoiceReferenceRead;
+  kind: LabsChoiceReferenceRead;
+  /** Source: normalized MAC or serial. Gateway: its agent_uid. */
+  device_uid: string;
+  state: LabsChoiceReferenceRead;
+  manufacturer: string;
+  model: string;
+  equipment: LabsNamedReferenceRead | null;
+  install_location: TelemetryTarget | null;
+  room: LabsNamedReferenceRead | null;
+  scope: TelemetryTarget | null;
+  modbus: TelemetryModbusSettingsRead | null;
+  channel_count: number;
+  /** Gateways: bumped on any change to its config. */
+  config_version: number;
+  /** Gateways: last config version the gateway reported using. */
+  config_version_applied: number | null;
+  reported_by: LabsNamedReferenceRead | null;
+  /** Informational address from the latest discovery report. */
+  last_seen_address: string;
+  first_seen_at: string | null;
+  last_seen_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+export type TelemetryTargetOverview = {
+  target: TelemetryTarget;
+  /** Devices installed at this target. */
+  installed_devices: TelemetryEmbeddedDevice[];
+  /** Measurements currently about this target. */
+  channels: TelemetryEmbeddedChannel[];
+};
+export type TelemetryTargetOverviewRead = {
+  target: TelemetryTarget;
+  /** Devices installed at this target. */
+  installed_devices: TelemetryEmbeddedDeviceRead[];
+  /** Measurements currently about this target. */
+  channels: TelemetryEmbeddedChannelRead[];
+};
+export type TelemetryTargetOverviewSerializersTargetOverviewDetailResponse = {
+  data: TelemetryTargetOverview;
+};
+export type TelemetryTargetOverviewSerializersTargetOverviewDetailResponseRead =
+  {
+    data: TelemetryTargetOverviewRead;
+  };
 export type SheetOutcome = {
   key: string;
   name: string;
@@ -17362,7 +18279,6 @@ export type TicketListSerializersTicketListPaginationMeta = {
   pagination: TicketListSerializersTicketListPagination;
 };
 export type UrgencyEnum = "1" | "2" | "3";
-export type BlankEnum = "";
 export type TicketList = {
   subject: string;
   impact?: UrgencyEnum | BlankEnum;
@@ -18011,6 +18927,11 @@ export type EffectiveRoles = {};
 export type EffectiveRolesRead = {
   labs: string[];
 };
+export type EffectivePermissions = {};
+export type EffectivePermissionsRead = {
+  /** Effective Labs permissions (`value` is the code, `label` describes it), sorted by code. Show or hide actions with these; the server decides. Codes: docs/architecture/access-matrix.md. */
+  labs: ChoiceRead[];
+};
 export type UserWithPermissionRead = {
   id: number;
   /** Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only. */
@@ -18019,6 +18940,7 @@ export type UserWithPermissionRead = {
   avatar_url: string | null;
   groups: GroupPermissionRead[];
   effective_roles: EffectiveRolesRead;
+  effective_permissions: EffectivePermissionsRead;
 };
 export type CurrentUserSerializersUserWithPermissionDetailResponse = {
   data: UserWithPermission;
@@ -18228,6 +19150,7 @@ export const {
   useLabsDowntimesCreateMutation,
   useLabsDowntimesRetrieveByDowntimeIdQuery,
   useLabsDowntimesActionsCancelCreateByDowntimeIdMutation,
+  useLabsDowntimesActionsChangeBookingAccessCreateByDowntimeIdMutation,
   useLabsDowntimesActionsEndCreateByDowntimeIdMutation,
   useLabsEquipmentRetrieveQuery,
   useLabsEquipmentCreateMutation,
@@ -18514,6 +19437,27 @@ export const {
   useLabsStationsOptionsRetrieveQuery,
   useLabsStationsReferenceDataRetrieveQuery,
   useLabsStationsStatusSummaryRetrieveQuery,
+  useLabsTelemetryChannelsRetrieveByChannelIdQuery,
+  useLabsTelemetryChannelsPartialUpdateByChannelIdMutation,
+  useLabsTelemetryChannelsActionsBindTargetCreateByChannelIdMutation,
+  useLabsTelemetryChannelsActionsUnbindCreateByChannelIdMutation,
+  useLabsTelemetryDeviceProfilesRetrieveQuery,
+  useLabsTelemetryDeviceProfilesCreateMutation,
+  useLabsTelemetryDeviceProfilesRetrieveByProfileIdQuery,
+  useLabsTelemetryDeviceProfilesActionsApproveCreateByProfileIdMutation,
+  useLabsTelemetryDevicesRetrieveQuery,
+  useLabsTelemetryDevicesRetrieveByDeviceIdQuery,
+  useLabsTelemetryDevicesActionsClaimCreateByDeviceIdMutation,
+  useLabsTelemetryDevicesActionsRetireCreateByDeviceIdMutation,
+  useLabsTelemetryGatewaysCreateMutation,
+  useLabsTelemetryGatewaysActionsBindScopeCreateByDeviceIdMutation,
+  useLabsTelemetryMetricsRetrieveQuery,
+  useLabsTelemetrySourcesCreateMutation,
+  useLabsTelemetrySourcesPartialUpdateByDeviceIdMutation,
+  useLabsTelemetrySourcesActionsBindTargetCreateByDeviceIdMutation,
+  useLabsTelemetrySourcesChannelsRetrieveByDeviceIdQuery,
+  useLabsTelemetrySourcesChannelsCreateByDeviceIdMutation,
+  useLabsTelemetryTargetsRetrieveByTargetTypeResourceIdQuery,
   useLabsWorkbookImportsActionsApplyCreateMutation,
   useLabsWorkbookImportsActionsCheckCreateMutation,
   useLabsWorkbookImportsExportRetrieveQuery,

@@ -2,28 +2,33 @@ import { type ReactNode } from 'react';
 import { Spin } from 'antd';
 import { useAppSelector } from '@/app/store';
 import { useGetMeQuery } from '@/features/auth/api';
+import { holds, type LabsPermission } from '@/features/auth/permissions';
 import AccessDenied from '@/pages/errors/AccessDenied';
+import { resolvePermissionRouteState } from './permissionRouteState';
 
 interface PermissionRouteProps {
   children: ReactNode;
-  /** One or more group names — user must belong to at least one */
-  groups: string[];
+  /** The Labs permission the page needs (`GET /api/users/me` → `effective_permissions`). */
+  permission: LabsPermission;
 }
 
-export default function PermissionRoute({ children, groups }: PermissionRouteProps) {
+export default function PermissionRoute({ children, permission }: PermissionRouteProps) {
   const isLoggedIn = useAppSelector((state) => state.auth.isLoggedIn);
   const bootstrapStatus = useAppSelector((state) => state.auth.bootstrapStatus);
-  const { isLoading, isFetching, isUninitialized } = useGetMeQuery(undefined, {
+  const meLoaded = useAppSelector((state) => state.me.id !== null);
+  const { data, isLoading, isFetching, isUninitialized } = useGetMeQuery(undefined, {
     skip: !isLoggedIn || bootstrapStatus !== 'authenticated',
   });
-  const permissionGroups = useAppSelector((state) => state.me.permissionGroups);
-  const hasAccess = groups.some((g) => {
-    if (permissionGroups[g]) return true;
-    const slug = g.toLowerCase().replace(/[\s_]+/g, '-');
-    return Boolean(permissionGroups[slug]);
+  const hasAccess = useAppSelector((state) => holds(state.me.permissions, permission));
+  const decision = resolvePermissionRouteState({
+    isLoggedIn,
+    bootstrapStatus,
+    meLoaded,
+    hasAccess,
+    query: { isUninitialized, isLoading, isFetching, hasData: Boolean(data) },
   });
 
-  if (isLoggedIn && (bootstrapStatus === 'loading' || isUninitialized || isLoading || isFetching)) {
+  if (decision === 'loading') {
     return (
       <div style={{ minHeight: '40vh', display: 'grid', placeItems: 'center' }}>
         <Spin size="large" />
@@ -31,7 +36,7 @@ export default function PermissionRoute({ children, groups }: PermissionRoutePro
     );
   }
 
-  if (!hasAccess) {
+  if (decision === 'denied') {
     return <AccessDenied />;
   }
 

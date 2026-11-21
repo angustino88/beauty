@@ -15,12 +15,21 @@ export type DowntimeReason =
   | 'other';
 export type DowntimeKind = 'planned' | 'unplanned';
 export type DowntimeState = 'scheduled' | 'current' | 'ended' | 'cancelled';
+/** Who may still book the benches a downtime window covers. */
+export type DowntimeBookingAccess = 'closed' | 'lab_operators';
+
+export const BOOKING_ACCESS_LABELS: Record<DowntimeBookingAccess, string> = {
+  closed: 'No one',
+  lab_operators: 'Lab operators only',
+};
 
 export interface Availability {
   value: 'available' | 'unavailable';
   blocked_by: { type: 'room' | 'station' | 'bench'; id: number; name: string } | null;
   condition: Condition | null;
   reason: DowntimeReason | LifecycleStatus | null;
+  /** While unavailable: lab_operators when lab coordinators and administrators can still book, else closed. */
+  booking_access?: DowntimeBookingAccess | null;
 }
 
 /** Shared by Room, Station and Bench reads. */
@@ -49,6 +58,7 @@ export interface Downtime {
   condition: Choice<'in_maintenance' | 'out_of_service'>;
   kind: Choice<DowntimeKind>;
   reason: Choice<DowntimeReason>;
+  booking_access: Choice<DowntimeBookingAccess>;
   state: DowntimeState;
   starts_at: string; // ISO 8601 with offset
   ends_at: string | null; // null: end not known yet
@@ -70,6 +80,13 @@ export interface ScheduleDowntimeRequest {
   ends_at?: string | null; // default: open-ended
   notes?: string; // max 2000
   cancel_conflicting_bookings?: boolean; // default false
+  booking_access?: DowntimeBookingAccess; // default closed; lab_operators is refused for equipment
+}
+
+export interface ChangeDowntimeBookingAccessRequest {
+  downtimeId: number;
+  booking_access: DowntimeBookingAccess;
+  cancel_conflicting_bookings?: boolean; // closing: cancel bookings that overlap the rest of the window
 }
 
 export interface DowntimeConflictBooking {
@@ -227,6 +244,7 @@ export function mapAvailability(raw: unknown): Availability {
       blocked_by: null,
       condition: null,
       reason: null,
+      booking_access: null,
     };
   }
   const rec = raw as Record<string, unknown>;
@@ -246,6 +264,14 @@ export function mapAvailability(raw: unknown): Availability {
       : null,
     condition: (rec.condition as Condition) ?? null,
     reason: (rec.reason as DowntimeReason | LifecycleStatus) ?? null,
+    booking_access: bookingAccessOf(rec.booking_access),
   };
+}
+
+/** Reads `booking_access` sent as a plain value or as `{ value, label }`; anything else is null. */
+export function bookingAccessOf(raw: unknown): DowntimeBookingAccess | null {
+  const value =
+    raw && typeof raw === 'object' && !Array.isArray(raw) ? (raw as Record<string, unknown>).value : raw;
+  return value === 'closed' || value === 'lab_operators' ? value : null;
 }
 

@@ -18,8 +18,6 @@ import {
 } from 'antd';
 import { CheckCircleOutlined, CopyOutlined, DeleteOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons';
 import { useMemo, useState } from 'react';
-import { useSelector } from 'react-redux';
-import type { RootState } from '@/app/store';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { StatusBadge } from '@/shared/components/StatusBadge';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
@@ -33,6 +31,7 @@ import { readApiProblem } from '../errors';
 import { PROFILE_STATUS_TONE } from '../format';
 import type { DeviceProfile, ModbusReadEntry } from '../types';
 import styles from './telemetry.module.css';
+import { usePermission } from '@/features/auth/hooks/useCan';
 
 const REGISTER_TYPES = ['int16', 'uint16', 'int32', 'uint32', 'float32'] as const;
 const WORDS: Record<(typeof REGISTER_TYPES)[number], number> = { int16: 1, uint16: 1, int32: 2, uint32: 2, float32: 2 };
@@ -275,8 +274,7 @@ function ProfileDrawer({ profile, onClose, canApprove, onNewVersion }: {
 }
 
 export default function DeviceProfilesPage() {
-  const groups = useSelector((state: RootState) => state.me.permissionGroups) as Record<string, unknown> | undefined;
-  const canApprove = Boolean(groups && ('admin' in groups || 'administrator' in groups));
+  const canApprove = usePermission('telemetry_profile.approve');
   const [status, setStatus] = useState<'all' | 'approved' | 'draft'>('all');
   const [search, setSearch] = useState('');
   const q = useDebouncedValue(search, 400).trim() || undefined;

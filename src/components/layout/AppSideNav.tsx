@@ -5,6 +5,7 @@ import { Button, Input, Layout, Menu, Tooltip, type MenuProps } from 'antd';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuthState } from '@/features/auth/hooks/useAuthState';
+import { useCan } from '@/features/auth/hooks/useCan';
 import { meActions } from '@/features/auth/meSlice';
 import { useAppDispatch } from '@/app/store';
 import styleCss from './layout.module.css';
@@ -20,18 +21,20 @@ interface AppSideNavProps {
 const AppSideNav = ({ collapsed, setCollapsed }: AppSideNavProps) => {
   const { pathname } = useLocation();
   const navigate = useNavigate();
-  const { username, displayName, avatar, isCoordinator } = useAuthState();
+  const { username, displayName, avatar } = useAuthState();
+  const can = useCan();
   const dispatch = useAppDispatch();
   const [query, setQuery] = useState('');
   const searchRef = useRef<React.ComponentRef<typeof Input>>(null);
-  const sections = useMemo(() => getNavigationSections(isCoordinator), [isCoordinator]);
+  const sections = useMemo(() => getNavigationSections(can), [can]);
+  const sectionKeys = sections.map((section) => section.key).join(',');
   const active = findNavigationPage(pathname, sections);
   const activeSection = active && active.section.pages.length > 1
     ? active.section.key : undefined;
   const [expansion, setExpansion] = useState<{ context: string; keys: string[] }>({
-    context: `${pathname}:${isCoordinator}`, keys: activeSection ? [activeSection] : [],
+    context: `${pathname}:${sectionKeys}`, keys: activeSection ? [activeSection] : [],
   });
-  const context = `${pathname}:${isCoordinator}`;
+  const context = `${pathname}:${sectionKeys}`;
   // A new route reveals its section; manual accordion choices apply until navigation.
   const openKeys = expansion.context === context
     ? expansion.keys : activeSection ? [activeSection] : [];
@@ -123,4 +126,4 @@ const AppSideNav = ({ collapsed, setCollapsed }: AppSideNavProps) => {
   );
 };
 
-export default React.memo(AppSideNav);
+export default React.memo(AppSideNav);
