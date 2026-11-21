@@ -1,3 +1,4 @@
+import { useMsal } from "@azure/msal-react";
 import { Layout } from "antd";
 import { createStyles } from "antd-style";
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -9,6 +10,7 @@ import { OfflineNotification } from "./OfflineNotification";
 import { useGetMeQuery } from "@/features/auth/api";
 import { meActions, meFromUser } from "@/features/auth/meSlice";
 import { useAuthState } from "@/features/auth/hooks/useAuthState";
+import { resolveUserDisplayName } from "@/features/auth/utils/displayName";
 import { ChatWidget } from "@/features/chat-widget";
 import { useNotificationsWebSocket } from "@/features/notifications/hooks/useNotificationsWebSocket";
 import { useAppDispatch } from "@/app/store";
@@ -35,6 +37,7 @@ export function AppLayout() {
     () => window.matchMedia('(max-width: 1000px)').matches,
   );
   const dispatch = useAppDispatch();
+  const { instance, accounts } = useMsal();
   const { isLoggedIn } = useAuthState();
   const [createLabVisit] = useLabsAnalyticsLabVisitsCreateMutation();
   useNotificationsWebSocket();
@@ -58,9 +61,15 @@ export function AppLayout() {
   useEffect(() => {
     if (meData) {
       const user = meData.data;
-      dispatch(meActions.setMe(meFromUser(user)));
+      const msalAccount = instance.getActiveAccount() ?? accounts[0];
+      dispatch(
+        meActions.setMe({
+          ...meFromUser(user),
+          displayName: resolveUserDisplayName(user.display_name, user.username, msalAccount?.name),
+        }),
+      );
     }
-  }, [meData, dispatch]);
+  }, [meData, dispatch, instance, accounts]);
 
   const layoutClass = useMemo(
     () => (collapsed ? styleCss.layoutCollapsed : styleCss.layout),

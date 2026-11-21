@@ -10,6 +10,7 @@ import { authActions } from "../authSlice";
 import { meActions, meFromUser } from "../meSlice";
 import { useGetMeQuery } from "../api";
 import { useLogin } from "../hooks/useLogin";
+import { resolveUserDisplayName } from "../utils/displayName";
 import lockImage from "@/assets/lock.svg";
 import {
   useLoginStyles,
@@ -26,7 +27,7 @@ const INSTRUCTION_URL =
  */
 export default function SsoLoginPage() {
   const RETURN_TO_KEY = "lm:returnTo";
-  const { inProgress } = useMsal();
+  const { inProgress, instance, accounts } = useMsal();
   const dispatch = useAppDispatch();
   const isLoggedIn = useAppSelector((state) => state.auth.isLoggedIn);
   const bootstrapStatus = useAppSelector((state) => state.auth.bootstrapStatus);
@@ -77,11 +78,17 @@ export default function SsoLoginPage() {
   useEffect(() => {
     if (!meData) return;
     const user = meData.data;
-    dispatch(meActions.setMe(meFromUser(user)));
+    const msalAccount = instance.getActiveAccount() ?? accounts[0];
+    dispatch(
+      meActions.setMe({
+        ...meFromUser(user),
+        displayName: resolveUserDisplayName(user.display_name, user.username, msalAccount?.name),
+      }),
+    );
     const returnPath = resolveReturnPath();
     sessionStorage.removeItem(RETURN_TO_KEY);
     navigate(returnPath, { replace: true });
-  }, [meData, dispatch, navigate, resolveReturnPath]);
+  }, [meData, dispatch, navigate, resolveReturnPath, instance, accounts]);
 
   // Fire auto-login once MSAL finishes any in-flight interaction (startup / handleRedirect).
   // Do NOT depend on inProgress for ongoing silent ops — those run in background.

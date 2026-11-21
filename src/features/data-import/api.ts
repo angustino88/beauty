@@ -57,14 +57,28 @@ function saveBlob(blob: Blob, fileName: string) {
   }, 100);
 }
 
+// Multi-sheet workbook check/apply/export can process thousands of rows in a single transaction;
+// give them 3 minutes instead of the default 30-second API timeout.
+const WORKBOOK_TIMEOUT_MS = 180_000;
+
 export const workbookImportApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
     checkWorkbook: build.mutation<ImportReport, WorkbookUpload>({
-      query: (upload) => ({ url: `${BASE}/actions/check`, method: 'POST', body: workbookBody(upload) }),
+      query: (upload) => ({
+        url: `${BASE}/actions/check`,
+        method: 'POST',
+        body: workbookBody(upload),
+        timeout: WORKBOOK_TIMEOUT_MS,
+      }),
       transformResponse: (response: { data: ImportReportApi }) => mapImportReport(response.data),
     }),
     applyWorkbook: build.mutation<ImportReport, WorkbookUpload>({
-      query: (upload) => ({ url: `${BASE}/actions/apply`, method: 'POST', body: workbookBody(upload) }),
+      query: (upload) => ({
+        url: `${BASE}/actions/apply`,
+        method: 'POST',
+        body: workbookBody(upload),
+        timeout: WORKBOOK_TIMEOUT_MS,
+      }),
       transformResponse: (response: { data: ImportReportApi }) => mapImportReport(response.data),
       invalidatesTags: CHANGED_TAGS,
     }),
@@ -74,7 +88,7 @@ export const workbookImportApi = baseApi.injectEndpoints({
     }),
     /** Downloads the current rooms, stations, slots, benches, equipment and placements in the template layout. */
     downloadWorkbookExport: build.mutation<null, void>({
-      query: () => downloadQuery('export', 'labmango-data-export.xlsx'),
+      query: () => ({ ...downloadQuery('export', 'labmango-data-export.xlsx'), timeout: WORKBOOK_TIMEOUT_MS }),
     }),
   }),
 });
