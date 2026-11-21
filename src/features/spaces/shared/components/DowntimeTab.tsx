@@ -172,7 +172,7 @@ export const DowntimeTab: React.FC<DowntimeTabProps> = ({
           loading={changingAccess}
           onClick={() => void handleChangeBookingAccess(r.id, isOpen ? 'closed' : 'lab_operators')}
         >
-          {isOpen ? 'Close' : 'Open to operators'}
+          {isOpen ? 'Close' : 'Open'}
         </Button>
       </Tooltip>
     );
@@ -238,7 +238,7 @@ export const DowntimeTab: React.FC<DowntimeTabProps> = ({
       title: 'State',
       dataIndex: 'state',
       key: 'state',
-      width: 136,
+      width: 104,
       render: (state: string) => {
         if (state === 'current') return <StatusBadge tone="warning" label="Active" icon={<span className={styles.pulsingDot} style={{ width: 6, height: 6, margin: 0 }} />} />;
         if (state === 'scheduled') return <StatusBadge tone="info" label="Scheduled" icon={<CalendarOutlined />} />;
@@ -249,7 +249,7 @@ export const DowntimeTab: React.FC<DowntimeTabProps> = ({
     {
       title: 'Condition',
       key: 'condition',
-      width: 170,
+      width: 142,
       render: (_, r) => {
         const isOutOfService = r.condition.value === 'out_of_service';
         return (
@@ -268,7 +268,7 @@ export const DowntimeTab: React.FC<DowntimeTabProps> = ({
     {
       title: 'Window',
       key: 'window',
-      width: 170,
+      width: 124,
       render: (_, r) => (
         <div className={styles.cellStack}>
           <span className={styles.cellMain}>{formatWhen(r.starts_at)}</span>
@@ -283,7 +283,7 @@ export const DowntimeTab: React.FC<DowntimeTabProps> = ({
           {
             title: 'Who can book',
             key: 'booking_access',
-            width: 170,
+            width: 148,
             render: (_: unknown, r: Downtime) => <BookingAccessTag access={r.booking_access.value} />,
           },
         ]
@@ -291,13 +291,13 @@ export const DowntimeTab: React.FC<DowntimeTabProps> = ({
     {
       title: 'Duration',
       key: 'duration',
-      width: 110,
+      width: 96,
       render: (_, r) => formatDuration(r.starts_at, r.ends_at, r.state === 'current'),
     },
     {
       title: 'Actor',
       key: 'actor',
-      width: 150,
+      width: 124,
       render: (_, r) => {
         const actor = r.actor?.display_name || r.actor?.username || 'System';
         return (
@@ -312,7 +312,7 @@ export const DowntimeTab: React.FC<DowntimeTabProps> = ({
       title: 'Notes',
       dataIndex: 'notes',
       key: 'notes',
-      width: 200,
+      width: 160,
       ellipsis: { showTitle: false },
       render: (val: string) =>
         val ? (
@@ -329,7 +329,7 @@ export const DowntimeTab: React.FC<DowntimeTabProps> = ({
     columns.push({
       title: 'Actions',
       key: 'actions',
-      width: supportsBookingAccess ? 260 : 120,
+      width: supportsBookingAccess ? 164 : 96,
       align: 'center',
       fixed: 'right',
       render: (_, r) => {

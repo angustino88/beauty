@@ -533,13 +533,12 @@ export default function EquipmentDetailsModal({
 }: EquipmentDetailsModalProps) {
   const [mappingExpanded, setMappingExpanded] = useState(true);
   const [lifecycleModalOpen, setLifecycleModalOpen] = useState(false);
-  // antd overlays opened from inside this sheet (modals, drawers, dropdowns) must be mounted inside the
-  // sheet's DOM: the sheet is a modal Radix dialog that traps focus and pointer events, so an overlay
-  // mounted on <body> appears behind the sheet and cannot receive typing. Modals and drawers call
-  // getPopupContainer without a trigger (or with document.body), so they go to the in-sheet host.
+  // antd overlays opened from inside this sheet (modals, drawers, dropdowns, tooltips) must be mounted
+  // inside the sheet's DOM (so Radix's focus and pointer trap allows interacting with them) but outside
+  // overflow:hidden labels, table cells, and the scrolling body so popups are never clipped.
   const overlayHost = useRef<HTMLDivElement>(null);
   const getPopupContainer = useCallback((trigger?: HTMLElement) => (
-    (trigger && trigger !== document.body ? trigger.parentElement : null) ?? overlayHost.current ?? document.body
+    overlayHost.current ?? trigger?.closest<HTMLElement>('[data-slot="sheet-content"]') ?? document.body
   ), []);
   const canManageLabOperations = usePermission('lab_operations.manage');
 
