@@ -1,13 +1,25 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { chapters, SANTA_X } from './constants.ts';
-import { createRun, jump, step } from './simulation.ts';
-import type { Run } from './types.ts';
+import { chapterPace, createRun, jump, step } from './simulation.ts';
+import type { Foe, Run, Supply } from './types.ts';
 
 for (const [chapter, level] of chapters.entries()) {
   test(`delivers the required letters in ${level.short} and clears its encounters`, () => {
     let run: Run = { ...createRun(chapter), phase: 'playing' };
+    const seenFoes = new Set<string>();
+    const seenSupplies = new Set<string>();
     for (let frame = 0; frame < (level.routeLength / level.speed + 30) * 60 && run.phase === 'playing'; frame++) {
+      for (const e of run.entities) {
+        if (['hare', 'owl', 'goblin', 'ram', 'mole', 'bat'].includes(e.kind)) {
+          assert.ok(level.foes.includes(e.kind as Foe), `${e.kind} should not spawn in ${level.short}`);
+          seenFoes.add(e.kind);
+        }
+        if (['star', 'shield', 'magnet', 'prism', 'hourglass'].includes(e.kind)) {
+          assert.ok(level.supplies.includes(e.kind as Supply), `${e.kind} should not spawn in ${level.short}`);
+          seenSupplies.add(e.kind);
+        }
+      }
       const target = run.entities.filter(e => e.x > SANTA_X + 45).sort((a, b) => a.x - b.x)[0];
       const owlAhead = run.entities.some(e => (e.kind === 'owl' || e.kind === 'bat') && e.x > SANTA_X - 45 && e.x < SANTA_X + 230);
       if (!owlAhead && run.height === 0 && target && target.x - SANTA_X < level.speed * 0.32 + 32) run = jump(run);
@@ -16,12 +28,29 @@ for (const [chapter, level] of chapters.entries()) {
       run = step(run, 1 / 60);
     }
     assert.equal(run.phase, 'delivered', JSON.stringify(run));
-    assert.equal(run.bossHP, 'boss' in level ? 0 : null);
+    assert.equal(run.bossHP, level.boss ? 0 : null);
     assert.ok(run.distance >= level.routeLength);
     assert.equal(run.letters, level.letters);
     assert.ok(run.score >= 10 * level.letters);
+    assert.equal(seenFoes.size, new Set(level.foes).size);
+    assert.equal(seenSupplies.size, new Set(level.supplies).size);
   });
 }
+
+test('each stop defines a unique stage rule, distinct rosters and strictly increasing difficulty', () => {
+  const rules = new Set(chapters.map(c => c.rule));
+  assert.equal(rules.size, chapters.length);
+  for (let i = 1; i < chapters.length; i++) {
+    const prev = chapters[i - 1];
+    const curr = chapters[i];
+    assert.ok(curr.speed > prev.speed);
+    assert.ok(curr.routeLength > prev.routeLength);
+    assert.ok(curr.letters > prev.letters);
+    assert.ok(curr.foeEvery <= prev.foeEvery);
+    assert.notDeepEqual(curr.foes, prev.foes);
+    assert.notDeepEqual(curr.supplies, prev.supplies);
+  }
+});
 
 test('shield absorbs one collision and a retry clears the inventory', () => {
   let state: Run = { ...createRun(2), phase: 'playing' };
@@ -64,24 +93,27 @@ test('reaching the observatory starts the boss fight and cannot skip it', () => 
   assert.equal(state.bossHP, 3);
 });
 
-test('score rush spends points on hits and ends at sixty seconds', () => {
-  let state: Run = { ...createRun(0, 0, 'rush'), phase: 'playing', score: 20,
-    entities: [{ id: 7, kind: 'hare', x: SANTA_X, bottom: 0 }] };
-  state = step(state, 1 / 60);
-  assert.equal(state.score, 5);
-  assert.equal(state.phase, 'playing');
-  state = step({ ...state, elapsed: 59.99 }, 0.02);
-  assert.equal(state.elapsed, 60);
-  assert.equal(state.phase, 'delivered');
+test('timed stops enforce their delivery deadline and hourglasses slow the countdown', () => {
+  const timedIndex = 2; // Moonlit Rooftops (90s curfew)
+  const limit = chapters[timedIndex].timeLimit;
+  assert.ok(limit > 0);
+  const expired = step({ ...createRun(timedIndex), phase: 'playing', elapsed: limit - 0.01 }, 0.02);
+  assert.equal(expired.phase, 'lost');
+  assert.equal(expired.elapsed, limit);
+  const slowed = step({ ...createRun(timedIndex), phase: 'playing', slow: 3, elapsed: limit - 0.01 }, 0.01);
+  assert.equal(slowed.phase, 'playing');
+  assert.ok(slowed.elapsed < limit);
 });
 
-test('endless accelerates beyond the route and awards survival points', () => {
-  const base: Run = { ...createRun(0, 0, 'endless'), phase: 'playing', distance: chapters[0].routeLength, letters: 10 };
-  const early = step(base, 0.02);
-  const late = step({ ...base, elapsed: 99.99 }, 0.02);
-  assert.ok(late.distance > early.distance);
-  assert.equal(late.phase, 'playing');
-  assert.equal(late.score, 10);
+test('accelerating stops ramp pace along the route and award survival bonuses', () => {
+  const harbor = createRun(5); // Starlight Harbor (+25% ramp, +10 bonus every 10s)
+  const startRun: Run = { ...harbor, phase: 'playing', distance: 0 };
+  const endRun: Run = { ...harbor, phase: 'playing', distance: chapters[5].routeLength, elapsed: 9.99 };
+  assert.ok(chapterPace(endRun) > chapterPace(startRun));
+  const early = step(startRun, 0.02);
+  const late = step(endRun, 0.02);
+  assert.ok(late.distance - endRun.distance > early.distance);
+  assert.equal(late.score, chapters[5].survivalBonus);
 });
 
 test('magnet collects a distant star, prism doubles it and hourglass slows travel', () => {
@@ -96,23 +128,15 @@ test('magnet collects a distant star, prism doubles it and hourglass slows trave
   assert.equal(step({ ...next, phase: 'paused' }, 0.02).magnet, next.magnet);
 });
 
-test('whiteout survives at 90 seconds and never schedules defensive supplies', () => {
+test('whiteout caverns never schedule defensive supplies and solstice peak fires paired boss blasts', () => {
   for (let wave = 0; wave < 28; wave++) {
-    const run: Run = { ...createRun(0, 0, 'whiteout'), phase: 'playing', wave };
+    const run: Run = { ...createRun(8), phase: 'playing', wave }; // Violet Ice Caverns (Stop 9)
     const next = step(run, 1 / 60);
-    assert.ok(next.distance > chapters[0].speed / 60);
+    assert.ok(next.distance > chapters[8].speed / 60);
     assert.ok(next.entities.every(e => e.kind !== 'shield' && e.kind !== 'hourglass'));
   }
-  const lastFrame: Run = { ...createRun(0, 0, 'whiteout'), phase: 'playing', elapsed: 89.99 };
-  assert.equal(step(lastFrame, 0.02).phase, 'delivered');
-});
-
-test('crown duel grants three jumps, fires paired blasts and enforces the deadline', () => {
-  const run: Run = { ...createRun(0, 0, 'duel'), phase: 'playing' };
-  assert.equal(run.jumpLimit, 3);
-  assert.equal(run.bossHP, 3);
-  assert.equal(step(run, 1 / 60).entities.filter(e => e.kind === 'blast').length, 2);
-  assert.equal(step({ ...run, elapsed: 23.99 }, 0.02).phase, 'lost');
-  const finalStar: Run = { ...run, bossHP: 1, entities: [{ kind: 'counterStar', x: SANTA_X, bottom: 0, id: 99 }] };
+  const summitBoss: Run = { ...createRun(9), phase: 'playing', bossHP: 3 }; // Solstice Peak (Stop 10)
+  assert.equal(step(summitBoss, 1 / 60).entities.filter(e => e.kind === 'blast').length, 2);
+  const finalStar: Run = { ...summitBoss, bossHP: 1, entities: [{ kind: 'counterStar', x: SANTA_X, bottom: 0, id: 99 }] };
   assert.equal(step(finalStar, 1 / 60).phase, 'delivered');
 });
