@@ -1,14 +1,28 @@
 import { chapters, HAZARD_SIZE, ITEM_SIZE, SANTA_SIZE, SANTA_X, WORLD_WIDTH } from './constants.ts';
-import type { Entity, Foe, Item, Run } from './types.ts';
+import type { Entity, Foe, Item, Run, Supply } from './types.ts';
 
 export function isThreat(kind: Item) {
   return ['hazard', 'blast', 'goblin', 'owl', 'hare', 'ram', 'bat', 'mole'].includes(kind);
 }
 
-export function chapterPace(run: Pick<Run, 'chapter' | 'distance'>) {
+export function chapterAct(run: Pick<Run, 'chapter' | 'distance'>): 0 | 1 | 2 {
+  const progress = run.distance / chapters[run.chapter].routeLength;
+  return progress >= 0.7 ? 2 : progress >= 0.35 ? 1 : 0;
+}
+
+export function chapterRule(run: Pick<Run, 'chapter' | 'distance' | 'bossHP'>): string {
+  const level = chapters[run.chapter];
+  if (run.bossHP !== null) return level.boss === 'summit-king' ? 'Crown Duel' : 'Frost King Siege';
+  return level.phases[chapterAct(run)];
+}
+
+export function chapterPace(run: Pick<Run, 'chapter' | 'distance'> & { bossHP?: number | null }) {
+  if (run.bossHP !== null && run.bossHP !== undefined) return 1.05;
   const level = chapters[run.chapter];
   const progress = Math.min(1, run.distance / level.routeLength);
-  return level.basePace + level.maxRamp * progress;
+  const act = chapterAct(run);
+  const actSurge = act === 2 ? 0.12 : act === 1 ? 0.05 : 0;
+  return level.basePace + level.maxRamp * progress + actSurge;
 }
 
 export function createRun(chapter: number, unlockedChapter = chapter): Run {
@@ -24,25 +38,42 @@ export function jump(run: Run): Run {
   return { ...run, jumps: run.jumps + 1, velocity: 550 };
 }
 
-function selectWaveThreat(chapter: number, wave: number, highPickup: boolean): Item {
+function activeActFoes(chapter: number, act: 0 | 1 | 2): readonly Foe[] {
+  const [act1, act2, act3] = chapters[chapter].foes;
+  if (act === 0) return [act1];
+  if (act === 1) return [act2, act1];
+  return [act3, act2, act1];
+}
+
+function selectWaveThreat(chapter: number, wave: number, act: 0 | 1 | 2, highPickup: boolean): Item {
   const level = chapters[chapter];
+  const pool = activeActFoes(chapter, act);
   if (wave % 2 === 1) {
     const oddIndex = Math.floor(wave / 2);
-    if (level.foeEvery >= 3 && oddIndex % 2 === 1) return 'hazard';
-    return level.foes[oddIndex % level.foes.length];
+    return pool[oddIndex % pool.length];
   }
   const evenIndex = wave / 2 - 1;
   const candidates: readonly Foe[] = highPickup
-    ? level.foes.filter(f => f === 'hare' || f === 'mole')
-    : level.foes.filter(f => f !== 'owl' && f !== 'bat');
+    ? pool.filter(f => f === 'hare' || f === 'mole')
+    : pool.filter(f => f !== 'owl' && f !== 'bat');
   if (candidates.length === 0) return 'hazard';
-  if (level.foeEvery === 1 && evenIndex % 2 === 1) {
+  if ((act === 2 || level.foeEvery === 1) && evenIndex % 2 === 1) {
     return candidates[Math.floor(evenIndex / 2) % candidates.length];
   }
   if (level.foeEvery === 2 && evenIndex % 3 === 2) {
     return candidates[Math.floor(evenIndex / 3) % candidates.length];
   }
   return 'hazard';
+}
+
+function selectStageSupply(chapter: number, wave: number, act: 0 | 1 | 2): Supply {
+  const level = chapters[chapter];
+  const scheduled = level.supplies[Math.floor(wave / 2) % level.supplies.length];
+  // During the Act III Climax (70-100%), shields are cut off in favor of offensive/scoring pickups.
+  if (act === 2 && scheduled === 'shield') {
+    return level.supplies.includes('prism') ? 'prism' : 'star';
+  }
+  return scheduled;
 }
 
 // Heights are measured from the snow line. All distances use world coordinates.
@@ -54,13 +85,14 @@ export function step(run: Run, dt: number): Run {
   if (level.timeLimit > 0 && elapsed >= level.timeLimit) {
     return { ...run, elapsed: level.timeLimit, phase: 'lost' };
   }
+  const act = chapterAct(run);
   const pace = chapterPace(run);
   const travel = level.speed * motionDt * pace;
   const distance = run.distance + travel;
   const ceiling = run.jumps >= 3 ? 198 : 165;
   const height = Math.max(0, Math.min(ceiling, run.height + run.velocity * motionDt - 700 * motionDt * motionDt));
   const survivalGain = level.survivalBonus > 0 && Math.floor(elapsed / 10) > Math.floor(run.elapsed / 10)
-    ? level.survivalBonus
+    ? level.survivalBonus * (act === 2 ? 2 : 1)
     : 0;
   const next: Run = {
     ...run, elapsed, height, distance,
@@ -83,26 +115,49 @@ export function step(run: Run, dt: number): Run {
       shots.push({ id: volley * 3 + 2, kind: 'blast', x: elite ? WORLD_WIDTH - 90 + level.speed * 0.30 : WORLD_WIDTH + 40, bottom: 0 });
     }
     entities = [...entities, ...shots];
-    next.nextWave += level.speed * ((elite ? 2.1 : 2.8) + run.bossHP * 0.25);
+    next.nextWave += level.speed * ((elite ? 2.1 : 2.6) + run.bossHP * 0.25);
     next.wave++;
   } else if (run.bossHP === null && distance >= run.nextWave) {
     const wave = run.wave;
-    const supply = level.supplies[Math.floor(wave / 2) % level.supplies.length];
-    const sendLetter = wave % 2 === 0 && run.letters < level.letters;
-    const defaultBottom = run.chapter >= 4 && wave % 6 === 4 ? 225 : run.chapter > 0 && wave % 4 === 2 ? 182 : 67 + (wave % 3) * 9;
-    const threatKind = wave > 0 ? selectWaveThreat(run.chapter, wave, defaultBottom >= 178) : null;
+    const supply = selectStageSupply(run.chapter, wave, act);
+    const climaxBurst = act === 2 && distance >= level.routeLength * 0.82 && wave >= level.supplies.length * 2;
+    const sendLetter = (wave % 2 === 0 || climaxBurst) && run.letters < level.letters;
+    const twinWave = wave > 0 && ((act === 1 && wave % 4 === 2) || (act === 2 && wave % 2 === 0));
+    const defaultBottom = run.chapter >= 4 && (wave % 6 === 4 || (act === 2 && wave % 4 === 0))
+      ? 225
+      : run.chapter > 0 && (wave % 4 === 2 || twinWave)
+        ? 182
+        : twinWave
+          ? 112
+          : 67 + (wave % 3) * 9;
+    const highPickup = defaultBottom >= 178 || twinWave;
+    const threatKind = wave > 0 ? selectWaveThreat(run.chapter, wave, act, highPickup) : null;
     const flyer = threatKind === 'owl' || threatKind === 'bat';
     const pickup: Entity = {
-      id: wave * 2, kind: sendLetter ? 'letter' : supply,
-      x: WORLD_WIDTH, bottom: flyer ? 18 : defaultBottom,
+      id: wave * 3, kind: sendLetter ? 'letter' : supply,
+      x: WORLD_WIDTH + (twinWave && !flyer ? 18 : 0),
+      bottom: flyer ? 18 : defaultBottom,
     };
     // The first pickup teaches the arc before any obstacle enters the lane.
     entities = [...entities, pickup];
     if (threatKind !== null) {
-      entities.push({ id: wave * 2 + 1, kind: threatKind, x: WORLD_WIDTH + 5, bottom: flyer ? 154 : 0 });
+      const chargerOffset = threatKind === 'ram' ? 46 : threatKind === 'goblin' ? 38 : 5;
+      entities.push({ id: wave * 3 + 1, kind: threatKind, x: WORLD_WIDTH + chargerOffset, bottom: flyer ? 154 : 0 });
+      if (twinWave && !flyer) {
+        const flankerPool = activeActFoes(run.chapter, act).filter(f => f === 'hare' || f === 'mole');
+        const flanker: Item = flankerPool.length > 0 && wave % 4 === 0 ? flankerPool[0] : 'hazard';
+        const twinSpan = run.jumpLimit > 1 ? 48 : 34;
+        entities.push({ id: wave * 3 + 2, kind: flanker, x: WORLD_WIDTH + 5 + twinSpan, bottom: 0 });
+      }
     }
-    const cadence = defaultBottom >= 178 ? 1.25 : [1, 1.18, 0.98, 1.34][wave % 4];
-    next.nextWave += level.spacing * pace * cadence;
+    const baseCadence = defaultBottom >= 178 || twinWave
+      ? 1.24
+      : act === 2
+        ? [0.92, 1.04, 0.90, 1.12][wave % 4]
+        : act === 1
+          ? [0.96, 1.10, 0.94, 1.20][wave % 4]
+          : [1, 1.14, 0.96, 1.26][wave % 4];
+    next.nextWave += level.spacing * pace * baseCadence;
     next.wave++;
   }
   for (const original of entities) {

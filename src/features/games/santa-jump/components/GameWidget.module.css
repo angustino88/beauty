@@ -141,10 +141,19 @@
   @keyframes hover { to { transform: translateY(-3%); } }
 }
 .ruleHint { margin: 0 0 10px; font-size: 12px; line-height: 1.45; color: #435243; }
+.board[data-climax] { box-shadow: inset 0 0 0 1.5px #f5b971c7, inset 0 0 32px #c84b3138; }
+.hud span[data-climax] { background: #4a1e18eb; border-color: #f4b266a8; color: #ffe5bd; }
+.actList { display: grid; gap: 5px; margin: 0 0 8px; padding-top: 7px; border-top: 1px dashed #b3a485; }
+.actItem { display: flex; align-items: center; gap: 8px; padding: 5px 7px; border-radius: 6px; background: #e8dcc080; border: 1px solid #cbbd9d; opacity: .78; }
+.actItem[data-active] { opacity: 1; background: #fff6dc; border-color: #27614f; box-shadow: 0 1px 3px #1d352b1f; }
+.actItem[data-climax][data-active] { border-color: #b44a2f; background: #ffeedb; }
+.actItem img { width: 26px; height: 26px; object-fit: contain; flex: none; }
+.actItem small { display: block; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: #6c593e; }
+.actItem b { display: block; font-size: 11.5px; color: #20352b; }
 .guide { padding: 7px 0; border-top: 1px dashed #b3a485; font-size: 13px; }
 .guide summary { cursor: pointer; font-weight: 700; }
 .guide .gear { border: 0; }
-@media(max-width:850px) { .ruleHint, .guide { grid-column: 1/-1; margin: 0; } }
+@media(max-width:850px) { .ruleHint, .actList, .guide { grid-column: 1/-1; margin: 0; } }
 @media (min-width: 851px) {
   .dispatch { max-height: clamp(250px, 31vw, 345px); overflow-y: auto; scrollbar-width: thin; scrollbar-color: #a99872 transparent; }
 }

@@ -37,18 +37,38 @@ for (const [chapter, level] of chapters.entries()) {
   });
 }
 
-test('each stop defines a unique stage rule, distinct rosters and strictly increasing difficulty', () => {
+test('each stop defines a unique stage rule, 3-act phases, distinct rosters and strictly increasing difficulty', () => {
   const rules = new Set(chapters.map(c => c.rule));
   assert.equal(rules.size, chapters.length);
-  for (let i = 1; i < chapters.length; i++) {
-    const prev = chapters[i - 1];
+  for (let i = 0; i < chapters.length; i++) {
     const curr = chapters[i];
-    assert.ok(curr.speed > prev.speed);
-    assert.ok(curr.routeLength > prev.routeLength);
-    assert.ok(curr.letters > prev.letters);
-    assert.ok(curr.foeEvery <= prev.foeEvery);
-    assert.notDeepEqual(curr.foes, prev.foes);
-    assert.notDeepEqual(curr.supplies, prev.supplies);
+    assert.equal(new Set(curr.phases).size, 3);
+    assert.equal(new Set(curr.foes).size, 3);
+    if (i > 0) {
+      const prev = chapters[i - 1];
+      assert.ok(curr.speed > prev.speed);
+      assert.ok(curr.spacing < prev.spacing);
+      assert.ok(curr.routeLength > prev.routeLength);
+      assert.ok(curr.letters > prev.letters);
+      assert.ok(curr.foeEvery <= prev.foeEvery);
+      assert.notDeepEqual(curr.foes, prev.foes);
+      assert.notDeepEqual(curr.supplies, prev.supplies);
+    }
+  }
+});
+
+test('stages evolve through 3 distinct acts with new monsters, twin hurdles and climax shield cutoff', () => {
+  const level = chapters[0];
+  const act0: Run = { ...createRun(0, 1), phase: 'playing', distance: 0 };
+  const act1: Run = { ...createRun(0, 1), phase: 'playing', distance: level.routeLength * 0.4, wave: 2, nextWave: 0 };
+  const act2: Run = { ...createRun(0, 1), phase: 'playing', distance: level.routeLength * 0.75, wave: 3, nextWave: 0 };
+  assert.ok(chapterPace(act1) > chapterPace(act0));
+  assert.ok(chapterPace(act2) > chapterPace(act1));
+  const twinStep = step(act1, 1 / 60);
+  assert.equal(twinStep.entities.filter(e => e.kind !== 'letter' && e.kind !== 'star' && e.kind !== 'shield' && e.kind !== 'magnet').length, 2);
+  for (let wave = 1; wave < 20; wave += 2) {
+    const climaxStep = step({ ...act2, wave, nextWave: 0, entities: [] }, 1 / 60);
+    assert.ok(climaxStep.entities.every(e => e.kind !== 'shield'));
   }
 });
 
@@ -94,7 +114,7 @@ test('reaching the observatory starts the boss fight and cannot skip it', () => 
 });
 
 test('timed stops enforce their delivery deadline and hourglasses slow the countdown', () => {
-  const timedIndex = 2; // Moonlit Rooftops (90s curfew)
+  const timedIndex = 2; // Moonlit Rooftops (85s curfew)
   const limit = chapters[timedIndex].timeLimit;
   assert.ok(limit > 0);
   const expired = step({ ...createRun(timedIndex), phase: 'playing', elapsed: limit - 0.01 }, 0.02);
@@ -105,15 +125,16 @@ test('timed stops enforce their delivery deadline and hourglasses slow the count
   assert.ok(slowed.elapsed < limit);
 });
 
-test('accelerating stops ramp pace along the route and award survival bonuses', () => {
-  const harbor = createRun(5); // Starlight Harbor (+25% ramp, +10 bonus every 10s)
-  const startRun: Run = { ...harbor, phase: 'playing', distance: 0 };
+test('accelerating stops ramp pace along the route and double survival bonuses during climax', () => {
+  const harbor = createRun(5); // Starlight Harbor (+10 bonus in Act I/II, +20 in Act III Climax)
+  const startRun: Run = { ...harbor, phase: 'playing', distance: 0, elapsed: 9.99 };
   const endRun: Run = { ...harbor, phase: 'playing', distance: chapters[5].routeLength, elapsed: 9.99 };
   assert.ok(chapterPace(endRun) > chapterPace(startRun));
   const early = step(startRun, 0.02);
   const late = step(endRun, 0.02);
   assert.ok(late.distance - endRun.distance > early.distance);
-  assert.equal(late.score, chapters[5].survivalBonus);
+  assert.equal(early.score, chapters[5].survivalBonus);
+  assert.equal(late.score, chapters[5].survivalBonus * 2);
 });
 
 test('magnet collects a distant star, prism doubles it and hourglass slows travel', () => {

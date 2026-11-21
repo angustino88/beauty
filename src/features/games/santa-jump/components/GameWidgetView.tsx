@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import type { CSSProperties } from 'react';
-import { ArrowRight, Check, ChevronRight, Clock3, Flag, LockKeyhole, Mail, MapPinned, Pause, Play, RotateCcw, Trophy, X } from 'lucide-react';
+import { ArrowRight, Check, ChevronRight, Clock3, Flag, Flame, LockKeyhole, Mail, MapPinned, Pause, Play, RotateCcw, Trophy, X } from 'lucide-react';
 import { chapters, FLOOR, HAZARD_SIZE, ITEM_SIZE, SANTA_SIZE, SANTA_X, WORLD_HEIGHT, WORLD_WIDTH } from '../constants';
 import type { useGameEngine } from '../hooks/useGameEngine';
 import santa from './santa-runner.webp';
@@ -31,7 +31,7 @@ import owl from '../art/snow-owl.webp';
 import hare from '../art/horned-hare.webp';
 import watch from '../art/pocket-watch.webp';
 import type { Foe, Item, Supply } from '../types';
-import { chapterPace, isThreat } from '../simulation';
+import { chapterAct, chapterPace, chapterRule, isThreat } from '../simulation';
 import railway from '../art/ribbon-railway.webp';
 import bells from '../art/bell-tower.webp';
 import caverns from '../art/violet-caverns.webp';
@@ -48,7 +48,7 @@ const items = { letter, star, shield, goblin, magnet, hourglass, prism, owl, har
 
 const supplyGuide: Record<Supply, [string, string, string]> = {
   star: [star, 'Gold star', 'Worth 5 points.'],
-  shield: [shield, 'Ice shield', 'Absorbs the next hit.'],
+  shield: [shield, 'Ice shield', 'Absorbs the next hit (disabled during Act III Climax).'],
   magnet: [magnet, 'Holly magnet', 'Draws nearby letters and stars to Santa for 8s.'],
   hourglass: [hourglass, 'Frost hourglass', 'Slows the world and countdown clock for 5s.'],
   prism: [prism, 'Prism brooch', 'Doubles letter and star points for 8s.'],
@@ -62,6 +62,9 @@ const creatureGuide: Record<Foe, [string, string, string]> = {
   mole: [mole, 'Lantern mole', 'Look for its lamp before it surfaces.'],
   bat: [bat, 'Crystal bat', 'Flies in a wave. Run underneath.'],
 };
+
+const actLabels = ['Act I · 0–35%', 'Act II · 35–70%', 'Climax · 70–100%'] as const;
+const actNotes = ['Vanguard wave', 'Twin hurdles & surge', 'Overdrive · No shields'] as const;
 
 const foeNames: Partial<Record<Item, string>> = {
   ram: 'Clockwork ram', mole: 'Lantern mole', bat: 'Crystal bat', goblin: 'Pine goblin', owl: 'Snow owl', hare: 'Horned hare',
@@ -88,7 +91,10 @@ export default function GameWidgetView({ state, record, unlocked, jump, pause, p
   const { phase, chapter, letters, score } = state;
   const level = chapters[chapter];
   const routePercent = Math.min(100, Math.floor(state.distance / level.routeLength * 100));
+  const act = chapterAct(state);
+  const activeRule = chapterRule(state);
   const pace = chapterPace(state);
+  const inClimax = act === 2 || state.bossHP !== null;
   const playing = phase === 'playing';
   const briefing = phase === 'briefing';
   const complete = phase === 'delivered';
@@ -111,11 +117,15 @@ export default function GameWidgetView({ state, record, unlocked, jump, pause, p
     ...uniqueSupplies.map(kind => supplyGuide[kind]),
   ];
   const stageThreats: [string, string, string][] = [
-    [hazards[chapter], level.hazard, 'Static track obstacle. Jump to clear.'],
-    ...level.foes.map(kind => creatureGuide[kind]),
+    [hazards[chapter], level.hazard, 'Static track obstacle. Pairs into twin hurdles from Act II.'],
+    ...level.foes.map((kind, idx) => {
+      const [icon, name, hint] = creatureGuide[kind];
+      const tag = idx === 0 ? 'Act I' : idx === 1 ? 'Act II' : 'Climax';
+      return [icon, `${name} (${tag})`, hint] as [string, string, string];
+    }),
     ...(level.boss ? [[
       king,
-      level.boss === 'summit-king' ? 'Summit Frost King' : 'Frost King',
+      level.boss === 'summit-king' ? 'Summit Frost King (Climax)' : 'Frost King (Climax)',
       level.boss === 'summit-king'
         ? 'Fires paired ice blasts. Catch three high stars between volleys.'
         : 'Guards the summit. Dodge ice blasts and catch three high stars.',
@@ -138,7 +148,7 @@ export default function GameWidgetView({ state, record, unlocked, jump, pause, p
     title = timedOut ? 'Deadline missed' : 'Delivery interrupted';
     message = timedOut
       ? `The ${level.timeLimit}s clock ran out on ${level.short}. Try this stop again.`
-      : 'Santa took a hit. Try this stop again.';
+      : `Santa was stopped during ${activeRule}. Try this stop again.`;
     action = 'Retry this stop';
   }
 
@@ -160,11 +170,15 @@ export default function GameWidgetView({ state, record, unlocked, jump, pause, p
 
       <div className={css.body}>
         <div className={css.main}>
-          <section className={css.board} data-active={playing || undefined} aria-label={level.name}>
+          <section className={css.board} data-active={playing || undefined} data-climax={playing && inClimax || undefined} aria-label={level.name}>
             <div aria-hidden="true" className={css.scenery}
               style={{ backgroundImage: `url("${scenes[chapter]}")` }} />
             <div className={css.hud}>
-              <span><Flag size={13} /> Stop {chapterNumber(chapter)} · {level.rule}</span>
+              <span><Flag size={13} /> Stop {chapterNumber(chapter)}</span>
+              <span data-climax={inClimax || undefined}>
+                {inClimax ? <Flame size={13} /> : null}
+                {state.bossHP !== null ? 'Boss' : `Act ${['I', 'II', 'III'][act]}`}: {activeRule}
+              </span>
               <span aria-label={`Route distance: ${routePercent}%`}>Route {routePercent}%</span>
               {level.timeLimit > 0 && <span><img src={watch} alt="Time remaining" />{Math.max(0, Math.ceil(level.timeLimit - state.elapsed))}s</span>}
               {pace > 1.01 && <span aria-label="Current speed">{Math.round(pace * 100)}% pace</span>}
@@ -199,7 +213,7 @@ export default function GameWidgetView({ state, record, unlocked, jump, pause, p
           </section>
           <aside className={css.dispatch}>
             <div className={css.eyebrow}><Mail size={14} /> Stop {chapterNumber(chapter)} · Tier {chapter + 1}/{chapters.length}</div>
-            <h2>{state.bossHP !== null ? 'Frost King' : level.rule}</h2>
+            <h2>{activeRule}</h2>
             <p className={css.ruleHint} role={state.bossHP !== null ? 'status' : undefined}>
               {state.bossHP !== null
                 ? `Frost seals: ${state.bossHP}/3. Jump over ice blasts and catch the high stars to break his crown.`
@@ -207,7 +221,21 @@ export default function GameWidgetView({ state, record, unlocked, jump, pause, p
             </p>
             <div className={css.delivery}><span>Wish letters</span><strong>{letters} / {level.letters}</strong></div>
             <progress value={letters} max={level.letters} aria-label="Letters collected" />
-            {[{ label: `Stage threats (${stageThreats.length})`, entries: stageThreats, open: true }, { label: `Stage supplies (${stageSupplies.length})`, entries: stageSupplies, open: false }].map(({ label, entries, open }) => (
+            <div className={css.actList} aria-label="Stage acts">
+              {level.phases.map((phaseName, idx) => {
+                const foe = creatureGuide[level.foes[idx]];
+                return (
+                  <div key={phaseName} className={css.actItem} data-active={act === idx || undefined} data-climax={idx === 2 || undefined}>
+                    <img src={foe[0]} alt="" />
+                    <div>
+                      <small>{actLabels[idx]} · {actNotes[idx]}</small>
+                      <b>{phaseName} (+{foe[1]})</b>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            {[{ label: `Stage threats (${stageThreats.length})`, entries: stageThreats, open: false }, { label: `Stage supplies (${stageSupplies.length})`, entries: stageSupplies, open: false }].map(({ label, entries, open }) => (
               <details key={label} className={css.guide} open={open}>
                 <summary>{label}</summary>
                 <div className={css.gear}>{entries.map(([icon, name, hint]) =>
