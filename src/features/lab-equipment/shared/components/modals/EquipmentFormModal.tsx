@@ -8,12 +8,13 @@ import {
     Form, Input, InputNumber, Select, Collapse,
     DatePicker, Upload, Row, Col, Spin,
 } from 'antd';
-import { confirmAction, getApiErrorMessage, notify } from '@/shared/notifications';
+import { confirmAction, getApiErrorDetails, getApiErrorMessage, notify } from '@/shared/notifications';
 import { InboxOutlined } from '@ant-design/icons';
 import { FormDialog } from '@/components/ui/form-dialog';
 import type { RcFile } from 'antd/es/upload/interface';
 import dayjs from 'dayjs';
 import { filterResourceOption } from '@/components/inputs/ResourceOption';
+import { isEquipmentErrorNotified } from '../../utils/equipmentNotifications';
 import { parseFormApiError } from '../../utils/formApiError';
 import { buildRequiredFieldRules } from '../../utils/formValidation';
 import { RESOURCE_IMAGE_ACCEPT, validateResourceImage } from '@/shared/lib/api/resourceImage';
@@ -321,7 +322,16 @@ export default function EquipmentFormModal({
                 const parsed = parseFormApiError(err);
                 if (parsed) {
                     const fieldNameSet = new Set(fields.map((f) => f.name));
+                    const fieldAliases: Record<string, string> = {
+                        power_capacity_w: 'max_power',
+                        owner_id: 'primary_owner',
+                    };
                     const matched = Object.entries(parsed.fieldErrors)
+                        .map(([name, errors]): [string, string[]] => {
+                            if (fieldNameSet.has(name)) return [name, errors];
+                            const alias = fieldAliases[name];
+                            return alias && fieldNameSet.has(alias) ? [alias, errors] : [name, errors];
+                        })
                         .filter(([name]) => fieldNameSet.has(name));
                     if (matched.length > 0) {
                         setDetailsOpen(true);
@@ -331,14 +341,12 @@ export default function EquipmentFormModal({
                         (form as unknown as { getFieldInstance?: (n: string) => { focus?: () => void } })
                             .getFieldInstance?.(first)?.focus?.();
                     }
-                    if (parsed.message) {
-                        notify.error('Unable to save changes', {
-                            description: parsed.message,
-                        });
-                    }
-                } else {
+                }
+                if (!isEquipmentErrorNotified(err)) {
+                    const details = getApiErrorDetails(err);
                     notify.error('Unable to save changes', {
                         description: getApiErrorMessage(err, 'Please review your entries and try again.'),
+                        details: details.length > 0 ? details : undefined,
                     });
                 }
             }

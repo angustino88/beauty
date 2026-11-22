@@ -78,3 +78,29 @@ test('skips metadata count fields when selecting a descriptive field error fallb
 
   assert.equal(result?.message, 'SKU is already in use.');
 });
+
+test('unwraps Error.cause and normalizes flattened scalar [0] field keys for form binding', () => {
+  const apiErr = {
+    status: 422,
+    data: {
+      error: {
+        code: 'validation_failed',
+        message: 'One or more fields are invalid.',
+        details: [
+          {
+            field: 'power_capacity_w[0]',
+            code: 'invalid',
+            message: 'Existing allocation or requested capacity exceeds this limit.',
+          },
+        ],
+      },
+    },
+  };
+  const wrapped = new Error('update_room_failed', { cause: apiErr });
+  const result = parseFormApiError(wrapped);
+
+  assert.deepEqual(result?.fieldErrors, {
+    power_capacity_w: ['Existing allocation or requested capacity exceeds this limit.'],
+  });
+  assert.equal(result?.message, 'Existing allocation or requested capacity exceeds this limit.');
+});

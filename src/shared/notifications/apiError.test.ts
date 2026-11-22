@@ -186,3 +186,89 @@ test('formats equipment delete blockers into readable toast detail rows', () => 
   ]);
 });
 
+test('surfaces readable field error when validation_failed uses generic wrapper and flattened [0] field', () => {
+  const err = {
+    status: 422,
+    data: {
+      error: {
+        code: 'validation_failed',
+        message: 'One or more fields are invalid.',
+        details: [
+          {
+            field: 'power_capacity_w[0]',
+            code: 'invalid',
+            message: 'Existing allocation or requested capacity exceeds this limit.',
+          },
+        ],
+        request_id: 'b6377148a8dc460489ce3d4f0edaae13',
+      },
+    },
+  };
+
+  const normalized = normalizeApiError(err);
+  assert.equal(
+    normalized.message,
+    'Power capacity (W): Existing allocation or requested capacity exceeds this limit.',
+  );
+  assert.deepEqual(normalized.fields, [
+    {
+      field: 'power_capacity_w',
+      message: 'Existing allocation or requested capacity exceeds this limit.',
+    },
+  ]);
+  // Single validation error is already in description, so details is empty to avoid duplication
+  assert.deepEqual(getApiErrorDetails(err), []);
+});
+
+test('surfaces summary and structured rows for multi-field validation_failed responses', () => {
+  const err = {
+    status: 422,
+    data: {
+      error: {
+        code: 'validation_failed',
+        message: 'One or more fields are invalid.',
+        details: [
+          { field: 'power_capacity_w[0]', code: 'invalid', message: 'Exceeds parent room capacity.' },
+          { field: 'sku', code: 'unique', message: 'SKU is already in use.' },
+        ],
+      },
+    },
+  };
+
+  assert.equal(
+    getApiErrorMessage(err),
+    'Power capacity (W): Exceeds parent room capacity. (+1 more issue)',
+  );
+  assert.deepEqual(getApiErrorDetails(err), [
+    { tone: 'neutral', label: 'Power capacity (W):', value: 'Exceeds parent room capacity.' },
+    { tone: 'neutral', label: 'SKU:', value: 'SKU is already in use.' },
+  ]);
+});
+
+test('unwraps Error.cause and suppresses internal snake_case error codes', () => {
+  const apiErr = {
+    status: 422,
+    data: {
+      error: {
+        code: 'validation_failed',
+        message: 'One or more fields are invalid.',
+        details: [
+          { field: 'non_field_errors[0]', code: 'invalid', message: 'Room cannot be shrunk while stations occupy removed slots.' },
+        ],
+      },
+    },
+  };
+  const wrapped = new Error('update_room_failed', { cause: apiErr });
+
+  assert.equal(
+    getApiErrorMessage(wrapped),
+    'Room cannot be shrunk while stations occupy removed slots.',
+  );
+  assert.equal(isTechnicalErrorText('update_room_failed'), true);
+  assert.equal(
+    getApiErrorMessage(new Error('update_room_failed'), 'Please try again.'),
+    'Please try again.',
+  );
+});
+
+

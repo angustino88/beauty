@@ -121,11 +121,25 @@ export const notifyMappingUpdated = (
   });
 };
 
+const notifiedErrors = new WeakSet<object>();
+
+export const isEquipmentErrorNotified = (error: unknown): boolean => {
+  if (!error || typeof error !== 'object') return false;
+  if (notifiedErrors.has(error)) return true;
+  if (error instanceof Error && error.cause && typeof error.cause === 'object') {
+    return notifiedErrors.has(error.cause);
+  }
+  return false;
+};
+
 export const notifyEquipmentError = (
   action: string,
   entityName: string,
   error: unknown,
 ): void => {
+  if (error && typeof error === 'object') {
+    notifiedErrors.add(error);
+  }
   const entityNameLower = entityName.toLowerCase();
   const details = getApiErrorDetails(error);
   notify.error(`Unable to ${action} ${entityNameLower}`, {
