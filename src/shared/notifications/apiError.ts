@@ -32,53 +32,39 @@ const TECHNICAL_PATTERNS = [
 const GENERIC_ENVELOPE_MESSAGES =
   /^(?:one or more fields are invalid|the request is invalid|validation (?:failed|error)|invalid (?:input|request|data|fields))\.?$/i;
 
-const BLOCKER_ARRAY_PREFIXES = new Set([
-  'stations',
-  'benches',
-  'equipment',
-  'equipment_categories',
-  'bookings',
-  'bench_bookings',
-  'blockers',
-]);
-
 const NON_FIELD_NAMES = new Set(['non_field_errors', '__all__', 'detail', 'error']);
 
-const FIELD_LABELS: Record<string, string> = {
-  power_capacity_w: 'Power capacity (W)',
-  max_power: 'Power capacity (W)',
-  max_load_kg: 'Max load (kg)',
-  height_mm: 'Height (mm)',
-  width_mm: 'Width (mm)',
-  depth_mm: 'Depth (mm)',
-  length_mm: 'Length (mm)',
-  network_port_capacity: 'Network port capacity',
-  bench_capacity: 'Bench capacity',
-  sku: 'SKU',
-  serial_number: 'Serial number',
-  ip_address: 'IP address',
-  mac_address: 'MAC address',
-  starts_at: 'Start time',
-  ends_at: 'End time',
-  due_at: 'Due date',
-  setup_location_id: 'Station',
-  station_slot_id: 'Station slot',
-  room_id: 'Room',
-  slot_id: 'Room slot',
-  bench_id: 'Bench',
-  bench_group_id: 'Bench group',
-  owner_id: 'Owner',
-  primary_owner: 'Owner',
-  department_id: 'Department',
-  group_id: 'Group',
-  type_id: 'Type',
-  purchase_order_number: 'Purchase order number',
-  total_amount: 'Total amount',
-  remote_ip: 'Remote IP',
-  computing_id: 'Computing unit',
+const UNIT_SUFFIXES: Record<string, string> = {
+  w: 'W',
+  kw: 'kW',
+  mw: 'MW',
+  kg: 'kg',
+  g: 'g',
+  mm: 'mm',
+  cm: 'cm',
+  m: 'm',
+  v: 'V',
+  mv: 'mV',
+  a: 'A',
+  ma: 'mA',
+  hz: 'Hz',
+  khz: 'kHz',
+  mhz: 'MHz',
+  ghz: 'GHz',
+  ms: 'ms',
+  s: 's',
+  mb: 'MB',
+  gb: 'GB',
+  tb: 'TB',
+  pct: '%',
 };
 
 const ACRONYMS = new Set(['sku', 'ip', 'mac', 'id', 'ids', 'url', 'uuid', 'csv', 'api', 'qr', 'pnp']);
+
+export interface ApiErrorFormatOptions {
+  /** Optional caller-supplied field label overrides (e.g. derived from a form's field definitions). */
+  fieldLabels?: Record<string, string>;
+}
 
 const isRecord = (value: unknown): value is UnknownRecord =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -98,61 +84,84 @@ const toMessages = (value: unknown): string[] => {
 };
 
 /**
- * Normalizes backend flattened field paths. Django/DRF plain-string error lists
- * are flattened by the API exception handler as `power_capacity_w[0]` or
- * `non_field_errors[0]`; strip trailing scalar list indices while preserving
- * structured blocker arrays (`benches[0]`) and nested object paths (`items[2].quantity`).
+ * Strips trailing scalar list indices added by DRF/Django validation flattening
+ * (e.g. `power_capacity_w[0]` -> `power_capacity_w`), while preserving nested
+ * object paths (`items[2].quantity`) and counted resource groups (`benches[0]`
+ * when accompanied by `benches_total`).
  */
-export function normalizeApiFieldPath(rawField: string): string {
+export function normalizeApiFieldPath(
+  rawField: string,
+  countedGroups?: ReadonlySet<string>,
+): string {
   const trimmed = rawField.trim();
   const scalarIndexMatch = /^([a-z0-9_.-]+)\[\d+\]$/i.exec(trimmed);
   if (scalarIndexMatch) {
     const base = scalarIndexMatch[1];
-    if (!BLOCKER_ARRAY_PREFIXES.has(base.toLowerCase())) {
+    if (!countedGroups?.has(base.toLowerCase())) {
       return base;
     }
   }
   return trimmed;
 }
 
-export function formatApiFieldLabel(field: string): string {
+/**
+ * Converts an API field key (e.g. `power_capacity_w`, `room_id`, `items[1].quantity`)
+ * into a readable label using purely structural rules (or a caller-provided label map).
+ */
+export function formatApiFieldLabel(
+  field: string,
+  fieldLabels?: Record<string, string>,
+): string {
   const normalized = normalizeApiFieldPath(field);
-  const direct = FIELD_LABELS[normalized.toLowerCase()];
-  if (direct) return direct;
+  if (fieldLabels) {
+    const override = fieldLabels[normalized] ?? fieldLabels[normalized.toLowerCase()];
+    if (override) return override;
+  }
 
   // Handle workbook or nested array paths like `Rooms[3].power_capacity_w` or `items[2].quantity`
   const indexedNested = /^([^.[\]]+)\[(\d+)\]\.(.+)$/.exec(normalized);
   if (indexedNested) {
     const [, collection, idxStr, subField] = indexedNested;
     const isWorkbookSheet = /^[A-Z]/.test(collection);
-    const subLabel = formatApiFieldLabel(subField);
+    const subLabel = formatApiFieldLabel(subField, fieldLabels);
     if (isWorkbookSheet) {
       return `${collection} row ${idxStr} · ${subLabel}`;
     }
     const singular = collection.endsWith('s') ? collection.slice(0, -1) : collection;
-    return `${formatApiFieldLabel(singular)} ${Number(idxStr) + 1} · ${subLabel}`;
+    return `${formatApiFieldLabel(singular, fieldLabels)} ${Number(idxStr) + 1} · ${subLabel}`;
   }
 
-  const cleaned = normalized
-    .replace(/_id$/i, '')
-    .replace(/[._]+/g, ' ')
-    .trim();
+  const withoutIdSuffix = normalized.replace(/_ids?$/i, '');
+  const tokens = withoutIdSuffix.split(/[._]+/).filter(Boolean);
+  if (tokens.length === 0) return field;
 
-  if (!cleaned) return field;
+  let unitSuffix = '';
+  if (tokens.length > 1) {
+    const lastLower = tokens[tokens.length - 1].toLowerCase();
+    const unit = UNIT_SUFFIXES[lastLower];
+    if (unit) {
+      tokens.pop();
+      unitSuffix = ` (${unit})`;
+    }
+  }
 
-  const words = cleaned.split(/\s+/).map((word, idx) => {
+  const words = tokens.map((word, idx) => {
     const lower = word.toLowerCase();
     if (ACRONYMS.has(lower)) return lower.toUpperCase();
     if (idx === 0) return lower.charAt(0).toUpperCase() + lower.slice(1);
     return lower;
   });
 
-  return words.join(' ');
+  return `${words.join(' ')}${unitSuffix}`;
 }
 
-function formatFieldMessage(field: string, message: string): string {
+function formatFieldMessage(
+  field: string,
+  message: string,
+  fieldLabels?: Record<string, string>,
+): string {
   const trimmed = message.trim();
-  const label = formatApiFieldLabel(field);
+  const label = formatApiFieldLabel(field, fieldLabels);
   const labelLower = label.toLowerCase().replace(/\s*\([^)]*\)\s*$/, '').trim();
   const msgLower = trimmed.toLowerCase();
   if (labelLower && (msgLower.startsWith(labelLower) || msgLower.startsWith(`the ${labelLower}`))) {
@@ -240,6 +249,45 @@ function extractEnvelope(error: unknown): {
   return { status, envelope: error };
 }
 
+const METADATA_COUNT_FIELD = /^([a-z0-9_]+)_(?:total|count)$/i;
+const BARE_NUMERIC_TEXT = /^\d+$/;
+const SNAKE_CASE_CODE = /^[a-z][a-z0-9]*(?:_[a-z0-9]+)+$/;
+const MAX_TOAST_PREVIEW_ITEMS = 3;
+const MAX_TOAST_FIELD_DETAILS = 4;
+
+function isMetadataCountEntry(field: string, message: string): boolean {
+  return METADATA_COUNT_FIELD.test(field) || BARE_NUMERIC_TEXT.test(message.trim());
+}
+
+function humanizeSnakeToken(value: string): string {
+  const cleaned = value.trim().replace(/_+/g, ' ');
+  if (!cleaned) return value;
+  return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+}
+
+function collectCountedGroups(details: unknown[]): Set<string> {
+  const groups = new Set<string>();
+  for (const item of details) {
+    if (!isRecord(item)) continue;
+    const rawField = readDetailField(item);
+    if (!rawField) continue;
+    const match = METADATA_COUNT_FIELD.exec(rawField);
+    if (match) {
+      groups.add(match[1].toLowerCase());
+    }
+  }
+  return groups;
+}
+
+function isCountedOrAuxiliaryField(field: string, countedGroups: ReadonlySet<string>): boolean {
+  const base = field.replace(/\[\d+\]$/, '').split('.')[0].toLowerCase();
+  if (countedGroups.has(base)) return true;
+  for (const group of countedGroups) {
+    if (base.startsWith(`${group}_`)) return true;
+  }
+  return false;
+}
+
 /**
  * Normalizes any RTK Query error, API error envelope, legacy DRF payload, or JS Error
  * into a safe, user-facing `NormalizedApiError`. Never throws.
@@ -247,10 +295,11 @@ function extractEnvelope(error: unknown): {
 export function normalizeApiError(
   error: unknown,
   fallback: string = DEFAULT_FALLBACK,
+  options?: ApiErrorFormatOptions,
 ): NormalizedApiError {
   if (error instanceof Error) {
     if (error.cause != null && error.cause !== error && (isRecord(error.cause) || error.cause instanceof Error)) {
-      return normalizeApiError(error.cause, fallback);
+      return normalizeApiError(error.cause, fallback, options);
     }
     const safeMsg = sanitizeUserMessage(error.message, fallback);
     return {
@@ -286,6 +335,10 @@ export function normalizeApiError(
     };
   }
 
+  const countedGroups = Array.isArray(envelope.details)
+    ? collectCountedGroups(envelope.details)
+    : new Set<string>();
+
   const fields: ApiFieldError[] = [];
   const nonFieldErrors: string[] = [
     ...toMessages(envelope.non_field_errors),
@@ -302,7 +355,7 @@ export function normalizeApiError(
         continue;
       }
       const rawField = readDetailField(item);
-      const field = rawField ? normalizeApiFieldPath(rawField) : undefined;
+      const field = rawField ? normalizeApiFieldPath(rawField, countedGroups) : undefined;
       const msgs = readDetailMessages(item);
       if (field && !NON_FIELD_NAMES.has(field.toLowerCase()) && msgs.length > 0) {
         for (const msg of msgs) {
@@ -319,7 +372,7 @@ export function normalizeApiError(
     // Only treat array/string values on raw DRF payloads as field errors when not transport metadata.
     if (key === 'originalStatus' || key === 'data' || key === 'stack' || key === 'name') continue;
     if (typeof value === 'string' || Array.isArray(value)) {
-      const normalizedKey = normalizeApiFieldPath(key);
+      const normalizedKey = normalizeApiFieldPath(key, countedGroups);
       const msgs = toMessages(value);
       if (NON_FIELD_NAMES.has(normalizedKey.toLowerCase())) {
         nonFieldErrors.push(...msgs);
@@ -345,7 +398,7 @@ export function normalizeApiError(
   const descriptiveFields = fields.filter(
     (entry) =>
       !isMetadataCountEntry(entry.field, entry.message) &&
-      !isBlockerMetadataField(entry.field) &&
+      !isCountedOrAuxiliaryField(entry.field, countedGroups) &&
       !isTechnicalErrorText(entry.message),
   );
 
@@ -370,11 +423,13 @@ export function normalizeApiError(
       primaryCandidate = formatFieldMessage(
         descriptiveFields[0].field,
         descriptiveFields[0].message,
+        options?.fieldLabels,
       );
     } else if (descriptiveFields.length > 1) {
       const first = formatFieldMessage(
         descriptiveFields[0].field,
         descriptiveFields[0].message,
+        options?.fieldLabels,
       );
       const extra = descriptiveFields.length - 1;
       primaryCandidate = `${first} (+${extra} more ${extra === 1 ? 'issue' : 'issues'})`;
@@ -400,49 +455,14 @@ export function normalizeApiError(
   };
 }
 
-const METADATA_COUNT_FIELD = /(?:^|_)(?:total|count)$/i;
-const BARE_NUMERIC_TEXT = /^\d+$/;
-
-function isMetadataCountEntry(field: string, message: string): boolean {
-  return METADATA_COUNT_FIELD.test(field) || BARE_NUMERIC_TEXT.test(message.trim());
-}
-
-function isBlockerMetadataField(field: string): boolean {
-  const base = field.replace(/\[\d+\]$/, '').split('.')[0].toLowerCase();
-  return BLOCKER_ARRAY_PREFIXES.has(base);
-}
-
-const BLOCKER_GROUPS: ReadonlyArray<{
-  key: string;
-  singular: string;
-  plural: string;
-}> = [
-  { key: 'stations', singular: 'Blocking station', plural: 'Blocking stations' },
-  { key: 'benches', singular: 'Blocking bench', plural: 'Blocking benches' },
-  { key: 'equipment', singular: 'Blocking equipment', plural: 'Blocking equipment' },
-  { key: 'bookings', singular: 'Active booking', plural: 'Active bookings' },
-  { key: 'bench_bookings', singular: 'Active booking', plural: 'Active bookings' },
-];
-
-const EQUIPMENT_BLOCKER_LABELS: Record<string, string> = {
-  bench_assignment: 'Assigned to a bench',
-  loan: 'Checked out on loan',
-  license_assignment: 'Assigned license seats',
-  booking: 'Active booking',
-};
-
-const MAX_TOAST_PREVIEW_ITEMS = 3;
-const MAX_TOAST_FIELD_DETAILS = 4;
-
-function formatBlockerGroup(
-  labelSingular: string,
-  labelPlural: string,
+function formatCountedGroup(
+  groupKey: string,
   total: number,
   previews: string[],
+  fieldLabels?: Record<string, string>,
 ): ToastDetailItem {
   const count = Math.max(total, previews.length);
-  const baseLabel = count === 1 ? labelSingular : labelPlural;
-  const label = `${baseLabel} (${count}):`;
+  const baseLabel = formatApiFieldLabel(groupKey, fieldLabels);
 
   if (previews.length === 0) {
     return { tone: 'neutral', label: `${baseLabel}:`, value: String(count) };
@@ -451,86 +471,108 @@ function formatBlockerGroup(
   const shown = previews.slice(0, MAX_TOAST_PREVIEW_ITEMS);
   const remaining = count - shown.length;
   const value = remaining > 0 ? `${shown.join(', ')} (+${remaining} more)` : shown.join(', ');
-  return { tone: 'neutral', label, value };
+  return { tone: 'neutral', label: `${baseLabel} (${count}):`, value };
 }
 
 /**
- * Extracts structured, human-readable details for toast display:
- * - 409 Conflict blockers (blocking benches, stations, equipment, active bookings)
+ * Extracts structured, human-readable details for toast display using purely structural conventions:
+ * - Counted conflict groups (`<key>_total` + `<key>[n]`, or `<key>.<id>` on 409 responses)
+ * - Coded conflict reason arrays (`<key>[n]` of snake_case tokens on 409 responses)
  * - Multi-field validation issues (422 validation_failed with multiple field errors)
  */
-export function getApiErrorDetails(error: unknown): ToastDetailItem[] {
-  const normalized = normalizeApiError(error);
+export function getApiErrorDetails(
+  error: unknown,
+  options?: ApiErrorFormatOptions,
+): ToastDetailItem[] {
+  const normalized = normalizeApiError(error, DEFAULT_FALLBACK, options);
   if (normalized.fields.length === 0) return [];
 
   const totals = new Map<string, number>();
-  const lists = new Map<string, string[]>();
+  const countedLists = new Map<string, string[]>();
+  const conflictDotLists = new Map<string, string[]>();
+  const conflictCodeLists = new Map<string, string[]>();
 
+  // First pass: discover all counted resource groups (`<key>_total` / `<key>_count`).
+  for (const { field, message } of normalized.fields) {
+    const match = METADATA_COUNT_FIELD.exec(field);
+    if (!match) continue;
+    const parsed = Number.parseInt(message.trim(), 10);
+    if (Number.isFinite(parsed) && parsed > 0) {
+      totals.set(match[1].toLowerCase(), parsed);
+    }
+  }
+
+  const countedGroups = new Set(totals.keys());
+
+  // Second pass: collect previews for counted groups and conflict-specific dot/code lists.
   for (const { field, message } of normalized.fields) {
     const trimmed = message.trim();
-    if (!trimmed) continue;
+    if (!trimmed || METADATA_COUNT_FIELD.test(field)) continue;
 
-    const totalMatch = /^([a-z_]+)_total$/i.exec(field);
-    if (totalMatch) {
-      const parsed = Number.parseInt(trimmed, 10);
-      if (Number.isFinite(parsed) && parsed > 0) {
-        totals.set(totalMatch[1].toLowerCase(), parsed);
-      }
-      continue;
-    }
-
-    const arrayMatch = /^([a-z_]+)\[\d+\]$/i.exec(field);
-    if (arrayMatch && BLOCKER_ARRAY_PREFIXES.has(arrayMatch[1].toLowerCase())) {
+    const arrayMatch = /^([a-z0-9_]+)\[\d+\]$/i.exec(field);
+    if (arrayMatch) {
       const groupKey = arrayMatch[1].toLowerCase();
-      const existing = lists.get(groupKey) ?? [];
-      if (!existing.includes(trimmed)) {
-        existing.push(trimmed);
-        lists.set(groupKey, existing);
+      if (countedGroups.has(groupKey)) {
+        const existing = countedLists.get(groupKey) ?? [];
+        if (!existing.includes(trimmed)) {
+          existing.push(trimmed);
+          countedLists.set(groupKey, existing);
+        }
+        continue;
       }
-      continue;
     }
 
-    const bookingDotMatch = /^bench_bookings\.\d+$/i.exec(field);
-    if (bookingDotMatch) {
-      const existing = lists.get('bench_bookings') ?? [];
-      if (!existing.includes(trimmed)) {
-        existing.push(trimmed);
-        lists.set('bench_bookings', existing);
+    if (normalized.isConflict) {
+      const dotIdMatch = /^([a-z0-9_]+)\.\d+$/i.exec(field);
+      if (dotIdMatch) {
+        const groupKey = dotIdMatch[1].toLowerCase();
+        const existing = conflictDotLists.get(groupKey) ?? [];
+        if (!existing.includes(trimmed)) {
+          existing.push(trimmed);
+          conflictDotLists.set(groupKey, existing);
+        }
+        continue;
       }
-      continue;
-    }
 
-    if (field === 'blockers') {
-      const existing = lists.get('blockers') ?? [];
-      if (!existing.includes(trimmed)) {
-        existing.push(trimmed);
-        lists.set('blockers', existing);
+      if (!isCountedOrAuxiliaryField(field, countedGroups) && (SNAKE_CASE_CODE.test(trimmed) || field.toLowerCase() === 'blockers' || field.toLowerCase() === 'reasons')) {
+        const groupKey = field.toLowerCase();
+        const existing = conflictCodeLists.get(groupKey) ?? [];
+        const readable = SNAKE_CASE_CODE.test(trimmed) || /^[a-z]+$/.test(trimmed)
+          ? humanizeSnakeToken(trimmed)
+          : trimmed;
+        if (!existing.includes(readable)) {
+          existing.push(readable);
+          conflictCodeLists.set(groupKey, existing);
+        }
       }
     }
   }
 
-  const blockerDetails: ToastDetailItem[] = [];
+  const conflictDetails: ToastDetailItem[] = [];
 
-  for (const group of BLOCKER_GROUPS) {
-    const total = totals.get(group.key) ?? 0;
-    const previews = lists.get(group.key) ?? [];
-    if (total > 0 || previews.length > 0) {
-      blockerDetails.push(formatBlockerGroup(group.singular, group.plural, total, previews));
+  for (const [groupKey, total] of totals.entries()) {
+    const previews = countedLists.get(groupKey) ?? [];
+    conflictDetails.push(formatCountedGroup(groupKey, total, previews, options?.fieldLabels));
+  }
+
+  for (const [groupKey, items] of conflictDotLists.entries()) {
+    if (totals.has(groupKey)) continue;
+    conflictDetails.push(formatCountedGroup(groupKey, items.length, items, options?.fieldLabels));
+  }
+
+  if (conflictDetails.length > 0) {
+    return conflictDetails;
+  }
+
+  if (conflictCodeLists.size > 0) {
+    for (const [groupKey, items] of conflictCodeLists.entries()) {
+      conflictDetails.push({
+        tone: 'neutral',
+        label: `${formatApiFieldLabel(groupKey, options?.fieldLabels)}:`,
+        value: items.join(', '),
+      });
     }
-  }
-
-  const blockers = lists.get('blockers') ?? [];
-  if (blockers.length > 0 && blockerDetails.length === 0) {
-    const labels = blockers.map((code) => EQUIPMENT_BLOCKER_LABELS[code] ?? code.replace(/_/g, ' '));
-    blockerDetails.push({
-      tone: 'neutral',
-      label: blockers.length === 1 ? 'Active blocker:' : 'Active blockers:',
-      value: labels.join(', '),
-    });
-  }
-
-  if (blockerDetails.length > 0) {
-    return blockerDetails;
+    return conflictDetails;
   }
 
   // Surface field-level validation issues as structured rows when there are multiple errors
@@ -538,7 +580,7 @@ export function getApiErrorDetails(error: unknown): ToastDetailItem[] {
   const validationFields = normalized.fields.filter(
     (entry) =>
       !isMetadataCountEntry(entry.field, entry.message) &&
-      !isBlockerMetadataField(entry.field) &&
+      !isCountedOrAuxiliaryField(entry.field, countedGroups) &&
       !isTechnicalErrorText(entry.message),
   );
 
@@ -551,7 +593,7 @@ export function getApiErrorDetails(error: unknown): ToastDetailItem[] {
     .slice(0, MAX_TOAST_FIELD_DETAILS)
     .map((entry) => ({
       tone: 'neutral' as const,
-      label: `${formatApiFieldLabel(entry.field)}:`,
+      label: `${formatApiFieldLabel(entry.field, options?.fieldLabels)}:`,
       value: entry.message.trim(),
     }));
 
@@ -570,8 +612,12 @@ export function getApiErrorDetails(error: unknown): ToastDetailItem[] {
 /**
  * Convenience helper returning only a safe, user-facing error message.
  */
-export function getApiErrorMessage(error: unknown, fallback: string = DEFAULT_FALLBACK): string {
-  return normalizeApiError(error, fallback).message;
+export function getApiErrorMessage(
+  error: unknown,
+  fallback: string = DEFAULT_FALLBACK,
+  options?: ApiErrorFormatOptions,
+): string {
+  return normalizeApiError(error, fallback, options).message;
 }
 
 /**

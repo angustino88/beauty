@@ -12,12 +12,14 @@ export type {
 } from './types';
 
 export {
+  formatApiFieldLabel,
   getApiErrorDetails,
   getApiErrorMessage,
   isTechnicalErrorText,
   mapApiFieldErrors,
   normalizeApiError,
   sanitizeUserMessage,
+  type ApiErrorFormatOptions,
 } from './apiError';
 
 export {

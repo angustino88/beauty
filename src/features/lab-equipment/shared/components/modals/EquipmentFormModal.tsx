@@ -43,6 +43,8 @@ export type SelectFieldOption = SelectOptionLeaf | SelectOptionGroup;
 
 export interface FieldConfig {
     name:            string;
+    /** Optional backend API field key when the form field name differs (e.g. max_power -> power_capacity_w). */
+    apiField?:       string;
     label:           string;
     type:            FieldType;
     required?:       boolean;
@@ -320,19 +322,23 @@ export default function EquipmentFormModal({
                 });
             } else {
                 const parsed = parseFormApiError(err);
+                const apiToFormName = new Map<string, string>();
+                const fieldLabels: Record<string, string> = {};
+                for (const field of fields) {
+                    apiToFormName.set(field.name, field.name);
+                    fieldLabels[field.name] = field.label;
+                    if (field.apiField) {
+                        apiToFormName.set(field.apiField, field.name);
+                        fieldLabels[field.apiField] = field.label;
+                    }
+                }
                 if (parsed) {
-                    const fieldNameSet = new Set(fields.map((f) => f.name));
-                    const fieldAliases: Record<string, string> = {
-                        power_capacity_w: 'max_power',
-                        owner_id: 'primary_owner',
-                    };
                     const matched = Object.entries(parsed.fieldErrors)
-                        .map(([name, errors]): [string, string[]] => {
-                            if (fieldNameSet.has(name)) return [name, errors];
-                            const alias = fieldAliases[name];
-                            return alias && fieldNameSet.has(alias) ? [alias, errors] : [name, errors];
+                        .map(([name, errors]): [string, string[]] | null => {
+                            const formName = apiToFormName.get(name);
+                            return formName ? [formName, errors] : null;
                         })
-                        .filter(([name]) => fieldNameSet.has(name));
+                        .filter((entry): entry is [string, string[]] => entry !== null);
                     if (matched.length > 0) {
                         setDetailsOpen(true);
                         form.setFields(matched.map(([name, errors]) => ({ name, errors })));
@@ -343,9 +349,9 @@ export default function EquipmentFormModal({
                     }
                 }
                 if (!isEquipmentErrorNotified(err)) {
-                    const details = getApiErrorDetails(err);
+                    const details = getApiErrorDetails(err, { fieldLabels });
                     notify.error('Unable to save changes', {
-                        description: getApiErrorMessage(err, 'Please review your entries and try again.'),
+                        description: getApiErrorMessage(err, 'Please review your entries and try again.', { fieldLabels }),
                         details: details.length > 0 ? details : undefined,
                     });
                 }

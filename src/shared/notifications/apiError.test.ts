@@ -121,7 +121,7 @@ test('preserves domain conflict message and extracts structured blocker details 
     'Move or detach configured benches before deleting the station.',
   );
   assert.deepEqual(getApiErrorDetails(stationConflict), [
-    { tone: 'neutral', label: 'Blocking bench (1):', value: 'BENCH-01 — BENCH-01' },
+    { tone: 'neutral', label: 'Benches (1):', value: 'BENCH-01 — BENCH-01' },
   ]);
 
   const roomConflict = {
@@ -139,14 +139,15 @@ test('preserves domain conflict message and extracts structured blocker details 
           { field: 'equipment_total', code: 'invalid', message: '2' },
           { field: 'equipment[0]', code: 'invalid', message: 'COMP-01' },
           { field: 'equipment[1]', code: 'invalid', message: 'COMP-02' },
+          { field: 'equipment_categories[0]', code: 'invalid', message: 'computing' },
         ],
       },
     },
   };
 
   assert.deepEqual(getApiErrorDetails(roomConflict), [
-    { tone: 'neutral', label: 'Blocking stations (5):', value: 'STN-01, STN-02, STN-03 (+2 more)' },
-    { tone: 'neutral', label: 'Blocking equipment (2):', value: 'COMP-01, COMP-02' },
+    { tone: 'neutral', label: 'Stations (5):', value: 'STN-01, STN-02, STN-03 (+2 more)' },
+    { tone: 'neutral', label: 'Equipment (2):', value: 'COMP-01, COMP-02' },
   ]);
 });
 
@@ -166,7 +167,7 @@ test('never falls back to bare numeric count fields when envelope message is abs
   assert.match(getApiErrorMessage(err), /conflicts|updated by someone else/i);
 });
 
-test('formats equipment delete blockers into readable toast detail rows', () => {
+test('formats conflict code arrays and arbitrary future counted groups structurally without hardcoded lists', () => {
   const equipmentConflict = {
     status: 409,
     data: {
@@ -182,8 +183,50 @@ test('formats equipment delete blockers into readable toast detail rows', () => 
   };
 
   assert.deepEqual(getApiErrorDetails(equipmentConflict), [
-    { tone: 'neutral', label: 'Active blockers:', value: 'Assigned to a bench, Checked out on loan' },
+    { tone: 'neutral', label: 'Blockers:', value: 'Bench assignment, Loan' },
   ]);
+
+  const futureConflict = {
+    status: 409,
+    data: {
+      error: {
+        code: 'gateway_conflict',
+        message: 'Unlink attached sensors before deleting this gateway.',
+        details: [
+          { field: 'sensors_total', code: 'invalid', message: '4' },
+          { field: 'sensors[0]', code: 'invalid', message: 'SENS-01' },
+          { field: 'sensors[1]', code: 'invalid', message: 'SENS-02' },
+          { field: 'sensors[2]', code: 'invalid', message: 'SENS-03' },
+          { field: 'sensors[3]', code: 'invalid', message: 'SENS-04' },
+        ],
+      },
+    },
+  };
+
+  assert.deepEqual(getApiErrorDetails(futureConflict), [
+    { tone: 'neutral', label: 'Sensors (4):', value: 'SENS-01, SENS-02, SENS-03 (+1 more)' },
+  ]);
+});
+
+test('supports caller-provided fieldLabels from form configs while deriving labels generically by default', () => {
+  const err = {
+    status: 422,
+    data: {
+      error: {
+        code: 'validation_failed',
+        message: 'One or more fields are invalid.',
+        details: [
+          { field: 'cooling_capacity_kw[0]', code: 'invalid', message: 'Must be greater than 0.' },
+        ],
+      },
+    },
+  };
+
+  assert.equal(getApiErrorMessage(err), 'Cooling capacity (kW): Must be greater than 0.');
+  assert.equal(
+    getApiErrorMessage(err, 'Fallback', { fieldLabels: { cooling_capacity_kw: 'Max cooling' } }),
+    'Max cooling: Must be greater than 0.',
+  );
 });
 
 test('surfaces readable field error when validation_failed uses generic wrapper and flattened [0] field', () => {

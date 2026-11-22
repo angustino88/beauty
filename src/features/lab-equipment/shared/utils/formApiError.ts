@@ -38,43 +38,32 @@ const readPayload = (error: unknown): UnknownRecord | null => {
   return error;
 };
 
-const BLOCKER_ARRAY_PREFIXES = new Set([
-  'stations',
-  'benches',
-  'equipment',
-  'equipment_categories',
-  'bookings',
-  'bench_bookings',
-  'blockers',
-]);
-
 const NON_FIELD_NAMES = new Set(['non_field_errors', '__all__', 'detail', 'error']);
+const METADATA_COUNT_FIELD = /^([a-z0-9_]+)_(?:total|count)$/i;
+const GENERIC_VALIDATION_WRAPPER =
+  /^(?:one or more fields are invalid|the request is invalid|validation (?:failed|error)|invalid (?:input|request|data|fields)|some fields require attention)\.?$/i;
+const BARE_NUMERIC_TEXT = /^\d+$/;
 
-const normalizeDetailField = (rawField: string): string => {
+const readRawDetailField = (detail: UnknownRecord): string | undefined => {
+  const candidate = detail.field ?? detail.name ?? detail.path;
+  if (typeof candidate === 'string' && candidate.trim()) return candidate.trim();
+  if (Array.isArray(candidate) && candidate.every((part) => typeof part === 'string' || typeof part === 'number')) {
+    return candidate.join('.');
+  }
+  return undefined;
+};
+
+const normalizeDetailField = (rawField: string, countedGroups: ReadonlySet<string>): string => {
   const trimmed = rawField.trim();
   const scalarIndexMatch = /^([a-z0-9_.-]+)\[\d+\]$/i.exec(trimmed);
-  if (scalarIndexMatch && !BLOCKER_ARRAY_PREFIXES.has(scalarIndexMatch[1].toLowerCase())) {
+  if (scalarIndexMatch && !countedGroups.has(scalarIndexMatch[1].toLowerCase())) {
     return scalarIndexMatch[1];
   }
   return trimmed;
 };
 
-const readDetailField = (detail: UnknownRecord): string | undefined => {
-  const candidate = detail.field ?? detail.name ?? detail.path;
-  if (typeof candidate === 'string' && candidate.trim()) return normalizeDetailField(candidate);
-  if (Array.isArray(candidate) && candidate.every((part) => typeof part === 'string' || typeof part === 'number')) {
-    return normalizeDetailField(candidate.join('.'));
-  }
-  return undefined;
-};
-
 const readDetailMessages = (detail: UnknownRecord): string[] =>
   toMessages(detail.message ?? detail.error ?? detail.detail ?? detail.messages);
-
-const GENERIC_VALIDATION_WRAPPER =
-  /^(?:one or more fields are invalid|the request is invalid|validation (?:failed|error)|invalid (?:input|request|data|fields)|some fields require attention)\.?$/i;
-const METADATA_COUNT_FIELD = /(?:^|_)(?:total|count)$/i;
-const BARE_NUMERIC_TEXT = /^\d+$/;
 
 const isGenericWrapper = (value: unknown): boolean =>
   typeof value !== 'string' || !value.trim() || GENERIC_VALIDATION_WRAPPER.test(value.trim());
@@ -100,13 +89,22 @@ export const parseFormApiError = (error: unknown): ParsedFormApiError | null => 
     ...toMessages(payload.message),
   ];
 
+  const countedGroups = new Set<string>();
   if (Array.isArray(payload.details)) {
+    for (const detail of payload.details) {
+      if (!isRecord(detail)) continue;
+      const rawField = readRawDetailField(detail);
+      const countMatch = rawField ? METADATA_COUNT_FIELD.exec(rawField) : null;
+      if (countMatch) countedGroups.add(countMatch[1].toLowerCase());
+    }
+
     for (const detail of payload.details) {
       if (!isRecord(detail)) {
         nonFieldErrors.push(...toMessages(detail));
         continue;
       }
-      const field = readDetailField(detail);
+      const rawField = readRawDetailField(detail);
+      const field = rawField ? normalizeDetailField(rawField, countedGroups) : undefined;
       const messages = readDetailMessages(detail);
       if (field && !NON_FIELD_NAMES.has(field.toLowerCase()) && messages.length > 0) {
         fieldErrors[field] = [...(fieldErrors[field] ?? []), ...messages];
