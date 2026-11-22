@@ -3,7 +3,8 @@ import {
   FieldTimeOutlined, LineChartOutlined, RadarChartOutlined,
   TeamOutlined, UserOutlined,
 } from '@ant-design/icons';
-import { Alert, Avatar, Modal, Segmented, Skeleton, Typography } from 'antd';
+import { Avatar, Modal, Segmented, Skeleton, Typography } from 'antd';
+import { InlineAlert } from '@/shared/notifications';
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { getAvatarUrl } from '@/shared/utils/avatar';
 import type {
@@ -213,7 +214,7 @@ export function LeaderboardDetailModal({ open, type, userRow, labRow, filter, on
         />
       ) : (
         <>
-          {error && <Alert type="error" message={error} style={{ marginBottom: 12 }} />}
+          {error && <InlineAlert variant="error" title={error} style={{ marginBottom: 12 }} />}
 
           {isLoading ? (
             <Skeleton active paragraph={{ rows: type === 'persona' ? 7 : 6 }} />

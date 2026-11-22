@@ -2,6 +2,7 @@ import { useCallback } from "react";
 import { useMsal } from "@azure/msal-react";
 import { AuthError } from "@azure/msal-browser";
 import { useAppDispatch } from "@/app/store";
+import { getApiErrorMessage } from "@/shared/notifications";
 import { authActions } from "../authSlice";
 import { useAadLoginMutation, requestLoginCsrfToken } from "../api";
 import { setCsrfToken } from "../session/csrf";
@@ -52,8 +53,10 @@ export function useLogin() {
         }
         dispatch(authActions.setAccessToken(accessToken));
       } catch (error: unknown) {
-        const problem = (error as { data?: { error?: { message?: string } } })?.data?.error;
-        const message = problem?.message || "Backend authentication failed. Please try again.";
+        const message = getApiErrorMessage(
+          error,
+          "We could not complete sign-in. Please try again or contact your lab administrator.",
+        );
         dispatch(authActions.setError(message));
         throw error;
       } finally {
@@ -113,9 +116,11 @@ export function useLogin() {
         );
         return;
       }
-      const msg =
-        error instanceof Error ? error.message : JSON.stringify(error);
-      dispatch(authActions.setError(`Login failed: ${msg}`));
+      dispatch(
+        authActions.setError(
+          "Unable to start Microsoft sign-in. Check your connection and try again.",
+        ),
+      );
     }
   }, [dispatch, instance]);
 

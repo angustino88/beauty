@@ -2,7 +2,8 @@ import { useUrlSearch } from '@/shared/hooks/useUrlSearch';
 import { SpaceLocationRow } from '@/features/spaces/shared/components/SpaceLocation';
 import React, { useState, useMemo, useCallback, type Key } from 'react';
 import { WorkbookImportButton } from '@/features/data-import';
-import { Tag, Tooltip, message, Popover, Progress, Modal, Form, Select, Input, InputNumber, Button } from 'antd';
+import { Tag, Tooltip, Popover, Progress, Modal, Form, Select, Input, InputNumber, Button } from 'antd';
+import { getApiErrorMessage, notify } from '@/shared/notifications';
 import type { ColumnsType } from 'antd/es/table';
 import { CloudServerOutlined, DesktopOutlined, SwapOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
@@ -278,8 +279,9 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
         const deletedItem = listData?.data?.find((item) => item.id === id);
         notifyEquipmentDeleted(config.singular, deletedItem ?? { id });
       } catch (err) {
-        const errMsg = (err as { data?: { message?: string } })?.data?.message ?? 'Failed to delete';
-        message.error(errMsg);
+        notify.error(`Unable to delete ${config.singular.toLowerCase()}`, {
+          description: getApiErrorMessage(err, 'Please try again.'),
+        });
       }
     },
     [config.key, config.singular, deleteEquipment, listData],
@@ -325,11 +327,16 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
           try {
             const parsed: unknown = JSON.parse(payload.dimensions);
             if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed) || !['length_mm', 'width_mm', 'height_mm'].every((key) => typeof (parsed as Record<string, unknown>)[key] === 'number')) {
-              throw new Error('Dimensions must contain numeric length_mm, width_mm and height_mm');
+              throw new Error('Dimensions must contain numeric length_mm, width_mm, and height_mm values.');
             }
             payload.dimensions = parsed;
           } catch (error) {
-            message.error(error instanceof SyntaxError ? 'Enter valid JSON dimensions' : (error as Error).message);
+            notify.warning('Invalid dimensions format', {
+              description:
+                error instanceof SyntaxError
+                  ? 'Enter valid JSON with numeric length_mm, width_mm, and height_mm fields.'
+                  : (error as Error).message,
+            });
             return;
           }
         }
@@ -830,8 +837,12 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
             await clearPlacement({ equipmentId: placementItem.id }).unwrap();
             await refetchList();
             setPlacementItem(null);
-            message.success('Placement cleared');
-          } catch { message.error('Unable to clear placement'); }
+            notify.success('Placement cleared', { code: placementItem.sku || undefined });
+          } catch (error) {
+            notify.error('Unable to clear placement', {
+              description: getApiErrorMessage(error, 'Please try again.'),
+            });
+          }
         }}>Clear placement</Button><CancelBtn /><OkBtn /></>}>
         <Form form={placementForm} layout="vertical" onFinish={async (values) => {
           if (!placementItem) return;
@@ -845,9 +856,11 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
             await updatePlacement({ equipmentId: placementItem.id, equipmentPlacementWrite }).unwrap();
             refetchList();
             setPlacementItem(null);
-            message.success('Placement updated');
+            notify.success('Placement updated', { code: placementItem.sku || undefined });
           } catch (error) {
-            message.error((error as { data?: { message?: string } })?.data?.message ?? 'Unable to update placement');
+            notify.error('Unable to update placement', {
+              description: getApiErrorMessage(error, 'Please try again.'),
+            });
           }
         }}>
           <Form.Item name="target" label="Location type" rules={[{ required: true }]}>

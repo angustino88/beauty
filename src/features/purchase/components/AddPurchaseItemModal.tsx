@@ -9,9 +9,9 @@ import {
   Select,
   Segmented,
   Typography,
-  message,
 } from 'antd';
 import { usePagedOptions } from '@/shared/hooks/usePagedOptions';
+import { getApiErrorMessage, notify } from '@/shared/notifications';
 import type { ICreatePurchaseItemPayload, ResourceKind } from '../types';
 import styles from '@/features/finance/components/FinanceWorkspace.module.css';
 import {
@@ -184,27 +184,25 @@ export const AddPurchaseItemModal: React.FC<AddPurchaseItemModalProps> = ({
               acquisition_price: Number(values.unit_price).toFixed(2),
             },
           }).unwrap();
-          void message.success(
-            `Added item and linked ${values.resource_kind} #${values.resource_id} successfully`,
-          );
+          notify.success('Line item added and resource linked', {
+            description: `Linked ${values.resource_kind} #${values.resource_id} to this purchase item.`,
+          });
         } catch {
-          void message.warning(
-            'Item created, but resource allocation encountered an issue. You can re-link in details.',
-          );
+          notify.warning('Line item added, but resource was not linked', {
+            description: 'You can link the resource from the purchase order details drawer.',
+          });
         }
       } else {
-        void message.success('Line item added successfully');
+        notify.success('Line item added');
       }
 
       form.resetFields();
       onClose();
       onSuccess?.();
     } catch (err) {
-      const errorDetail =
-        err && typeof err === 'object' && 'data' in err
-          ? JSON.stringify((err as { data: unknown }).data)
-          : 'Failed to add line item';
-      void message.error(errorDetail);
+      notify.error('Unable to add line item', {
+        description: getApiErrorMessage(err, 'Please review the item details and try again.'),
+      });
     } finally {
       setSubmitting(false);
     }

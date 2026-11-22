@@ -1,18 +1,14 @@
 import { useState } from 'react';
-import { Button, Select, Tag, message } from 'antd';
+import { Button, Select, Tag } from 'antd';
 import { equipmentPagedConfig, usePagedOptions } from '@/shared/hooks/usePagedOptions';
 import { type LegacyDeviceSuggestionRead } from '@/shared/api/generated/api';
+import { getApiErrorMessage, notify } from '@/shared/notifications';
 import {
   useCreateExpectedDeviceMutation,
   useGetLegacyDeviceSuggestionsQuery,
   useRegisterEquipmentHardwareIdMutation,
 } from './devicesApi';
 import styles from './Devices.module.css';
-
-function problemMessage(error: unknown, fallback: string): string {
-  const body = (error as { data?: { error?: { message?: string } } } | undefined)?.data;
-  return body?.error?.message || fallback;
-}
 
 function SuggestionRow({ computingId, suggestion }: { computingId: number; suggestion: LegacyDeviceSuggestionRead }) {
   const [equipmentId, setEquipmentId] = useState<number>();
@@ -35,9 +31,11 @@ function SuggestionRow({ computingId, suggestion }: { computingId: number; sugge
         computing_id: suggestion.is_port_bound ? computingId : null,
       }).unwrap();
       await expectOn(equipmentId);
-      message.success('Registered and expected on this computer');
+      notify.success('Device registered and expected on this computer');
     } catch (error) {
-      message.error(problemMessage(error, 'Could not register this device'));
+      notify.error('Unable to register device', {
+        description: getApiErrorMessage(error, 'Please try again.'),
+      });
     }
   };
 
@@ -45,9 +43,11 @@ function SuggestionRow({ computingId, suggestion }: { computingId: number; sugge
     if (!suggestion.equipment) return;
     try {
       await expectOn(suggestion.equipment.id);
-      message.success('Expected on this computer');
+      notify.success('Device marked as expected on this computer');
     } catch (error) {
-      message.error(problemMessage(error, 'Could not expect this device'));
+      notify.error('Unable to mark device as expected', {
+        description: getApiErrorMessage(error, 'Please try again.'),
+      });
     }
   };
 

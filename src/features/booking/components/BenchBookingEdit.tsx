@@ -1,7 +1,8 @@
-import { Form, message, Modal } from 'antd';
+import { Form, Modal } from 'antd';
 import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
-import { processBookingBody } from '@/shared/utils/booking';
+import { extractBookingErrorMessage, processBookingBody } from '@/shared/utils/booking';
+import { confirmAction, notify } from '@/shared/notifications';
 import type { IBenchBookingFormValues } from '../types';
 import type { BenchBookingUpdateRequest } from '../mapper';
 import { BookingForm } from './BookingForm';
@@ -20,36 +21,12 @@ export interface BenchBookingEditProps {
   refetchBooking?: () => void;
 }
 
-function getBookingErrorMessage(error: unknown, fallback: string): string {
-  if (!error || typeof error !== 'object') return fallback;
-
-  const data = 'data' in error ? error.data : undefined;
-  if (!data || typeof data !== 'object') return fallback;
-
-  const payload = data as Record<string, unknown>;
-  for (const key of ['message', 'detail', 'title']) {
-    if (typeof payload[key] === 'string' && payload[key].trim()) {
-      return payload[key] as string;
-    }
-  }
-
-  const nestedError = payload.error;
-  if (typeof nestedError === 'string' && nestedError.trim()) return nestedError;
-  if (nestedError && typeof nestedError === 'object') {
-    const nestedMessage = (nestedError as Record<string, unknown>).message;
-    if (typeof nestedMessage === 'string' && nestedMessage.trim()) return nestedMessage;
-  }
-
-  return fallback;
-}
-
 export const BenchBookingEdit: React.FC<BenchBookingEditProps> = ({
   visible,
   eventId,
   refetchBooking,
   onClose,
 }) => {
-  const [messageApi, contextHolder] = message.useMessage();
   const [form] = Form.useForm<IBenchBookingFormValues>();
   const [loading, setLoading] = useState(false);
 
@@ -79,9 +56,11 @@ export const BenchBookingEdit: React.FC<BenchBookingEditProps> = ({
         });
       })
       .catch((error: unknown) => {
-        void messageApi.error(getBookingErrorMessage(error, 'Failed to load booking'));
+        notify.error('Unable to load booking', {
+          description: extractBookingErrorMessage(error, 'Please close and reopen the dialog to try again.'),
+        });
       });
-  }, [eventId, fetchBooking, form, messageApi]);
+  }, [eventId, fetchBooking, form]);
 
   const handleOk = async () => {
     try {
@@ -106,11 +85,13 @@ export const BenchBookingEdit: React.FC<BenchBookingEditProps> = ({
             id: eventId!,
             reason: values.reason || 'Cancelled by user',
           }).unwrap();
-          void message.success('Booking cancelled successfully');
+          notify.success('Booking cancelled');
           refetchBooking?.();
           onClose?.();
         } catch (error: unknown) {
-          void messageApi.error(getBookingErrorMessage(error, 'Failed to cancel booking'));
+          notify.error('Unable to cancel booking', {
+            description: extractBookingErrorMessage(error, 'Please try again.'),
+          });
         } finally {
           setLoading(false);
         }
@@ -120,11 +101,13 @@ export const BenchBookingEdit: React.FC<BenchBookingEditProps> = ({
       if (valuesWithStatus.status === 'completed') {
         try {
           await completeBooking(eventId!).unwrap();
-          void message.success('Booking completed successfully');
+          notify.success('Booking marked as completed');
           refetchBooking?.();
           onClose?.();
         } catch (error: unknown) {
-          void messageApi.error(getBookingErrorMessage(error, 'Failed to complete booking'));
+          notify.error('Unable to complete booking', {
+            description: extractBookingErrorMessage(error, 'Please try again.'),
+          });
         } finally {
           setLoading(false);
         }
@@ -134,6 +117,7 @@ export const BenchBookingEdit: React.FC<BenchBookingEditProps> = ({
       const startsAt = dayjs(values.starts_at as string);
       const endsAt = dayjs(values.ends_at as string);
       const durationInHours = endsAt.diff(startsAt, 'hours', true);
+      const requiresApproval = durationInHours > 4 && valuesWithStatus.status !== 'cancel';
 
       const doUpdate = async () => {
         try {
@@ -143,48 +127,31 @@ export const BenchBookingEdit: React.FC<BenchBookingEditProps> = ({
             body: body as BenchBookingUpdateRequest,
           }).unwrap();
 
-          if (!response?.booking_code) {
-            void message.success('Booking updated successfully');
-          } else {
-            void message.success({
-              content: (
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap' }}>
-                  <code
-                    style={{
-                      padding: '2px 7px',
-                      border: '1px solid var(--lm-success-solid)',
-                      borderRadius: 4,
-                      background: 'var(--lm-surface-muted)',
-                      color: 'var(--lm-success-fg)',
-                      fontFamily: 'ui-monospace, SFMono-Regular, Consolas, monospace',
-                      fontSize: 12,
-                      fontWeight: 700,
-                    }}
-                  >
-                    {response.booking_code}
-                  </code>
-                  <strong style={{ fontSize: 13 }}>updated</strong>
-                </span>
-              ),
-              duration: 4,
-            });
-          }
+          const title = requiresApproval
+            ? 'Booking update submitted for approval'
+            : 'Booking updated';
+          notify.success(title, {
+            code: response?.booking_code || undefined,
+          });
           refetchBooking?.();
           onClose?.();
         } catch (error: unknown) {
-          void messageApi.error(getBookingErrorMessage(error, 'Failed to edit booking'));
+          notify.error('Unable to update booking', {
+            description: extractBookingErrorMessage(error, 'Please review your changes and try again.'),
+          });
         } finally {
           setLoading(false);
         }
       };
 
-      if (durationInHours > 4 && valuesWithStatus.status !== 'cancel') {
-        Modal.confirm({
-          title: 'Approval Required',
-          content: `This booking spans ${durationInHours.toFixed(1)} hours, exceeding the 4-hour limit. Do you want to submit this request for coordinator approval?`,
-          okText: 'Submit',
+      if (requiresApproval) {
+        confirmAction({
+          title: 'Coordinator approval required',
+          description: `This booking spans ${durationInHours.toFixed(1)} hours, which exceeds the 4-hour standard limit. Submit the updated request for coordinator approval?`,
+          confirmText: 'Submit for approval',
           cancelText: 'Cancel',
-          onOk: async () => {
+          variant: 'warning',
+          onConfirm: async () => {
             await doUpdate();
           },
           onCancel: () => {
@@ -215,7 +182,6 @@ export const BenchBookingEdit: React.FC<BenchBookingEditProps> = ({
       modalRender={(node) => <div onClick={(e) => e.stopPropagation()}>{node}</div>}
       style={{ top: '10%' }}
     >
-      {contextHolder}
       <BookingForm form={form} formProps={{ onFinish: handleOnFinish }} />
     </Modal>
   );

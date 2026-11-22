@@ -6,8 +6,8 @@ import {
   InputNumber,
   Select,
   Button,
-  message,
 } from 'antd';
+import { getApiErrorMessage, notify } from '@/shared/notifications';
 import type { IPurchaseItem, IUpdatePurchaseItemPayload } from '../types';
 import { getItemEtag } from '../mapper';
 import {
@@ -94,18 +94,14 @@ export const EditPurchaseItemModal: React.FC<EditPurchaseItemModalProps> = ({
         ifMatch,
       }).unwrap();
 
-      void message.success('Line item updated successfully');
+      notify.success('Line item updated');
       form.resetFields();
       onClose();
       onSuccess?.();
     } catch (err: unknown) {
-      const errorData = (err as { data?: { error?: { message?: string } } })?.data;
-      const errorMsg =
-        errorData?.error?.message ||
-        (typeof errorData === 'string'
-          ? errorData
-          : 'Failed to update line item');
-      void message.error(errorMsg);
+      notify.error('Unable to update line item', {
+        description: getApiErrorMessage(err, 'Please review your changes and try again.'),
+      });
     }
   };
 

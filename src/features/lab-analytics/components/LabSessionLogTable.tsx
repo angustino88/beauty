@@ -1,5 +1,6 @@
 import dayjs, { type Dayjs } from "dayjs";
-import { Button, DatePicker, Input, message, Select, Table } from "antd";
+import { Button, DatePicker, Input, Select, Table } from "antd";
+import { getApiErrorMessage, notify } from "@/shared/notifications";
 import { ExportOutlined, ReloadOutlined } from "@ant-design/icons";
 import type { TableProps } from "antd/es/table";
 import { useMemo, useState } from "react";
@@ -84,9 +85,19 @@ export function LabSessionLogTable() {
         if (rows.length >= result.total_count || result.results.length < EXPORT_PAGE_SIZE) break;
       }
       await exportSessionLogExcel(rows, `Lab sessions ${filters.start_date} to ${filters.end_date}`);
-      if (rows.length >= EXPORT_MAX_ROWS) message.info(`Exported the first ${EXPORT_MAX_ROWS} sessions. Narrow the range for the rest.`);
-    } catch {
-      message.error("Export failed. Try again or narrow the date range.");
+      if (rows.length >= EXPORT_MAX_ROWS) {
+        notify.info(`Exported the first ${EXPORT_MAX_ROWS.toLocaleString()} sessions`, {
+          description: "Narrow the date range to export additional records.",
+        });
+      } else {
+        notify.success("Session log exported", {
+          description: `Exported ${rows.length} ${rows.length === 1 ? "session" : "sessions"} to Excel.`,
+        });
+      }
+    } catch (error) {
+      notify.error("Unable to export session log", {
+        description: getApiErrorMessage(error, "Try again or narrow the date range."),
+      });
     } finally {
       setIsExporting(false);
     }

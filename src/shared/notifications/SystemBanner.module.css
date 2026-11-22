@@ -1,0 +1,154 @@
+.banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--lm-border);
+  background: var(--lm-surface-subtle);
+  color: var(--lm-text);
+  font-size: 13.5px;
+  line-height: 1.45;
+  animation: lmBannerEnter 180ms ease-out both;
+}
+
+.fullBleed {
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+}
+
+.variant_success {
+  background: var(--lm-success-bg);
+  border-color: var(--lm-success-border);
+}
+
+.variant_info {
+  background: var(--lm-info-bg);
+  border-color: var(--lm-info-border);
+}
+
+.variant_warning {
+  background: var(--lm-warning-bg);
+  border-color: var(--lm-warning-border);
+}
+
+.variant_error {
+  background: var(--lm-danger-bg);
+  border-color: var(--lm-danger-border);
+}
+
+.lead {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+
+.icon {
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
+  margin-top: 2px;
+  stroke-width: 2;
+}
+
+.variant_success .icon {
+  color: var(--lm-success-fg);
+}
+
+.variant_info .icon {
+  color: var(--lm-info-fg);
+}
+
+.variant_warning .icon {
+  color: var(--lm-warning-fg);
+}
+
+.variant_error .icon {
+  color: var(--lm-danger-fg);
+}
+
+.textGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.title {
+  font-weight: 600;
+  color: var(--lm-text);
+  word-break: break-word;
+}
+
+.description {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--lm-text-secondary);
+  word-break: break-word;
+}
+
+.controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.closeBtn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--lm-text-secondary);
+  cursor: pointer;
+  transition: background-color 140ms ease, color 140ms ease;
+}
+
+.closeBtn:hover {
+  background: var(--lm-notif-close-hover);
+  color: var(--lm-text);
+}
+
+.closeBtn:focus-visible {
+  outline: none;
+  box-shadow: var(--lm-focus-ring);
+}
+
+.closeIcon {
+  width: 14px;
+  height: 14px;
+}
+
+@keyframes lmBannerEnter {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 640px) {
+  .banner {
+    padding: 10px 12px;
+    align-items: flex-start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .banner {
+    animation: none;
+  }
+}

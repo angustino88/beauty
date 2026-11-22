@@ -1,4 +1,5 @@
-import { Alert, Button, Modal, Spin, Tooltip } from 'antd';
+import { Button, Modal, Spin, Tooltip } from 'antd';
+import { InlineAlert } from '@/shared/notifications';
 import styles from './ChartCard.module.css';
 import { DownloadOutlined, ExpandOutlined } from '@ant-design/icons';
 import type { ReactNode } from 'react';
@@ -37,7 +38,7 @@ export function ChartCard({
   onClose,
 }: ChartCardProps) {
   const errorBox = (
-    <Alert type="error" showIcon message="Unable to load chart data" action={onRetry && <Button size="small" onClick={onRetry}>Retry</Button>} />
+    <InlineAlert variant="error" title="Unable to load chart data" onRetry={onRetry} />
   );
   return (
     <>

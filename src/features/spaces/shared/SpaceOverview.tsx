@@ -1,4 +1,4 @@
-import { Alert } from 'antd';
+import { InlineAlert } from '@/shared/notifications';
 import { Link } from 'react-router-dom';
 import { baseApi } from '@/shared/lib/api';
 import EquipmentInventoryOverview from '@/features/lab-equipment/shared/components/cards/EquipmentInventoryOverview';
@@ -78,21 +78,10 @@ export default function SpaceOverview({ kind }: { kind: SpaceKind }) {
   return (
     <>
       {isError && (
-        <Alert
-          type="warning"
-          showIcon
-          message="Lifecycle totals are unavailable"
-          description={
-            <a
-              href="#retry-status"
-              onClick={(event) => {
-                event.preventDefault();
-                void refetch();
-              }}
-            >
-              Try again
-            </a>
-          }
+        <InlineAlert
+          variant="warning"
+          title="Lifecycle totals are temporarily unavailable"
+          onRetry={() => void refetch()}
         />
       )}
       <EquipmentInventoryOverview

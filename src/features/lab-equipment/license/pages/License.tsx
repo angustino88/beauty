@@ -1,6 +1,7 @@
 import { useEquipmentSearchOptions } from '../hooks/useEquipmentSearchOptions';
 import { useMemo, useState } from 'react';
-import { Alert, Badge, Tabs } from 'antd';
+import { Badge, Tabs } from 'antd';
+import { InlineAlert } from '@/shared/notifications';
 import { useSearchParams } from 'react-router-dom';
 import { FoundLicensesPanel, LicenseChecksPanel, useGetLicenseObservationsQuery } from '@/features/lab-equipment/license-checks';
 import { skipToken } from '@reduxjs/toolkit/query';
@@ -249,7 +250,13 @@ function LicenseInventory() {
         filters={table.filters}
         onFiltersChange={table.setFilters}
         customSummary={<>
-          {table.statusSummaryError && <Alert type="warning" showIcon message="License status totals are unavailable" action={<a href="#retry-license-status" onClick={(event) => { event.preventDefault(); void table.refetchStatusSummary(); }}>Try again</a>} />}
+          {table.statusSummaryError && (
+            <InlineAlert
+              variant="warning"
+              title="License status totals are temporarily unavailable"
+              onRetry={() => void table.refetchStatusSummary()}
+            />
+          )}
           <EquipmentInventoryOverview
             total={table.statusSummary?.total_count}
             statuses={table.statusSummary?.statuses.map(({ status, resource_count }) => ({ status, count: resource_count }))}

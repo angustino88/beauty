@@ -88,6 +88,13 @@
   --lm-focus-ring: 0 0 0 3px rgba(109, 63, 214, 0.28);
   --lm-overlay: rgba(18, 15, 28, 0.45);
 
+  /* Notification surface and elevation tokens */
+  --lm-notif-surface: #ffffff;
+  --lm-notif-border: #dfdce8;
+  --lm-notif-shadow: 0 10px 28px -6px rgba(26, 23, 35, 0.12), 0 2px 6px rgba(26, 23, 35, 0.05);
+  --lm-notif-close-hover: #efedf4;
+  --lm-notif-progress-track: rgba(26, 23, 35, 0.06);
+
   /* Outline of the mango mark: ink in light, a quiet warm brown in dark so the
      fruit keeps its shape without a bright rim. */
   --lm-logo-outline: #31352e;
@@ -200,6 +207,13 @@ html[data-theme='dark'] {
   --lm-shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.6);
   --lm-focus-ring: 0 0 0 3px rgba(116, 88, 224, 0.45);
   --lm-overlay: rgba(0, 0, 0, 0.6);
+
+  /* Notification surface and elevation tokens */
+  --lm-notif-surface: #23242b;
+  --lm-notif-border: #363842;
+  --lm-notif-shadow: 0 12px 32px -6px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.35);
+  --lm-notif-close-hover: #2f313a;
+  --lm-notif-progress-track: rgba(255, 255, 255, 0.08);
 
   --lm-logo-outline: #4a3a22;
 

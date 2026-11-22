@@ -1,5 +1,6 @@
 import { LastAuditCell } from '../../columns/sharedColumns';
-import { Alert, Button, Collapse, ConfigProvider, Descriptions, Image, Spin, Tabs, Tag } from 'antd';
+import { Collapse, ConfigProvider, Descriptions, Image, Spin, Tabs, Tag } from 'antd';
+import { InlineAlert } from '@/shared/notifications';
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Button as UiButton } from '@/components/ui/button';
 import { Pencil, Settings2 } from 'lucide-react';
@@ -771,16 +772,12 @@ export default function EquipmentDetailsModal({
               </div>
             )}
             {detailQuery.isError && (
-              <Alert
-                type="warning"
-                showIcon
+              <InlineAlert
+                variant="warning"
                 style={{ marginBottom: 12 }}
-                message="Full details could not be loaded. Showing table record."
-                action={
-                  <Button size="small" onClick={() => detailQuery.refetch()}>
-                    Retry
-                  </Button>
-                }
+                title="Full equipment details could not be loaded"
+                description="Showing the summary from the table record."
+                onRetry={() => void detailQuery.refetch()}
               />
             )}
             <EquipmentCompactSummary
@@ -799,14 +796,21 @@ export default function EquipmentDetailsModal({
         ) : (
           <>
             {isEquipment && detailQuery.isFetching && <div className={presentation.feedback}><Spin size="small" /> Loading full equipment details</div>}
-            {isEquipment && detailQuery.isError && <Alert type="warning" showIcon title="Full details could not be loaded. Showing the table record." action={<Button size="small" onClick={() => detailQuery.refetch()}>Retry</Button>} />}
+            {isEquipment && detailQuery.isError && (
+              <InlineAlert
+                variant="warning"
+                title="Full equipment details could not be loaded"
+                description="Showing the summary from the table record."
+                onRetry={() => void detailQuery.refetch()}
+              />
+            )}
             {isEquipment && <section className={styles.detailsSection}>
                     <div className={styles.sectionHeading}>
                 <div className={presentation.sectionTitle}><AppstoreOutlined /><h3>Equipment relationships</h3></div>
                 <span>{connectedMappingRows.length} {connectedMappingRows.length === 1 ? 'assignment' : 'assignments'}</span>
               </div>
               {equipmentMappingQuery.isFetching ? <div className={presentation.feedback}><Spin size="small" /> Loading mapping</div> : equipmentMappingQuery.isError ?
-                <Alert type="warning" title="Equipment mapping could not be loaded" action={<Button size="small" onClick={() => equipmentMappingQuery.refetch()}>Retry</Button>} /> : connectedMappingRows.length === 0 ?
+                <InlineAlert variant="warning" title="Equipment mapping could not be loaded" onRetry={() => void equipmentMappingQuery.refetch()} /> : connectedMappingRows.length === 0 ?
                 <div className={presentation.emptyMapping}>No bench assignment for this equipment.</div> : (
                   <div className={presentation.connectedGraph} role="region" aria-label="Connected equipment relationship graph">
                     <p className={presentation.graphHint}>Room → Station / Bench → Equipment → Licenses. The selected equipment is highlighted.</p>

@@ -1,12 +1,26 @@
-import { WifiOutlined } from '@ant-design/icons';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { WifiOff } from 'lucide-react';
+import { SystemBanner, notify } from '@/shared/notifications';
 
 export function OfflineNotification() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const wasOfflineRef = useRef(!navigator.onLine);
 
   useEffect(() => {
-    const goOnline = () => setIsOnline(true);
-    const goOffline = () => setIsOnline(false);
+    const goOnline = () => {
+      setIsOnline(true);
+      if (wasOfflineRef.current) {
+        wasOfflineRef.current = false;
+        notify.success('Connection restored', {
+          key: 'network-status',
+          description: 'You are back online.',
+        });
+      }
+    };
+    const goOffline = () => {
+      wasOfflineRef.current = true;
+      setIsOnline(false);
+    };
     window.addEventListener('online', goOnline);
     window.addEventListener('offline', goOffline);
     return () => {
@@ -19,26 +33,21 @@ export function OfflineNotification() {
 
   return (
     <div
-      role="alert"
       style={{
         position: 'fixed',
         top: 0,
         left: 0,
         right: 0,
-        zIndex: 9999,
-        backgroundColor: 'var(--lm-danger-solid)',
-        color: '#fff',
-        textAlign: 'center',
-        padding: '6px 16px',
-        fontSize: 14,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 8,
+        zIndex: 2200,
       }}
     >
-      <WifiOutlined />
-      No internet connection — some features may be unavailable.
+      <SystemBanner
+        variant="error"
+        fullBleed
+        icon={<WifiOff style={{ width: 16, height: 16 }} />}
+        title="You are offline"
+        description="Check your network connection. Changes cannot be saved until connectivity is restored."
+      />
     </div>
   );
 }

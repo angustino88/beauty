@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/set-state-in-effect */
-import { message } from "antd";
+import { getApiErrorMessage, notify } from "@/shared/notifications";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { skipToken } from "@reduxjs/toolkit/query";
@@ -180,7 +180,9 @@ export function useDashboard() {
       if (!currentRoom) return;
       const targetSlot = nearestAvailableSlot(position, slotAnchors, id);
       if (!targetSlot) {
-        void message.error("No available slot to place this rack");
+        notify.warning("No available slot", {
+          description: "Free a slot in this room before placing the station.",
+        });
         return;
       }
 
@@ -195,9 +197,13 @@ export function useDashboard() {
         .catch((err: unknown) => {
           const status = (err as { status?: number }).status;
           if (status === 409) {
-            void message.error("Selected slot is occupied");
+            notify.warning("Slot already occupied", {
+              description: "Choose an empty slot and try again.",
+            });
           } else {
-            void message.error("Failed to place rack");
+            notify.error("Unable to place station", {
+              description: getApiErrorMessage(err, "Please try again."),
+            });
           }
           void refetchLayout();
         });
@@ -246,8 +252,10 @@ export function useDashboard() {
         .then(() => {
           void refetchLayout();
         })
-        .catch(() => {
-          void message.error("Failed to unplace rack");
+        .catch((err: unknown) => {
+          notify.error("Unable to remove station from layout", {
+            description: getApiErrorMessage(err, "Please try again."),
+          });
           void refetchLayout();
         });
     },

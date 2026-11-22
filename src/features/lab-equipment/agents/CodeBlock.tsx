@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Button, Tooltip, message } from 'antd';
+import { Button, Tooltip } from 'antd';
 import { CheckOutlined, CopyOutlined, EyeInvisibleOutlined, EyeOutlined } from '@ant-design/icons';
+import { notify } from '@/shared/notifications';
 import { sectionCommands, type ScriptSection } from './agentModel';
 import styles from './ComputingAgent.module.css';
 
@@ -23,7 +24,9 @@ export function CodeBlock({ section, secret }: { section: ScriptSection; secret?
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1500);
     } catch {
-      message.error('Copy failed; select the text and copy it manually');
+      notify.warning('Unable to copy automatically', {
+        description: 'Select the command text and copy it manually.',
+      });
     }
   };
 

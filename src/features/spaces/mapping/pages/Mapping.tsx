@@ -1,5 +1,6 @@
 import { useState, type Key } from "react";
-import { Alert, Button, Card, Dropdown, Empty, Segmented, Table } from "antd";
+import { Button, Card, Dropdown, Empty, Segmented, Table } from "antd";
+import { InlineAlert } from "@/shared/notifications";
 import type { FilterValue } from "antd/es/table/interface";
 import {
   AppstoreOutlined,
@@ -179,8 +180,13 @@ export default function MappingPage() {
         </div>
 
         {table.error && (
-          <Alert type="error" showIcon className={styles.error} message="The mapping could not be loaded."
-            action={<Button size="small" onClick={() => void table.refetch()}>Retry</Button>} />
+          <InlineAlert
+            variant="error"
+            className={styles.error}
+            title="Unable to load resource mapping"
+            description="Check your connection and try again."
+            onRetry={() => void table.refetch()}
+          />
         )}
 
         {viewMode === "table" ? (

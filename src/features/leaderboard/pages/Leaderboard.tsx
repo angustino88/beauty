@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
-import { Card, Empty, Segmented, Tabs, Typography, message } from 'antd';
+import { Card, Empty, Segmented, Tabs, Typography } from 'antd';
+import { getApiErrorMessage, notify } from '@/shared/notifications';
 import { ExportOutlined, TrophyOutlined } from '@ant-design/icons';
 import { Button } from 'antd';
 import { useAppSelector } from '@/app/store';
@@ -58,9 +59,13 @@ export default function Leaderboard() {
       const type = activeTab === 'lab' ? 'lab' : 'persona';
       const rows = await exportLeaderboard(filter, type);
       await exportLeaderboardExcel(rows, type, `Leaderboard_${type}_${new Date().toISOString().slice(0, 10)}`);
+      notify.success('Leaderboard exported', {
+        description: `Exported ${rows.length} ${rows.length === 1 ? 'row' : 'rows'} to Excel.`,
+      });
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Unknown error';
-      void message.error(`Export failed: ${msg}`);
+      notify.error('Unable to export leaderboard', {
+        description: getApiErrorMessage(err, 'Please try again.'),
+      });
     } finally {
       setExportLoading(false);
     }

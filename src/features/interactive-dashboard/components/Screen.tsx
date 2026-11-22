@@ -3,7 +3,7 @@ import { OrbitControls } from "@react-three/drei";
 import { Suspense, useCallback, useState } from "react";
 import * as THREE from "three";
 import { useNavigate } from "react-router-dom";
-import { message, Modal } from "antd";
+import { confirmAction, notify } from "@/shared/notifications";
 import { RoomFloor } from "./scene/RoomFloor";
 import { useDashboard } from "../hooks/useDashboard";
 import { useEditMode } from "../hooks/useEditMode";
@@ -76,9 +76,9 @@ export function Screen() {
         rows <= 0 ||
         cols <= 0
       ) {
-        void message.warning(
-          "Please set Room rows/cols before editing 3D layout",
-        );
+        notify.warning("Room grid dimensions required", {
+          description: "Configure room rows and columns before editing the 3D layout.",
+        });
         return;
       }
       handleToggleEdit();
@@ -88,22 +88,19 @@ export function Screen() {
     // Warn if there are any unsaved moves (drop without saving)
     if (hasPendingMoves) {
       setIsWarningOpen(true);
-      Modal.confirm({
-        title: "Unsaved changes",
-        content:
-          "You have station moves that have not been saved. Exit anyway? All changes will be discarded.",
-        okText: "Exit anyway",
-        cancelText: "Stay in edit",
-        okButtonProps: { danger: true },
-        onOk: () => {
+      confirmAction({
+        title: "Discard unsaved layout changes?",
+        description:
+          "You have station moves that have not been saved. Exiting edit mode will discard them.",
+        confirmText: "Discard and exit",
+        cancelText: "Keep editing",
+        variant: "danger",
+        onConfirm: () => {
           setIsWarningOpen(false);
           clearEditState();
           handleToggleEdit();
         },
         onCancel: () => {
-          setIsWarningOpen(false);
-        },
-        afterClose: () => {
           setIsWarningOpen(false);
         },
       });

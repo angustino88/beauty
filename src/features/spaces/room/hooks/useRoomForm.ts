@@ -5,7 +5,7 @@ import {
     useUpdateRoomImageMutation,
     useDeleteRoomImageMutation,
 } from '../api';
-import { message } from 'antd';
+import { notify } from '@/shared/notifications';
 import { useLabsRoomsActionsGenerateSlotsCreateByRoomIdMutation } from '@/shared/api/generated/api';
 import { notifyEquipmentCreated, notifyEquipmentError, useEquipmentCrudActions } from '@/features/lab-equipment/shared';
 import { parseFormApiError } from '@/features/lab-equipment/shared/utils/formApiError';
@@ -21,7 +21,7 @@ const toNumber = (value: unknown): number | undefined => {
 
 const slotErrorText = (err: unknown): string => {
     const parsed = parseFormApiError(err);
-    return parsed?.message || parsed?.nonFieldErrors[0] || Object.values(parsed?.fieldErrors ?? {})[0]?.[0] || 'the slot grid could not be generated';
+    return parsed?.message || parsed?.nonFieldErrors[0] || Object.values(parsed?.fieldErrors ?? {})[0]?.[0] || 'The slot grid could not be generated.';
 };
 
 // ── hook ──────────────────────────────────────────────────────────────────────
@@ -46,7 +46,9 @@ export function useRoomForm() {
         try {
             await generateSlotsMutation({ roomId }).unwrap();
         } catch (err) {
-            message.warning(`Room saved, but its slots were not updated: ${slotErrorText(err)}.`);
+            notify.warning('Room saved, but slots were not updated', {
+                description: slotErrorText(err),
+            });
         }
     };
 

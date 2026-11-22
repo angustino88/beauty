@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
-import { Alert, Button, Radio, Select } from 'antd';
+import { Button, Radio, Select } from 'antd';
+import { InlineAlert } from '@/shared/notifications';
 import { AppleOutlined, LinuxOutlined, WindowsOutlined } from '@ant-design/icons';
 import type { AgentIdentityRead } from '@/shared/api/generated/api';
 import { CodeBlock } from './CodeBlock';
@@ -95,12 +96,11 @@ export function AgentSetup({ agent, grant, mode, generating, onGenerate }: {
       </div>
 
       {!serverUrl && (
-        <Alert
-          type="warning"
-          showIcon
+        <InlineAlert
+          variant="warning"
           style={{ marginBottom: 12 }}
-          message="The agent server URL is not configured"
-          description="Replace <server-url> with the public Nginx or Router address lab computers use, or set VITE_AGENT_URL for this web app."
+          title="Agent server URL is not configured"
+          description="Replace <server-url> with the public address lab computers use, or configure the agent URL in your environment."
         />
       )}
 
@@ -118,7 +118,12 @@ export function AgentSetup({ agent, grant, mode, generating, onGenerate }: {
         ) : (
           <div className={styles.generate}>
             {mode === 'recover' && (
-              <Alert type="warning" showIcon message="The current agent stops working until this computer enrolls again." style={{ marginBottom: 12 }} />
+              <InlineAlert
+                variant="warning"
+                compact
+                title="The current agent stops working until this computer enrolls again."
+                style={{ marginBottom: 12 }}
+              />
             )}
             <p className={styles.stepText}>
               {mode === 'setup'

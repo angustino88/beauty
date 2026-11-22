@@ -10,7 +10,7 @@ import {
   notifyEquipmentError,
   useEquipmentCrudActions,
 } from "@/features/lab-equipment/shared";
-import { message } from "antd";
+import { notify } from "@/shared/notifications";
 import { useAppDispatch } from "@/app/store";
 import { generatedApi, useLabsStationsSlotsCreateByStationIdMutation } from "@/shared/api/generated/api";
 import { parseFormApiError } from "@/features/lab-equipment/shared/utils/formApiError";
@@ -24,7 +24,7 @@ const toCount = (value: unknown): number | null => {
 
 const errorText = (err: unknown): string => {
   const parsed = parseFormApiError(err);
-  return parsed?.message || parsed?.nonFieldErrors[0] || Object.values(parsed?.fieldErrors ?? {})[0]?.[0] || "unknown error";
+  return parsed?.message || parsed?.nonFieldErrors[0] || Object.values(parsed?.fieldErrors ?? {})[0]?.[0] || "The bench slots could not be created.";
 };
 
 export function useStationForm() {
@@ -62,7 +62,9 @@ export function useStationForm() {
         await createSlot({ stationId, stationSlotCreate: { position_index: position, slot_code: code } }).unwrap();
       }
     } catch (err) {
-      message.warning(`Station saved, but its bench slots were not created: ${errorText(err)}.`);
+      notify.warning("Station saved, but bench slots were not created", {
+        description: errorText(err),
+      });
     }
   };
 

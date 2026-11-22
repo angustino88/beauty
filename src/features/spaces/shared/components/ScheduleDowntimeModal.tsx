@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 import {
-  Alert,
   Button,
   DatePicker,
   Form,
   Input,
   Radio,
   Select,
-  message,
 } from 'antd';
+import { InlineAlert, getApiErrorMessage, notify } from '@/shared/notifications';
 import { ToolOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import dayjs, { type Dayjs } from 'dayjs';
 import {
@@ -150,7 +149,7 @@ export const ScheduleDowntimeModal: React.FC<ScheduleDowntimeModalProps> = ({
 
     try {
       await createDowntime(payload).unwrap();
-      message.success('Downtime scheduled successfully');
+      notify.success('Downtime scheduled');
       resetState();
       onSuccess?.();
       onClose();
@@ -170,26 +169,25 @@ export const ScheduleDowntimeModal: React.FC<ScheduleDowntimeModalProps> = ({
       }
 
       if (errorCode === 'downtime_overlap') {
-        message.error(
-          errorObj?.message || 'This resource already has downtime in that period.',
-        );
+        notify.warning('Overlapping downtime window', {
+          description: getApiErrorMessage(err, 'This resource already has downtime scheduled in that period.'),
+        });
         return;
       }
 
       if (errorCode === 'downtime_not_allowed') {
-        message.error(
-          errorObj?.message ||
-            'The resource is not in service (planned or retired). Downtime cannot be scheduled.',
-        );
+        notify.error('Downtime not allowed', {
+          description: getApiErrorMessage(
+            err,
+            'This resource is not currently in service and cannot have downtime scheduled.',
+          ),
+        });
         return;
       }
 
-      const fallbackMsg =
-        errorObj?.message ||
-        apiErr.data?.message ||
-        apiErr.data?.detail ||
-        'Failed to schedule downtime.';
-      message.error(fallbackMsg);
+      notify.error('Unable to schedule downtime', {
+        description: getApiErrorMessage(err, 'Please review the downtime window and try again.'),
+      });
     }
   };
 
@@ -200,17 +198,16 @@ export const ScheduleDowntimeModal: React.FC<ScheduleDowntimeModalProps> = ({
         ...lastPayload,
         cancel_conflicting_bookings: true,
       }).unwrap();
-      message.success('Downtime scheduled and conflicting bookings cancelled');
+      notify.success('Downtime scheduled', {
+        description: 'Conflicting bookings have been cancelled.',
+      });
       resetState();
       onSuccess?.();
       onClose();
     } catch (err: unknown) {
-      const apiErr = err as ApiErrorResponse;
-      message.error(
-        apiErr.data?.error?.message ||
-          apiErr.data?.message ||
-          'Failed to schedule downtime after confirming cancellation.',
-      );
+      notify.error('Unable to schedule downtime', {
+        description: getApiErrorMessage(err, 'Please try again.'),
+      });
     }
   };
 
@@ -389,10 +386,9 @@ export const ScheduleDowntimeModal: React.FC<ScheduleDowntimeModalProps> = ({
           setConflictMessage('');
         }}
       >
-        <Alert
-          type="warning"
-          showIcon
-          message="Overlapping Bookings Detected"
+        <InlineAlert
+          variant="warning"
+          title="Overlapping bookings detected"
           description={conflictMessage}
         />
         <div style={{ marginTop: 12 }}>

@@ -1,0 +1,331 @@
+.viewport {
+  position: fixed;
+  top: 68px;
+  right: 20px;
+  z-index: 2100;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(400px, calc(100vw - 32px));
+  pointer-events: none;
+}
+
+.region {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.toast {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: start;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--lm-notif-surface);
+  border: 1px solid var(--lm-notif-border);
+  box-shadow: var(--lm-notif-shadow);
+  color: var(--lm-text);
+  pointer-events: auto;
+  overflow: hidden;
+  animation: lmToastEnter 200ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.toast:focus-visible {
+  outline: none;
+  box-shadow: var(--lm-notif-shadow), var(--lm-focus-ring);
+}
+
+.iconWrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.icon {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2;
+}
+
+.spinner {
+  animation: lmToastSpin 900ms linear infinite;
+}
+
+.variant_success .iconWrap {
+  background: var(--lm-success-bg);
+  color: var(--lm-success-fg);
+}
+
+.variant_info .iconWrap,
+.variant_loading .iconWrap {
+  background: var(--lm-info-bg);
+  color: var(--lm-info-fg);
+}
+
+.variant_warning .iconWrap {
+  background: var(--lm-warning-bg);
+  color: var(--lm-warning-fg);
+}
+
+.variant_error .iconWrap {
+  background: var(--lm-danger-bg);
+  color: var(--lm-danger-fg);
+}
+
+.body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.headerRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.title {
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--lm-text);
+  word-break: break-word;
+}
+
+.codeBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  border-radius: 5px;
+  font-family: var(--lm-font-mono);
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.45;
+  background: var(--lm-surface-muted);
+  color: var(--lm-text);
+  border: 1px solid var(--lm-border);
+}
+
+.variant_success .codeBadge {
+  background: var(--lm-success-bg);
+  color: var(--lm-success-fg);
+  border-color: var(--lm-success-border);
+}
+
+.countBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.6;
+  background: var(--lm-surface-muted);
+  color: var(--lm-text-secondary);
+}
+
+.description {
+  font-size: 12.5px;
+  font-weight: 400;
+  line-height: 1.45;
+  color: var(--lm-text-secondary);
+  word-break: break-word;
+}
+
+.detailsList {
+  list-style: none;
+  margin: 2px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.detailItem {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--lm-text-secondary);
+}
+
+.detailDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  flex-shrink: 0;
+  transform: translateY(-1px);
+  background: var(--lm-neutral-solid);
+}
+
+.detail_added .detailDot {
+  background: var(--lm-success-solid);
+}
+
+.detail_removed .detailDot {
+  background: var(--lm-danger-solid);
+}
+
+.detailLabel {
+  font-weight: 600;
+  color: var(--lm-text);
+}
+
+.actionRow {
+  margin-top: 4px;
+}
+
+.actionBtn {
+  appearance: none;
+  border: 1px solid var(--lm-border-strong);
+  background: var(--lm-surface-subtle);
+  color: var(--lm-text);
+  font-family: var(--lm-font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.3;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 140ms ease, border-color 140ms ease;
+}
+
+.actionBtn:hover {
+  background: var(--lm-surface-muted);
+}
+
+.actionBtn:focus-visible {
+  outline: none;
+  box-shadow: var(--lm-focus-ring);
+}
+
+.closeBtn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--lm-text-tertiary);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color 140ms ease, color 140ms ease;
+}
+
+.closeBtn:hover {
+  background: var(--lm-notif-close-hover);
+  color: var(--lm-text);
+}
+
+.closeBtn:focus-visible {
+  outline: none;
+  box-shadow: var(--lm-focus-ring);
+}
+
+.closeIcon {
+  width: 14px;
+  height: 14px;
+}
+
+.progressTrack {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: var(--lm-notif-progress-track);
+}
+
+.progressBar {
+  height: 100%;
+  width: 100%;
+  transform-origin: left center;
+  animation-name: lmToastProgress;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+.variant_success .progressBar {
+  background: var(--lm-success-solid);
+}
+
+.variant_info .progressBar {
+  background: var(--lm-info-solid);
+}
+
+.variant_warning .progressBar {
+  background: var(--lm-warning-solid);
+}
+
+.variant_error .progressBar {
+  background: var(--lm-danger-solid);
+}
+
+.paused .progressBar {
+  animation-play-state: paused;
+}
+
+@keyframes lmToastEnter {
+  from {
+    opacity: 0;
+    transform: translate3d(0, -8px, 0) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes lmToastProgress {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes lmToastSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 640px) {
+  .viewport {
+    top: 12px;
+    left: 12px;
+    right: 12px;
+    width: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast {
+    animation: none;
+  }
+  .spinner {
+    animation: none;
+  }
+  .progressTrack {
+    display: none;
+  }
+}

@@ -1,6 +1,6 @@
-import React, { useState, useCallback, useMemo } from 'react';
-import { message, Modal, type TableProps } from 'antd';
-import { QuestionCircleOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import { useState, useCallback, useMemo } from 'react';
+import type { TableProps } from 'antd';
+import { confirmAction, getApiErrorMessage, notify } from '@/shared/notifications';
 import {
   useGetBenchBookingsQuery,
   useApproveBenchBookingMutation,
@@ -108,23 +108,24 @@ export function useMyBookingTable(
 
   const handleApproveBooking = useCallback(
     (bookingId: number) => {
-      Modal.confirm({
-        title: 'Approve Booking',
-        icon: React.createElement(QuestionCircleOutlined, { style: { color: 'var(--lm-warning-solid)' } }),
-        content: 'Are you sure you want to approve this booking?',
-        okText: 'Approve',
+      confirmAction({
+        title: 'Approve booking',
+        description: 'Confirm approval for this bench booking request?',
+        confirmText: 'Approve',
         cancelText: 'Cancel',
-        onOk: async () => {
+        variant: 'default',
+        onConfirm: async () => {
           try {
             await approveBooking({
               id: bookingId,
               idempotencyKey: crypto.randomUUID(),
             }).unwrap();
             void refetch();
-            message.success('Booking approved.');
+            notify.success('Booking approved');
           } catch (error) {
-            console.error('Failed to approve booking:', error);
-            message.error('Could not approve booking. Check the API connection and try again.');
+            notify.error('Unable to approve booking', {
+              description: getApiErrorMessage(error, 'Please try again.'),
+            });
           }
         },
       });
@@ -134,14 +135,13 @@ export function useMyBookingTable(
 
   const handleRejectBooking = useCallback(
     (bookingId: number) => {
-      Modal.confirm({
-        title: 'Reject Booking',
-        icon: React.createElement(ExclamationCircleOutlined, { style: { color: 'var(--lm-danger-solid)' } }),
-        content: 'Are you sure you want to reject this booking?',
-        okText: 'Reject',
-        okButtonProps: { danger: true },
+      confirmAction({
+        title: 'Reject booking',
+        description: 'Are you sure you want to reject this booking request? The requester will be notified.',
+        confirmText: 'Reject',
         cancelText: 'Cancel',
-        onOk: async () => {
+        variant: 'danger',
+        onConfirm: async () => {
           try {
             await rejectBooking({
               id: bookingId,
@@ -149,10 +149,11 @@ export function useMyBookingTable(
               reason: 'Rejected by coordinator',
             }).unwrap();
             void refetch();
-            message.success('Booking rejected.');
+            notify.success('Booking rejected');
           } catch (error) {
-            console.error('Failed to reject booking:', error);
-            message.error('Could not reject booking. Check the API connection and try again.');
+            notify.error('Unable to reject booking', {
+              description: getApiErrorMessage(error, 'Please try again.'),
+            });
           }
         },
       });

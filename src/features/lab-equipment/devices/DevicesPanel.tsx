@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
-import { Alert, Button, Input, Segmented, Table, Tag, Tooltip, message } from 'antd';
+import { Button, Input, Segmented, Table, Tag, Tooltip } from 'antd';
+import { InlineAlert, getApiErrorMessage, notify } from '@/shared/notifications';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import { useGetComputingAgentsQuery, liveAgentsByEquipment } from '../agents';
@@ -92,7 +93,16 @@ function MissingDevices({ benchId, computingId }: { benchId?: number; computingI
             size="small"
             type="link"
             style={{ marginLeft: 'auto' }}
-            onClick={() => remove(row.id).unwrap().then(() => message.success('No longer expected')).catch(() => message.error('Could not update'))}
+            onClick={() =>
+              remove(row.id)
+                .unwrap()
+                .then(() => notify.success('Device expectation removed'))
+                .catch((err) =>
+                  notify.error('Unable to update device expectation', {
+                    description: getApiErrorMessage(err, 'Please try again.'),
+                  }),
+                )
+            }
           >
             Stop expecting
           </Button>
@@ -242,12 +252,11 @@ export function DevicesPanel({ benchId, computingId, onClearComputing, onViewEve
         />
       </div>
       {isError && (
-        <Alert
-          type="error"
-          showIcon
-          title="Could not refresh devices"
+        <InlineAlert
+          variant="error"
+          title="Unable to refresh devices"
           description={currentData ? 'Showing the last loaded data; connection state is unconfirmed.' : undefined}
-          action={<Button size="small" onClick={() => void refetch()}>Retry</Button>}
+          onRetry={() => void refetch()}
         />
       )}
       <Table<DeviceConnection>

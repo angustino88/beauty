@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Alert, Button, Checkbox, Empty, List, Popconfirm, Space, Tag, Tooltip, Typography, Upload, message } from 'antd';
+import { Button, Checkbox, Empty, List, Popconfirm, Space, Tag, Tooltip, Typography, Upload } from 'antd';
 import { DeleteOutlined, DownloadOutlined, FileOutlined, FileImageOutlined, PaperClipOutlined } from '@ant-design/icons';
 import { useSupportTicketsAttachmentsDestroyByKeyAttachmentIdMutation } from '@/shared/api/generated/api';
+import { InlineAlert, notify } from '@/shared/notifications';
 import { userLabel } from '@/shared/utils/userRef';
 import { useDownloadSupportAttachmentMutation, useUploadSupportAttachmentMutation } from '../api';
 import {
@@ -33,10 +34,12 @@ export function TicketAttachments({ ticketKey, attachments, currentUserId, canMa
     setUploading((count) => count + 1);
     try {
       await upload({ key: ticketKey, file, isRestricted: canManage && restricted }).unwrap();
-      void message.success(`${file.name} attached`);
+      notify.success('Attachment uploaded', { description: file.name });
       await onChanged();
     } catch (error) {
-      void message.error(`${file.name}: ${apiErrorMessage(error)}`);
+      notify.error('Unable to upload attachment', {
+        description: `${file.name}: ${apiErrorMessage(error)}`,
+      });
     } finally {
       setUploading((count) => count - 1);
     }
@@ -46,17 +49,21 @@ export function TicketAttachments({ ticketKey, attachments, currentUserId, canMa
     try {
       await download({ attachmentId: attachment.id, filename: attachment.filename }).unwrap();
     } catch (error) {
-      void message.error(apiErrorMessage(error, 'The file could not be downloaded.'));
+      notify.error('Unable to download attachment', {
+        description: apiErrorMessage(error, 'Please try again.'),
+      });
     }
   };
 
   const deleteFile = async (attachment: SupportAttachment) => {
     try {
       await remove({ key: ticketKey, attachmentId: attachment.id }).unwrap();
-      void message.success(`${attachment.filename} removed`);
+      notify.success('Attachment removed', { description: attachment.filename });
       await onChanged();
     } catch (error) {
-      void message.error(apiErrorMessage(error));
+      notify.error('Unable to remove attachment', {
+        description: apiErrorMessage(error, 'Please try again.'),
+      });
     }
   };
 
@@ -137,7 +144,12 @@ export function TicketAttachments({ ticketKey, attachments, currentUserId, canMa
       </Space>
       <Typography.Text type="secondary">{SUPPORT_ATTACHMENT_HINT}</Typography.Text>
       {attachments.some((attachment) => attachment.scan_status.value === 'infected') && (
-        <Alert type="warning" showIcon message="A quarantined file cannot be downloaded. Remove it and upload a clean copy." />
+        <InlineAlert
+          variant="warning"
+          compact
+          title="Quarantined attachment cannot be downloaded"
+          description="Remove the quarantined file and upload a clean copy."
+        />
       )}
     </Space>
   );

@@ -1,8 +1,9 @@
 import { StatusBadge } from '@/shared/components/StatusBadge';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { Alert, Button, Card, Descriptions, Empty, Form, Input, Select, Space, Spin, Timeline, Typography, Upload, message } from 'antd';
+import { Button, Card, Descriptions, Empty, Form, Input, Select, Space, Spin, Timeline, Typography, Upload } from 'antd';
 import type { UploadFile } from 'antd';
+import { InlineAlert, notify } from '@/shared/notifications';
 import { PaperClipOutlined } from '@ant-design/icons';
 import { useAuthState } from '@/features/auth/hooks/useAuthState';
 import {
@@ -78,10 +79,18 @@ export default function SupportTicketDetail() {
       }
       setReplyFiles([]);
       await refresh();
-      if (failed.length) void message.warning(`Reply posted, but some files were not attached. ${failed.join(' ')}`, 8);
-      else void message.success(files.length ? 'Reply posted with attachments' : 'Reply posted');
+      if (failed.length) {
+        notify.warning('Reply posted, but some files were not attached', {
+          description: failed.join(' '),
+          duration: 8000,
+        });
+      } else {
+        notify.success(files.length ? 'Reply posted with attachments' : 'Reply posted');
+      }
     } catch (error) {
-      void message.error(errorMessage(error));
+      notify.error('Unable to post reply', {
+        description: errorMessage(error),
+      });
     }
   };
 
@@ -91,10 +100,12 @@ export default function SupportTicketDetail() {
       await assign({ key, ticketAssignRequest: { assignee_id: assigneeId === UNASSIGN ? null : assigneeId, version: ticket.version } }).unwrap();
       setAssigneeId(undefined);
       await refresh();
-      void message.success('Assignment updated');
+      notify.success('Ticket assignment updated');
     } catch (error) {
       if (isConflict(error)) await refetchDetail();
-      void message.error(errorMessage(error));
+      notify.error('Unable to update assignment', {
+        description: errorMessage(error),
+      });
     }
   };
 
@@ -109,16 +120,26 @@ export default function SupportTicketDetail() {
       setStatusId(undefined);
       setReason('');
       await refresh();
-      void message.success('Status updated');
+      notify.success('Ticket status updated');
     } catch (error) {
       if (isConflict(error)) await refetchDetail();
-      void message.error(errorMessage(error));
+      notify.error('Unable to update ticket status', {
+        description: errorMessage(error),
+      });
     }
   };
 
-  if (!key) return <Alert type="error" message="Missing ticket key" />;
+  if (!key) return <InlineAlert variant="error" title="Missing ticket key" />;
   if (isLoading) return <Spin size="large" />;
-  if (isError || !ticket) return <Alert type="error" showIcon message="Ticket could not be loaded" action={<Button onClick={() => refetchDetail()}>Retry</Button>} />;
+  if (isError || !ticket) {
+    return (
+      <InlineAlert
+        variant="error"
+        title="Unable to load support ticket"
+        onRetry={() => void refetchDetail()}
+      />
+    );
+  }
 
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto', padding: 24 }}>
@@ -169,7 +190,14 @@ export default function SupportTicketDetail() {
                 <Input aria-label="Transition reason" placeholder="Reason (optional)" value={reason} onChange={(event) => setReason(event.target.value)} style={{ width: 260 }} />
                 <Button loading={transitioning} disabled={statusId === undefined || ticket.version === undefined} onClick={() => void submitTransition()}>Change status</Button>
               </Space>
-              {ticket.version === undefined && <Alert type="warning" message="Status updates are unavailable until the server supplies a ticket version." />}
+              {ticket.version === undefined && (
+                <InlineAlert
+                  variant="warning"
+                  compact
+                  title="Status updates are temporarily unavailable"
+                  description="Refresh the ticket to retrieve its latest version before making changes."
+                />
+              )}
             </Space>
           </Card>
         )}
@@ -185,7 +213,13 @@ export default function SupportTicketDetail() {
         </Card>
 
         <Card title="Conversation">
-          {commentsError && <Alert type="error" showIcon message="Comments could not be loaded" action={<Button onClick={() => refetchComments()}>Retry</Button>} />}
+          {commentsError && (
+            <InlineAlert
+              variant="error"
+              title="Unable to load conversation"
+              onRetry={() => void refetchComments()}
+            />
+          )}
           {!commentsError && (comments?.data.length ? comments.data.map((entry) => (
             <Card size="small" key={entry.id} style={{ marginBottom: 12 }}>
               <Space><strong>{userLabel(entry.author) || 'User'}</strong><Typography.Text type="secondary">{formatDate(entry.created_at)}</Typography.Text></Space>
@@ -210,7 +244,13 @@ export default function SupportTicketDetail() {
         </Card>
 
         <Card title="Activity">
-          {activityError ? <Alert type="error" showIcon message="Activity could not be loaded" action={<Button onClick={() => refetchActivity()}>Retry</Button>} /> :
+          {activityError ? (
+            <InlineAlert
+              variant="error"
+              title="Unable to load ticket activity"
+              onRetry={() => void refetchActivity()}
+            />
+          ) :
             activity?.data.length ? <Timeline items={activity.data.map((event) => ({
               children: <span><strong>{event.actor_name}</strong> · {activityLabel(event)} <Typography.Text type="secondary">{formatDate(event.occurred_at)}</Typography.Text></span>,
             }))} /> : <Empty description="No activity yet" />}

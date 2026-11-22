@@ -6,8 +6,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
     Form, Input, InputNumber, Select, Collapse,
-    DatePicker, Upload, Row, Col, Spin, message,
+    DatePicker, Upload, Row, Col, Spin,
 } from 'antd';
+import { confirmAction, getApiErrorMessage, notify } from '@/shared/notifications';
 import { InboxOutlined } from '@ant-design/icons';
 import { FormDialog } from '@/components/ui/form-dialog';
 import type { RcFile } from 'antd/es/upload/interface';
@@ -313,7 +314,9 @@ export default function EquipmentFormModal({
                 }
                 const firstField = validationError.errorFields[0]?.name;
                 if (firstField) requestAnimationFrame(() => form.scrollToField(firstField, { block: 'center', focus: true }));
-                message.warning('Please fill all required fields');
+                notify.warning('Please review the highlighted fields', {
+                    description: 'Complete all required fields before saving.',
+                });
             } else {
                 const parsed = parseFormApiError(err);
                 if (parsed) {
@@ -328,9 +331,15 @@ export default function EquipmentFormModal({
                         (form as unknown as { getFieldInstance?: (n: string) => { focus?: () => void } })
                             .getFieldInstance?.(first)?.focus?.();
                     }
-                    if (parsed.message) message.error(parsed.message);
+                    if (parsed.message) {
+                        notify.error('Unable to save changes', {
+                            description: parsed.message,
+                        });
+                    }
                 } else {
-                    message.error('Failed to submit form');
+                    notify.error('Unable to save changes', {
+                        description: getApiErrorMessage(err, 'Please review your entries and try again.'),
+                    });
                 }
             }
         } finally {
@@ -384,7 +393,7 @@ export default function EquipmentFormModal({
     const handleImageChange = (file: RcFile) => {
         const problem = validateResourceImage(file);
         if (problem) {
-            message.error(problem);
+            notify.warning('Invalid image file', { description: problem });
             return Upload.LIST_IGNORE;
         }
         if (previewUrl.current) URL.revokeObjectURL(previewUrl.current);
@@ -414,9 +423,14 @@ export default function EquipmentFormModal({
             onSubmit={handleOk}
             onCancel={() => {
                 if (form.isFieldsTouched()) {
-                    if (window.confirm('You are closing the form. All information will be discarded.')) {
-                        onCancel();
-                    }
+                    confirmAction({
+                        title: 'Discard unsaved changes?',
+                        description: 'Closing this form will discard all unsaved entries.',
+                        confirmText: 'Discard',
+                        cancelText: 'Continue editing',
+                        variant: 'danger',
+                        onConfirm: onCancel,
+                    });
                 } else {
                     onCancel();
                 }

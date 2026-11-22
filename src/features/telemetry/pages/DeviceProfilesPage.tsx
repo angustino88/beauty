@@ -1,5 +1,4 @@
 import {
-  Alert,
   Button,
   Descriptions,
   Drawer,
@@ -14,8 +13,8 @@ import {
   Table,
   Tag,
   Typography,
-  message,
 } from 'antd';
+import { InlineAlert, notify } from '@/shared/notifications';
 import { CheckCircleOutlined, CopyOutlined, DeleteOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons';
 import { useMemo, useState } from 'react';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -84,7 +83,10 @@ function ProfileEditor({ base, open, onClose }: { base: DeviceProfile | null; op
         notes: values.notes ?? '',
         read_map,
       }).unwrap();
-      void message.success(`Saved ${saved.reference} as a draft. A lab admin approves it after the bench test.`);
+      notify.success('Device profile saved as draft', {
+        code: saved.reference,
+        description: 'A lab administrator can approve it after the bench test.',
+      });
       onClose();
     } catch (error) {
       const result = readApiProblem(error);
@@ -107,7 +109,7 @@ function ProfileEditor({ base, open, onClose }: { base: DeviceProfile | null; op
         A device profile tells the gateway how to read one sensor model over Modbus: which register holds each
         measurement, its data type and scale. Take the values from the sensor's manual and confirm them in a bench test.
       </Typography.Paragraph>
-      {problem && <Alert type="error" showIcon title={problem} style={{ marginBottom: 12 }} />}
+      {problem && <InlineAlert variant="error" title={problem} style={{ marginBottom: 12 }} />}
       <Form<EditorValues>
         form={form}
         layout="vertical"
@@ -228,7 +230,16 @@ function ProfileDrawer({ profile, onClose, canApprove, onNewVersion }: {
               title="Approve this profile?"
               description="Approve only after a bench test confirmed every register and scale. Channels can then use it."
               okText="Approve"
-              onConfirm={() => approve(profile.id).unwrap().then(() => message.success('Profile approved')).catch((error) => message.error(readApiProblem(error).message))}
+              onConfirm={() =>
+                approve(profile.id)
+                  .unwrap()
+                  .then(() => notify.success('Device profile approved', { code: profile.reference }))
+                  .catch((error) =>
+                    notify.error('Unable to approve profile', {
+                      description: readApiProblem(error).message,
+                    }),
+                  )
+              }
             >
               <Button type="primary" icon={<CheckCircleOutlined />} loading={state.isLoading}>Approve</Button>
             </Popconfirm>
@@ -239,7 +250,12 @@ function ProfileDrawer({ profile, onClose, canApprove, onNewVersion }: {
       {profile && (
         <>
           {profile.status.value === 'draft' && !canApprove && (
-            <Alert type="info" showIcon style={{ marginBottom: 16 }} title="Draft: a lab admin approves it after the bench test. Until then it cannot be used by sensors." />
+            <InlineAlert
+              variant="info"
+              style={{ marginBottom: 16 }}
+              title="Pending bench test approval"
+              description="A lab administrator approves this draft after the bench test. Until then it cannot be used by sensors."
+            />
           )}
           <Descriptions
             size="small"

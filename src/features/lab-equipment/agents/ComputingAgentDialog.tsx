@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Button, Dropdown, Modal, Popconfirm, Spin, Tooltip, Typography, message } from 'antd';
+import { Button, Dropdown, Modal, Popconfirm, Spin, Tooltip, Typography } from 'antd';
+import { confirmAction, notify } from '@/shared/notifications';
 import { CheckCircleFilled, DownOutlined, ExclamationCircleFilled, LaptopOutlined, PoweroffOutlined, StopOutlined, SyncOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
@@ -104,25 +105,32 @@ export function ComputingAgentDialog({ computer, onClose }: {
       setRecovering(false);
       setView('setup');
     } catch (error) {
-      message.error(agentErrorMessage(error, 'Unable to issue an enrollment grant'));
+      notify.error('Unable to issue enrollment grant', {
+        description: agentErrorMessage(error, 'Please try again.'),
+      });
     }
   };
 
   const retire = (action: 'revoke' | 'decommission') => {
     if (!live) return;
-    Modal.confirm({
-      title: action === 'revoke' ? `Revoke the agent on ${computer?.sku ?? 'this computer'}?` : `Decommission the agent on ${computer?.sku ?? 'this computer'}?`,
-      content: action === 'revoke'
+    confirmAction({
+      title: action === 'revoke' ? `Revoke agent on ${computer?.sku ?? 'this computer'}?` : `Decommission agent on ${computer?.sku ?? 'this computer'}?`,
+      description: action === 'revoke'
         ? 'Its key stops working at the next request. Use this when the computer or its key may be compromised.'
         : 'Use this when the computer leaves service or the agent is uninstalled.',
-      okText: action === 'revoke' ? 'Revoke agent' : 'Decommission agent',
-      okButtonProps: { danger: true },
-      onOk: async () => {
+      confirmText: action === 'revoke' ? 'Revoke agent' : 'Decommission agent',
+      cancelText: 'Cancel',
+      variant: 'danger',
+      onConfirm: async () => {
         try {
           await retireAgent({ agentId: live.id, action }).unwrap();
-          message.success(action === 'revoke' ? 'Agent revoked' : 'Agent decommissioned');
+          notify.success(action === 'revoke' ? 'Agent revoked' : 'Agent decommissioned', {
+            code: computer?.sku || undefined,
+          });
         } catch (error) {
-          message.error(agentErrorMessage(error, `Unable to ${action} the agent`));
+          notify.error(`Unable to ${action} agent`, {
+            description: agentErrorMessage(error, 'Please try again.'),
+          });
         }
       },
     });
@@ -144,14 +152,17 @@ export function ComputingAgentDialog({ computer, onClose }: {
           action: canManageAgents && live ? (
             <Popconfirm
               title="Revoke this grant?"
+              okText="Revoke"
               okButtonProps={{ danger: true }}
               onConfirm={async () => {
                 try {
                   await revokeGrant({ agentId: live.id, grantId: row.id }).unwrap();
                   setIssued(null);
-                  message.success('Grant revoked');
+                  notify.success('Enrollment grant revoked');
                 } catch (error) {
-                  message.error(agentErrorMessage(error, 'Unable to revoke the grant'));
+                  notify.error('Unable to revoke grant', {
+                    description: agentErrorMessage(error, 'Please try again.'),
+                  });
                 }
               }}
             >

@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, Button, Modal, Progress, Radio, Segmented, Space, Steps, Table, Tag, Typography, Upload, message } from 'antd';
+import { Button, Modal, Progress, Radio, Segmented, Space, Steps, Table, Tag, Typography, Upload } from 'antd';
 import type { TableColumnsType, UploadFile } from 'antd';
 import { CloudDownloadOutlined, DownloadOutlined, FileExcelOutlined, InboxOutlined } from '@ant-design/icons';
+import { InlineAlert, getApiErrorMessage, notify } from '@/shared/notifications';
 import {
   useApplyWorkbookMutation,
   useCheckWorkbookMutation,
@@ -36,8 +37,7 @@ function apiErrorMessage(error: unknown): string {
   if (status === 'TIMEOUT_ERROR') {
     return 'The workbook check or import timed out because the file is very large. Try again or split the workbook into smaller batches.';
   }
-  const body = (error as { data?: { error?: { message?: string } } })?.data;
-  return body?.error?.message ?? 'The request failed. Try again.';
+  return getApiErrorMessage(error, 'We could not process the workbook. Please try again.');
 }
 
 function apiErrorDetails(error: unknown): ApiErrorDetail[] {
@@ -202,7 +202,7 @@ export default function WorkbookImportModal({ open, onClose }: Props) {
     } catch (error) {
       setFile(null);
       setReport(null);
-      message.error(apiErrorMessage(error));
+      notify.error('Unable to check workbook', { description: apiErrorMessage(error) });
     } finally {
       stopPolling();
       setActiveAction(null);
@@ -226,9 +226,11 @@ export default function WorkbookImportModal({ open, onClose }: Props) {
       const details = apiErrorDetails(error);
       if (details.length) {
         setApplyProblems(details.map(mapApplyErrorDetail));
-        message.error('Nothing was imported: the workbook has errors. Fix them and check again.');
+        notify.error('Workbook import blocked', {
+          description: 'Resolve the highlighted workbook errors and run the check again.',
+        });
       } else {
-        message.error(apiErrorMessage(error));
+        notify.error('Unable to import workbook', { description: apiErrorMessage(error) });
       }
     } finally {
       stopPolling();
@@ -241,15 +243,19 @@ export default function WorkbookImportModal({ open, onClose }: Props) {
     try {
       await action().unwrap();
     } catch (error) {
-      message.error(apiErrorMessage(error));
+      notify.error('Unable to download workbook', { description: apiErrorMessage(error) });
     }
   };
 
   const beforeUpload = (candidate: UploadFile & File) => {
     if (!candidate.name.toLowerCase().endsWith('.xlsx')) {
-      message.error('Choose an Excel workbook (.xlsx).');
+      notify.warning('Unsupported file format', {
+        description: 'Choose an Excel workbook (.xlsx).',
+      });
     } else if (candidate.size > MAX_BYTES) {
-      message.error('The workbook must not exceed 10 MB.');
+      notify.warning('Workbook exceeds size limit', {
+        description: 'The workbook must not exceed 10 MB.',
+      });
     } else {
       void runCheck(candidate, mode);
     }
@@ -269,10 +275,9 @@ export default function WorkbookImportModal({ open, onClose }: Props) {
   );
 
   const progressPanel = busy && (
-    <Alert
-      type="info"
-      showIcon
-      message={
+    <InlineAlert
+      variant="info"
+      title={
         progress?.phase === 'waiting_lock'
           ? 'Waiting for another import to finish…'
           : activeAction === 'apply'
@@ -321,7 +326,9 @@ export default function WorkbookImportModal({ open, onClose }: Props) {
 
       {step === 0 && (
         <Space direction="vertical" size="middle" style={{ width: '100%' }}>
-          <Alert type="info" showIcon message="One workbook for reference data, spaces and equipment"
+          <InlineAlert
+            variant="info"
+            title="One workbook for reference data, spaces and equipment"
             description={(
               <>
                 To add records, download the <b>template</b>, fill the sheets from left to right and upload it. To change
@@ -329,7 +336,8 @@ export default function WorkbookImportModal({ open, onClose }: Props) {
                 The check lists every problem and saves nothing; the import then saves every row, or nothing if any row
                 has an error.
               </>
-            )} />
+            )}
+          />
           <Space wrap>
             <Button icon={<DownloadOutlined />} loading={downloadingTemplate} onClick={() => download(downloadTemplate)}>
               Download template
@@ -354,27 +362,38 @@ export default function WorkbookImportModal({ open, onClose }: Props) {
           {modePicker}
           {progressPanel}
           {applyProblems.length > 0 ? (
-            <Alert type="error" showIcon message="Nothing was imported"
-              description="The data changed since the check, or the import found new problems. Fix them and check again." />
+            <InlineAlert
+              variant="error"
+              title="Nothing was imported"
+              description="The data changed since the check, or the import found new problems. Fix them and check again."
+            />
           ) : report.isValid && changes === 0 ? (
-            <Alert type="info" showIcon message="Nothing to change"
-              description="Every row matches the data in the system." />
+            <InlineAlert
+              variant="info"
+              title="Nothing to change"
+              description="Every row matches the data in the system."
+            />
           ) : report.isValid ? (
-            <Alert type="success" showIcon message={`Ready: ${changeSummary(report)}`}
+            <InlineAlert
+              variant="success"
+              title={`Ready: ${changeSummary(report)}`}
               description={`${report.summary.existing} rows match the system and stay as they are.${
-                report.summary.warningCount ? ` ${report.summary.warningCount} warnings: read them before importing.` : ''}`} />
+                report.summary.warningCount ? ` ${report.summary.warningCount} warnings: review them before importing.` : ''}`}
+            />
           ) : (
-            <Alert type="error" showIcon
-              message={`${report.summary.errorCount} problems must be fixed before the import`}
+            <InlineAlert
+              variant="error"
+              title={`${report.summary.errorCount} problems must be fixed before the import`}
               description={alreadyExists && mode === 'create'
                 ? 'Some asset tags already exist. To change those records, choose Update existing records.'
                 : 'Fix them in the workbook and upload it again. Nothing has been saved.'}
               action={alreadyExists && mode === 'create'
                 ? <Button size="small" onClick={() => changeMode('upsert')}>Update existing records</Button>
-                : undefined} />
+                : undefined}
+            />
           )}
           {report.unknownSheets.length > 0 && (
-            <Alert type="warning" showIcon message={`Sheets not read: ${report.unknownSheets.join(', ')}`} />
+            <InlineAlert variant="warning" title={`Sheets not read: ${report.unknownSheets.join(', ')}`} />
           )}
           <Typography.Text type="secondary">File: {file?.name} · template {report.templateVersion ?? 'v1'}</Typography.Text>
           <Table<ImportSheetOutcome> size="small" rowKey="key" pagination={false} columns={sheetColumns(report.mode)}
@@ -401,8 +420,11 @@ export default function WorkbookImportModal({ open, onClose }: Props) {
 
       {step === 2 && applied && (
         <Space direction="vertical" size="middle" style={{ width: '100%' }}>
-          <Alert type="success" showIcon message={`Saved: ${changeSummary(applied)}`}
-            description={`${applied.summary.existing} rows matched the system and were left as they are.`} />
+          <InlineAlert
+            variant="success"
+            title={`Saved: ${changeSummary(applied)}`}
+            description={`${applied.summary.existing} rows matched the system and were left as they are.`}
+          />
           <Table<ImportSheetOutcome> size="small" rowKey="key" pagination={false} columns={sheetColumns(applied.mode)}
             dataSource={applied.sheets.filter((sheet) => sheet.rows > 0)} />
         </Space>

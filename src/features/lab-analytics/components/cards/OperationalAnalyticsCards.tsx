@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Alert, DatePicker, Spin, Table, Typography } from 'antd';
+import { DatePicker, Spin, Table, Typography } from 'antd';
+import { InlineAlert } from '@/shared/notifications';
 import dayjs, { type Dayjs } from 'dayjs';
 import {
   useLabsAnalyticsBookedVsUsedRetrieveQuery,
@@ -47,7 +48,7 @@ export function OperationalAnalyticsCards() {
         <section className={styles.card}>
           <header><h3>Booked vs used hours</h3><span>How much booked bench time was actually used</span></header>
           {bookings.isFetching ? <div className={styles.center}><Spin /></div>
-            : bookings.isError ? <Alert type="error" showIcon message="Unable to load booking utilization" action={<a onClick={() => void bookings.refetch()}>Retry</a>} />
+            : bookings.isError ? <InlineAlert variant="error" title="Unable to load booking utilization" onRetry={() => void bookings.refetch()} />
               : bookingData ? (
                 <>
                   <StatGrid>
@@ -71,7 +72,7 @@ export function OperationalAnalyticsCards() {
         <section className={styles.card}>
           <header><h3>Equipment availability</h3><span>Uptime and outages per tracked device</span></header>
           {availability.isFetching ? <div className={styles.center}><Spin /></div>
-            : availability.isError ? <Alert type="error" showIcon message="Unable to load equipment availability" action={<a onClick={() => void availability.refetch()}>Retry</a>} />
+            : availability.isError ? <InlineAlert variant="error" title="Unable to load equipment availability" onRetry={() => void availability.refetch()} />
               : equipmentData ? (
                 <>
                   <StatGrid>

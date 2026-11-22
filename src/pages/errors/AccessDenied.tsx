@@ -1,6 +1,9 @@
-import { Result } from 'antd';
+import { Button, Result } from 'antd';
+import { useNavigate } from 'react-router-dom';
 
 export default function AccessDenied() {
+  const navigate = useNavigate();
+
   return (
     <div
       style={{
@@ -13,8 +16,13 @@ export default function AccessDenied() {
     >
       <Result
         status="403"
-        title="403 Access Denied"
-        subTitle="Sorry, you don't have the permission to access this page. Please contact lab admin if this is a mistake."
+        title="Access denied"
+        subTitle="You do not have permission to view this page. Contact your lab administrator if you believe you should have access."
+        extra={(
+          <Button type="primary" onClick={() => navigate('/dashboard')}>
+            Return to Dashboard
+          </Button>
+        )}
       />
     </div>
   );

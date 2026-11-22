@@ -1,4 +1,5 @@
-import { Form, Modal, Select, message, Space, Button, Alert } from "antd";
+import { Form, Modal, Select, Space, Button } from "antd";
+import { InlineAlert, getApiErrorMessage, notify } from "@/shared/notifications";
 import { useLabsStationsOptionsRetrieveQuery } from "@/shared/api/generated/api";
 import { filterResourceOption, toResourceOption } from "@/components/inputs/ResourceOption";
 import { useGetStationSlotsQuery } from "@/features/spaces/station/api";
@@ -60,14 +61,16 @@ export function BenchPlacementModal({
         },
       }).unwrap();
 
-      message.success(`Placement for ${row.bench.name || row.bench.sku} updated`);
+      notify.success("Bench placement updated", {
+        code: row.bench.sku || undefined,
+        description: row.bench.name || undefined,
+      });
       onSuccess();
       onClose();
     } catch (err: unknown) {
-      const errorMsg =
-        (err as { data?: { message?: string } })?.data?.message ??
-        "Failed to update bench placement";
-      message.error(errorMsg);
+      notify.error("Unable to update bench placement", {
+        description: getApiErrorMessage(err, "Please review the selected location and try again."),
+      });
     }
   };
 
@@ -82,14 +85,16 @@ export function BenchPlacementModal({
         },
       }).unwrap();
 
-      message.success(`Unplaced ${row.bench.name || row.bench.sku} from station`);
+      notify.success("Bench removed from station", {
+        code: row.bench.sku || undefined,
+        description: row.bench.name || undefined,
+      });
       onSuccess();
       onClose();
     } catch (err: unknown) {
-      const errorMsg =
-        (err as { data?: { message?: string } })?.data?.message ??
-        "Failed to unplace bench";
-      message.error(errorMsg);
+      notify.error("Unable to remove bench from station", {
+        description: getApiErrorMessage(err, "Please try again."),
+      });
     }
   };
 
@@ -110,21 +115,14 @@ export function BenchPlacementModal({
       destroyOnHidden
     >
       <div style={{ marginTop: 12 }}>
-        <Alert
-          type="info"
-          showIcon
+        <InlineAlert
+          variant="info"
           style={{ marginBottom: 16 }}
-          message={
-            <span>
-              <strong>Mapping Hierarchy:</strong> Room → Station → Bench Slot
-              {row?.room && (
-                <span style={{ display: "block", marginTop: 4, fontSize: 12, color: "var(--lm-text-secondary)" }}>
-                  Current: {row.room.name || row.room.sku}
-                  {row.station ? ` / ${row.station.name || row.station.sku}` : ""}
-                  {row.station_slot ? ` (Slot ${row.station_slot.slot_code})` : ""}
-                </span>
-              )}
-            </span>
+          title="Mapping hierarchy: Room → Station → Bench Slot"
+          description={
+            row?.room
+              ? `Current: ${row.room.name || row.room.sku}${row.station ? ` / ${row.station.name || row.station.sku}` : ""}${row.station_slot ? ` (Slot ${row.station_slot.slot_code})` : ""}`
+              : undefined
           }
         />
 

@@ -1,5 +1,4 @@
 import {
-  Alert,
   Button,
   Descriptions,
   Drawer,
@@ -17,8 +16,8 @@ import {
   Table,
   Tooltip,
   Typography,
-  message,
 } from 'antd';
+import { InlineAlert, notify } from '@/shared/notifications';
 import { DisconnectOutlined, EditOutlined, LinkOutlined, PlusOutlined, StopOutlined } from '@ant-design/icons';
 import { useState } from 'react';
 import { skipToken } from '@reduxjs/toolkit/query';
@@ -60,9 +59,13 @@ function MeasuresCell({ channel, sourceId }: { channel: Channel; sourceId: numbe
     try {
       await bind({ id: channel.id, sourceId, target_type: target.type, target_id: target.id }).unwrap();
       setOpen(false);
-      void message.success(`Now measuring ${TARGET_TYPE_LABEL[target.type].toLowerCase()} ${target.name ?? ''}`);
+      notify.success('Measurement target updated', {
+        description: `Now measuring ${TARGET_TYPE_LABEL[target.type].toLowerCase()} ${target.name ?? ''}.`,
+      });
     } catch (error) {
-      void message.error(readApiProblem(error).message);
+      notify.error('Unable to update measurement target', {
+        description: readApiProblem(error).message,
+      });
     }
   };
   return (
@@ -88,9 +91,19 @@ function MeasuresCell({ channel, sourceId }: { channel: Channel; sourceId: numbe
       </Popover>
       {channel.measures && (
         <Popconfirm
-          title="Stop linking this measurement?"
+          title="Unlink this measurement?"
           description="Readings are kept but no longer attributed until you link it again."
-          onConfirm={() => unbind({ id: channel.id, sourceId }).unwrap().catch((error) => message.error(readApiProblem(error).message))}
+          okText="Unlink"
+          onConfirm={() =>
+            unbind({ id: channel.id, sourceId })
+              .unwrap()
+              .then(() => notify.success('Measurement unlinked'))
+              .catch((error) =>
+                notify.error('Unable to unlink measurement', {
+                  description: readApiProblem(error).message,
+                }),
+              )
+          }
         >
           <Tooltip title="Unlink">
             <Button size="small" type="text" icon={<DisconnectOutlined />} loading={unbindState.isLoading} aria-label="Unlink" />
@@ -106,7 +119,11 @@ function ChannelsTable({ device }: { device: DeviceDetail }) {
   const patch = (channel: Channel, body: { label?: string; is_enabled?: boolean }) =>
     update({ id: channel.id, sourceId: device.id, body })
       .unwrap()
-      .catch((error) => message.error(readApiProblem(error).message));
+      .catch((error) =>
+        notify.error('Unable to update measurement', {
+          description: readApiProblem(error).message,
+        }),
+      );
   return (
     <Table<Channel>
       size="small"
@@ -165,13 +182,15 @@ function AddSensorModal({ device, open, onClose }: { device: DeviceDetail; open:
           ...(target ? { target_type: target.type, target_id: target.id } : {}),
         },
       }).unwrap();
-      void message.success('Sensor added');
+      notify.success('Sensor added');
       form.resetFields();
       onClose();
     } catch (error) {
       const problem = readApiProblem(error);
       form.setFields(toFormErrors(problem, ['unit_id', 'profile_id', 'measures', 'label'], { target_type: 'measures', target_id: 'measures' }).matched as never);
-      void message.error(problem.message);
+      notify.error('Unable to add sensor', {
+        description: problem.message,
+      });
     }
   };
   return (
@@ -234,14 +253,16 @@ function EditSourceModal({ device, open, onClose }: { device: DeviceDetail; open
           },
         },
       }).unwrap();
-      void message.success('Device updated');
+      notify.success('Telemetry device updated');
       onClose();
     } catch (error) {
       const problem = readApiProblem(error);
       form.setFields(toFormErrors(problem, ['location', 'network_host', 'port', 'model'], {
         install_location_type: 'location', install_location_id: 'location', 'modbus.network_host': 'network_host', 'modbus.port': 'port',
       }).matched as never);
-      void message.error(problem.message);
+      notify.error('Unable to update device', {
+        description: problem.message,
+      });
     }
   };
   return (
@@ -316,7 +337,16 @@ export function DeviceDrawer({ deviceId, onClose, onClaim }: DeviceDrawerProps) 
               description={isSource ? 'Its measurements stop, its IP address is released and history is kept.' : 'It stops covering its room; history is kept.'}
               okButtonProps={{ danger: true }}
               okText="Retire"
-              onConfirm={() => retire(device.id).unwrap().then(() => message.success('Device retired')).catch((error) => message.error(readApiProblem(error).message))}
+              onConfirm={() =>
+                retire(device.id)
+                  .unwrap()
+                  .then(() => notify.success('Telemetry device retired', { code: device.device_uid }))
+                  .catch((error) =>
+                    notify.error('Unable to retire device', {
+                      description: readApiProblem(error).message,
+                    }),
+                  )
+              }
             >
               <Button danger icon={<StopOutlined />} loading={retireState.isLoading}>Retire</Button>
             </Popconfirm>
@@ -324,14 +354,20 @@ export function DeviceDrawer({ deviceId, onClose, onClaim }: DeviceDrawerProps) 
         </Space>
       )}
     >
-      {isError && <Alert type="warning" showIcon title="The device could not be loaded" action={<Button size="small" onClick={() => void refetch()}>Retry</Button>} />}
+      {isError && (
+        <InlineAlert
+          variant="warning"
+          style={{ marginBottom: 16 }}
+          title="Unable to load telemetry device"
+          onRetry={() => void refetch()}
+        />
+      )}
       {!device && isFetching && <Skeleton active />}
       {device && (
         <>
           {device.state.value === 'discovered' && (
-            <Alert
-              type="warning"
-              showIcon
+            <InlineAlert
+              variant="warning"
               style={{ marginBottom: 16 }}
               title="Found on the network, not configured yet"
               description={`Reported by ${device.reported_by?.name ?? 'a gateway'}${device.last_seen_address ? ` at ${device.last_seen_address}` : ''}. Claim it to say what it is and where it is installed.`}

@@ -1,8 +1,9 @@
-import { Alert, Button, Empty, List, Skeleton, Space, Table, Typography } from 'antd';
+import { Button, Empty, List, Skeleton, Space, Table, Typography } from 'antd';
 import { ApiOutlined, ArrowRightOutlined, PlusOutlined } from '@ant-design/icons';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { StatusBadge } from '@/shared/components/StatusBadge';
+import { InlineAlert } from '@/shared/notifications';
 import { useGetTargetTelemetryQuery } from '../api';
 import { DEVICE_STATE_TONE, TARGET_TYPE_LABEL, describeModbus } from '../format';
 import type { Channel, DeviceDetail, TargetType } from '../types';
@@ -24,7 +25,13 @@ export function TargetTelemetryPanel({ type, id, name }: TargetTelemetryPanelPro
   const label = TARGET_TYPE_LABEL[type].toLowerCase();
 
   if (isError) {
-    return <Alert type="warning" showIcon title="Telemetry could not be loaded" action={<Button size="small" onClick={() => void refetch()}>Retry</Button>} />;
+    return (
+      <InlineAlert
+        variant="warning"
+        title="Unable to load telemetry data"
+        onRetry={() => void refetch()}
+      />
+    );
   }
   if (!data && isFetching) return <Skeleton active />;
 

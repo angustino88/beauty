@@ -1,5 +1,6 @@
 import React, { useState, type ReactNode } from 'react';
-import { Alert, Form, message } from 'antd';
+import { Form } from 'antd';
+import { InlineAlert, getApiErrorMessage, notify } from '@/shared/notifications';
 import {
   CheckCircleOutlined,
   ClockCircleOutlined,
@@ -151,19 +152,19 @@ export const ChangeLifecycleModal: React.FC<ChangeLifecycleModalProps> = ({
         }).unwrap();
       }
 
-      message.success('Lifecycle and access updated successfully');
+      notify.success('Lifecycle and access updated');
       setShowRetireConfirm(false);
       setPendingValues(null);
       form.resetFields();
       onSuccess?.();
       onClose();
     } catch (err: unknown) {
-      const errorObj = (err as { data?: { error?: { message?: string }; message?: string } })?.data;
-      const errorMsg =
-        errorObj?.error?.message ||
-        errorObj?.message ||
-        'Failed to update lifecycle status. Please check for active child resources or overlapping schedules.';
-      message.error(errorMsg);
+      notify.error('Unable to update lifecycle status', {
+        description: getApiErrorMessage(
+          err,
+          'Check for active child resources or overlapping schedules and try again.',
+        ),
+      });
       setShowRetireConfirm(false);
     }
   };
@@ -281,11 +282,10 @@ export const ChangeLifecycleModal: React.FC<ChangeLifecycleModalProps> = ({
         onSubmit={() => { if (pendingValues) void executeChange(pendingValues); }}
         onCancel={() => setShowRetireConfirm(false)}
       >
-        <Alert
-          type="error"
-          showIcon
-          message="Retiring is final and cannot be undone!"
-          description="Retiring this resource will end current downtime windows and cancel any planned downtime windows. You will not be able to return this resource to service."
+        <InlineAlert
+          variant="error"
+          title="Retiring this resource is permanent"
+          description="Active downtime windows will end and planned windows will be cancelled. Retired resources cannot be returned to service."
         />
         <p style={{ marginTop: 12 }}>
           Are you sure you want to retire <strong>{resourceType} {resourceName || `#${resourceId}`}</strong>?

@@ -178,7 +178,7 @@ export const useChatWebSocket = ({ onExit }: Options = {}) => {
           case "error":
             setAgentStatus(null);
             setStatus("error");
-            setError(data.message || "An error occurred");
+            setError(data.message || "The assistant could not complete that request. Please try again.");
             break;
         }
       } catch (err) {
@@ -200,7 +200,7 @@ export const useChatWebSocket = ({ onExit }: Options = {}) => {
 
     ws.onerror = () => {
       setStatus("error");
-      setError("Connection failed");
+      setError("Unable to connect to the assistant. Check your connection and try again.");
     };
   }, [send, teardown, stopPing, wipeSession]);
 

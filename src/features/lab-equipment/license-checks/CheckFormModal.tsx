@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
-import { Alert, Input, InputNumber, Modal, Segmented, Select, Switch, message } from 'antd';
+import { Input, InputNumber, Modal, Segmented, Select, Switch } from 'antd';
+import { InlineAlert, normalizeApiError, notify } from '@/shared/notifications';
 import type { LicenseCheckRead, LicenseCheckWrite } from '@/shared/api/generated/api';
 import { useCreateLicenseCheckMutation, useGetLicenseCheckPresetsQuery, useUpdateLicenseCheckMutation } from './api';
 import { TargetPicker } from './TargetPicker';
@@ -18,12 +19,10 @@ const CONFIG_LABELS: Record<ConfigField, string> = {
   carrier: 'Carrier (what holds the licenses)',
 };
 
-/** Field errors of a standard API problem response, as one readable line. */
-function problemMessage(error: unknown, fallback: string): string {
-  const body = (error as { data?: { error?: { message?: string; details?: { field?: string; message?: string }[] } } } | undefined)?.data;
-  const details = body?.error?.details ?? [];
-  const fields = details.map((item) => (item.field ? `${item.field}: ${item.message}` : item.message)).filter(Boolean);
-  return [body?.error?.message, ...fields].filter(Boolean).join(' · ') || fallback;
+function formatCheckError(error: unknown, fallback: string): string {
+  const problem = normalizeApiError(error, fallback);
+  const fields = problem.fields.map((item) => `${item.field}: ${item.message}`);
+  return [problem.message, ...fields].filter(Boolean).join(' · ') || fallback;
 }
 
 function toTargets(check?: LicenseCheckRead): PickedTarget[] {
@@ -83,7 +82,9 @@ function CheckFormDialog({ open, check, canManageLicenseChecks, onClose }: Check
       try {
         parsed[field] = JSON.parse(config[field]);
       } catch {
-        message.error(`${CONFIG_LABELS[field]} is not valid JSON`);
+        notify.warning('Invalid JSON configuration', {
+          description: `${CONFIG_LABELS[field]} must be valid JSON.`,
+        });
         return null;
       }
     }
@@ -110,10 +111,12 @@ function CheckFormDialog({ open, check, canManageLicenseChecks, onClose }: Check
     try {
       if (check) await update({ checkId: check.id, changes: body }).unwrap();
       else await create(body).unwrap();
-      message.success(check ? 'License check saved' : 'License check created');
+      notify.success(check ? 'License check updated' : 'License check created');
       onClose();
     } catch (error) {
-      message.error(problemMessage(error, 'Could not save the license check'));
+      notify.error('Unable to save license check', {
+        description: formatCheckError(error, 'Please review the configuration and try again.'),
+      });
     }
   };
 
@@ -217,7 +220,11 @@ function CheckFormDialog({ open, check, canManageLicenseChecks, onClose }: Check
               </span>
             </>
           ) : (
-            <Alert type="info" showIcon title="Only administrators change what agents run (probe, extraction, carrier)." />
+            <InlineAlert
+              variant="info"
+              compact
+              title="Only administrators can change what agents run (probe, extraction, carrier)."
+            />
           )
         )}
       </div>
