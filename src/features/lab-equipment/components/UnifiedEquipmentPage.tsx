@@ -46,6 +46,7 @@ import {
   renderImageCell,
   renderOwnerCell,
 } from '../shared/columns/sharedColumns';
+import { parseFormApiError } from '../shared/utils/formApiError';
 import { resourcePageIcon } from '@/components/layout/pageIcons';
 import type { IPrimaryOwner } from '../shared/types/equipment.types';
 import { facetToAntdFilters, getFacetOptions } from '../shared/facets/filterFacets';
@@ -279,10 +280,6 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
     setDeleteModal({ item: record, mode: 'standard' });
   }, []);
 
-  const handleOpenForceDeleteModal = useCallback((record: EquipmentItem) => {
-    setDeleteModal({ item: record, mode: 'force' });
-  }, []);
-
   const handleStandardDelete = useCallback(
     async (id: number): Promise<DeleteEquipmentAttemptResult> => {
       try {
@@ -319,7 +316,8 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
         if (apiError?.status === 409 && apiError?.data?.error?.code === 'equipment_in_use') {
           return { blocked: blockers.length > 0 ? blockers : ['in_use'] };
         }
-        const errMsg = apiError?.data?.error?.message ?? apiError?.data?.message ?? 'Failed to delete';
+        const parsed = parseFormApiError(err);
+        const errMsg = parsed?.message ?? apiError?.data?.error?.message ?? apiError?.data?.message ?? 'Failed to delete';
         return { error: errMsg };
       }
     },
@@ -355,12 +353,13 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
         setDeleteModal(null);
         return {};
       } catch (err) {
-        const apiError = (err as {
-          data?: { message?: string; error?: { message?: string } };
-        });
-        return {
-          error: apiError?.data?.error?.message ?? apiError?.data?.message ?? 'Failed to force-delete equipment',
-        };
+        const parsed = parseFormApiError(err);
+        const errMsg =
+          parsed?.message ||
+          parsed?.nonFieldErrors[0] ||
+          Object.values(parsed?.fieldErrors ?? {})[0]?.[0] ||
+          'Failed to force-delete equipment.';
+        return { error: errMsg };
       }
     },
     [config.key, config.singular, forceDeleteEquipment, listData],
@@ -475,7 +474,6 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
       deleting: isDeleting || isForceDeleting,
       onEdit: handleOpenEdit,
       onDelete: handleOpenDeleteModal,
-      onForceDelete: handleOpenForceDeleteModal,
       onHistory: (id) => {
         setHistoryPage(1);
         setHistoryPageSize(10);
@@ -515,7 +513,7 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
         },
       ],
     });
-  }, [canManageLabOperations, isDeleting, isForceDeleting, handleOpenEdit, handleOpenDeleteModal, handleOpenForceDeleteModal, handleOpenStatus, placementForm, setHistoryPage, setHistoryPageSize, setHistoryId, config.supportsAgent, openAgent]);
+  }, [canManageLabOperations, isDeleting, isForceDeleting, handleOpenEdit, handleOpenDeleteModal, handleOpenStatus, placementForm, setHistoryPage, setHistoryPageSize, setHistoryId, config.supportsAgent, openAgent]);
 
   // Columns definition matching complete field parity with all equipment fields
   const columns = useMemo<ColumnsType<EquipmentItem>>(() => {

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Alert, Button, Checkbox, Descriptions, Input, Modal, Space, Tag, Typography } from 'antd';
-import { ExclamationCircleOutlined, WarningOutlined } from '@ant-design/icons';
+import { Button, Checkbox, Input, Modal, Space } from 'antd';
+import { AlertTriangle, ArrowLeft, Check, Cpu, ShieldAlert, Trash2 } from 'lucide-react';
 import type { EquipmentItem } from '../../../types/equipment';
+import styles from './DeleteModal.module.css';
 
 export type DeleteModalMode = 'standard' | 'force';
 
@@ -22,31 +23,43 @@ export interface DeleteEquipmentModalProps {
   onForceDelete: (id: number, reason: string) => Promise<{ error?: string }>;
 }
 
-const BLOCKER_DESCRIPTIONS: Record<string, { label: string; effect: string }> = {
+interface ForceEffectItem {
+  title: string;
+  detail: string;
+}
+
+const BLOCKER_DESCRIPTIONS: Record<string, ForceEffectItem> = {
   bench_assignment: {
-    label: 'Active bench assignment',
-    effect: 'Will be unassigned from its bench immediately',
+    title: 'Active bench assignment',
+    detail: 'Immediately unassigned from its bench.',
   },
   loan: {
-    label: 'Active loan',
-    effect: 'Will be closed as returned with your force-delete reason',
+    title: 'Active equipment loan',
+    detail: 'Closed as returned with your operator audit reason.',
   },
   license_assignment: {
-    label: 'Active license seat(s)',
-    effect: 'Will be released back to their license pools',
+    title: 'Active license seat(s)',
+    detail: 'Released back to their license pools.',
   },
   booking: {
-    label: 'Active booking(s) / reservation(s)',
-    effect: 'Will be cancelled with your force-delete reason',
+    title: 'Active booking(s) / reservation(s)',
+    detail: 'Cancelled with your operator audit reason.',
   },
 };
 
-const ALL_FORCE_EFFECTS = [
-  'Unassign from any active bench or resting placement',
-  'Close any active loan as returned',
-  'Release all assigned license seats',
-  'Cancel all active bookings and reservations',
-  'Soft-delete the equipment and record an operator audit entry',
+const ALL_FORCE_EFFECTS: ForceEffectItem[] = [
+  {
+    title: 'Unassign bench or resting placement',
+    detail: 'Removes any active bench assignment or room/station placement.',
+  },
+  {
+    title: 'Close active loan & release licenses',
+    detail: 'Marks any active loan as returned and returns assigned license seats to their pools.',
+  },
+  {
+    title: 'Cancel bookings, log audit & soft-delete',
+    detail: 'Cancels active reservations, records an operator audit entry, and soft-deletes the unit.',
+  },
 ];
 
 const REASON_MIN_LENGTH = 3;
@@ -73,13 +86,14 @@ export const DeleteEquipmentModal: React.FC<DeleteEquipmentModalProps> = ({
 
   if (!item) return null;
 
-  const confirmToken = (item.sku?.trim() || item.name?.trim() || `#${item.id}`);
+  const confirmToken = item.sku?.trim() || item.name?.trim() || `#${item.id}`;
   const displayLabel = item.sku || item.name || `${singularLabel} #${item.id}`;
   const trimmedReason = reason.trim();
+  const tokenMatched = typedConfirm.trim() === confirmToken;
   const canProceedForce =
     trimmedReason.length >= REASON_MIN_LENGTH &&
     trimmedReason.length <= REASON_MAX_LENGTH &&
-    typedConfirm.trim() === confirmToken &&
+    tokenMatched &&
     acknowledged;
 
   const busy = deleting || forceDeleting;
@@ -129,6 +143,25 @@ export const DeleteEquipmentModal: React.FC<DeleteEquipmentModalProps> = ({
   const isForce = mode === 'force';
   const isFinalStep = isForce && forceStep === 2;
 
+  const effectsToShow: ForceEffectItem[] =
+    blockers.length > 0
+      ? blockers.map((key) => BLOCKER_DESCRIPTIONS[key] ?? { title: key, detail: 'Will be released or cancelled immediately.' })
+      : ALL_FORCE_EFFECTS;
+
+  const headerTitle = isFinalStep
+    ? 'Confirm force delete'
+    : isForce
+      ? `Force delete ${singularLabel.toLowerCase()}`
+      : `Delete ${singularLabel.toLowerCase()}`;
+
+  const headerSubtitle = isFinalStep
+    ? `Final operator verification for ${displayLabel}`
+    : isForce
+      ? blockers.length > 0
+        ? `Standard delete blocked — active lab records are linked to ${displayLabel}`
+        : `Lab operator override with automatic release & audit logging`
+      : `Remove ${displayLabel} from active inventory`;
+
   return (
     <Modal
       open={open}
@@ -138,28 +171,18 @@ export const DeleteEquipmentModal: React.FC<DeleteEquipmentModalProps> = ({
       destroyOnHidden
       width={isForce ? 580 : 480}
       title={
-        <Space size={8}>
-          {isForce ? (
-            <WarningOutlined style={{ color: 'var(--lm-danger-solid, #ff4d4f)' }} />
-          ) : (
-            <ExclamationCircleOutlined style={{ color: 'var(--lm-warning-solid, #faad14)' }} />
-          )}
-          <span>
-            {isFinalStep
-              ? `Final confirmation: Force delete ${displayLabel}`
-              : isForce
-                ? `Force delete ${displayLabel}`
-                : `Delete ${displayLabel}?`}
-          </span>
-          {isForce && (
-            <Tag color={isFinalStep ? 'red' : 'volcano'} style={{ marginInlineStart: 4 }}>
-              Step {forceStep} of 2
-            </Tag>
-          )}
-        </Space>
+        <div className={styles.modalHeader}>
+          <div className={`${styles.headerIcon} ${isForce ? styles.headerIconDanger : styles.headerIconWarning}`}>
+            {isForce ? <ShieldAlert /> : <Trash2 />}
+          </div>
+          <div className={styles.headerCopy}>
+            <span className={styles.headerTitle}>{headerTitle}</span>
+            <span className={styles.headerSubtitle}>{headerSubtitle}</span>
+          </div>
+        </div>
       }
       footer={
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+        <div className={styles.footerRow}>
           <div>
             {!isForce ? (
               <Button
@@ -174,36 +197,37 @@ export const DeleteEquipmentModal: React.FC<DeleteEquipmentModalProps> = ({
               </Button>
             ) : isFinalStep ? (
               <Button
-                type="link"
+                type="text"
                 size="small"
-                style={{ paddingInline: 0 }}
+                icon={<ArrowLeft size={14} />}
                 disabled={busy}
                 onClick={() => {
                   setErrorMessage(null);
                   setForceStep(1);
                 }}
               >
-                Back to edit details
+                Edit details
               </Button>
             ) : blockers.length === 0 ? (
               <Button
-                type="link"
+                type="text"
                 size="small"
-                style={{ paddingInline: 0 }}
+                icon={<ArrowLeft size={14} />}
                 disabled={busy}
                 onClick={switchToStandard}
               >
-                Back to standard delete
+                Standard delete
               </Button>
             ) : null}
           </div>
-          <Space>
+
+          <Space size={8}>
             <Button onClick={onCancel} disabled={busy}>
               Cancel
             </Button>
             {!isForce ? (
               <Button type="primary" danger loading={deleting} onClick={() => void handleStandardConfirm()}>
-                Delete
+                Delete {singularLabel}
               </Button>
             ) : !isFinalStep ? (
               <Button
@@ -212,7 +236,7 @@ export const DeleteEquipmentModal: React.FC<DeleteEquipmentModalProps> = ({
                 disabled={!canProceedForce || busy}
                 onClick={handleProceedToFinalStep}
               >
-                Continue to final confirmation
+                Review &amp; confirm
               </Button>
             ) : (
               <Button
@@ -222,77 +246,86 @@ export const DeleteEquipmentModal: React.FC<DeleteEquipmentModalProps> = ({
                 disabled={!canProceedForce}
                 onClick={() => void handleForceConfirm()}
               >
-                Yes, force delete permanently
+                Confirm force delete
               </Button>
             )}
           </Space>
         </div>
       }
     >
-      <Space orientation="vertical" size={16} style={{ width: '100%' }}>
-        <Descriptions size="small" column={2} bordered>
-          <Descriptions.Item label="SKU">
-            <Typography.Text code>{item.sku || '—'}</Typography.Text>
-          </Descriptions.Item>
-          <Descriptions.Item label="ID">#{item.id}</Descriptions.Item>
-          <Descriptions.Item label="Name" span={2}>
-            {item.name || '—'}
-          </Descriptions.Item>
-        </Descriptions>
+      <div className={styles.bodyStack}>
+        {isForce && (
+          <div className={styles.stepper} role="list" aria-label="Force delete confirmation steps">
+            <div
+              role="listitem"
+              className={`${styles.stepItem} ${isFinalStep ? styles.stepDone : styles.stepActive}`}
+            >
+              <span className={styles.stepBadge}>
+                {isFinalStep ? <Check /> : '1'}
+              </span>
+              <span>Impact &amp; audit details</span>
+            </div>
+            <div
+              role="listitem"
+              className={`${styles.stepItem} ${isFinalStep ? styles.stepActive : ''}`}
+            >
+              <span className={styles.stepBadge}>2</span>
+              <span>Final confirmation</span>
+            </div>
+          </div>
+        )}
+
+        <div className={styles.identityCard}>
+          <div className={styles.identityLeft}>
+            <span className={styles.identityEyebrow}>
+              <Cpu size={13} />
+              <span>{singularLabel}</span>
+            </span>
+            <span className={styles.identityName}>{item.name || item.sku || `${singularLabel} #${item.id}`}</span>
+          </div>
+          <div className={styles.identityMeta}>
+            {item.sku && <span className={styles.skuPill}>{item.sku}</span>}
+            <span className={styles.idPill}>#{item.id}</span>
+          </div>
+        </div>
 
         {!isForce ? (
-          <Typography.Paragraph style={{ marginBottom: 0 }}>
+          <p className={styles.hintCopy}>
             This removes the {singularLabel.toLowerCase()} from active inventory and cannot be undone from the UI.
-            If it still has an active bench assignment, loan, license seat, or booking, standard delete will be blocked
-            and you can choose to force-delete it instead.
-          </Typography.Paragraph>
+            If it still has an active bench assignment, loan, license seat, or booking, standard delete will be
+            blocked and you can choose to force-delete it instead.
+          </p>
         ) : !isFinalStep ? (
           <>
-            <Alert
-              type="error"
-              showIcon
-              title={
-                blockers.length > 0
-                  ? 'Standard delete blocked — active lab records are linked to this unit'
-                  : 'Destructive lab operator override'
-              }
-              description={
-                blockers.length > 0 ? (
-                  <div style={{ marginTop: 4 }}>
-                    <div style={{ marginBottom: 6 }}>
-                      Force-deleting will immediately release or cancel the following active records:
+            <div className={styles.impactCard}>
+              <div className={styles.impactHeader}>
+                <AlertTriangle />
+                <span>
+                  {blockers.length > 0
+                    ? `Active records that will be released or cancelled on ${displayLabel}`
+                    : `Immediate side effects of force-deleting ${displayLabel}`}
+                </span>
+              </div>
+              <ul className={styles.impactList}>
+                {effectsToShow.map((effect) => (
+                  <li key={effect.title} className={styles.impactRow}>
+                    <span className={styles.impactDot} aria-hidden="true" />
+                    <div className={styles.impactText}>
+                      <span className={styles.impactTitle}>{effect.title}</span>
+                      <span className={styles.impactDetail}>{effect.detail}</span>
                     </div>
-                    <ul style={{ margin: 0, paddingLeft: 18 }}>
-                      {blockers.map((key) => {
-                        const info = BLOCKER_DESCRIPTIONS[key];
-                        return (
-                          <li key={key}>
-                            <strong>{info?.label ?? key}</strong>
-                            {info?.effect ? ` — ${info.effect}` : ''}
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </div>
-                ) : (
-                  <div style={{ marginTop: 4 }}>
-                    <div style={{ marginBottom: 6 }}>
-                      Force-deleting bypasses standard dependency checks and will immediately:
-                    </div>
-                    <ul style={{ margin: 0, paddingLeft: 18 }}>
-                      {ALL_FORCE_EFFECTS.map((effect) => (
-                        <li key={effect}>{effect}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )
-              }
-            />
+                  </li>
+                ))}
+              </ul>
+            </div>
 
-            <div>
-              <Typography.Text strong style={{ display: 'block', marginBottom: 6 }}>
-                Reason for force delete <Typography.Text type="danger">*</Typography.Text>
-              </Typography.Text>
+            <div className={styles.fieldGroup}>
+              <div className={styles.fieldLabelRow}>
+                <span className={styles.fieldLabel}>
+                  Audit reason<span className={styles.requiredMark}>*</span>
+                </span>
+                <span className={styles.fieldHint}>Recorded in resource change history (min 3 chars)</span>
+              </div>
               <Input.TextArea
                 rows={2}
                 maxLength={REASON_MAX_LENGTH}
@@ -304,54 +337,77 @@ export const DeleteEquipmentModal: React.FC<DeleteEquipmentModalProps> = ({
               />
             </div>
 
-            <div>
-              <Typography.Text strong style={{ display: 'block', marginBottom: 6 }}>
-                Type <Tag style={{ marginInline: 2, fontFamily: 'monospace' }}>{confirmToken}</Tag> to confirm{' '}
-                <Typography.Text type="danger">*</Typography.Text>
-              </Typography.Text>
+            <div className={styles.fieldGroup}>
+              <div className={styles.fieldLabelRow}>
+                <span className={styles.fieldLabel}>
+                  Type <span className={styles.tokenChip}>{confirmToken}</span> to confirm
+                  <span className={styles.requiredMark}>*</span>
+                </span>
+                {tokenMatched && (
+                  <span className={styles.matchBadge}>
+                    <Check /> Matched
+                  </span>
+                )}
+              </div>
               <Input
-                placeholder={confirmToken}
+                placeholder={`Enter ${confirmToken}`}
                 value={typedConfirm}
                 onChange={(event) => setTypedConfirm(event.target.value)}
                 disabled={busy}
                 autoComplete="off"
+                status={typedConfirm.length > 0 && !tokenMatched ? 'warning' : undefined}
               />
             </div>
 
-            <Checkbox
-              checked={acknowledged}
-              onChange={(event) => setAcknowledged(event.target.checked)}
-              disabled={busy}
-            >
-              I confirm as a lab operator that I want to force-delete <strong>{displayLabel}</strong> and
-              immediately release or cancel all linked records.
-            </Checkbox>
+            <label className={`${styles.ackCard} ${acknowledged ? styles.ackCardChecked : ''}`}>
+              <Checkbox
+                checked={acknowledged}
+                onChange={(event) => setAcknowledged(event.target.checked)}
+                disabled={busy}
+              />
+              <span className={styles.ackCopy}>
+                I confirm as a lab operator that I want to force-delete <strong>{displayLabel}</strong> and
+                immediately release or cancel all linked records.
+              </span>
+            </label>
           </>
         ) : (
           <>
-            <Alert
-              type="error"
-              showIcon
-              title="Final confirmation required"
-              description={
-                <div>
-                  You are about to permanently force-delete <strong>{displayLabel}</strong>. This action cannot
-                  be undone from the UI and will immediately release or cancel every active placement, loan,
-                  license seat, and reservation on this unit.
+            <div className={styles.dangerBanner} role="status">
+              <ShieldAlert />
+              <div>
+                <div className={styles.dangerBannerTitle}>Permanent operator override</div>
+                <div className={styles.dangerBannerCopy}>
+                  This immediately removes <strong>{displayLabel}</strong> from active inventory, releases all
+                  active placements, loans, and license seats, and cancels reserving bookings. This cannot be
+                  undone from the UI.
                 </div>
-              }
-            />
-            <Descriptions size="small" column={1} bordered>
-              <Descriptions.Item label="Confirmed identifier">
-                <Typography.Text code>{confirmToken}</Typography.Text>
-              </Descriptions.Item>
-              <Descriptions.Item label="Audit reason">{trimmedReason}</Descriptions.Item>
-            </Descriptions>
+              </div>
+            </div>
+
+            <div className={styles.reviewCard}>
+              <div className={styles.reviewRow}>
+                <span className={styles.reviewLabel}>Target {singularLabel.toLowerCase()}</span>
+                <span className={styles.reviewValue}>
+                  <span className={styles.skuPill}>{confirmToken}</span>{' '}
+                  {item.name && item.name !== confirmToken ? item.name : null}
+                </span>
+              </div>
+              <div className={styles.reviewRow}>
+                <span className={styles.reviewLabel}>Audit reason</span>
+                <div className={styles.reasonQuote}>{trimmedReason}</div>
+              </div>
+            </div>
           </>
         )}
 
-        {errorMessage && <Alert type="error" showIcon title={errorMessage} />}
-      </Space>
+        {errorMessage && (
+          <div className={styles.errorBox} role="alert">
+            <AlertTriangle />
+            <span>{errorMessage}</span>
+          </div>
+        )}
+      </div>
     </Modal>
   );
 };

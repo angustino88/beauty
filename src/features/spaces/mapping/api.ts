@@ -13,7 +13,12 @@ import type {
   ResourceMappingParams,
   ResourceMappingRow,
 } from "./types";
-import { mapBenchMappingList, mapResourceMappingDataToRows } from "./mapper";
+import {
+  mapBenchMappingList,
+  mapResourceMappingDataToRows,
+  mapRoomMappingStations,
+  type RoomAssignedStationItem,
+} from "./mapper";
 
 const TAG = "ResourceMapping";
 
@@ -61,6 +66,30 @@ export const mappingApi = baseApi.injectEndpoints({
         return rows[0] ?? null;
       },
       providesTags: (_res, _err, id) => generateItemTag(TAG, id),
+    }),
+
+    getStationMapping: build.query<ResourceMappingRow[], number>({
+      query: (stationId) => ({
+        url: `/api/labs/stations/${stationId}/mapping`,
+        params: { page_size: 100 },
+      }),
+      transformResponse: (res: unknown) => mapResourceMappingDataToRows(res),
+      providesTags: (_res, _err, id) => [
+        { type: "Station", id },
+        { type: TAG, id: "LIST" },
+      ],
+    }),
+
+    getRoomMapping: build.query<RoomAssignedStationItem[], number>({
+      query: (roomId) => ({
+        url: `/api/labs/rooms/${roomId}/mapping`,
+        params: { page_size: 100 },
+      }),
+      transformResponse: (res: unknown, _meta, roomId) => mapRoomMappingStations(res, roomId),
+      providesTags: (_res, _err, id) => [
+        { type: "Room", id },
+        { type: TAG, id: "LIST" },
+      ],
     }),
 
     placeBench: build.mutation<void, { benchId: number; body: BenchPlacementPayload }>({
@@ -157,6 +186,8 @@ export const {
   useGetEquipmentMappingQuery,
   useLazyGetMappingsQuery,
   useGetBenchMappingQuery,
+  useGetStationMappingQuery,
+  useGetRoomMappingQuery,
   usePlaceBenchMutation,
   useAssignEquipmentMutation,
   useUnassignEquipmentMutation,

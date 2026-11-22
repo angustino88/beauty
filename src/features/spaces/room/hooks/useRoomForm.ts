@@ -81,7 +81,13 @@ export function useRoomForm() {
             );
             return { ok: true };
         } catch (err) {
-            return { ok: false, error: slotErrorText(err) || 'Failed to force-delete room.' };
+            const parsed = parseFormApiError(err);
+            const errMsg =
+                parsed?.message ||
+                parsed?.nonFieldErrors[0] ||
+                Object.values(parsed?.fieldErrors ?? {})[0]?.[0] ||
+                'Failed to force-delete room.';
+            return { ok: false, error: errMsg };
         }
     };
 

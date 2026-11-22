@@ -124,7 +124,6 @@ export default function BenchPage() {
     onEdit: (id) => setEditingBench(table.rows.find((bench) => bench.id === id) ?? null),
     deleting: form.deleting || form.forceDeleting,
     onDelete: (_id, record) => setDeleteModal({ item: record, mode: 'standard' }),
-    onForceDelete: (record) => setDeleteModal({ item: record, mode: 'force' }),
     onPrint: (item) => printDeviceLabel({ sku: item.sku, name: item.name }),
   });
 

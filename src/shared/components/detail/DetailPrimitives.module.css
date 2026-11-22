@@ -74,10 +74,16 @@
 
 /* Linked resources */
 .linked { display: flex; flex-direction: column; margin: 0; padding: 0; overflow: hidden; list-style: none; background: var(--lm-surface); border: 1px solid var(--lm-border); border-radius: 10px; }
-.linked li { display: flex; min-width: 0; align-items: center; gap: 10px; padding: 10px 12px; }
+.linked li { display: flex; min-width: 0; align-items: center; gap: 10px; padding: 10px 12px; transition: background-color 0.12s ease; }
 .linked li + li { border-top: 1px solid var(--lm-border-subtle); }
+.linked li:hover { background: var(--lm-surface-subtle); }
 .linkedTitle { min-width: 0; flex: 1; overflow: hidden; color: var(--lm-text); font-size: 13px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.linkedLink { color: var(--lm-primary-fg); text-decoration: none; }
+.linkedLink:hover { text-decoration: underline; }
 .linkedMeta { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 6px; color: var(--lm-text-tertiary); font-size: 12px; }
+.linkedPill { display: inline-flex; align-items: center; padding: 2px 7px; border-radius: 999px; font-size: 11px; font-weight: 600; color: var(--lm-text-secondary); background: var(--lm-surface-muted); border: 1px solid var(--lm-border-subtle); white-space: nowrap; }
+.linkedPillAccent { color: var(--lm-primary-fg); background: color-mix(in srgb, var(--lm-primary) 10%, var(--lm-surface)); border-color: color-mix(in srgb, var(--lm-primary) 28%, var(--lm-border)); }
+.linkedEmpty { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 18px 14px; color: var(--lm-text-tertiary); font-size: 12.5px; background: var(--lm-surface-subtle); border: 1px dashed var(--lm-border); border-radius: 10px; text-align: center; }
 .code { flex: 0 0 auto; padding: 2px 6px; color: var(--lm-text-secondary); font-family: var(--lm-font-mono); font-size: 11px; font-weight: 600; background: var(--lm-surface-muted); border: 1px solid var(--lm-border); border-radius: 5px; }
 
 @media (max-width: 600px) {

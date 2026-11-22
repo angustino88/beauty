@@ -225,7 +225,6 @@ export function createActionsRenderer<TRecord extends { id: number }>(options: {
   deleting: boolean;
   onEdit: (id: number) => void;
   onDelete: (id: number, record: TRecord) => void;
-  onForceDelete?: (record: TRecord) => void;
   onHistory?: (id: number, record?: TRecord) => void;
   onPrint?: (record: TRecord) => void;
   extraMenuItems?: (record: TRecord) => Array<{ key: string; label: string; onClick: () => void }>;
@@ -254,19 +253,6 @@ export function createActionsRenderer<TRecord extends { id: number }>(options: {
       });
     }
     menuItems.push(...(options.extraMenuItems?.(record) ?? []));
-    if (options.canManageLabOperations && options.onForceDelete) {
-      const onForceDelete = options.onForceDelete;
-      menuItems.push(
-        { type: 'divider' },
-        {
-          key: 'force-delete',
-          label: 'Force delete…',
-          icon: <DeleteOutlined />,
-          danger: true,
-          onClick: () => onForceDelete(record),
-        },
-      );
-    }
 
     return (
       <Space size={4} onClick={(event) => event.stopPropagation()}>

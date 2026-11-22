@@ -149,10 +149,26 @@ export function NoteBox({ title = 'Note', children }: { title?: string; children
   );
 }
 
+export interface LinkedListBadge {
+  label: string;
+  accent?: boolean;
+}
+
+export interface LinkedListItem {
+  key: string | number;
+  code?: ReactNode;
+  title: ReactNode;
+  meta?: ReactNode;
+  badges?: LinkedListBadge[];
+  to?: string | null;
+}
+
 export function LinkedList({
   items,
+  onItemClick,
 }: {
-  items: Array<{ key: string | number; code?: ReactNode; title: ReactNode; meta?: ReactNode; to?: string | null }>;
+  items: LinkedListItem[];
+  onItemClick?: () => void;
 }) {
   return (
     <ul className={styles.linked}>
@@ -160,17 +176,37 @@ export function LinkedList({
         <li key={item.key}>
           {item.code && <span className={styles.code}>{item.code}</span>}
           {item.to ? (
-            <Link to={item.to} className={styles.linkedTitle} style={{ color: 'var(--lm-accent, #1677ff)' }}>
+            <Link
+              to={item.to}
+              className={`${styles.linkedTitle} ${styles.linkedLink}`}
+              onClick={onItemClick}
+            >
               {item.title}
             </Link>
           ) : (
             <span className={styles.linkedTitle}>{item.title}</span>
           )}
-          {item.meta && <span className={styles.linkedMeta}>{item.meta}</span>}
+          {(item.badges?.length || item.meta) && (
+            <span className={styles.linkedMeta}>
+              {item.badges?.map((badge) => (
+                <span
+                  key={badge.label}
+                  className={`${styles.linkedPill} ${badge.accent ? styles.linkedPillAccent : ''}`}
+                >
+                  {badge.label}
+                </span>
+              ))}
+              {item.meta}
+            </span>
+          )}
         </li>
       ))}
     </ul>
   );
+}
+
+export function LinkedEmpty({ children }: { children: ReactNode }) {
+  return <div className={styles.linkedEmpty}>{children}</div>;
 }
 
 export function Code({ children }: { children: ReactNode }) {

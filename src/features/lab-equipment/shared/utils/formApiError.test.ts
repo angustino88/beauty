@@ -41,3 +41,26 @@ test('uses detail-level non-field message instead of the generic envelope messag
 
   assert.equal(result?.message, 'Equipment cannot be created for this category.');
 });
+
+test('formats RTK Query PARSING_ERROR HTML 404 responses cleanly instead of raw SyntaxError', () => {
+  const result = parseFormApiError({
+    status: 'PARSING_ERROR',
+    originalStatus: 404,
+    data: '<!DOCTYPE html><html><title>Page not found</title></html>',
+    error: 'SyntaxError: Unexpected token \'<\', "<!DOCTYPE "... is not valid JSON',
+  });
+
+  assert.ok(result?.message?.includes('HTTP 404'));
+  assert.ok(!result?.message?.includes('<!DOCTYPE'));
+});
+
+test('formats RTK Query PARSING_ERROR HTML 500 responses cleanly', () => {
+  const result = parseFormApiError({
+    status: 'PARSING_ERROR',
+    originalStatus: 500,
+    data: '<!DOCTYPE html><html>Server Error</html>',
+    error: 'SyntaxError: Unexpected token \'<\'',
+  });
+
+  assert.ok(result?.message?.includes('HTTP 500'));
+});

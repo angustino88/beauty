@@ -16,7 +16,7 @@ import {
   Typography,
   message,
 } from "antd";
-import { DeleteOutlined, ExportOutlined, PlusOutlined } from "@ant-design/icons";
+import { DeleteOutlined, PlusOutlined } from "@ant-design/icons";
 import { usePagedOptions } from "@/shared/hooks/usePagedOptions";
 import {
   useAssignEquipmentMutation,
@@ -160,7 +160,7 @@ export function EquipmentAssignmentModal({
                         {item.sku && <Typography.Text code style={{ fontSize: 12 }}>{item.sku}</Typography.Text>}
                         {targetPath ? (
                           <Link to={targetPath} onClick={onClose} style={{ fontWeight: 600 }}>
-                            {item.name || item.sku} <ExportOutlined style={{ fontSize: 11 }} />
+                            {item.name || item.sku}
                           </Link>
                         ) : (
                           <strong>{item.name || item.sku}</strong>

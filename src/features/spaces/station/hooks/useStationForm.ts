@@ -98,7 +98,13 @@ export function useStationForm() {
       );
       return { ok: true };
     } catch (err) {
-      return { ok: false, error: errorText(err) || "Failed to force-delete station." };
+      const parsed = parseFormApiError(err);
+      const errMsg =
+        parsed?.message ||
+        parsed?.nonFieldErrors[0] ||
+        Object.values(parsed?.fieldErrors ?? {})[0]?.[0] ||
+        "Failed to force-delete station.";
+      return { ok: false, error: errMsg };
     }
   };
 

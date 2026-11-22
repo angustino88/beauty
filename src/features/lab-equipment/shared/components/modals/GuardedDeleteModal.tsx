@@ -1,14 +1,18 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Alert, Button, Checkbox, Descriptions, Input, Modal, Space, Tag, Typography } from 'antd';
+import { Alert, Button, Checkbox, Input, Modal, Space, Tag, Typography } from 'antd';
+import { LinkOutlined, SettingOutlined } from '@ant-design/icons';
 import {
-  ExclamationCircleOutlined,
-  ExportOutlined,
-  LinkOutlined,
-  SettingOutlined,
-  StopOutlined,
-  WarningOutlined,
-} from '@ant-design/icons';
+  AlertTriangle,
+  ArrowLeft,
+  Building2,
+  Check,
+  Cpu,
+  KeyRound,
+  Server,
+  ShieldAlert,
+  Trash2,
+} from 'lucide-react';
 import { EQUIPMENT_CATEGORIES } from '../../../categories/registry';
 import type { EquipmentCategoryKey } from '../../../types/equipment';
 import {
@@ -17,6 +21,7 @@ import {
   type BlockedDeleteGroup,
   type ParsedBlockedDeleteError,
 } from '../../utils/deleteBlockers';
+import styles from './DeleteModal.module.css';
 
 export type GuardedDeleteResourceKind = 'room' | 'station' | 'bench' | 'license';
 export type GuardedDeleteInitialMode = 'standard' | 'force';
@@ -54,23 +59,44 @@ export interface GuardedDeleteModalProps {
 const REASON_MIN_LENGTH = 3;
 const REASON_MAX_LENGTH = 500;
 
+interface ForceEffectItem {
+  title: string;
+  detail: string;
+}
+
 interface ResourceCopy {
   singular: string;
   preconditionHint: string;
-  forceEffects: string[];
+  forceEffects: ForceEffectItem[];
   childStatusSummary: string;
   reasonPlaceholder: string;
 }
+
+const RESOURCE_ICONS: Record<GuardedDeleteResourceKind, React.ReactNode> = {
+  room: <Building2 size={13} />,
+  station: <Server size={13} />,
+  bench: <Cpu size={13} />,
+  license: <KeyRound size={13} />,
+};
 
 const RESOURCE_COPY: Record<GuardedDeleteResourceKind, ResourceCopy> = {
   room: {
     singular: 'Room',
     preconditionHint:
-      'Rooms cannot be standard-deleted while stations or resting equipment are still placed inside. If you want to stop using this room without removing it, consider retiring it via Change lifecycle instead.',
+      'Rooms cannot be standard-deleted while stations or resting equipment remain placed inside. To stop using this room without removing it, retire it via Change lifecycle instead.',
     forceEffects: [
-      'Detach all child stations from this room (room & slot cleared; station lifecycle status stays unchanged and shows as "Needs placement" in Space Mapping)',
-      'Clear any resting equipment placements directly in this room (equipment stays In service / Available)',
-      'Close open downtime windows on this room, record an operator audit entry, and soft-delete the room',
+      {
+        title: 'Detach all child stations',
+        detail: 'Room & slot links are cleared; each station keeps its lifecycle status and appears as "Needs placement" in Space Mapping.',
+      },
+      {
+        title: 'Clear resting equipment placements',
+        detail: 'Any equipment kept directly in this room is detached and stays In service / Available.',
+      },
+      {
+        title: 'Close downtime, log audit & soft-delete',
+        detail: 'Open room downtime windows are closed, an operator audit entry is recorded, and the room is soft-deleted.',
+      },
     ],
     childStatusSummary:
       'Child stations keep their lifecycle status (detached / Needs placement); resting equipment stays In service / Available.',
@@ -79,11 +105,20 @@ const RESOURCE_COPY: Record<GuardedDeleteResourceKind, ResourceCopy> = {
   station: {
     singular: 'Station',
     preconditionHint:
-      'Stations cannot be standard-deleted while configured benches or resting equipment are still placed here. If you want to stop using this station without removing it, consider retiring it via Change lifecycle instead.',
+      'Stations cannot be standard-deleted while configured benches or resting equipment remain placed here. To stop using this station without removing it, retire it via Change lifecycle instead.',
     forceEffects: [
-      'Detach all child benches from this station (station & slot cleared; bench lifecycle status stays unchanged and shows as "Needs placement" in Space Mapping)',
-      'Clear any resting equipment placements directly at this station (equipment stays In service / Available)',
-      'Release this station’s room slot, close open downtime windows, record an operator audit entry, and soft-delete the station',
+      {
+        title: 'Detach all child benches',
+        detail: 'Station & slot links are cleared; each bench keeps its lifecycle status and appears as "Needs placement" in Space Mapping.',
+      },
+      {
+        title: 'Clear resting equipment & release room slot',
+        detail: 'Resting equipment stays In service / Available, and this station’s room slot is freed immediately.',
+      },
+      {
+        title: 'Close downtime, log audit & soft-delete',
+        detail: 'Open station downtime windows are closed, an operator audit entry is recorded, and the station is soft-deleted.',
+      },
     ],
     childStatusSummary:
       'Child benches keep their lifecycle status (detached / Needs placement); resting equipment stays In service / Available.',
@@ -94,9 +129,18 @@ const RESOURCE_COPY: Record<GuardedDeleteResourceKind, ResourceCopy> = {
     preconditionHint:
       'Benches cannot be standard-deleted while equipment is assigned or active bookings exist. Move equipment and cancel active bookings first, or retire the bench via Change lifecycle.',
     forceEffects: [
-      'Unassign all assigned equipment from this bench (equipment stays In service and display status becomes Available)',
-      'Cancel all active bench bookings with your force-delete reason',
-      'Release this bench’s station slot, close open downtime windows, record an operator audit entry, and soft-delete the bench',
+      {
+        title: 'Unassign all bench equipment',
+        detail: 'Assigned equipment stays In service and its display status returns to Available.',
+      },
+      {
+        title: 'Cancel all active bench bookings',
+        detail: 'Active and upcoming bookings are cancelled with your operator audit reason attached.',
+      },
+      {
+        title: 'Release station slot, log audit & soft-delete',
+        detail: 'Station slot is freed, open downtime windows are closed, an operator audit entry is recorded, and the bench is soft-deleted.',
+      },
     ],
     childStatusSummary:
       'Assigned equipment becomes unassigned (status → Available); active bench bookings are cancelled.',
@@ -235,14 +279,15 @@ export const GuardedDeleteModal: React.FC<GuardedDeleteModalProps> = ({
 
   const copy = RESOURCE_COPY[resourceKind];
   const displayLabel = item.sku || item.name || `${copy.singular} #${item.id}`;
-  const confirmToken = (item.sku?.trim() || item.name?.trim() || `#${item.id}`);
-  const targetSearchToken = (item.sku?.trim() || item.name?.trim() || '');
+  const confirmToken = item.sku?.trim() || item.name?.trim() || `#${item.id}`;
+  const targetSearchToken = item.sku?.trim() || item.name?.trim() || '';
   const trimmedReason = reason.trim();
+  const tokenMatched = typedConfirm.trim() === confirmToken;
   const canProceedForce =
     supportsForceDelete &&
     trimmedReason.length >= REASON_MIN_LENGTH &&
     trimmedReason.length <= REASON_MAX_LENGTH &&
-    typedConfirm.trim() === confirmToken &&
+    tokenMatched &&
     acknowledged;
   const busy = deleting || forceDeleting;
 
@@ -289,33 +334,12 @@ export const GuardedDeleteModal: React.FC<GuardedDeleteModalProps> = ({
     const remaining = Math.max(0, group.total - group.entries.length);
 
     return (
-      <div
-        key={group.key}
-        style={{
-          border: '1px solid var(--lm-border-subtle, #e5e7eb)',
-          borderRadius: 10,
-          overflow: 'hidden',
-          background: 'var(--lm-surface-elevated, #ffffff)',
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: 8,
-            padding: '10px 12px',
-            background: 'var(--lm-surface-subtle, #fafafa)',
-            borderBottom: group.entries.length > 0 ? '1px solid var(--lm-border-subtle, #f0f0f0)' : undefined,
-          }}
-        >
-          <Space size={8}>
-            <Typography.Text strong>{meta.title}</Typography.Text>
-            <Tag color="orange" style={{ marginInlineEnd: 0 }}>
-              {group.total}
-            </Tag>
-          </Space>
+      <div key={group.key} className={styles.blockerCard}>
+        <div className={styles.blockerHeader}>
+          <div className={styles.blockerTitleWrap}>
+            <span className={styles.blockerTitle}>{meta.title}</span>
+            <span className={styles.blockerCount}>{group.total}</span>
+          </div>
           <Space size={8}>
             {resourceKind === 'bench' && group.key === 'equipment' && onManageEquipment && (
               <Button
@@ -343,72 +367,36 @@ export const GuardedDeleteModal: React.FC<GuardedDeleteModalProps> = ({
         </div>
 
         {group.entries.length > 0 && (
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <div>
             {group.entries.map((entry, idx) => {
               const { path, categoryLabel } = buildEntryLink(group.key, entry);
-              const isLast = idx === group.entries.length - 1 && remaining === 0;
               return (
-                <div
-                  key={`${entry.label}-${idx}`}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: 10,
-                    padding: '8px 12px',
-                    borderBottom: isLast ? undefined : '1px solid var(--lm-border-subtle, #f0f0f0)',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flex: 1 }}>
-                    {entry.sku && (
-                      <Typography.Text code style={{ flexShrink: 0, fontSize: 12 }}>
-                        {entry.sku}
-                      </Typography.Text>
-                    )}
+                <div key={`${entry.label}-${idx}`} className={styles.blockerRow}>
+                  <div className={styles.blockerRowLeft}>
+                    {entry.sku && <span className={styles.skuPill}>{entry.sku}</span>}
                     {path ? (
-                      <Button
-                        type="link"
-                        size="small"
-                        style={{
-                          padding: 0,
-                          height: 'auto',
-                          textAlign: 'left',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                        }}
+                      <button
+                        type="button"
+                        className={styles.blockerLink}
                         onClick={() => handleNavigate(path)}
                       >
                         {entry.name || entry.sku || entry.label}
-                      </Button>
+                      </button>
                     ) : (
                       <Typography.Text ellipsis>{entry.name || entry.label}</Typography.Text>
                     )}
                   </div>
-                  <Space size={6} style={{ flexShrink: 0 }}>
-                    {categoryLabel && (
-                      <Tag color="geekblue" style={{ marginInlineEnd: 0, fontSize: 11 }}>
-                        {categoryLabel}
-                      </Tag>
-                    )}
-                    {path && (
-                      <Button
-                        type="text"
-                        size="small"
-                        icon={<ExportOutlined />}
-                        aria-label={`Open ${entry.label}`}
-                        onClick={() => handleNavigate(path)}
-                      />
-                    )}
-                  </Space>
+                  {categoryLabel && (
+                    <Tag color="geekblue" style={{ marginInlineEnd: 0, fontSize: 11, flexShrink: 0 }}>
+                      {categoryLabel}
+                    </Tag>
+                  )}
                 </div>
               );
             })}
             {remaining > 0 && (
-              <div style={{ padding: '7px 12px', background: 'var(--lm-surface-subtle, #fafafa)' }}>
-                <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-                  …and {remaining} more item{remaining === 1 ? '' : 's'}
-                </Typography.Text>
+              <div className={styles.blockerMore}>
+                …and {remaining} more item{remaining === 1 ? '' : 's'}
               </div>
             )}
           </div>
@@ -421,6 +409,22 @@ export const GuardedDeleteModal: React.FC<GuardedDeleteModalProps> = ({
   const isForce = mode === 'force';
   const isFinalForceStep = isForce && forceStep === 2;
 
+  const headerTitle = isFinalForceStep
+    ? `Confirm force delete`
+    : isForce
+      ? `Force delete ${copy.singular.toLowerCase()}`
+      : isBlocked
+        ? `Cannot delete ${copy.singular.toLowerCase()}`
+        : `Delete ${copy.singular.toLowerCase()}`;
+
+  const headerSubtitle = isFinalForceStep
+    ? `Final operator verification for ${displayLabel}`
+    : isForce
+      ? `Lab operator override with automatic child detachment & audit logging`
+      : isBlocked
+        ? `Active dependencies are linked to ${displayLabel}`
+        : `Remove ${displayLabel} from active inventory`;
+
   return (
     <Modal
       open={open}
@@ -428,34 +432,24 @@ export const GuardedDeleteModal: React.FC<GuardedDeleteModalProps> = ({
       maskClosable={!busy}
       closable={!busy}
       destroyOnHidden
-      width={isBlocked || isForce ? 600 : 480}
+      width={isBlocked || isForce ? 580 : 480}
       title={
-        <Space size={8}>
-          {isForce ? (
-            <WarningOutlined style={{ color: 'var(--lm-danger-solid, #ff4d4f)' }} />
-          ) : isBlocked ? (
-            <StopOutlined style={{ color: 'var(--lm-warning-solid, #faad14)' }} />
-          ) : (
-            <ExclamationCircleOutlined style={{ color: 'var(--lm-warning-solid, #faad14)' }} />
-          )}
-          <span>
-            {isFinalForceStep
-              ? `Final confirmation: Force delete ${displayLabel}`
-              : isForce
-                ? `Force delete ${displayLabel}`
-                : isBlocked
-                  ? `Cannot delete ${displayLabel}`
-                  : `Delete ${displayLabel}?`}
-          </span>
-          {isForce && (
-            <Tag color={isFinalForceStep ? 'red' : 'volcano'} style={{ marginInlineStart: 4 }}>
-              Step {forceStep} of 2
-            </Tag>
-          )}
-        </Space>
+        <div className={styles.modalHeader}>
+          <div
+            className={`${styles.headerIcon} ${
+              isForce ? styles.headerIconDanger : styles.headerIconWarning
+            }`}
+          >
+            {isForce ? <ShieldAlert /> : isBlocked ? <AlertTriangle /> : <Trash2 />}
+          </div>
+          <div className={styles.headerCopy}>
+            <span className={styles.headerTitle}>{headerTitle}</span>
+            <span className={styles.headerSubtitle}>{headerSubtitle}</span>
+          </div>
+        </div>
       }
       footer={
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+        <div className={styles.footerRow}>
           <div>
             {mode === 'standard' && supportsForceDelete ? (
               <Button
@@ -474,40 +468,40 @@ export const GuardedDeleteModal: React.FC<GuardedDeleteModalProps> = ({
               </Button>
             ) : isFinalForceStep ? (
               <Button
-                type="link"
+                type="text"
                 size="small"
-                style={{ paddingInline: 0 }}
+                icon={<ArrowLeft size={14} />}
                 disabled={busy}
                 onClick={() => {
                   setErrorMessage(null);
                   setForceStep(1);
                 }}
               >
-                Back to edit details
+                Edit details
               </Button>
             ) : isForce ? (
               <Button
-                type="link"
+                type="text"
                 size="small"
-                style={{ paddingInline: 0 }}
+                icon={<ArrowLeft size={14} />}
                 disabled={busy}
                 onClick={() => {
                   setErrorMessage(null);
                   setMode(conflict ? 'blocked' : 'standard');
                 }}
               >
-                {conflict ? 'Back to blockers' : 'Back to standard delete'}
+                {conflict ? 'Back to blockers' : 'Standard delete'}
               </Button>
             ) : null}
           </div>
 
-          <Space>
+          <Space size={8}>
             <Button onClick={onCancel} disabled={busy}>
               {isBlocked ? 'Close' : 'Cancel'}
             </Button>
             {mode === 'standard' && (
               <Button type="primary" danger loading={deleting} onClick={() => void handleConfirm()}>
-                Delete
+                Delete {copy.singular}
               </Button>
             )}
             {isBlocked && (
@@ -541,7 +535,7 @@ export const GuardedDeleteModal: React.FC<GuardedDeleteModalProps> = ({
                   setForceStep(2);
                 }}
               >
-                Continue to final confirmation
+                Review & confirm
               </Button>
             )}
             {isFinalForceStep && (
@@ -552,29 +546,50 @@ export const GuardedDeleteModal: React.FC<GuardedDeleteModalProps> = ({
                 disabled={!canProceedForce}
                 onClick={() => void handleForceConfirm()}
               >
-                Yes, force delete permanently
+                Confirm force delete
               </Button>
             )}
           </Space>
         </div>
       }
     >
-      <Space orientation="vertical" size={14} style={{ width: '100%' }}>
-        <Descriptions size="small" column={2} bordered>
-          <Descriptions.Item label="SKU">
-            <Typography.Text code>{item.sku || '—'}</Typography.Text>
-          </Descriptions.Item>
-          <Descriptions.Item label="ID">#{item.id}</Descriptions.Item>
-          <Descriptions.Item label="Name" span={2}>
-            {item.name || '—'}
-          </Descriptions.Item>
-        </Descriptions>
-
-        {mode === 'standard' && (
-          <Typography.Paragraph style={{ marginBottom: 0 }}>
-            {copy.preconditionHint}
-          </Typography.Paragraph>
+      <div className={styles.bodyStack}>
+        {isForce && (
+          <div className={styles.stepper} role="list" aria-label="Force delete confirmation steps">
+            <div
+              role="listitem"
+              className={`${styles.stepItem} ${isFinalForceStep ? styles.stepDone : styles.stepActive}`}
+            >
+              <span className={styles.stepBadge}>
+                {isFinalForceStep ? <Check /> : '1'}
+              </span>
+              <span>Impact &amp; audit details</span>
+            </div>
+            <div
+              role="listitem"
+              className={`${styles.stepItem} ${isFinalForceStep ? styles.stepActive : ''}`}
+            >
+              <span className={styles.stepBadge}>2</span>
+              <span>Final confirmation</span>
+            </div>
+          </div>
         )}
+
+        <div className={styles.identityCard}>
+          <div className={styles.identityLeft}>
+            <span className={styles.identityEyebrow}>
+              {RESOURCE_ICONS[resourceKind]}
+              <span>{copy.singular}</span>
+            </span>
+            <span className={styles.identityName}>{item.name || item.sku || `${copy.singular} #${item.id}`}</span>
+          </div>
+          <div className={styles.identityMeta}>
+            {item.sku && <span className={styles.skuPill}>{item.sku}</span>}
+            <span className={styles.idPill}>#{item.id}</span>
+          </div>
+        </div>
+
+        {mode === 'standard' && <p className={styles.hintCopy}>{copy.preconditionHint}</p>}
 
         {isBlocked && (
           <>
@@ -638,28 +653,31 @@ export const GuardedDeleteModal: React.FC<GuardedDeleteModalProps> = ({
 
         {isForce && !isFinalForceStep && (
           <>
-            <Alert
-              type="error"
-              showIcon
-              title={`Destructive lab operator override — ${copy.singular.toLowerCase()} force delete`}
-              description={
-                <div style={{ marginTop: 4 }}>
-                  <div style={{ marginBottom: 6 }}>
-                    Force-deleting <strong>{displayLabel}</strong> will immediately apply the following changes:
-                  </div>
-                  <ul style={{ margin: 0, paddingLeft: 18 }}>
-                    {copy.forceEffects.map((effect) => (
-                      <li key={effect}>{effect}</li>
-                    ))}
-                  </ul>
-                </div>
-              }
-            />
+            <div className={styles.impactCard}>
+              <div className={styles.impactHeader}>
+                <AlertTriangle />
+                <span>Immediate side effects of force-deleting {displayLabel}</span>
+              </div>
+              <ul className={styles.impactList}>
+                {copy.forceEffects.map((effect) => (
+                  <li key={effect.title} className={styles.impactRow}>
+                    <span className={styles.impactDot} aria-hidden="true" />
+                    <div className={styles.impactText}>
+                      <span className={styles.impactTitle}>{effect.title}</span>
+                      <span className={styles.impactDetail}>{effect.detail}</span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
 
-            <div>
-              <Typography.Text strong style={{ display: 'block', marginBottom: 6 }}>
-                Reason for force delete <Typography.Text type="danger">*</Typography.Text>
-              </Typography.Text>
+            <div className={styles.fieldGroup}>
+              <div className={styles.fieldLabelRow}>
+                <span className={styles.fieldLabel}>
+                  Audit reason<span className={styles.requiredMark}>*</span>
+                </span>
+                <span className={styles.fieldHint}>Recorded in resource change history (min 3 chars)</span>
+              </div>
               <Input.TextArea
                 rows={2}
                 maxLength={REASON_MAX_LENGTH}
@@ -671,56 +689,84 @@ export const GuardedDeleteModal: React.FC<GuardedDeleteModalProps> = ({
               />
             </div>
 
-            <div>
-              <Typography.Text strong style={{ display: 'block', marginBottom: 6 }}>
-                Type <Tag style={{ marginInline: 2, fontFamily: 'monospace' }}>{confirmToken}</Tag> to confirm{' '}
-                <Typography.Text type="danger">*</Typography.Text>
-              </Typography.Text>
+            <div className={styles.fieldGroup}>
+              <div className={styles.fieldLabelRow}>
+                <span className={styles.fieldLabel}>
+                  Type <span className={styles.tokenChip}>{confirmToken}</span> to confirm
+                  <span className={styles.requiredMark}>*</span>
+                </span>
+                {tokenMatched && (
+                  <span className={styles.matchBadge}>
+                    <Check /> Matched
+                  </span>
+                )}
+              </div>
               <Input
-                placeholder={confirmToken}
+                placeholder={`Enter ${confirmToken}`}
                 value={typedConfirm}
                 onChange={(event) => setTypedConfirm(event.target.value)}
                 disabled={busy}
                 autoComplete="off"
+                status={typedConfirm.length > 0 && !tokenMatched ? 'warning' : undefined}
               />
             </div>
 
-            <Checkbox
-              checked={acknowledged}
-              onChange={(event) => setAcknowledged(event.target.checked)}
-              disabled={busy}
+            <label
+              className={`${styles.ackCard} ${acknowledged ? styles.ackCardChecked : ''}`}
             >
-              I confirm as a lab operator that I understand how child resources will be detached/unassigned and
-              want to force-delete <strong>{displayLabel}</strong>.
-            </Checkbox>
+              <Checkbox
+                checked={acknowledged}
+                onChange={(event) => setAcknowledged(event.target.checked)}
+                disabled={busy}
+              />
+              <span className={styles.ackCopy}>
+                I confirm as a lab operator that I understand how child resources will be detached or
+                unassigned and want to force-delete <strong>{displayLabel}</strong>.
+              </span>
+            </label>
           </>
         )}
 
         {isFinalForceStep && (
           <>
-            <Alert
-              type="error"
-              showIcon
-              title="Final confirmation required"
-              description={
-                <div>
-                  You are about to permanently force-delete <strong>{displayLabel}</strong>. This action cannot
-                  be undone from the UI.
+            <div className={styles.dangerBanner} role="status">
+              <ShieldAlert />
+              <div>
+                <div className={styles.dangerBannerTitle}>Permanent operator override</div>
+                <div className={styles.dangerBannerCopy}>
+                  This immediately removes <strong>{displayLabel}</strong> from active lab inventory and
+                  cannot be undone from the UI.
                 </div>
-              }
-            />
-            <Descriptions size="small" column={1} bordered>
-              <Descriptions.Item label="Confirmed identifier">
-                <Typography.Text code>{confirmToken}</Typography.Text>
-              </Descriptions.Item>
-              <Descriptions.Item label="Child impact">{copy.childStatusSummary}</Descriptions.Item>
-              <Descriptions.Item label="Audit reason">{trimmedReason}</Descriptions.Item>
-            </Descriptions>
+              </div>
+            </div>
+
+            <div className={styles.reviewCard}>
+              <div className={styles.reviewRow}>
+                <span className={styles.reviewLabel}>Target {copy.singular.toLowerCase()}</span>
+                <span className={styles.reviewValue}>
+                  <span className={styles.skuPill}>{confirmToken}</span>{' '}
+                  {item.name && item.name !== confirmToken ? item.name : null}
+                </span>
+              </div>
+              <div className={styles.reviewRow}>
+                <span className={styles.reviewLabel}>Child impact</span>
+                <span className={styles.reviewValue}>{copy.childStatusSummary}</span>
+              </div>
+              <div className={styles.reviewRow}>
+                <span className={styles.reviewLabel}>Audit reason</span>
+                <div className={styles.reasonQuote}>{trimmedReason}</div>
+              </div>
+            </div>
           </>
         )}
 
-        {errorMessage && <Alert type="error" showIcon title={errorMessage} />}
-      </Space>
+        {errorMessage && (
+          <div className={styles.errorBox} role="alert">
+            <AlertTriangle />
+            <span>{errorMessage}</span>
+          </div>
+        )}
+      </div>
     </Modal>
   );
 };

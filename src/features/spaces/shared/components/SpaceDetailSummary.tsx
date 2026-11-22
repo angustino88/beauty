@@ -1,15 +1,17 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { Spin } from 'antd';
 import { Activity, Boxes, Building2, Cpu, Gauge, Info, Lock, LockOpen, Server, Wrench } from 'lucide-react';
 import {
-  Code, DetailSection, FacetGrid, LinkedList, MeterStat, NoteBox, PropertyList, StatGrid, StatTile, StatusHero,
-  type Facet, type HeroFact,
+  Code, DetailSection, FacetGrid, LinkedEmpty, LinkedList, MeterStat, NoteBox, PropertyList, StatGrid, StatTile, StatusHero,
+  type Facet, type HeroFact, type LinkedListBadge,
 } from '@/shared/components/detail/DetailPrimitives';
 import { refLabel } from '@/shared/utils/refLabel';
 import type { StatusTone } from '@/shared/status/statusTone';
 import type { LocationState, ResourceState } from '../resourceStatus';
 import { explainSpaceStatus } from '../spaceStatusExplanation';
 import type { ResourceMappingRow } from '@/features/spaces/mapping/types';
+import type { RoomAssignedStationItem } from '@/features/spaces/mapping/mapper';
 import { categoryPath } from '@/features/spaces/mapping/columns/mappingColumnRenderers';
 import { useCategoryKeyById } from '@/features/spaces/mapping/hooks/useCategoryKeyById';
 import { resolveCategoryKey } from '@/features/spaces/mapping/utils/categoryKey';
@@ -20,7 +22,9 @@ interface SpaceDetailSummaryProps {
   spaceKind: SpaceKind;
   record: Record<string, unknown>;
   connectedRows?: ResourceMappingRow[];
-  onOpenMapping?: () => void;
+  roomStations?: RoomAssignedStationItem[];
+  connectedLoading?: boolean;
+  onNavigate?: () => void;
 }
 
 /** Reads a dotted path from the record ("location_info.building"). */
@@ -190,63 +194,192 @@ function properties(kind: SpaceKind, record: Record<string, unknown>) {
   ] as const;
 }
 
-function Connected({ kind, record, rows }: { kind: SpaceKind; record: Record<string, unknown>; rows: ResourceMappingRow[] }) {
+function fallbackRoomStations(record: Record<string, unknown>): RoomAssignedStationItem[] {
+  const rawList = record.rack_list;
+  if (!Array.isArray(rawList)) return [];
+  return rawList
+    .filter((item): item is Record<string, unknown> => Boolean(item && typeof item === 'object' && 'id' in item))
+    .map((item) => ({
+      id: Number(item.id),
+      sku: typeof item.sku === 'string' ? item.sku : '',
+      name: typeof item.name === 'string' ? item.name : '',
+      slotCode: typeof item.slot_code === 'string' && item.slot_code ? item.slot_code : null,
+      benchCount: typeof item.bench_count === 'number' ? item.bench_count : 0,
+      equipmentCount: 0,
+    }))
+    .filter((item) => Number.isFinite(item.id) && item.id > 0);
+}
+
+function Connected({
+  kind,
+  record,
+  rows,
+  roomStations,
+  loading,
+  onNavigate,
+}: {
+  kind: SpaceKind;
+  record: Record<string, unknown>;
+  rows: ResourceMappingRow[];
+  roomStations?: RoomAssignedStationItem[];
+  loading?: boolean;
+  onNavigate?: () => void;
+}) {
   const keyById = useCategoryKeyById();
   const recordToken = text(record, 'sku', 'name');
   const mappingTo = recordToken ? `/spaces/mapping?q=${encodeURIComponent(recordToken)}` : '/spaces/mapping';
-  const mappingLink = <Link to={mappingTo}>Open in Mapping →</Link>;
+  const mappingLink = (
+    <Link to={mappingTo} onClick={onNavigate}>
+      Open in Mapping →
+    </Link>
+  );
+
   if (kind === 'bench') {
     const row = rows.find((r) => r.bench.id === Number(record.id)) ?? rows[0];
     const equipment = row?.equipment ?? [];
-    if (!equipment.length) return null;
+    const headerTitle = loading && equipment.length === 0
+      ? 'Assigned equipment'
+      : `Assigned equipment (${equipment.length})`;
     return (
-      <DetailSection title={`Assigned equipment (${equipment.length})`} icon={<Boxes />} action={mappingLink}>
-        <LinkedList
-          items={equipment.map((eq) => {
-            const categoryKey = resolveCategoryKey(eq.category, keyById);
-            const basePath = categoryPath(categoryKey);
-            const token = eq.sku || eq.name || '';
-            const to = basePath
-              ? `${basePath}?q=${encodeURIComponent(token)}`
-              : `/spaces/mapping?q=${encodeURIComponent(token)}`;
-            return {
-              key: eq.id,
-              code: eq.sku,
-              title: eq.name || eq.sku,
-              meta: [refLabel(eq.category), eq.role && eq.role !== 'default' ? eq.role : null]
-                .filter(Boolean)
-                .join(' · '),
-              to,
-            };
-          })}
-        />
+      <DetailSection title={headerTitle} icon={<Boxes />} action={mappingLink}>
+        {loading && equipment.length === 0 ? (
+          <LinkedEmpty>
+            <Spin size="small" />
+            <span>Loading assigned equipment…</span>
+          </LinkedEmpty>
+        ) : equipment.length === 0 ? (
+          <LinkedEmpty>No equipment assigned to this bench yet.</LinkedEmpty>
+        ) : (
+          <LinkedList
+            onItemClick={onNavigate}
+            items={equipment.map((eq) => {
+              const categoryKey = resolveCategoryKey(eq.category, keyById);
+              const basePath = categoryPath(categoryKey);
+              const token = eq.sku || eq.name || '';
+              const to = basePath
+                ? `${basePath}?q=${encodeURIComponent(token)}`
+                : `/spaces/mapping?q=${encodeURIComponent(token)}`;
+              const badges: LinkedListBadge[] = [];
+              const categoryName = refLabel(eq.category);
+              if (categoryName) badges.push({ label: categoryName, accent: true });
+              if (eq.role && eq.role !== 'default') badges.push({ label: eq.role });
+              return {
+                key: eq.id,
+                code: eq.sku,
+                title: eq.name || eq.sku,
+                badges,
+                to,
+              };
+            })}
+          />
+        )}
       </DetailSection>
     );
   }
+
   if (kind === 'station') {
     const stationId = Number(record.id);
-    const hosted = rows.filter((r) => r.station?.id === stationId || r.bench.setup_location_id === stationId);
-    if (!hosted.length) return null;
+    const hosted = rows
+      .filter((r) => r.station?.id === stationId || r.bench.setup_location_id === stationId)
+      .slice()
+      .sort((a, b) => {
+        const slotA = a.station_slot?.slot_code ?? '';
+        const slotB = b.station_slot?.slot_code ?? '';
+        if (slotA && !slotB) return -1;
+        if (!slotA && slotB) return 1;
+        if (slotA !== slotB) return slotA.localeCompare(slotB, undefined, { numeric: true });
+        return (a.bench.sku || a.bench.name).localeCompare(b.bench.sku || b.bench.name, undefined, { numeric: true });
+      });
+    const headerTitle = loading && hosted.length === 0
+      ? 'Assigned benches'
+      : `Assigned benches (${hosted.length})`;
     return (
-      <DetailSection title={`Hosted benches (${hosted.length})`} icon={<Boxes />} action={mappingLink}>
-        <LinkedList
-          items={hosted.map((r) => ({
-            key: r.id,
-            code: r.bench.sku,
-            title: r.bench.name || r.bench.sku,
-            meta: [r.station_slot && `Slot ${r.station_slot.slot_code}`, `${r.equipment.length} equipment`]
-              .filter(Boolean)
-              .join(' · '),
-            to: `/spaces/bench?q=${encodeURIComponent(r.bench.sku || r.bench.name || '')}`,
-          }))}
-        />
+      <DetailSection title={headerTitle} icon={<Cpu />} action={mappingLink}>
+        {loading && hosted.length === 0 ? (
+          <LinkedEmpty>
+            <Spin size="small" />
+            <span>Loading assigned benches…</span>
+          </LinkedEmpty>
+        ) : hosted.length === 0 ? (
+          <LinkedEmpty>No benches assigned to this station yet.</LinkedEmpty>
+        ) : (
+          <LinkedList
+            onItemClick={onNavigate}
+            items={hosted.map((r) => {
+              const badges: LinkedListBadge[] = [];
+              if (r.station_slot?.slot_code) {
+                badges.push({ label: `Slot ${r.station_slot.slot_code}`, accent: true });
+              }
+              const eqCount = r.equipment.length;
+              badges.push({ label: `${eqCount} ${eqCount === 1 ? 'device' : 'devices'}` });
+              return {
+                key: r.bench.id,
+                code: r.bench.sku,
+                title: r.bench.name || r.bench.sku,
+                badges,
+                to: `/spaces/bench?q=${encodeURIComponent(r.bench.sku || r.bench.name || '')}`,
+              };
+            })}
+          />
+        )}
       </DetailSection>
     );
   }
+
+  if (kind === 'room') {
+    const stations =
+      roomStations !== undefined
+        ? roomStations
+        : fallbackRoomStations(record);
+    const headerTitle = loading && stations.length === 0
+      ? 'Assigned stations'
+      : `Assigned stations (${stations.length})`;
+    return (
+      <DetailSection title={headerTitle} icon={<Server />} action={mappingLink}>
+        {loading && stations.length === 0 ? (
+          <LinkedEmpty>
+            <Spin size="small" />
+            <span>Loading assigned stations…</span>
+          </LinkedEmpty>
+        ) : stations.length === 0 ? (
+          <LinkedEmpty>No stations assigned to this room yet.</LinkedEmpty>
+        ) : (
+          <LinkedList
+            onItemClick={onNavigate}
+            items={stations.map((st) => {
+              const badges: LinkedListBadge[] = [];
+              if (st.slotCode) {
+                badges.push({ label: `Slot ${st.slotCode}`, accent: true });
+              }
+              badges.push({ label: `${st.benchCount} ${st.benchCount === 1 ? 'bench' : 'benches'}` });
+              if (st.equipmentCount > 0) {
+                badges.push({ label: `${st.equipmentCount} ${st.equipmentCount === 1 ? 'device' : 'devices'}` });
+              }
+              return {
+                key: st.id,
+                code: st.sku,
+                title: st.name || st.sku || `Station #${st.id}`,
+                badges,
+                to: `/spaces/station?q=${encodeURIComponent(st.sku || st.name || '')}`,
+              };
+            })}
+          />
+        )}
+      </DetailSection>
+    );
+  }
+
   return null;
 }
 
-export const SpaceDetailSummary: React.FC<SpaceDetailSummaryProps> = ({ spaceKind, record, connectedRows = [] }) => {
+export const SpaceDetailSummary: React.FC<SpaceDetailSummaryProps> = ({
+  spaceKind,
+  record,
+  connectedRows = [],
+  roomStations,
+  connectedLoading = false,
+  onNavigate,
+}) => {
   const state = record as unknown as Partial<LocationState & ResourceState>;
   const status = explainSpaceStatus(state, spaceKind);
   const access = state.access_policy;
@@ -269,7 +402,14 @@ export const SpaceDetailSummary: React.FC<SpaceDetailSummaryProps> = ({ spaceKin
       <StatusHero tone={status.tone} title={status.title} description={status.description} icon={ICONS[spaceKind]} facts={facts} />
       <FacetGrid items={facetsOf(spaceKind, state)} />
       <CapacityStats kind={spaceKind} record={record} equipmentCount={equipmentCount} />
-      <Connected kind={spaceKind} record={record} rows={connectedRows} />
+      <Connected
+        kind={spaceKind}
+        record={record}
+        rows={connectedRows}
+        roomStations={roomStations}
+        loading={connectedLoading}
+        onNavigate={onNavigate}
+      />
       {(() => {
         const items = properties(spaceKind, record);
         return items.some(([, value]) => value) ? (

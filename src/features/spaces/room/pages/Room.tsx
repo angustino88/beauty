@@ -63,7 +63,6 @@ export default function RoomPage() {
     deleting: form.deleting || form.forceDeleting,
     onEdit: (id) => setEditingRoom(table.rows.find((room) => room.id === id) ?? null),
     onDelete: (_id, record) => setDeleteModal({ item: record, mode: 'standard' }),
-    onForceDelete: (record) => setDeleteModal({ item: record, mode: 'force' }),
     onHistory: (id) => {
       setHistoryPage(1);
       setHistoryPageSize(10);

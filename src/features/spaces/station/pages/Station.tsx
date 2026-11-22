@@ -133,7 +133,6 @@ export default function StationPage() {
     onEdit: (id) => setEditingStation(table.rows.find((station) => station.id === id) ?? null),
     deleting: form.deleting || form.forceDeleting,
     onDelete: (_id, record) => setDeleteModal({ item: record, mode: 'standard' }),
-    onForceDelete: (record) => setDeleteModal({ item: record, mode: 'force' }),
     onHistory: (id) => {
       setHistoryPage(1);
       setHistoryPageSize(10);

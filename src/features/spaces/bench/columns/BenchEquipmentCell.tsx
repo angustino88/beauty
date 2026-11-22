@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import { Button, Empty, Popover, Space, Spin, Tag, Typography } from "antd";
 import {
   DownOutlined,
-  ExportOutlined,
   LinkOutlined,
   PlusOutlined,
   SettingOutlined,
@@ -122,14 +121,6 @@ export function BenchEquipmentCell({
                     )}
                   </div>
                 </div>
-                <Link
-                  to={targetPath}
-                  onClick={() => setOpen(false)}
-                  aria-label={`Open ${item.sku || item.name}`}
-                  style={{ flexShrink: 0, color: "var(--lm-text-secondary, #64748b)" }}
-                >
-                  <ExportOutlined />
-                </Link>
               </div>
             );
           })}
