@@ -68,6 +68,43 @@ export interface ImportReportApi {
   unknown_sheets: string[];
 }
 
+export type ImportProgressStatus = 'running' | 'completed' | 'failed';
+export type ImportProgressPhase =
+  | 'reading'
+  | 'waiting_lock'
+  | 'processing'
+  | 'finalizing'
+  | 'completed'
+  | 'failed';
+
+export interface ImportProgress {
+  progressKey: string;
+  status: ImportProgressStatus;
+  phase: ImportProgressPhase;
+  percent: number;
+  currentSheet: string | null;
+  processedRows: number;
+  totalRows: number;
+  completedSheets: number;
+  totalSheets: number;
+  message: string;
+  updatedAt: string;
+}
+
+export interface ImportProgressApi {
+  progress_key: string;
+  status: { value: string; label: string } | null;
+  phase: { value: string; label: string } | null;
+  percent: number;
+  current_sheet: string | null;
+  processed_rows: number;
+  total_rows: number;
+  completed_sheets: number;
+  total_sheets: number;
+  message: string;
+  updated_at: string;
+}
+
 export interface ApiErrorDetail {
   field?: string | null;
   code?: string;

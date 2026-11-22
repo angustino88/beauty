@@ -1,4 +1,41 @@
-import type { ApiErrorDetail, ImportProblem, ImportReport, ImportReportApi } from './types.ts';
+import type {
+  ApiErrorDetail,
+  ImportProblem,
+  ImportProgress,
+  ImportProgressApi,
+  ImportProgressPhase,
+  ImportProgressStatus,
+  ImportReport,
+  ImportReportApi,
+} from './types.ts';
+
+const PROGRESS_STATUSES = new Set<ImportProgressStatus>(['running', 'completed', 'failed']);
+const PROGRESS_PHASES = new Set<ImportProgressPhase>([
+  'reading',
+  'waiting_lock',
+  'processing',
+  'finalizing',
+  'completed',
+  'failed',
+]);
+
+export function mapImportProgress(api: ImportProgressApi): ImportProgress {
+  const rawStatus = api.status?.value as ImportProgressStatus | undefined;
+  const rawPhase = api.phase?.value as ImportProgressPhase | undefined;
+  return {
+    progressKey: api.progress_key,
+    status: rawStatus && PROGRESS_STATUSES.has(rawStatus) ? rawStatus : 'running',
+    phase: rawPhase && PROGRESS_PHASES.has(rawPhase) ? rawPhase : 'processing',
+    percent: Math.max(0, Math.min(100, Math.round(api.percent ?? 0))),
+    currentSheet: api.current_sheet ?? null,
+    processedRows: api.processed_rows ?? 0,
+    totalRows: api.total_rows ?? 0,
+    completedSheets: api.completed_sheets ?? 0,
+    totalSheets: api.total_sheets ?? 0,
+    message: api.message ?? '',
+    updatedAt: api.updated_at,
+  };
+}
 
 export function mapImportReport(api: ImportReportApi): ImportReport {
   return {

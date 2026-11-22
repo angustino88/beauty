@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { Alert, Button, Modal, Radio, Segmented, Space, Steps, Table, Tag, Typography, Upload, message } from 'antd';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Alert, Button, Modal, Progress, Radio, Segmented, Space, Steps, Table, Tag, Typography, Upload, message } from 'antd';
 import type { TableColumnsType, UploadFile } from 'antd';
 import { CloudDownloadOutlined, DownloadOutlined, FileExcelOutlined, InboxOutlined } from '@ant-design/icons';
 import {
@@ -7,11 +7,24 @@ import {
   useCheckWorkbookMutation,
   useDownloadWorkbookExportMutation,
   useDownloadWorkbookTemplateMutation,
+  useLazyGetWorkbookImportProgressQuery,
 } from '../api.ts';
 import { mapApplyErrorDetail, problemsToCsv, sortProblems } from '../mapper.ts';
-import type { ApiErrorDetail, ImportMode, ImportProblem, ImportReport, ImportSheetOutcome } from '../types.ts';
+import type { ApiErrorDetail, ImportMode, ImportProblem, ImportProgress, ImportReport, ImportSheetOutcome } from '../types.ts';
 
 const MAX_BYTES = 10 * 1024 * 1024;
+const PROGRESS_POLL_MS = 500;
+
+function createProgressKey(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (char) => {
+    const rand = Math.floor(Math.random() * 16);
+    const value = char === 'x' ? rand : (rand & 0x3) | 0x8;
+    return value.toString(16);
+  });
+}
 
 interface Props {
   open: boolean;
@@ -91,11 +104,18 @@ export default function WorkbookImportModal({ open, onClose }: Props) {
   const [applied, setApplied] = useState<ImportReport | null>(null);
   const [applyProblems, setApplyProblems] = useState<ImportProblem[]>([]);
   const [filter, setFilter] = useState<'all' | 'error' | 'warning'>('all');
+  const [progress, setProgress] = useState<ImportProgress | null>(null);
+  const [activeAction, setActiveAction] = useState<'check' | 'apply' | null>(null);
+  const pollTimerRef = useRef<number | null>(null);
+  const activeKeyRef = useRef<string | null>(null);
+
   const [checkWorkbook, { isLoading: checking }] = useCheckWorkbookMutation();
   const [applyWorkbook, { isLoading: applying }] = useApplyWorkbookMutation();
+  const [fetchProgress] = useLazyGetWorkbookImportProgressQuery();
   const [downloadTemplate, { isLoading: downloadingTemplate }] = useDownloadWorkbookTemplateMutation();
   const [downloadExport, { isLoading: exporting }] = useDownloadWorkbookExportMutation();
 
+  const busy = checking || applying;
   const step = applied ? 2 : report ? 1 : 0;
   const changes = report ? report.summary.created + report.summary.updated : 0;
   const problems = useMemo(() => {
@@ -105,12 +125,66 @@ export default function WorkbookImportModal({ open, onClose }: Props) {
   }, [applyProblems, report, filter]);
   const alreadyExists = (report?.problems ?? []).some((problem) => problem.code === 'already_exists');
 
+  const stopPolling = useCallback(() => {
+    activeKeyRef.current = null;
+    if (pollTimerRef.current !== null) {
+      window.clearInterval(pollTimerRef.current);
+      pollTimerRef.current = null;
+    }
+  }, []);
+
+  const startPolling = useCallback(
+    (progressKey: string, action: 'check' | 'apply') => {
+      stopPolling();
+      activeKeyRef.current = progressKey;
+      setActiveAction(action);
+      setProgress({
+        progressKey,
+        status: 'running',
+        phase: 'reading',
+        percent: 1,
+        currentSheet: null,
+        processedRows: 0,
+        totalRows: 0,
+        completedSheets: 0,
+        totalSheets: 0,
+        message: action === 'check' ? 'Uploading workbook for check…' : 'Uploading workbook for import…',
+        updatedAt: new Date().toISOString(),
+      });
+
+      const pollOnce = async () => {
+        if (activeKeyRef.current !== progressKey) return;
+        try {
+          const snapshot = await fetchProgress(progressKey, false).unwrap();
+          if (activeKeyRef.current === progressKey) {
+            setProgress(snapshot);
+          }
+        } catch {
+          // Ignore transient 404s before the server records the first progress snapshot.
+        }
+      };
+
+      pollTimerRef.current = window.setInterval(() => {
+        void pollOnce();
+      }, PROGRESS_POLL_MS);
+      window.setTimeout(() => {
+        void pollOnce();
+      }, 200);
+    },
+    [fetchProgress, stopPolling],
+  );
+
+  useEffect(() => () => stopPolling(), [stopPolling]);
+
   const reset = () => {
+    stopPolling();
     setFile(null);
     setReport(null);
     setApplied(null);
     setApplyProblems([]);
     setFilter('all');
+    setProgress(null);
+    setActiveAction(null);
   };
 
   const close = () => {
@@ -119,14 +193,20 @@ export default function WorkbookImportModal({ open, onClose }: Props) {
   };
 
   const runCheck = async (selected: File, selectedMode: ImportMode) => {
+    const progressKey = createProgressKey();
     setFile(selected);
     setApplyProblems([]);
+    startPolling(progressKey, 'check');
     try {
-      setReport(await checkWorkbook({ file: selected, mode: selectedMode }).unwrap());
+      setReport(await checkWorkbook({ file: selected, mode: selectedMode, progressKey }).unwrap());
     } catch (error) {
       setFile(null);
       setReport(null);
       message.error(apiErrorMessage(error));
+    } finally {
+      stopPolling();
+      setActiveAction(null);
+      setProgress(null);
     }
   };
 
@@ -138,8 +218,10 @@ export default function WorkbookImportModal({ open, onClose }: Props) {
 
   const handleApply = async () => {
     if (!file) return;
+    const progressKey = createProgressKey();
+    startPolling(progressKey, 'apply');
     try {
-      setApplied(await applyWorkbook({ file, mode }).unwrap());
+      setApplied(await applyWorkbook({ file, mode, progressKey }).unwrap());
     } catch (error) {
       const details = apiErrorDetails(error);
       if (details.length) {
@@ -148,6 +230,10 @@ export default function WorkbookImportModal({ open, onClose }: Props) {
       } else {
         message.error(apiErrorMessage(error));
       }
+    } finally {
+      stopPolling();
+      setActiveAction(null);
+      setProgress(null);
     }
   };
 
@@ -173,7 +259,7 @@ export default function WorkbookImportModal({ open, onClose }: Props) {
   const modePicker = (
     <Space direction="vertical" size={4} style={{ width: '100%' }}>
       <Radio.Group value={mode} onChange={(event) => changeMode(event.target.value as ImportMode)}
-        disabled={checking || applying} optionType="button" buttonStyle="solid"
+        disabled={busy} optionType="button" buttonStyle="solid"
         options={[
           { label: 'Create new records', value: 'create' },
           { label: 'Update existing records', value: 'upsert' },
@@ -182,10 +268,42 @@ export default function WorkbookImportModal({ open, onClose }: Props) {
     </Space>
   );
 
+  const progressPanel = busy && (
+    <Alert
+      type="info"
+      showIcon
+      message={
+        progress?.phase === 'waiting_lock'
+          ? 'Waiting for another import to finish…'
+          : activeAction === 'apply'
+            ? `Importing ${file?.name ?? 'workbook'}…`
+            : `Checking ${file?.name ?? 'workbook'}…`
+      }
+      description={(
+        <Space direction="vertical" size={4} style={{ width: '100%' }}>
+          <Progress percent={progress?.percent ?? 1} status="active" />
+          <Space style={{ justifyContent: 'space-between', width: '100%' }} wrap>
+            <Typography.Text type="secondary">
+              {progress?.message || (activeAction === 'apply' ? 'Starting import…' : 'Starting check…')}
+            </Typography.Text>
+            {progress && progress.totalRows > 0 && (
+              <Typography.Text type="secondary">
+                {progress.currentSheet ? `${progress.currentSheet} · ` : ''}
+                Sheet {Math.min(progress.completedSheets + (progress.currentSheet ? 1 : 0), progress.totalSheets)} / {progress.totalSheets}
+                {' · '}
+                {progress.processedRows.toLocaleString()} / {progress.totalRows.toLocaleString()} rows
+              </Typography.Text>
+            )}
+          </Space>
+        </Space>
+      )}
+    />
+  );
+
   const footer = [
     <Button key="close" onClick={close}>{applied ? 'Close' : 'Cancel'}</Button>,
     step === 1 && (
-      <Button key="again" onClick={reset} disabled={applying}>Choose another file</Button>
+      <Button key="again" onClick={reset} disabled={busy}>Choose another file</Button>
     ),
     step === 1 && (
       <Button key="apply" type="primary" loading={applying}
@@ -197,7 +315,7 @@ export default function WorkbookImportModal({ open, onClose }: Props) {
   ].filter(Boolean);
 
   return (
-    <Modal open={open} onCancel={close} title="Excel import and export" width={980} footer={footer} destroyOnHidden>
+    <Modal open={open} onCancel={close} maskClosable={!busy} title="Excel import and export" width={980} footer={footer} destroyOnHidden>
       <Steps size="small" current={step} style={{ marginBottom: 16 }}
         items={[{ title: 'Choose file' }, { title: 'Check' }, { title: mode === 'upsert' ? 'Applied' : 'Imported' }]} />
 
@@ -221,6 +339,7 @@ export default function WorkbookImportModal({ open, onClose }: Props) {
             </Button>
           </Space>
           {modePicker}
+          {progressPanel}
           <Upload.Dragger accept=".xlsx" multiple={false} showUploadList={false} beforeUpload={beforeUpload}
             disabled={checking}>
             <p className="ant-upload-drag-icon">{checking ? <FileExcelOutlined /> : <InboxOutlined />}</p>
@@ -233,6 +352,7 @@ export default function WorkbookImportModal({ open, onClose }: Props) {
       {step === 1 && report && (
         <Space direction="vertical" size="middle" style={{ width: '100%' }}>
           {modePicker}
+          {progressPanel}
           {applyProblems.length > 0 ? (
             <Alert type="error" showIcon message="Nothing was imported"
               description="The data changed since the check, or the import found new problems. Fix them and check again." />
