@@ -1,10 +1,11 @@
 import { baseApi } from '@/shared/lib/api';
-import { mapImportReport } from './mapper.ts';
-import type { ImportMode, ImportReport, ImportReportApi } from './types.ts';
+import { mapImportProgress, mapImportReport } from './mapper.ts';
+import type { ImportMode, ImportProgress, ImportProgressApi, ImportReport, ImportReportApi } from './types.ts';
 
 export interface WorkbookUpload {
   file: File;
   mode: ImportMode;
+  progressKey?: string;
 }
 
 const BASE = '/api/labs/workbook-imports';
@@ -22,10 +23,13 @@ const CHANGED_TAGS = [
   'Downtime' as const,
 ];
 
-function workbookBody({ file, mode }: WorkbookUpload): FormData {
+function workbookBody({ file, mode, progressKey }: WorkbookUpload): FormData {
   const body = new FormData();
   body.append('file', file);
   body.append('mode', mode);
+  if (progressKey) {
+    body.append('progress_key', progressKey);
+  }
   return body;
 }
 
@@ -82,6 +86,13 @@ export const workbookImportApi = baseApi.injectEndpoints({
       transformResponse: (response: { data: ImportReportApi }) => mapImportReport(response.data),
       invalidatesTags: CHANGED_TAGS,
     }),
+    getWorkbookImportProgress: build.query<ImportProgress, string>({
+      query: (progressKey) => ({
+        url: `${BASE}/progress/${progressKey}`,
+        method: 'GET',
+      }),
+      transformResponse: (response: { data: ImportProgressApi }) => mapImportProgress(response.data),
+    }),
     /** Downloads the empty template (reference sheets filled in). */
     downloadWorkbookTemplate: build.mutation<null, void>({
       query: () => downloadQuery('template', 'labmango-data-template.xlsx'),
@@ -96,6 +107,7 @@ export const workbookImportApi = baseApi.injectEndpoints({
 export const {
   useCheckWorkbookMutation,
   useApplyWorkbookMutation,
+  useLazyGetWorkbookImportProgressQuery,
   useDownloadWorkbookTemplateMutation,
   useDownloadWorkbookExportMutation,
 } = workbookImportApi;
