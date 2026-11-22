@@ -1,10 +1,11 @@
-﻿import { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { WorkbookImportButton } from "@/features/data-import";
 import { skipToken } from "@reduxjs/toolkit/query";
 import { useGetRoomHistoryQuery } from "../api";
 import {
   EquipmentPageLayout,
   EquipmentFormModal,
+  GuardedDeleteModal,
   createActionsRenderer,
   printDeviceLabel,
 } from "@/features/lab-equipment/shared";
@@ -44,6 +45,7 @@ export default function RoomPage() {
 
   const [createOpen, setCreateOpen] = useState(false);
   const [editingRoom, setEditingRoom] = useState<IRoom | null>(null);
+  const [deletingRoom, setDeletingRoom] = useState<IRoom | null>(null);
   const [historyId, setHistoryId] = useState<number | null>(null);
   const [historyPage, setHistoryPage] = useState(1);
   const [historyPageSize, setHistoryPageSize] = useState(10);
@@ -59,7 +61,7 @@ export default function RoomPage() {
     canManageLabOperations,
     deleting: form.deleting,
     onEdit: (id) => setEditingRoom(table.rows.find((room) => room.id === id) ?? null),
-    onDelete: form.deleteById,
+    onDelete: (_id, record) => setDeletingRoom(record),
     onHistory: (id) => {
       setHistoryPage(1);
       setHistoryPageSize(10);
@@ -154,6 +156,16 @@ export default function RoomPage() {
         }}
         onCancel={() => setEditingRoom(null)}
         loading={form.updating}
+      />
+
+      <GuardedDeleteModal
+        key={deletingRoom ? deletingRoom.id : 'closed'}
+        open={deletingRoom !== null}
+        resourceKind="room"
+        item={deletingRoom}
+        deleting={form.deleting}
+        onCancel={() => setDeletingRoom(null)}
+        onConfirm={(id) => form.tryDeleteById(id, deletingRoom ?? undefined)}
       />
     </>
   );

@@ -7,6 +7,7 @@ import { useLabsRoomsSlotsRetrieveByRoomIdQuery } from "@/shared/api/generated/a
 import {
   EquipmentPageLayout,
   EquipmentFormModal,
+  GuardedDeleteModal,
   createActionsRenderer,
   printDeviceLabel,
 } from "@/features/lab-equipment/shared";
@@ -28,6 +29,7 @@ export default function StationPage() {
 
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editingStation, setEditingStation] = useState<IStation | null>(null);
+  const [deletingStation, setDeletingStation] = useState<IStation | null>(null);
   const [historyId, setHistoryId] = useState<number | null>(null);
   const [historyPage, setHistoryPage] = useState(1);
   const [historyPageSize, setHistoryPageSize] = useState(10);
@@ -129,7 +131,7 @@ export default function StationPage() {
     canManageLabOperations,
     onEdit: (id) => setEditingStation(table.rows.find((station) => station.id === id) ?? null),
     deleting: form.deleting,
-    onDelete: form.deleteById,
+    onDelete: (_id, record) => setDeletingStation(record),
     onHistory: (id) => {
       setHistoryPage(1);
       setHistoryPageSize(10);
@@ -239,6 +241,16 @@ export default function StationPage() {
         }}
         onCancel={() => setEditingStation(null)}
         loading={form.updating}
+      />
+
+      <GuardedDeleteModal
+        key={deletingStation ? deletingStation.id : 'closed'}
+        open={deletingStation !== null}
+        resourceKind="station"
+        item={deletingStation}
+        deleting={form.deleting}
+        onCancel={() => setDeletingStation(null)}
+        onConfirm={(id) => form.tryDeleteById(id, deletingStation ?? undefined)}
       />
     </>
   );

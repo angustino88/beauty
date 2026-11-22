@@ -7,6 +7,7 @@ import { skipToken } from "@reduxjs/toolkit/query";
 import {
   EquipmentPageLayout,
   EquipmentFormModal,
+  GuardedDeleteModal,
   createActionsRenderer,
   printDeviceLabel,
 } from "@/features/lab-equipment/shared";
@@ -28,6 +29,7 @@ export default function BenchPage() {
 
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editingBench, setEditingBench] = useState<IBench | null>(null);
+  const [deletingBench, setDeletingBench] = useState<IBench | null>(null);
 
   const { data: benchGroups } = useGetBenchGroupsQuery();
   const { data: facets } = useGetBenchFiltersQuery();
@@ -113,7 +115,7 @@ export default function BenchPage() {
     canManageLabOperations,
     onEdit: (id) => setEditingBench(table.rows.find((bench) => bench.id === id) ?? null),
     deleting: form.deleting,
-    onDelete: form.deleteById,
+    onDelete: (_id, record) => setDeletingBench(record),
     onPrint: (item) => printDeviceLabel({ sku: item.sku, name: item.name }),
   });
 
@@ -208,6 +210,16 @@ export default function BenchPage() {
         }}
         onCancel={() => setEditingBench(null)}
         loading={form.updating}
+      />
+
+      <GuardedDeleteModal
+        key={deletingBench ? deletingBench.id : 'closed'}
+        open={deletingBench !== null}
+        resourceKind="bench"
+        item={deletingBench}
+        deleting={form.deleting}
+        onCancel={() => setDeletingBench(null)}
+        onConfirm={(id) => form.tryDeleteById(id, deletingBench ?? undefined)}
       />
     </>
   );

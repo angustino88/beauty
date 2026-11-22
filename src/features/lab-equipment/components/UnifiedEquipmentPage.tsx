@@ -22,6 +22,7 @@ import {
   useCreateEquipmentMutation,
   useUpdateEquipmentMutation,
   useDeleteEquipmentMutation,
+  useForceDeleteEquipmentMutation,
   useChangeEquipmentConditionMutation,
   useChangeEquipmentLifecycleMutation,
   useUpdateEquipmentImageMutation,
@@ -34,6 +35,7 @@ import { skipToken } from '@reduxjs/toolkit/query';
 import EquipmentPageLayout from '../shared/components/layout/EquipmentPageLayout';
 import EquipmentInventoryOverview from '../shared/components/cards/EquipmentInventoryOverview';
 import tableStyles from '../shared/components/layout/InventoryPresentation.module.css';
+import DeleteEquipmentModal, { type DeleteEquipmentAttemptResult, type DeleteModalMode } from '../shared/components/modals/DeleteEquipmentModal';
 import EquipmentStatusHistoryModal from '../shared/components/modals/EquipmentStatusHistoryModal';
 import EquipmentFormModal, {
   type FieldConfig,
@@ -89,6 +91,7 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
 
   const [statusModalOpen, setStatusModalOpen] = useState(false);
   const [statusItem, setStatusItem] = useState<EquipmentItem | null>(null);
+  const [deleteModal, setDeleteModal] = useState<{ item: EquipmentItem; mode: DeleteModalMode } | null>(null);
 
   const [historyId, setHistoryId] = useState<number | null>(null);
   const [historyPage, setHistoryPage] = useState(1);
@@ -231,6 +234,7 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
   const [deleteEquipmentImage] = useDeleteEquipmentImageMutation();
   const [updateEquipment, { isLoading: isUpdating }] = useUpdateEquipmentMutation();
   const [deleteEquipment, { isLoading: isDeleting }] = useDeleteEquipmentMutation();
+  const [forceDeleteEquipment, { isLoading: isForceDeleting }] = useForceDeleteEquipmentMutation();
   const [changeCondition] = useChangeEquipmentConditionMutation();
   const [changeLifecycle] = useChangeEquipmentLifecycleMutation();
 
@@ -271,18 +275,95 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
     return result.data;
   }, [refetchStatusRecord]);
 
-  const handleDelete = useCallback(
-    async (id: number) => {
+  const handleOpenDeleteModal = useCallback((_id: number, record: EquipmentItem) => {
+    setDeleteModal({ item: record, mode: 'standard' });
+  }, []);
+
+  const handleOpenForceDeleteModal = useCallback((record: EquipmentItem) => {
+    setDeleteModal({ item: record, mode: 'force' });
+  }, []);
+
+  const handleStandardDelete = useCallback(
+    async (id: number): Promise<DeleteEquipmentAttemptResult> => {
       try {
         await deleteEquipment({ category: config.key, id }).unwrap();
         const deletedItem = listData?.data?.find((item) => item.id === id);
         notifyEquipmentDeleted(config.singular, deletedItem ?? { id });
+        setDeleteModal(null);
+        return {};
       } catch (err) {
-        const errMsg = (err as { data?: { message?: string } })?.data?.message ?? 'Failed to delete';
-        message.error(errMsg);
+        const apiError = (err as {
+          status?: number;
+          data?: {
+            message?: string;
+            error?: {
+              code?: string;
+              message?: string;
+              details?: Array<{ field?: string; message?: string }> | { blockers?: string[] };
+            };
+          };
+        });
+        const rawDetails = apiError?.data?.error?.details;
+        const blockers = Array.isArray(rawDetails)
+          ? rawDetails
+              .filter(
+                (entry) =>
+                  typeof entry?.field === 'string' &&
+                  entry.field.startsWith('blockers') &&
+                  typeof entry.message === 'string',
+              )
+              .map((entry) => entry.message as string)
+          : Array.isArray(rawDetails?.blockers)
+            ? rawDetails.blockers
+            : [];
+        if (apiError?.status === 409 && apiError?.data?.error?.code === 'equipment_in_use') {
+          return { blocked: blockers.length > 0 ? blockers : ['in_use'] };
+        }
+        const errMsg = apiError?.data?.error?.message ?? apiError?.data?.message ?? 'Failed to delete';
+        return { error: errMsg };
       }
     },
     [config.key, config.singular, deleteEquipment, listData],
+  );
+
+  const handleForceDelete = useCallback(
+    async (id: number, reason: string): Promise<{ error?: string }> => {
+      try {
+        const result = await forceDeleteEquipment({
+          category: config.key,
+          id,
+          reason,
+          confirm: true,
+        }).unwrap();
+        const deletedItem = listData?.data?.find((item) => item.id === id);
+        const label = deletedItem?.sku || deletedItem?.name || `${config.singular} #${id}`;
+        const releasedParts: string[] = [];
+        if (result.released.bench_assignments > 0) releasedParts.push('unassigned bench');
+        if (result.released.loans > 0) releasedParts.push('closed loan');
+        if (result.released.license_assignments > 0) {
+          releasedParts.push(
+            `released ${result.released.license_assignments} license seat${result.released.license_assignments === 1 ? '' : 's'}`,
+          );
+        }
+        if (result.released.bookings > 0) {
+          releasedParts.push(
+            `cancelled ${result.released.bookings} booking${result.released.bookings === 1 ? '' : 's'}`,
+          );
+        }
+        const suffix = releasedParts.length > 0 ? ` (${releasedParts.join(', ')})` : '';
+        message.success(`${label} force-deleted${suffix}.`);
+        setDeleteModal(null);
+        return {};
+      } catch (err) {
+        const apiError = (err as {
+          data?: { message?: string; error?: { message?: string } };
+        });
+        return {
+          error: apiError?.data?.error?.message ?? apiError?.data?.message ?? 'Failed to force-delete equipment',
+        };
+      }
+    },
+    [config.key, config.singular, forceDeleteEquipment, listData],
   );
 
   const handleStatusSave = useCallback(
@@ -391,9 +472,10 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
   const actionsRenderer = useMemo(() => {
     return createActionsRenderer<EquipmentItem>({
       canManageLabOperations,
-      deleting: isDeleting,
+      deleting: isDeleting || isForceDeleting,
       onEdit: handleOpenEdit,
-      onDelete: handleDelete,
+      onDelete: handleOpenDeleteModal,
+      onForceDelete: handleOpenForceDeleteModal,
       onHistory: (id) => {
         setHistoryPage(1);
         setHistoryPageSize(10);
@@ -433,7 +515,7 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
         },
       ],
     });
-  }, [canManageLabOperations, isDeleting, handleOpenEdit, handleDelete, handleOpenStatus, placementForm, setHistoryPage, setHistoryPageSize, setHistoryId, config.supportsAgent, openAgent]);
+  }, [canManageLabOperations, isDeleting, isForceDeleting, handleOpenEdit, handleOpenDeleteModal, handleOpenForceDeleteModal, handleOpenStatus, placementForm, setHistoryPage, setHistoryPageSize, setHistoryId, config.supportsAgent, openAgent]);
 
   // Columns definition matching complete field parity with all equipment fields
   const columns = useMemo<ColumnsType<EquipmentItem>>(() => {
@@ -905,6 +987,19 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
           onSave={handleStatusSave}
         />
       )}
+
+      <DeleteEquipmentModal
+        key={deleteModal ? `${deleteModal.item.id}-${deleteModal.mode}` : 'closed'}
+        open={deleteModal !== null}
+        item={deleteModal?.item ?? null}
+        singularLabel={config.singular}
+        initialMode={deleteModal?.mode ?? 'standard'}
+        deleting={isDeleting}
+        forceDeleting={isForceDeleting}
+        onCancel={() => setDeleteModal(null)}
+        onStandardDelete={handleStandardDelete}
+        onForceDelete={handleForceDelete}
+      />
     </>
   );
 };
