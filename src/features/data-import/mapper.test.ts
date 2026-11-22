@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { mapApplyErrorDetail, mapImportReport, problemsToCsv, sortProblems } from './mapper.ts';
+import { mapApplyErrorDetail, mapImportProgress, mapImportReport, problemsToCsv, sortProblems } from './mapper.ts';
 
 test('maps the import report from the wire shape', () => {
   const report = mapImportReport({
@@ -62,4 +62,30 @@ test('sorts errors first, then by sheet order and row', () => {
 test('CSV export quotes values and neutralises formulas', () => {
   const csv = problemsToCsv([{ sheet: 'Rooms', row: 4, column: 'Name', severity: 'error', code: 'c', message: '=cmd "x"' }]);
   assert.match(csv, /"'=cmd ""x"""/);
+});
+
+test('maps live import progress snapshots from the wire shape', () => {
+  const progress = mapImportProgress({
+    progress_key: '11111111-1111-4111-8111-111111111111',
+    status: { value: 'running', label: 'Running' },
+    phase: { value: 'processing', label: 'Processing rows' },
+    percent: 42,
+    current_sheet: 'Equipment',
+    processed_rows: 1200,
+    total_rows: 3000,
+    completed_sheets: 15,
+    total_sheets: 21,
+    message: 'Checking Equipment (1,200 / 3,000 rows)...',
+    updated_at: '2026-11-21T10:00:00Z',
+  });
+
+  assert.equal(progress.progressKey, '11111111-1111-4111-8111-111111111111');
+  assert.equal(progress.status, 'running');
+  assert.equal(progress.phase, 'processing');
+  assert.equal(progress.percent, 42);
+  assert.equal(progress.currentSheet, 'Equipment');
+  assert.equal(progress.processedRows, 1200);
+  assert.equal(progress.totalRows, 3000);
+  assert.equal(progress.completedSheets, 15);
+  assert.equal(progress.totalSheets, 21);
 });
