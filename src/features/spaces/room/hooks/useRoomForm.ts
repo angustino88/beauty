@@ -1,13 +1,14 @@
 import {
     useCreateRoomMutation,
     useDeleteRoomMutation,
+    useForceDeleteRoomMutation,
     useUpdateRoomMutation,
     useUpdateRoomImageMutation,
     useDeleteRoomImageMutation,
 } from '../api';
 import { message } from 'antd';
 import { useLabsRoomsActionsGenerateSlotsCreateByRoomIdMutation } from '@/shared/api/generated/api';
-import { notifyEquipmentCreated, notifyEquipmentError, useEquipmentCrudActions } from '@/features/lab-equipment/shared';
+import { notifyEquipmentCreated, notifyEquipmentError, useEquipmentCrudActions, type GuardedForceDeleteResult } from '@/features/lab-equipment/shared';
 import { parseFormApiError } from '@/features/lab-equipment/shared/utils/formApiError';
 import type { IRoomPayload } from '../types';
 
@@ -30,6 +31,7 @@ export function useRoomForm() {
     const [createRoom,          { isLoading: creating }] = useCreateRoomMutation();
     const [updateRoom,          { isLoading: updating }] = useUpdateRoomMutation();
     const [deleteRoom,          { isLoading: deleting }] = useDeleteRoomMutation();
+    const [forceDeleteRoom,     { isLoading: forceDeleting }] = useForceDeleteRoomMutation();
     const [updateRoomImageMutation]                       = useUpdateRoomImageMutation();
     const [deleteRoomImageMutation]                       = useDeleteRoomImageMutation();
     const [generateSlotsMutation]                         = useLabsRoomsActionsGenerateSlotsCreateByRoomIdMutation();
@@ -58,6 +60,30 @@ export function useRoomForm() {
         mapStatusBody:       (values) => values as unknown as IRoomPayload,
         labels: { entityName: 'Room', entityNameLower: 'room', errorPrefix: 'room' },
     });
+
+    const forceDeleteById = async (
+        id: number,
+        reason: string,
+        item?: { sku?: string | null; name?: string | null },
+    ): Promise<GuardedForceDeleteResult> => {
+        try {
+            const result = await forceDeleteRoom({ id, reason, confirm: true }).unwrap();
+            const label = item?.sku || item?.name || `Room #${id}`;
+            const parts: string[] = [];
+            if (result?.released?.stations) {
+                parts.push(`detached ${result.released.stations} station${result.released.stations === 1 ? '' : 's'}`);
+            }
+            if (result?.released?.equipment) {
+                parts.push(`cleared ${result.released.equipment} resting equipment placement${result.released.equipment === 1 ? '' : 's'}`);
+            }
+            message.success(
+                parts.length > 0 ? `Force-deleted ${label} (${parts.join(', ')}).` : `Force-deleted ${label}.`,
+            );
+            return { ok: true };
+        } catch (err) {
+            return { ok: false, error: slotErrorText(err) || 'Failed to force-delete room.' };
+        }
+    };
 
     const createFromValues = async (values: Record<string, unknown>, imageFile?: File | null) => {
         const rows = toNumber(values.rows);
@@ -97,9 +123,11 @@ export function useRoomForm() {
     return {
         createFromValues,
         syncSlots,
+        forceDeleteById,
         ...actions,   // updateInline, updateImage, updateStatus, deleteById
         creating,
         updating,
         deleting,
+        forceDeleting,
     };
 }

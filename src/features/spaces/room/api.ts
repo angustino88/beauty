@@ -73,6 +73,28 @@ export const roomRtkApi = baseApi.injectEndpoints({
       query: (id) => ({ url: ENDPOINTS.DELETE(id), method: "DELETE" }),
       invalidatesTags: invalidateList(TAG),
     }),
+    forceDeleteRoom: build.mutation<
+      { id: number; released: { stations: number; equipment: number } },
+      { id: number; reason: string; confirm: true }
+    >({
+      query: ({ id, reason, confirm }) => ({
+        url: `/api/labs/rooms/${id}/actions/force-delete`,
+        method: "POST",
+        body: { reason, confirm },
+      }),
+      transformResponse: (res: unknown) => {
+        const envelope = (res ?? {}) as { data?: { id: number; released: { stations: number; equipment: number } } };
+        return envelope.data ?? (res as { id: number; released: { stations: number; equipment: number } });
+      },
+      invalidatesTags: (_r, _e, { id }) => [
+        ...generateItemTag(TAG, id),
+        ...invalidateList(TAG),
+        { type: "Station", id: "LIST" },
+        { type: "Bench", id: "LIST" },
+        { type: "ResourceMapping", id: "LIST" },
+        { type: "Equipment", id: "LIST" },
+      ],
+    }),
     changeRoomLifecycle: build.mutation<
       IRoom,
       {
@@ -250,6 +272,7 @@ export const {
   useCreateRoomMutation,
   useUpdateRoomMutation,
   useDeleteRoomMutation,
+  useForceDeleteRoomMutation,
   useChangeRoomLifecycleMutation,
   useUpdateRoomImageMutation,
   useDeleteRoomImageMutation,

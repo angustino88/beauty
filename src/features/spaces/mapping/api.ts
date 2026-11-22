@@ -85,6 +85,8 @@ export const mappingApi = baseApi.injectEndpoints({
       invalidatesTags: (_res, _err, { body }) => [
         ...generateItemTag(TAG, body.bench_id),
         ...invalidateList(TAG),
+        { type: "Bench", id: body.bench_id },
+        { type: "Bench", id: "LIST" },
         { type: "Equipment", id: "LIST" },
       ],
     }),
@@ -97,6 +99,8 @@ export const mappingApi = baseApi.injectEndpoints({
       invalidatesTags: (_res, _err, { benchId }) => [
         ...(benchId ? generateItemTag(TAG, benchId) : []),
         ...invalidateList(TAG),
+        ...(benchId ? [{ type: "Bench" as const, id: benchId }] : []),
+        { type: "Bench", id: "LIST" },
         { type: "Equipment", id: "LIST" },
       ],
     }),

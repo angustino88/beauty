@@ -104,6 +104,29 @@ export const benchApi = baseApi.injectEndpoints({
       invalidatesTags: invalidateList(TAG),
     }),
 
+    forceDeleteBench: build.mutation<
+      { id: number; released: { equipment: number; bookings: number } },
+      { id: number; reason: string; confirm: true }
+    >({
+      query: ({ id, reason, confirm }) => ({
+        url: `/api/labs/benches/${id}/actions/force-delete`,
+        method: "POST",
+        body: { reason, confirm },
+      }),
+      transformResponse: (res: unknown) => {
+        const envelope = (res ?? {}) as { data?: { id: number; released: { equipment: number; bookings: number } } };
+        return envelope.data ?? (res as { id: number; released: { equipment: number; bookings: number } });
+      },
+      invalidatesTags: (_r, _e, { id }) => [
+        ...generateItemTag(TAG, id),
+        ...invalidateList(TAG),
+        { type: "Station", id: "LIST" },
+        { type: "ResourceMapping", id: "LIST" },
+        { type: "Equipment", id: "LIST" },
+        { type: "Booking", id: "LIST" },
+      ],
+    }),
+
     getBenchGroups: build.query<IBenchGroup[], void>({
       query: () => ({ url: "/api/labs/bench-groups/options" }),
       transformResponse: (res: unknown): IBenchGroup[] => {
@@ -166,6 +189,7 @@ export const {
   useCreateBenchMutation,
   useUpdateBenchMutation,
   useDeleteBenchMutation,
+  useForceDeleteBenchMutation,
   useGetBenchGroupsQuery,
   useGetBenchFiltersQuery,
   useFavoriteBenchMutation,

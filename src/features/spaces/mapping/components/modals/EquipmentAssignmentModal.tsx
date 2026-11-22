@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import {
   Button,
   Card,
@@ -12,14 +13,18 @@ import {
   Select,
   Space,
   Tag,
+  Typography,
   message,
 } from "antd";
-import { DeleteOutlined, PlusOutlined } from "@ant-design/icons";
+import { DeleteOutlined, ExportOutlined, PlusOutlined } from "@ant-design/icons";
 import { usePagedOptions } from "@/shared/hooks/usePagedOptions";
 import {
   useAssignEquipmentMutation,
   useUnassignEquipmentMutation,
 } from "../../api";
+import { categoryPath } from "../../columns/mappingColumnRenderers";
+import { useCategoryKeyById } from "../../hooks/useCategoryKeyById";
+import { resolveCategoryKey } from "../../utils/categoryKey";
 import type { MappingEquipmentItem, ResourceMappingRow } from "../../types";
 
 interface EquipmentAssignmentModalProps {
@@ -36,6 +41,7 @@ export function EquipmentAssignmentModal({
   onSuccess,
 }: EquipmentAssignmentModalProps) {
   const [form] = Form.useForm<{ equipmentId: number; role?: string; position?: number }>();
+  const keyById = useCategoryKeyById();
   // Equipment that can go on a bench right now (available = in service, operational, calibrated)
   // and is not on another bench. The first page loads when the list opens; more load on scroll.
   const equipment = usePagedOptions({
@@ -105,7 +111,7 @@ export function EquipmentAssignmentModal({
         </Button>,
       ]}
       width={680}
-      destroyOnClose
+      destroyOnHidden
     >
       <div style={{ marginTop: 12 }}>
         <h4 style={{ marginBottom: 8, fontSize: 13 }}>Assigned Equipment ({row?.equipment.length ?? 0})</h4>
@@ -119,42 +125,55 @@ export function EquipmentAssignmentModal({
             size="small"
             bordered
             dataSource={row.equipment}
-            renderItem={(item) => (
-              <List.Item
-                actions={[
-                  <Popconfirm
-                    key="unassign"
-                    title={`Unassign ${item.name || item.sku}?`}
-                    description="This will detach the equipment from this bench."
-                    onConfirm={() => handleUnassign(item)}
-                    okText="Unassign"
-                    cancelText="Cancel"
-                  >
-                    <Button
-                      danger
-                      type="text"
-                      icon={<DeleteOutlined />}
-                      size="small"
-                      loading={unassigning}
+            renderItem={(item) => {
+              const categoryKey = resolveCategoryKey(item.category, keyById);
+              const basePath = categoryPath(categoryKey);
+              const targetPath = basePath
+                ? `${basePath}?q=${encodeURIComponent(item.sku || item.name || "")}`
+                : null;
+              return (
+                <List.Item
+                  actions={[
+                    <Popconfirm
+                      key="unassign"
+                      title={`Unassign ${item.name || item.sku}?`}
+                      description="This will detach the equipment from this bench."
+                      onConfirm={() => handleUnassign(item)}
+                      okText="Unassign"
+                      cancelText="Cancel"
                     >
-                      Unassign
-                    </Button>
-                  </Popconfirm>,
-                ]}
-              >
-                <List.Item.Meta
-                  title={
-                    <Space>
-                      <strong>{item.name || item.sku}</strong>
-                      <Tag color="blue">{item.category?.name || "Equipment"}</Tag>
-                      {item.role && <Tag color="default">{item.role}</Tag>}
-                      {item.position != null && <Tag color="default">Pos: {item.position}</Tag>}
-                    </Space>
-                  }
-                  description={`SKU: ${item.sku || "N/A"}`}
-                />
-              </List.Item>
-            )}
+                      <Button
+                        danger
+                        type="text"
+                        icon={<DeleteOutlined />}
+                        size="small"
+                        loading={unassigning}
+                      >
+                        Unassign
+                      </Button>
+                    </Popconfirm>,
+                  ]}
+                >
+                  <List.Item.Meta
+                    title={
+                      <Space wrap size={6}>
+                        {item.sku && <Typography.Text code style={{ fontSize: 12 }}>{item.sku}</Typography.Text>}
+                        {targetPath ? (
+                          <Link to={targetPath} onClick={onClose} style={{ fontWeight: 600 }}>
+                            {item.name || item.sku} <ExportOutlined style={{ fontSize: 11 }} />
+                          </Link>
+                        ) : (
+                          <strong>{item.name || item.sku}</strong>
+                        )}
+                        <Tag color="blue">{item.category?.name || "Equipment"}</Tag>
+                        {item.role && item.role !== "default" && <Tag color="default">{item.role}</Tag>}
+                        {item.position != null && item.position !== 0 && <Tag color="default">Pos: {item.position}</Tag>}
+                      </Space>
+                    }
+                  />
+                </List.Item>
+              );
+            }}
           />
         )}
 

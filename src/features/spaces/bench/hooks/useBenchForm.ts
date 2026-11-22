@@ -1,6 +1,8 @@
+import { message } from "antd";
 import {
   useCreateBenchMutation,
   useDeleteBenchMutation,
+  useForceDeleteBenchMutation,
   useUpdateBenchMutation,
   useUpdateBenchImageMutation,
   useDeleteBenchImageMutation,
@@ -8,7 +10,9 @@ import {
 import {
   notifyEquipmentCreated,
   notifyEquipmentError,
+  parseFormApiError,
   useEquipmentCrudActions,
+  type GuardedForceDeleteResult,
 } from "@/features/lab-equipment/shared";
 import type { IBenchPayload } from "../types";
 
@@ -16,6 +20,7 @@ export function useBenchForm() {
   const [createBench, { isLoading: creating }] = useCreateBenchMutation();
   const [updateBench, { isLoading: updating }] = useUpdateBenchMutation();
   const [deleteBench, { isLoading: deleting }] = useDeleteBenchMutation();
+  const [forceDeleteBench, { isLoading: forceDeleting }] = useForceDeleteBenchMutation();
   const [updateBenchImage] = useUpdateBenchImageMutation();
   const [deleteBenchImage] = useDeleteBenchImageMutation();
 
@@ -27,6 +32,36 @@ export function useBenchForm() {
     mapStatusBody: (values) => values as unknown as IBenchPayload,
     labels: { entityName: "Bench", entityNameLower: "bench", errorPrefix: "bench" },
   });
+
+  const forceDeleteById = async (
+    id: number,
+    reason: string,
+    item?: { sku?: string | null; name?: string | null },
+  ): Promise<GuardedForceDeleteResult> => {
+    try {
+      const result = await forceDeleteBench({ id, reason, confirm: true }).unwrap();
+      const label = item?.sku || item?.name || `Bench #${id}`;
+      const parts: string[] = [];
+      if (result?.released?.equipment) {
+        parts.push(`unassigned ${result.released.equipment} equipment unit${result.released.equipment === 1 ? "" : "s"}`);
+      }
+      if (result?.released?.bookings) {
+        parts.push(`cancelled ${result.released.bookings} booking${result.released.bookings === 1 ? "" : "s"}`);
+      }
+      message.success(
+        parts.length > 0 ? `Force-deleted ${label} (${parts.join(", ")}).` : `Force-deleted ${label}.`,
+      );
+      return { ok: true };
+    } catch (err) {
+      const parsed = parseFormApiError(err);
+      const errMsg =
+        parsed?.message ||
+        parsed?.nonFieldErrors[0] ||
+        Object.values(parsed?.fieldErrors ?? {})[0]?.[0] ||
+        "Failed to force-delete bench.";
+      return { ok: false, error: errMsg };
+    }
+  };
 
   const createFromValues = async (values: Record<string, unknown>, imageFile?: File | null) => {
     const payload: IBenchPayload = {
@@ -51,9 +86,11 @@ export function useBenchForm() {
 
   return {
     createFromValues,
+    forceDeleteById,
     ...actions,
     creating,
     updating,
     deleting,
+    forceDeleting,
   };
 }

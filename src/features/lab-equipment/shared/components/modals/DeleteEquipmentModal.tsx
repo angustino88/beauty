@@ -64,6 +64,7 @@ export const DeleteEquipmentModal: React.FC<DeleteEquipmentModalProps> = ({
   onForceDelete,
 }) => {
   const [mode, setMode] = useState<DeleteModalMode>(initialMode);
+  const [forceStep, setForceStep] = useState<1 | 2>(1);
   const [blockers, setBlockers] = useState<string[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [reason, setReason] = useState('');
@@ -75,7 +76,7 @@ export const DeleteEquipmentModal: React.FC<DeleteEquipmentModalProps> = ({
   const confirmToken = (item.sku?.trim() || item.name?.trim() || `#${item.id}`);
   const displayLabel = item.sku || item.name || `${singularLabel} #${item.id}`;
   const trimmedReason = reason.trim();
-  const canSubmitForce =
+  const canProceedForce =
     trimmedReason.length >= REASON_MIN_LENGTH &&
     trimmedReason.length <= REASON_MAX_LENGTH &&
     typedConfirm.trim() === confirmToken &&
@@ -88,6 +89,7 @@ export const DeleteEquipmentModal: React.FC<DeleteEquipmentModalProps> = ({
     const result = await onStandardDelete(item.id);
     if (result.blocked && result.blocked.length > 0) {
       setBlockers(result.blocked);
+      setForceStep(1);
       setMode('force');
       return;
     }
@@ -96,8 +98,14 @@ export const DeleteEquipmentModal: React.FC<DeleteEquipmentModalProps> = ({
     }
   };
 
+  const handleProceedToFinalStep = () => {
+    if (!canProceedForce) return;
+    setErrorMessage(null);
+    setForceStep(2);
+  };
+
   const handleForceConfirm = async () => {
-    if (!canSubmitForce) return;
+    if (!canProceedForce) return;
     setErrorMessage(null);
     const result = await onForceDelete(item.id, trimmedReason);
     if (result.error) {
@@ -107,16 +115,19 @@ export const DeleteEquipmentModal: React.FC<DeleteEquipmentModalProps> = ({
 
   const switchToForce = () => {
     setErrorMessage(null);
+    setForceStep(1);
     setMode('force');
   };
 
   const switchToStandard = () => {
     setErrorMessage(null);
     setBlockers([]);
+    setForceStep(1);
     setMode('standard');
   };
 
   const isForce = mode === 'force';
+  const isFinalStep = isForce && forceStep === 2;
 
   return (
     <Modal
@@ -125,7 +136,7 @@ export const DeleteEquipmentModal: React.FC<DeleteEquipmentModalProps> = ({
       maskClosable={!busy}
       closable={!busy}
       destroyOnHidden
-      width={isForce ? 560 : 480}
+      width={isForce ? 580 : 480}
       title={
         <Space size={8}>
           {isForce ? (
@@ -133,7 +144,18 @@ export const DeleteEquipmentModal: React.FC<DeleteEquipmentModalProps> = ({
           ) : (
             <ExclamationCircleOutlined style={{ color: 'var(--lm-warning-solid, #faad14)' }} />
           )}
-          <span>{isForce ? `Force delete ${displayLabel}` : `Delete ${displayLabel}?`}</span>
+          <span>
+            {isFinalStep
+              ? `Final confirmation: Force delete ${displayLabel}`
+              : isForce
+                ? `Force delete ${displayLabel}`
+                : `Delete ${displayLabel}?`}
+          </span>
+          {isForce && (
+            <Tag color={isFinalStep ? 'red' : 'volcano'} style={{ marginInlineStart: 4 }}>
+              Step {forceStep} of 2
+            </Tag>
+          )}
         </Space>
       }
       footer={
@@ -149,6 +171,19 @@ export const DeleteEquipmentModal: React.FC<DeleteEquipmentModalProps> = ({
                 onClick={switchToForce}
               >
                 Need to force delete?
+              </Button>
+            ) : isFinalStep ? (
+              <Button
+                type="link"
+                size="small"
+                style={{ paddingInline: 0 }}
+                disabled={busy}
+                onClick={() => {
+                  setErrorMessage(null);
+                  setForceStep(1);
+                }}
+              >
+                Back to edit details
               </Button>
             ) : blockers.length === 0 ? (
               <Button
@@ -170,15 +205,24 @@ export const DeleteEquipmentModal: React.FC<DeleteEquipmentModalProps> = ({
               <Button type="primary" danger loading={deleting} onClick={() => void handleStandardConfirm()}>
                 Delete
               </Button>
+            ) : !isFinalStep ? (
+              <Button
+                type="primary"
+                danger
+                disabled={!canProceedForce || busy}
+                onClick={handleProceedToFinalStep}
+              >
+                Continue to final confirmation
+              </Button>
             ) : (
               <Button
                 type="primary"
                 danger
                 loading={forceDeleting}
-                disabled={!canSubmitForce}
+                disabled={!canProceedForce}
                 onClick={() => void handleForceConfirm()}
               >
-                Force delete
+                Yes, force delete permanently
               </Button>
             )}
           </Space>
@@ -202,7 +246,7 @@ export const DeleteEquipmentModal: React.FC<DeleteEquipmentModalProps> = ({
             If it still has an active bench assignment, loan, license seat, or booking, standard delete will be blocked
             and you can choose to force-delete it instead.
           </Typography.Paragraph>
-        ) : (
+        ) : !isFinalStep ? (
           <>
             <Alert
               type="error"
@@ -282,6 +326,27 @@ export const DeleteEquipmentModal: React.FC<DeleteEquipmentModalProps> = ({
               I confirm as a lab operator that I want to force-delete <strong>{displayLabel}</strong> and
               immediately release or cancel all linked records.
             </Checkbox>
+          </>
+        ) : (
+          <>
+            <Alert
+              type="error"
+              showIcon
+              title="Final confirmation required"
+              description={
+                <div>
+                  You are about to permanently force-delete <strong>{displayLabel}</strong>. This action cannot
+                  be undone from the UI and will immediately release or cancel every active placement, loan,
+                  license seat, and reservation on this unit.
+                </div>
+              }
+            />
+            <Descriptions size="small" column={1} bordered>
+              <Descriptions.Item label="Confirmed identifier">
+                <Typography.Text code>{confirmToken}</Typography.Text>
+              </Descriptions.Item>
+              <Descriptions.Item label="Audit reason">{trimmedReason}</Descriptions.Item>
+            </Descriptions>
           </>
         )}
 

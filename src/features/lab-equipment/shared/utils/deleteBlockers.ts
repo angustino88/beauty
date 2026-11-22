@@ -1,7 +1,15 @@
+export interface BlockedDeleteEntry {
+  label: string;
+  sku: string | null;
+  name: string | null;
+  categoryKey: string | null;
+}
+
 export interface BlockedDeleteGroup {
   key: string;
   total: number;
   items: string[];
+  entries: BlockedDeleteEntry[];
 }
 
 export interface ParsedBlockedDeleteError {
@@ -31,22 +39,35 @@ interface RawApiError {
 }
 
 /**
+ * Splits a `"SKU — Name"` blocker label into its SKU and Name components.
+ */
+export function splitBlockerLabel(label: string): { sku: string | null; name: string | null } {
+  const trimmed = label.trim();
+  if (!trimmed) return { sku: null, name: null };
+  const separatorIndex = trimmed.indexOf(' — ');
+  if (separatorIndex > 0) {
+    const sku = trimmed.slice(0, separatorIndex).trim();
+    const name = trimmed.slice(separatorIndex + 3).trim();
+    return { sku: sku || null, name: name || null };
+  }
+  return { sku: trimmed, name: null };
+}
+
+/**
  * Extracts the searchable identifier prefix from a `"SKU — Name"` blocker label.
  * Falls back to the full trimmed label when no em-dash separator is present.
  */
 export function extractBlockerSearchToken(label: string): string {
-  const trimmed = label.trim();
-  const separatorIndex = trimmed.indexOf(' — ');
-  if (separatorIndex > 0) {
-    return trimmed.slice(0, separatorIndex).trim();
-  }
-  return trimmed;
+  const { sku } = splitBlockerLabel(label);
+  return sku ?? label.trim();
 }
+
+const METADATA_LIST_GROUPS = new Set(['equipment_categories']);
 
 /**
  * Parses a DRF / Lab Mango delete error into a structured conflict summary.
- * Supports the standard flattened `error.details` list (`stations_total`, `stations[0]`, …)
- * as well as legacy message-only 409 conflicts.
+ * Supports the standard flattened `error.details` list (`stations_total`, `stations[0]`,
+ * `equipment_categories[0]`, …) as well as legacy message-only 409 conflicts.
  */
 export function parseBlockedDeleteError(
   err: unknown,
@@ -71,9 +92,11 @@ export function parseBlockedDeleteError(
 
   const totals = new Map<string, number>();
   const itemsByGroup = new Map<string, string[]>();
+  const equipmentCategoriesByIndex = new Map<number, string>();
   const order: string[] = [];
 
   const registerGroup = (group: string) => {
+    if (METADATA_LIST_GROUPS.has(group)) return;
     if (!order.includes(group)) order.push(group);
   };
 
@@ -82,7 +105,7 @@ export function parseBlockedDeleteError(
     for (const entry of rawDetails) {
       const field = typeof entry?.field === 'string' ? entry.field : '';
       const entryMessage = typeof entry?.message === 'string' ? entry.message.trim() : '';
-      if (!field || !entryMessage) continue;
+      if (!field) continue;
 
       if (field.endsWith('_total')) {
         const group = field.slice(0, -'_total'.length);
@@ -97,6 +120,16 @@ export function parseBlockedDeleteError(
       const bracketIndex = field.indexOf('[');
       if (bracketIndex > 0) {
         const group = field.slice(0, bracketIndex);
+        const closeIndex = field.indexOf(']', bracketIndex);
+        const index =
+          closeIndex > bracketIndex ? Number.parseInt(field.slice(bracketIndex + 1, closeIndex), 10) : NaN;
+        if (group === 'equipment_categories') {
+          if (Number.isFinite(index) && entryMessage) {
+            equipmentCategoriesByIndex.set(index, entryMessage);
+          }
+          continue;
+        }
+        if (!entryMessage) continue;
         registerGroup(group);
         const list = itemsByGroup.get(group) ?? [];
         list.push(entryMessage);
@@ -105,6 +138,14 @@ export function parseBlockedDeleteError(
     }
   } else if (rawDetails && typeof rawDetails === 'object') {
     for (const [key, value] of Object.entries(rawDetails)) {
+      if (key === 'equipment_categories' && Array.isArray(value)) {
+        value.forEach((item, idx) => {
+          if (typeof item === 'string' && item.trim()) {
+            equipmentCategoriesByIndex.set(idx, item.trim());
+          }
+        });
+        continue;
+      }
       if (key.endsWith('_total') && typeof value === 'number' && value > 0) {
         const group = key.slice(0, -'_total'.length);
         registerGroup(group);
@@ -123,7 +164,12 @@ export function parseBlockedDeleteError(
     .map((key) => {
       const items = itemsByGroup.get(key) ?? [];
       const total = totals.get(key) ?? items.length;
-      return { key, total, items };
+      const entries: BlockedDeleteEntry[] = items.map((label, idx) => {
+        const { sku, name } = splitBlockerLabel(label);
+        const categoryKey = key === 'equipment' ? (equipmentCategoriesByIndex.get(idx) ?? null) : null;
+        return { label, sku, name, categoryKey };
+      });
+      return { key, total, items, entries };
     })
     .filter((group) => group.total > 0 || group.items.length > 0);
 

@@ -8,6 +8,7 @@ import {
   GuardedDeleteModal,
   createActionsRenderer,
   printDeviceLabel,
+  type GuardedDeleteInitialMode,
 } from "@/features/lab-equipment/shared";
 import type { IRoom, IRoomPayload } from "../types";
 import SpaceOverview from "../../shared/SpaceOverview";
@@ -45,7 +46,7 @@ export default function RoomPage() {
 
   const [createOpen, setCreateOpen] = useState(false);
   const [editingRoom, setEditingRoom] = useState<IRoom | null>(null);
-  const [deletingRoom, setDeletingRoom] = useState<IRoom | null>(null);
+  const [deleteModal, setDeleteModal] = useState<{ item: IRoom; mode: GuardedDeleteInitialMode } | null>(null);
   const [historyId, setHistoryId] = useState<number | null>(null);
   const [historyPage, setHistoryPage] = useState(1);
   const [historyPageSize, setHistoryPageSize] = useState(10);
@@ -59,9 +60,10 @@ export default function RoomPage() {
 
   const actionsRenderer = createActionsRenderer<IRoom>({
     canManageLabOperations,
-    deleting: form.deleting,
+    deleting: form.deleting || form.forceDeleting,
     onEdit: (id) => setEditingRoom(table.rows.find((room) => room.id === id) ?? null),
-    onDelete: (_id, record) => setDeletingRoom(record),
+    onDelete: (_id, record) => setDeleteModal({ item: record, mode: 'standard' }),
+    onForceDelete: (record) => setDeleteModal({ item: record, mode: 'force' }),
     onHistory: (id) => {
       setHistoryPage(1);
       setHistoryPageSize(10);
@@ -159,13 +161,16 @@ export default function RoomPage() {
       />
 
       <GuardedDeleteModal
-        key={deletingRoom ? deletingRoom.id : 'closed'}
-        open={deletingRoom !== null}
+        key={deleteModal ? `${deleteModal.item.id}-${deleteModal.mode}` : 'closed'}
+        open={deleteModal !== null}
         resourceKind="room"
-        item={deletingRoom}
+        item={deleteModal?.item ?? null}
+        initialMode={deleteModal?.mode ?? 'standard'}
         deleting={form.deleting}
-        onCancel={() => setDeletingRoom(null)}
-        onConfirm={(id) => form.tryDeleteById(id, deletingRoom ?? undefined)}
+        forceDeleting={form.forceDeleting}
+        onCancel={() => setDeleteModal(null)}
+        onConfirm={(id) => form.tryDeleteById(id, deleteModal?.item)}
+        onForceDelete={(id, reason) => form.forceDeleteById(id, reason, deleteModal?.item)}
       />
     </>
   );

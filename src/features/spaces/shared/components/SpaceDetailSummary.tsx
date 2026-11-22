@@ -10,6 +10,9 @@ import type { StatusTone } from '@/shared/status/statusTone';
 import type { LocationState, ResourceState } from '../resourceStatus';
 import { explainSpaceStatus } from '../spaceStatusExplanation';
 import type { ResourceMappingRow } from '@/features/spaces/mapping/types';
+import { categoryPath } from '@/features/spaces/mapping/columns/mappingColumnRenderers';
+import { useCategoryKeyById } from '@/features/spaces/mapping/hooks/useCategoryKeyById';
+import { resolveCategoryKey } from '@/features/spaces/mapping/utils/categoryKey';
 
 type SpaceKind = 'room' | 'station' | 'bench';
 
@@ -188,17 +191,35 @@ function properties(kind: SpaceKind, record: Record<string, unknown>) {
 }
 
 function Connected({ kind, record, rows }: { kind: SpaceKind; record: Record<string, unknown>; rows: ResourceMappingRow[] }) {
-  const mappingLink = <Link to="/spaces/mapping">Open mapping →</Link>;
+  const keyById = useCategoryKeyById();
+  const recordToken = text(record, 'sku', 'name');
+  const mappingTo = recordToken ? `/spaces/mapping?q=${encodeURIComponent(recordToken)}` : '/spaces/mapping';
+  const mappingLink = <Link to={mappingTo}>Open in Mapping →</Link>;
   if (kind === 'bench') {
     const row = rows.find((r) => r.bench.id === Number(record.id)) ?? rows[0];
     const equipment = row?.equipment ?? [];
     if (!equipment.length) return null;
     return (
       <DetailSection title={`Assigned equipment (${equipment.length})`} icon={<Boxes />} action={mappingLink}>
-        <LinkedList items={equipment.map((eq) => ({
-          key: eq.id, code: eq.sku, title: eq.name,
-          meta: [refLabel(eq.category), eq.role].filter(Boolean).join(' · '),
-        }))} />
+        <LinkedList
+          items={equipment.map((eq) => {
+            const categoryKey = resolveCategoryKey(eq.category, keyById);
+            const basePath = categoryPath(categoryKey);
+            const token = eq.sku || eq.name || '';
+            const to = basePath
+              ? `${basePath}?q=${encodeURIComponent(token)}`
+              : `/spaces/mapping?q=${encodeURIComponent(token)}`;
+            return {
+              key: eq.id,
+              code: eq.sku,
+              title: eq.name || eq.sku,
+              meta: [refLabel(eq.category), eq.role && eq.role !== 'default' ? eq.role : null]
+                .filter(Boolean)
+                .join(' · '),
+              to,
+            };
+          })}
+        />
       </DetailSection>
     );
   }
@@ -208,10 +229,17 @@ function Connected({ kind, record, rows }: { kind: SpaceKind; record: Record<str
     if (!hosted.length) return null;
     return (
       <DetailSection title={`Hosted benches (${hosted.length})`} icon={<Boxes />} action={mappingLink}>
-        <LinkedList items={hosted.map((r) => ({
-          key: r.id, code: r.bench.sku, title: r.bench.name,
-          meta: [r.station_slot && `Slot ${r.station_slot.slot_code}`, `${r.equipment.length} equipment`].filter(Boolean).join(' · '),
-        }))} />
+        <LinkedList
+          items={hosted.map((r) => ({
+            key: r.id,
+            code: r.bench.sku,
+            title: r.bench.name || r.bench.sku,
+            meta: [r.station_slot && `Slot ${r.station_slot.slot_code}`, `${r.equipment.length} equipment`]
+              .filter(Boolean)
+              .join(' · '),
+            to: `/spaces/bench?q=${encodeURIComponent(r.bench.sku || r.bench.name || '')}`,
+          }))}
+        />
       </DetailSection>
     );
   }

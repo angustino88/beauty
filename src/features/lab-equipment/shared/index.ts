@@ -114,7 +114,9 @@ export {
 export { GuardedDeleteModal } from "./components/modals/GuardedDeleteModal";
 export type {
   GuardedDeleteAttemptResult,
+  GuardedDeleteInitialMode,
   GuardedDeleteModalProps,
   GuardedDeleteResourceKind,
   GuardedDeleteTarget,
+  GuardedForceDeleteResult,
 } from "./components/modals/GuardedDeleteModal";

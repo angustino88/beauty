@@ -10,6 +10,7 @@ import {
   GuardedDeleteModal,
   createActionsRenderer,
   printDeviceLabel,
+  type GuardedDeleteInitialMode,
 } from "@/features/lab-equipment/shared";
 import type { FieldConfig } from "@/features/lab-equipment/shared";
 import type { IStation, IStationPayload } from "../types";
@@ -29,7 +30,7 @@ export default function StationPage() {
 
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editingStation, setEditingStation] = useState<IStation | null>(null);
-  const [deletingStation, setDeletingStation] = useState<IStation | null>(null);
+  const [deleteModal, setDeleteModal] = useState<{ item: IStation; mode: GuardedDeleteInitialMode } | null>(null);
   const [historyId, setHistoryId] = useState<number | null>(null);
   const [historyPage, setHistoryPage] = useState(1);
   const [historyPageSize, setHistoryPageSize] = useState(10);
@@ -130,8 +131,9 @@ export default function StationPage() {
   const actionsRenderer = createActionsRenderer<IStation>({
     canManageLabOperations,
     onEdit: (id) => setEditingStation(table.rows.find((station) => station.id === id) ?? null),
-    deleting: form.deleting,
-    onDelete: (_id, record) => setDeletingStation(record),
+    deleting: form.deleting || form.forceDeleting,
+    onDelete: (_id, record) => setDeleteModal({ item: record, mode: 'standard' }),
+    onForceDelete: (record) => setDeleteModal({ item: record, mode: 'force' }),
     onHistory: (id) => {
       setHistoryPage(1);
       setHistoryPageSize(10);
@@ -244,13 +246,16 @@ export default function StationPage() {
       />
 
       <GuardedDeleteModal
-        key={deletingStation ? deletingStation.id : 'closed'}
-        open={deletingStation !== null}
+        key={deleteModal ? `${deleteModal.item.id}-${deleteModal.mode}` : 'closed'}
+        open={deleteModal !== null}
         resourceKind="station"
-        item={deletingStation}
+        item={deleteModal?.item ?? null}
+        initialMode={deleteModal?.mode ?? 'standard'}
         deleting={form.deleting}
-        onCancel={() => setDeletingStation(null)}
-        onConfirm={(id) => form.tryDeleteById(id, deletingStation ?? undefined)}
+        forceDeleting={form.forceDeleting}
+        onCancel={() => setDeleteModal(null)}
+        onConfirm={(id) => form.tryDeleteById(id, deleteModal?.item)}
+        onForceDelete={(id, reason) => form.forceDeleteById(id, reason, deleteModal?.item)}
       />
     </>
   );

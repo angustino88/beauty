@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { Link } from 'react-router-dom';
 import type { StatusTone } from '@/shared/status/statusTone';
 import styles from './DetailPrimitives.module.css';
 
@@ -148,13 +149,23 @@ export function NoteBox({ title = 'Note', children }: { title?: string; children
   );
 }
 
-export function LinkedList({ items }: { items: Array<{ key: string | number; code?: ReactNode; title: ReactNode; meta?: ReactNode }> }) {
+export function LinkedList({
+  items,
+}: {
+  items: Array<{ key: string | number; code?: ReactNode; title: ReactNode; meta?: ReactNode; to?: string | null }>;
+}) {
   return (
     <ul className={styles.linked}>
       {items.map((item) => (
         <li key={item.key}>
           {item.code && <span className={styles.code}>{item.code}</span>}
-          <span className={styles.linkedTitle}>{item.title}</span>
+          {item.to ? (
+            <Link to={item.to} className={styles.linkedTitle} style={{ color: 'var(--lm-accent, #1677ff)' }}>
+              {item.title}
+            </Link>
+          ) : (
+            <span className={styles.linkedTitle}>{item.title}</span>
+          )}
           {item.meta && <span className={styles.linkedMeta}>{item.meta}</span>}
         </li>
       ))}
