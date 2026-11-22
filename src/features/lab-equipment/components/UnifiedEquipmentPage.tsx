@@ -56,7 +56,7 @@ import {
 } from '../shared/utils/parity';
 import { printDeviceLabel } from '../shared/utils/printLabel';
 import { buildEquipmentFormFields, equipmentFormInitialValues } from '../shared/utils/formFields';
-import { notifyEquipmentCreated, notifyEquipmentDeleted, notifyEquipmentUpdated } from '../shared/utils/equipmentNotifications';
+import { notifyEquipmentCreated, notifyEquipmentDeleted, notifyEquipmentError, notifyEquipmentUpdated } from '../shared/utils/equipmentNotifications';
 import { equipmentStatusTone } from '../shared/utils/equipmentStatus';
 import { userLabel } from '@/shared/utils/userRef';
 import { AgentHealthCell, ComputingAgentDialog, liveAgentsByEquipment, useGetComputingAgentsQuery, type AgentComputer } from '../agents';
@@ -279,9 +279,7 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
         const deletedItem = listData?.data?.find((item) => item.id === id);
         notifyEquipmentDeleted(config.singular, deletedItem ?? { id });
       } catch (err) {
-        notify.error(`Unable to delete ${config.singular.toLowerCase()}`, {
-          description: getApiErrorMessage(err, 'Please try again.'),
-        });
+        notifyEquipmentError('delete', config.singular, err);
       }
     },
     [config.key, config.singular, deleteEquipment, listData],

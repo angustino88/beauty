@@ -44,6 +44,23 @@ const readDetailField = (detail: UnknownRecord): string | undefined => {
 const readDetailMessages = (detail: UnknownRecord): string[] =>
   toMessages(detail.message ?? detail.error ?? detail.detail ?? detail.messages);
 
+const GENERIC_VALIDATION_WRAPPER =
+  /^(?:one or more fields are invalid|validation (?:failed|error)|invalid (?:input|request|data|fields)|some fields require attention)\.?$/i;
+const METADATA_COUNT_FIELD = /(?:^|_)(?:total|count)$/i;
+const BARE_NUMERIC_TEXT = /^\d+$/;
+
+const isGenericWrapper = (value: unknown): boolean =>
+  typeof value !== 'string' || !value.trim() || GENERIC_VALIDATION_WRAPPER.test(value.trim());
+
+const findDescriptiveFieldError = (fieldErrors: Record<string, string[]>): string | undefined => {
+  for (const [field, messages] of Object.entries(fieldErrors)) {
+    if (METADATA_COUNT_FIELD.test(field)) continue;
+    const candidate = messages.find((msg) => msg.trim() && !BARE_NUMERIC_TEXT.test(msg.trim()));
+    if (candidate) return candidate;
+  }
+  return undefined;
+};
+
 export const parseFormApiError = (error: unknown): ParsedFormApiError | null => {
   const payload = readPayload(error);
   if (!payload) return null;
@@ -78,10 +95,11 @@ export const parseFormApiError = (error: unknown): ParsedFormApiError | null => 
     if (messages.length > 0) fieldErrors[key] = messages;
   }
 
-  const firstFieldError = Object.values(fieldErrors)[0]?.[0];
-  const message = nonFieldErrors.find((item) => item !== payload.message)
-    ?? firstFieldError
-    ?? nonFieldErrors[0];
+  const firstFieldError = findDescriptiveFieldError(fieldErrors);
+  const specificNonField = nonFieldErrors.find((item) => item !== payload.message);
+  const message = isGenericWrapper(payload.message)
+    ? (specificNonField ?? firstFieldError ?? nonFieldErrors[0])
+    : (specificNonField ?? (typeof payload.message === 'string' ? payload.message.trim() : undefined) ?? nonFieldErrors[0]);
 
   if (message || Object.keys(fieldErrors).length > 0) {
     return { fieldErrors, nonFieldErrors, message };

@@ -1,5 +1,4 @@
-import { getApiErrorMessage, notify, type ToastDetailItem } from '@/shared/notifications';
-import { parseFormApiError } from './formApiError';
+import { getApiErrorDetails, getApiErrorMessage, notify, type ToastDetailItem } from '@/shared/notifications';
 
 type EquipmentIdentity = {
   id?: unknown;
@@ -127,11 +126,11 @@ export const notifyEquipmentError = (
   entityName: string,
   error: unknown,
 ): void => {
-  const parsed = parseFormApiError(error);
   const entityNameLower = entityName.toLowerCase();
-  const detail = parsed?.message ?? getApiErrorMessage(error, 'Please try again.');
+  const details = getApiErrorDetails(error);
   notify.error(`Unable to ${action} ${entityNameLower}`, {
-    description: detail,
+    description: getApiErrorMessage(error, 'Please try again.'),
+    details: details.length > 0 ? details : undefined,
   });
 };
 

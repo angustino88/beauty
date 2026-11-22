@@ -12,6 +12,7 @@ export type {
 } from './types';
 
 export {
+  getApiErrorDetails,
   getApiErrorMessage,
   isTechnicalErrorText,
   mapApiFieldErrors,

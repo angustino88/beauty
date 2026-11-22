@@ -5,10 +5,9 @@ import {
     useUpdateRoomImageMutation,
     useDeleteRoomImageMutation,
 } from '../api';
-import { notify } from '@/shared/notifications';
+import { getApiErrorMessage, notify } from '@/shared/notifications';
 import { useLabsRoomsActionsGenerateSlotsCreateByRoomIdMutation } from '@/shared/api/generated/api';
 import { notifyEquipmentCreated, notifyEquipmentError, useEquipmentCrudActions } from '@/features/lab-equipment/shared';
-import { parseFormApiError } from '@/features/lab-equipment/shared/utils/formApiError';
 import type { IRoomPayload } from '../types';
 
 // ── helpers ───────────────────────────────────────────────────────────────────
@@ -19,10 +18,8 @@ const toNumber = (value: unknown): number | undefined => {
     return Number.isNaN(n) ? undefined : n;
 };
 
-const slotErrorText = (err: unknown): string => {
-    const parsed = parseFormApiError(err);
-    return parsed?.message || parsed?.nonFieldErrors[0] || Object.values(parsed?.fieldErrors ?? {})[0]?.[0] || 'The slot grid could not be generated.';
-};
+const slotErrorText = (err: unknown): string =>
+    getApiErrorMessage(err, 'The slot grid could not be generated.');
 
 // ── hook ──────────────────────────────────────────────────────────────────────
 

@@ -1,4 +1,4 @@
-import type { ApiFieldError, NormalizedApiError } from './types.ts';
+import type { ApiFieldError, NormalizedApiError, ToastDetailItem } from './types.ts';
 
 type UnknownRecord = Record<string, unknown>;
 
@@ -217,11 +217,12 @@ export function normalizeApiError(
           : 'error';
 
   const statusDefault = statusFallbackMessage(status, fallback);
+  const descriptiveField = fields.find(
+    (entry) => !isMetadataCountEntry(entry.field, entry.message) && !isTechnicalErrorText(entry.message),
+  );
   const primaryCandidate =
     nonFieldErrors.find((item) => item !== envelope.message && !isTechnicalErrorText(item)) ??
-    (fields.length > 0 && !isTechnicalErrorText(fields[0].message)
-      ? fields[0].message
-      : undefined) ??
+    descriptiveField?.message ??
     nonFieldErrors.find((item) => !isTechnicalErrorText(item));
 
   // Prefer the explicit top-level server message when it is user-friendly and not a generic wrapper
@@ -247,6 +248,121 @@ export function normalizeApiError(
     isPermissionError,
     isConflict: isConflict || rawCode.includes('conflict'),
   };
+}
+
+const METADATA_COUNT_FIELD = /(?:^|_)(?:total|count)$/i;
+const BARE_NUMERIC_TEXT = /^\d+$/;
+
+function isMetadataCountEntry(field: string, message: string): boolean {
+  return METADATA_COUNT_FIELD.test(field) || BARE_NUMERIC_TEXT.test(message.trim());
+}
+
+const BLOCKER_GROUPS: ReadonlyArray<{
+  key: string;
+  singular: string;
+  plural: string;
+}> = [
+  { key: 'stations', singular: 'Blocking station', plural: 'Blocking stations' },
+  { key: 'benches', singular: 'Blocking bench', plural: 'Blocking benches' },
+  { key: 'equipment', singular: 'Blocking equipment', plural: 'Blocking equipment' },
+  { key: 'bookings', singular: 'Active booking', plural: 'Active bookings' },
+  { key: 'bench_bookings', singular: 'Active booking', plural: 'Active bookings' },
+];
+
+const EQUIPMENT_BLOCKER_LABELS: Record<string, string> = {
+  bench_assignment: 'Assigned to a bench',
+  loan: 'Checked out on loan',
+  license_assignment: 'Assigned license seats',
+  booking: 'Active booking',
+};
+
+const MAX_TOAST_PREVIEW_ITEMS = 3;
+
+function formatBlockerGroup(
+  labelSingular: string,
+  labelPlural: string,
+  total: number,
+  previews: string[],
+): ToastDetailItem {
+  const count = Math.max(total, previews.length);
+  const baseLabel = count === 1 ? labelSingular : labelPlural;
+  const label = `${baseLabel} (${count}):`;
+
+  if (previews.length === 0) {
+    return { tone: 'neutral', label: `${baseLabel}:`, value: String(count) };
+  }
+
+  const shown = previews.slice(0, MAX_TOAST_PREVIEW_ITEMS);
+  const remaining = count - shown.length;
+  const value = remaining > 0 ? `${shown.join(', ')} (+${remaining} more)` : shown.join(', ');
+  return { tone: 'neutral', label, value };
+}
+
+/**
+ * Extracts structured, human-readable conflict details (e.g. blocking benches, stations,
+ * equipment, or active bookings returned on 409 Conflict responses) for toast display.
+ */
+export function getApiErrorDetails(error: unknown): ToastDetailItem[] {
+  const normalized = normalizeApiError(error);
+  if (normalized.fields.length === 0) return [];
+
+  const totals = new Map<string, number>();
+  const lists = new Map<string, string[]>();
+
+  for (const { field, message } of normalized.fields) {
+    const trimmed = message.trim();
+    if (!trimmed) continue;
+
+    const totalMatch = /^([a-z_]+)_total$/i.exec(field);
+    if (totalMatch) {
+      const parsed = Number.parseInt(trimmed, 10);
+      if (Number.isFinite(parsed) && parsed > 0) {
+        totals.set(totalMatch[1].toLowerCase(), parsed);
+      }
+      continue;
+    }
+
+    const arrayMatch = /^([a-z_]+)\[\d+\]$/i.exec(field);
+    if (arrayMatch) {
+      const groupKey = arrayMatch[1].toLowerCase();
+      const existing = lists.get(groupKey) ?? [];
+      if (!existing.includes(trimmed)) {
+        existing.push(trimmed);
+        lists.set(groupKey, existing);
+      }
+      continue;
+    }
+
+    if (field === 'blockers') {
+      const existing = lists.get('blockers') ?? [];
+      if (!existing.includes(trimmed)) {
+        existing.push(trimmed);
+        lists.set('blockers', existing);
+      }
+    }
+  }
+
+  const details: ToastDetailItem[] = [];
+
+  for (const group of BLOCKER_GROUPS) {
+    const total = totals.get(group.key) ?? 0;
+    const previews = lists.get(group.key) ?? [];
+    if (total > 0 || previews.length > 0) {
+      details.push(formatBlockerGroup(group.singular, group.plural, total, previews));
+    }
+  }
+
+  const blockers = lists.get('blockers') ?? [];
+  if (blockers.length > 0 && details.length === 0) {
+    const labels = blockers.map((code) => EQUIPMENT_BLOCKER_LABELS[code] ?? code.replace(/_/g, ' '));
+    details.push({
+      tone: 'neutral',
+      label: blockers.length === 1 ? 'Active blocker:' : 'Active blockers:',
+      value: labels.join(', '),
+    });
+  }
+
+  return details;
 }
 
 /**

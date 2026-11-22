@@ -10,10 +10,9 @@ import {
   notifyEquipmentError,
   useEquipmentCrudActions,
 } from "@/features/lab-equipment/shared";
-import { notify } from "@/shared/notifications";
+import { getApiErrorMessage, notify } from "@/shared/notifications";
 import { useAppDispatch } from "@/app/store";
 import { generatedApi, useLabsStationsSlotsCreateByStationIdMutation } from "@/shared/api/generated/api";
-import { parseFormApiError } from "@/features/lab-equipment/shared/utils/formApiError";
 import type { IStationPayload } from "../types";
 
 const toCount = (value: unknown): number | null => {
@@ -22,10 +21,8 @@ const toCount = (value: unknown): number | null => {
   return Number.isInteger(n) && n >= 0 ? n : null;
 };
 
-const errorText = (err: unknown): string => {
-  const parsed = parseFormApiError(err);
-  return parsed?.message || parsed?.nonFieldErrors[0] || Object.values(parsed?.fieldErrors ?? {})[0]?.[0] || "The bench slots could not be created.";
-};
+const errorText = (err: unknown): string =>
+  getApiErrorMessage(err, "The bench slots could not be created.");
 
 export function useStationForm() {
   const [createStation, { isLoading: creating }] = useCreateStationMutation();
