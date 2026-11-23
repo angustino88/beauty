@@ -32,6 +32,7 @@ import {
   EyeInvisibleOutlined,
   EyeOutlined,
   HistoryOutlined,
+  InfoCircleOutlined,
   LockOutlined,
   PaperClipOutlined,
   ReloadOutlined,
@@ -56,7 +57,6 @@ import {
   useSupportTicketsPartialUpdateByKeyMutation,
   useSupportTicketsRetrieveByKeyQuery,
   useSupportTicketsWatchersCreateByKeyMutation,
-  useSupportTicketsWatchersDestroyByKeyMutation,
   useUsersRetrieveQuery,
   type PatchedTicketUpdateRequest,
   type ResolutionCodeEnum,
@@ -67,7 +67,10 @@ import {
 } from '@/shared/api/generated/api';
 import { InlineAlert, notify } from '@/shared/notifications';
 import { userLabel } from '@/shared/utils/userRef';
-import { useUploadSupportAttachmentMutation } from '../api';
+import {
+  useRemoveSupportWatcherMutation,
+  useUploadSupportAttachmentMutation,
+} from '../api';
 import {
   SUPPORT_ATTACHMENT_ACCEPT,
   apiErrorMessage,
@@ -230,7 +233,7 @@ export default function SupportTicketDetail() {
   const [addWatcher, { isLoading: addingWatcher }] =
     useSupportTicketsWatchersCreateByKeyMutation();
   const [removeWatcher, { isLoading: removingWatcher }] =
-    useSupportTicketsWatchersDestroyByKeyMutation();
+    useRemoveSupportWatcherMutation();
 
   const refresh = async () => {
     await Promise.all([refetchDetail(), refetchComments(), refetchActivity()]);
@@ -386,7 +389,7 @@ export default function SupportTicketDetail() {
     });
   };
 
-  // --- Watch / Unwatch Handler ---
+  // --- Watchers Management Handlers ---
   const handleToggleWatch = async () => {
     if (!key || !ticket) return;
     try {
@@ -397,9 +400,37 @@ export default function SupportTicketDetail() {
         await addWatcher({ key, watcherRequest: {} }).unwrap();
         notify.success('Watching ticket for updates');
       }
-      await refetchDetail();
+      await Promise.all([refetchDetail(), refetchActivity()]);
     } catch (error) {
       notify.error('Unable to update watcher preference', {
+        description: errorMessage(error),
+      });
+    }
+  };
+
+  const handleAddWatcher = async (userId: number) => {
+    if (!key || !ticket) return;
+    try {
+      await addWatcher({ key, watcherRequest: { user_id: userId } }).unwrap();
+      await Promise.all([refetchDetail(), refetchActivity()]);
+      notify.success('Watcher added');
+    } catch (error) {
+      notify.error('Unable to add watcher', {
+        description: errorMessage(error),
+      });
+    }
+  };
+
+  const handleRemoveWatcher = async (userId: number, displayName?: string) => {
+    if (!key || !ticket) return;
+    try {
+      await removeWatcher({ key, userId }).unwrap();
+      await Promise.all([refetchDetail(), refetchActivity()]);
+      notify.success(
+        displayName ? `Removed ${displayName} from watchers` : 'Watcher removed',
+      );
+    } catch (error) {
+      notify.error('Unable to remove watcher', {
         description: errorMessage(error),
       });
     }
@@ -564,6 +595,19 @@ export default function SupportTicketDetail() {
       }
     }
     return list;
+  }, [ticket, users]);
+
+  const watcherCandidateOptions = useMemo(() => {
+    if (!ticket) return [];
+    const existingIds = new Set(
+      (ticket.watchers ?? []).map((w) => w.user.id),
+    );
+    return (users?.data ?? [])
+      .filter((u) => !existingIds.has(u.id))
+      .map((u) => ({
+        value: u.id,
+        label: u.display_name || u.username,
+      }));
   }, [ticket, users]);
 
   if (!key) return <InlineAlert variant="error" title="Missing ticket key" />;
@@ -1436,7 +1480,12 @@ export default function SupportTicketDetail() {
               {/* Team Field */}
               <div className={styles.fieldRow}>
                 <div className={styles.fieldLabelRow}>
-                  <span className={styles.fieldLabel}>Support Team</span>
+                  <span className={styles.fieldLabelGroup}>
+                    <span className={styles.fieldLabel}>Support Team</span>
+                    <Tooltip title="Resolver group (queue) responsible for this ticket. Team members receive routing alerts and the team lead receives SLA breach escalations.">
+                      <InfoCircleOutlined className={styles.fieldInfoIcon} />
+                    </Tooltip>
+                  </span>
                 </div>
                 {canManage ? (
                   <Select<number>
@@ -1445,6 +1494,7 @@ export default function SupportTicketDetail() {
                     allowClear
                     showSearch
                     optionFilterProp="label"
+                    notFoundContent="No support teams configured"
                     value={ticket.team?.id ?? undefined}
                     loading={updatingTicket && savingField === 'team'}
                     disabled={ticket.version === undefined}
@@ -1465,6 +1515,79 @@ export default function SupportTicketDetail() {
                   <Typography.Text style={{ fontSize: 13 }}>
                     {ticket.team?.name || 'Unassigned'}
                   </Typography.Text>
+                )}
+              </div>
+
+              {/* Watchers Field */}
+              <div className={styles.fieldRow}>
+                <div className={styles.fieldLabelRow}>
+                  <span className={styles.fieldLabelGroup}>
+                    <span className={styles.fieldLabel}>Watchers</span>
+                    <span className={styles.watcherCountBadge}>
+                      {ticket.watchers?.length ?? 0}
+                    </span>
+                    <Tooltip title="People subscribed to receive notifications whenever this ticket is updated or commented on.">
+                      <InfoCircleOutlined className={styles.fieldInfoIcon} />
+                    </Tooltip>
+                  </span>
+                  <button
+                    type="button"
+                    className={styles.quickActionBtn}
+                    disabled={addingWatcher || removingWatcher}
+                    onClick={() => void handleToggleWatch()}
+                  >
+                    {ticket.is_watching ? 'Stop watching' : 'Watch'}
+                  </button>
+                </div>
+
+                {ticket.watchers && ticket.watchers.length > 0 ? (
+                  <div className={styles.watchersList}>
+                    {ticket.watchers.map((watcher) => {
+                      const canRemoveThis =
+                        canManage ||
+                        (currentUserId !== null &&
+                          watcher.user.id === currentUserId);
+                      const watcherName =
+                        userLabel(watcher.user) || watcher.user.username;
+                      return (
+                        <TicketUserChip
+                          key={watcher.user.id}
+                          user={watcher.user}
+                          removing={removingWatcher}
+                          onRemove={
+                            canRemoveThis
+                              ? () =>
+                                  void handleRemoveWatcher(
+                                    watcher.user.id,
+                                    watcherName,
+                                  )
+                              : undefined
+                          }
+                        />
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                    No watchers subscribed yet.
+                  </Typography.Text>
+                )}
+
+                {canManage && (
+                  <Select<number>
+                    aria-label="Add watcher"
+                    placeholder="+ Add watcher…"
+                    showSearch
+                    optionFilterProp="label"
+                    value={null}
+                    loading={addingWatcher}
+                    notFoundContent="No available users to add"
+                    onChange={(userId) => {
+                      if (userId) void handleAddWatcher(userId);
+                    }}
+                    style={{ width: '100%', marginTop: 4 }}
+                    options={watcherCandidateOptions}
+                  />
                 )}
               </div>
             </div>

@@ -81,12 +81,20 @@ const supportAttachmentApi = baseApi.injectEndpoints({
         },
       }),
     }),
+    removeSupportWatcher: build.mutation<unknown, { key: string; userId?: number }>({
+      query: ({ key, userId }) => ({
+        url: `/api/support/tickets/${encodeURIComponent(key)}/watchers`,
+        method: 'DELETE',
+        params: userId !== undefined ? { user_id: userId } : undefined,
+      }),
+    }),
   }),
 });
 
 export const {
   useUploadSupportAttachmentMutation,
   useDownloadSupportAttachmentMutation,
+  useRemoveSupportWatcherMutation,
 } = supportAttachmentApi;
 
 function saveBlob(blob: Blob, fileName: string) {

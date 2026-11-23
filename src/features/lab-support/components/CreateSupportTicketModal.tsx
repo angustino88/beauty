@@ -10,6 +10,8 @@ import {
   useGetSupportPrioritiesQuery,
   useUploadSupportAttachmentMutation,
 } from '../api';
+import { useUsersRetrieveQuery } from '@/shared/api/generated/api';
+import { usePermission } from '@/features/auth/hooks/useCan';
 import { SUPPORT_ATTACHMENT_ACCEPT, SUPPORT_ATTACHMENT_HINT, apiErrorMessage } from '../attachments';
 import type { TicketCreatePayload } from '../types';
 import { TicketPriorityBadge } from './TicketBadges';
@@ -29,12 +31,17 @@ export function CreateSupportTicketModal({
   const [submitting, setSubmitting] = useState(false);
   const [files, setFiles] = useState<UploadFile[]>([]);
   const [uploadAttachment] = useUploadSupportAttachmentMutation();
+  const canManage = usePermission('support.handle');
 
   const [createTicket] = useCreateSupportTicketMutation();
   const { data: categoriesData, isFetching: isCategoriesFetching, isError: categoriesError } =
     useGetSupportCategoriesQuery({});
   const { data: prioritiesData, isFetching: isPrioritiesFetching, isError: prioritiesError } =
     useGetSupportPrioritiesQuery({});
+  const { data: usersData, isFetching: isUsersFetching } = useUsersRetrieveQuery(
+    {},
+    { skip: !open || !canManage },
+  );
 
   const categoryOptions = (categoriesData?.data ?? []).map((cat) => ({
     value: cat.id,
@@ -47,6 +54,11 @@ export function CreateSupportTicketModal({
     label: <TicketPriorityBadge priority={p.name} showTooltip={false} />,
   }));
 
+  const watcherOptions = (usersData?.data ?? []).map((u) => ({
+    value: u.id,
+    label: u.display_name || u.username,
+  }));
+
   const handleFinish = async (values: TicketCreatePayload) => {
     try {
       setSubmitting(true);
@@ -55,6 +67,7 @@ export function CreateSupportTicketModal({
         subject: values.subject.trim(),
         description: values.description.trim(),
         labels: values.labels?.map((label) => label.trim()).filter(Boolean),
+        watcher_ids: values.watcher_ids?.length ? values.watcher_ids : undefined,
         due_date: values.due_date || null,
       }).unwrap();
 
@@ -214,6 +227,24 @@ export function CreateSupportTicketModal({
         <Form.Item label="Labels" name="labels" extra="Add a few keywords to help the team categorize this request.">
           <Select mode="tags" tokenSeparators={[',']} placeholder="e.g. microscope, calibration" />
         </Form.Item>
+
+        {canManage && (
+          <Form.Item
+            label="Watchers"
+            name="watcher_ids"
+            extra="Optional — subscribe people to receive updates on this ticket."
+          >
+            <Select
+              mode="multiple"
+              allowClear
+              showSearch
+              optionFilterProp="label"
+              loading={isUsersFetching}
+              placeholder="Select people to notify"
+              options={watcherOptions}
+            />
+          </Form.Item>
+        )}
 
         <Form.Item
           label="Description"

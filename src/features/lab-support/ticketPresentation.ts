@@ -402,6 +402,9 @@ export function formatTicketActivityLines(activity: {
   if (typeof payload.assignee === 'string' && payload.assignee) {
     lines.push(`Assignee: ${payload.assignee}`);
   }
+  if (typeof payload.user_name === 'string' && payload.user_name) {
+    lines.push(`Watcher: ${payload.user_name}`);
+  }
 
   if (payload.changes && typeof payload.changes === 'object' && !Array.isArray(payload.changes)) {
     const changes = payload.changes as Record<string, unknown>;
