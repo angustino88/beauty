@@ -1,4 +1,5 @@
-import { Alert, Progress, Skeleton } from 'antd';
+import { Progress, Skeleton } from 'antd';
+import { InlineAlert } from '@/shared/notifications';
 import { CheckCircleFilled, ExclamationCircleFilled, LockOutlined, WarningFilled } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { StatusBadge } from '@/shared/components/StatusBadge';
@@ -113,7 +114,15 @@ interface AssessmentReportProps {
 /** The KPI assessment tab of the user or bench profile. */
 export function AssessmentReport({ assessment, loading, error, audience }: AssessmentReportProps) {
   if (loading && !assessment) return <Skeleton active paragraph={{ rows: 10 }} />;
-  if (error && !assessment) return <Alert type="error" showIcon message="The assessment could not be loaded. Try again later." />;
+  if (error && !assessment) {
+    return (
+      <InlineAlert
+        variant="error"
+        title="Unable to load assessment"
+        description="Please try again later."
+      />
+    );
+  }
   if (!assessment) return null;
   const rated = assessment.rating.value !== 'insufficient_data';
 

@@ -80,3 +80,26 @@ optional mascot, coloured only by the five `--lm-season-*` tokens that
 links and status colours never change with the season. The season follows the
 calendar; set `VITE_SEASON` to `tet`, `mid-autumn`, `christmas` or `none` to pin
 it.
+
+## Notifications
+
+All user-facing feedback routes through `src/shared/notifications/` using the
+`--lm-notif-*` and semantic status tokens in `tokens.css`:
+
+| Pattern | Component / API | Use for |
+|---|---|---|
+| Toast | `notify.success / info / warning / error / loading` + `<ToastViewport>` | Short-lived operation feedback (create, update, delete, export, copy) |
+| Inline alert | `<InlineAlert>` | Form errors, section data-load failures (with `onRetry`), contextual caveats |
+| Confirmation dialog | `confirmAction(...)` / `Popconfirm` | Destructive or consequential actions requiring explicit confirmation |
+| Persistent banner | `<SystemBanner>` (`NotificationBanner`, `OfflineNotification`) | System-wide announcements and connectivity / service interruptions |
+
+Rules:
+- Never call static `antd` `message.*`, `notification.*`, `Modal.confirm`, raw
+  `<Alert>`, or `window.confirm` directly in feature modules.
+- Auto-dismiss durations scale by severity (`success` 4s, `info` 5s, `warning`
+  6.5s); `error` toasts stay visible until dismissed. Hovering or focusing a
+  toast pauses its timer. Identical active toasts coalesce with a repeat badge.
+- Normalize every API or network error through `normalizeApiError` /
+  `getApiErrorMessage` so internal exceptions, stack traces, SQL errors, and raw
+  JSON payloads are never exposed.
+

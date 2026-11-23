@@ -7,9 +7,9 @@ import {
   Radio,
   DatePicker,
   Button,
-  message,
 } from 'antd';
 import dayjs from 'dayjs';
+import { getApiErrorMessage, notify } from '@/shared/notifications';
 import type { ICreateExpensePaymentPayload } from '../types';
 import { useCreateExpensePaymentMutation } from '../api';
 
@@ -53,20 +53,17 @@ export const RecordExpensePaymentModal: React.FC<RecordExpensePaymentModalProps>
       };
 
       await createPayment({ expenseId, body: payload }).unwrap();
-      void message.success(
-        values.transaction_type === 'refund'
-          ? 'Refund recorded successfully'
-          : 'Payment recorded successfully',
+      notify.success(
+        values.transaction_type === 'refund' ? 'Refund recorded' : 'Payment recorded',
+        { description: `Updated "${expenseName}".` },
       );
       form.resetFields();
       onClose();
       onSuccess?.();
     } catch (err) {
-      const errorDetail =
-        err && typeof err === 'object' && 'data' in err
-          ? JSON.stringify((err as { data: unknown }).data)
-          : 'Failed to record payment';
-      void message.error(errorDetail);
+      notify.error('Unable to record payment', {
+        description: getApiErrorMessage(err, 'Please review the payment details and try again.'),
+      });
     }
   };
 

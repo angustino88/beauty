@@ -1,4 +1,4 @@
-import { message } from "antd";
+import { notify } from "@/shared/notifications";
 import {
   useCreateBenchMutation,
   useDeleteBenchMutation,
@@ -48,7 +48,7 @@ export function useBenchForm() {
       if (result?.released?.bookings) {
         parts.push(`cancelled ${result.released.bookings} booking${result.released.bookings === 1 ? "" : "s"}`);
       }
-      message.success(
+      notify.success(
         parts.length > 0 ? `Force-deleted ${label} (${parts.join(", ")}).` : `Force-deleted ${label}.`,
       );
       return { ok: true };

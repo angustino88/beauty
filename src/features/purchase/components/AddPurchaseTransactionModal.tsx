@@ -7,9 +7,9 @@ import {
   Radio,
   DatePicker,
   Button,
-  message,
 } from 'antd';
 import dayjs from 'dayjs';
+import { getApiErrorMessage, notify } from '@/shared/notifications';
 import type { ICreatePurchaseTransactionPayload, TransactionType } from '../types';
 import { useCreatePurchaseTransactionMutation } from '../api';
 
@@ -51,20 +51,16 @@ export const AddPurchaseTransactionModal: React.FC<AddPurchaseTransactionModalPr
       };
 
       await createTransaction({ purchaseId, body: payload }).unwrap();
-      void message.success(
-        values.transaction_type === 'refund'
-          ? 'Refund recorded successfully'
-          : 'Payment recorded successfully',
+      notify.success(
+        values.transaction_type === 'refund' ? 'Refund recorded' : 'Payment recorded',
       );
       form.resetFields();
       onClose();
       onSuccess?.();
     } catch (err) {
-      const errorDetail =
-        err && typeof err === 'object' && 'data' in err
-          ? JSON.stringify((err as { data: unknown }).data)
-          : 'Failed to record transaction';
-      void message.error(errorDetail);
+      notify.error('Unable to record transaction', {
+        description: getApiErrorMessage(err, 'Please review the transaction details and try again.'),
+      });
     }
   };
 

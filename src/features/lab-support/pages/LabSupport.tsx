@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { TablePaginationConfig } from 'antd/es/table';
-import { Card, Col, Row, Segmented, Table, Typography, message } from 'antd';
+import { Card, Col, Row, Segmented, Table, Typography } from 'antd';
+import { getApiErrorMessage, notify } from '@/shared/notifications';
 import { ExportOutlined, PlusOutlined, UndoOutlined } from '@ant-design/icons';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { FullTextSearch } from '@/components/inputs/FullTextSearch';
@@ -78,9 +79,13 @@ export default function SupportTickets() {
         nextPage += 1;
       }
       await exportLabSupportExcel(allTickets, 'Support Tickets');
+      notify.success('Support tickets exported', {
+        description: `Exported ${allTickets.length} ${allTickets.length === 1 ? 'ticket' : 'tickets'} to Excel.`,
+      });
     } catch (error) {
-      const detail = error instanceof Error ? error.message : 'Unknown export error';
-      void message.error(`Export failed: ${detail}`);
+      notify.error('Unable to export support tickets', {
+        description: getApiErrorMessage(error, 'Please try again.'),
+      });
     } finally {
       setExportLoading(false);
     }

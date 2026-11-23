@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { Alert, Button, Empty, Popconfirm, Segmented, Space, Table, Tag, Tooltip, message } from 'antd';
+import { Button, Empty, Popconfirm, Segmented, Space, Table, Tag, Tooltip } from 'antd';
+import { InlineAlert, getApiErrorMessage, notify } from '@/shared/notifications';
 import {
   PlusOutlined,
   StopOutlined,
@@ -139,12 +140,18 @@ export const DowntimeTab: React.FC<DowntimeTabProps> = ({
         cancel_conflicting_bookings: cancelConflictingBookings,
       }).unwrap();
       setAccessConflict(null);
-      message.success(
+      notify.success(
         access === 'lab_operators'
-          ? 'Lab operators can now book during this downtime.'
-          : cancelConflictingBookings
-            ? 'Downtime closed to everyone; the overlapping bookings were cancelled.'
-            : 'Downtime closed to everyone.',
+          ? 'Downtime opened to lab operators'
+          : 'Downtime closed to all bookings',
+        {
+          description:
+            access === 'lab_operators'
+              ? 'Lab operators can now book during this downtime window.'
+              : cancelConflictingBookings
+                ? 'Overlapping bookings were cancelled.'
+                : undefined,
+        },
       );
       void refetch();
     } catch (err: unknown) {
@@ -157,7 +164,9 @@ export const DowntimeTab: React.FC<DowntimeTabProps> = ({
         });
         return;
       }
-      message.error(error?.message || 'Failed to change who can book during this downtime.');
+      notify.error('Unable to update downtime booking access', {
+        description: getApiErrorMessage(err, 'Please try again.'),
+      });
     }
   };
 
@@ -181,20 +190,26 @@ export const DowntimeTab: React.FC<DowntimeTabProps> = ({
   const handleEnd = async (downtimeId: number) => {
     try {
       await endDowntime(downtimeId).unwrap();
-      message.success('Downtime ended successfully. Resource marked operational.');
+      notify.success('Downtime ended', {
+        description: 'The resource has been returned to operational status.',
+      });
       void refetch();
-    } catch {
-      message.error('Failed to end downtime');
+    } catch (err: unknown) {
+      notify.error('Unable to end downtime', {
+        description: getApiErrorMessage(err, 'Please try again.'),
+      });
     }
   };
 
   const handleCancel = async (downtimeId: number) => {
     try {
       await cancelDowntime(downtimeId).unwrap();
-      message.success('Scheduled downtime cancelled successfully');
+      notify.success('Scheduled downtime cancelled');
       void refetch();
-    } catch {
-      message.error('Failed to cancel downtime');
+    } catch (err: unknown) {
+      notify.error('Unable to cancel downtime', {
+        description: getApiErrorMessage(err, 'Please try again.'),
+      });
     }
   };
 
@@ -550,7 +565,7 @@ export const DowntimeTab: React.FC<DowntimeTabProps> = ({
         }
         onCancel={() => setAccessConflict(null)}
       >
-        <Alert type="warning" showIcon message="Overlapping bookings" description={accessConflict?.message} />
+        <InlineAlert variant="warning" title="Overlapping bookings" description={accessConflict?.message} />
         <div style={{ marginTop: 12 }}>
           <strong>These bookings will be cancelled:</strong>
           <ul className={styles.conflictList}>

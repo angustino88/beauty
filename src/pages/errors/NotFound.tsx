@@ -7,11 +7,11 @@ export default function NotFound() {
   return (
     <Result
       status="404"
-      title="404 Not Found"
-      subTitle="Sorry, the page you visited does not exist."
+      title="Page not found"
+      subTitle="The page you are looking for does not exist or may have been moved."
       extra={(
         <Button type="primary" onClick={() => navigate('/')}>
-          Back to Home
+          Return to Home
         </Button>
       )}
     />

@@ -1,6 +1,4 @@
-import { message } from 'antd';
-import { MinusCircleOutlined, PlusCircleOutlined } from '@ant-design/icons';
-import { parseFormApiError } from './formApiError';
+import { getApiErrorDetails, getApiErrorMessage, notify, type ToastDetailItem } from '@/shared/notifications';
 
 type EquipmentIdentity = {
   id?: unknown;
@@ -22,33 +20,15 @@ export const notifyEquipmentCreated = (
   const sku = toText(created.sku) ?? toText(fallback.sku);
   const name = toText(created.name) ?? toText(fallback.name);
 
-  if (!sku) {
-    message.success(`${entityName} ${name ?? 'record'} created successfully`);
+  if (sku) {
+    notify.success(`${entityName} created`, {
+      code: sku,
+      description: name && name !== sku ? name : undefined,
+    });
     return;
   }
 
-  message.open({
-    content: (
-      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap' }}>
-        <code
-          style={{
-            padding: '2px 7px',
-            border: '1px solid var(--lm-success-border)',
-            borderRadius: 4,
-            background: 'var(--lm-success-bg)',
-            color: 'var(--lm-success-fg)',
-            fontFamily: 'ui-monospace, SFMono-Regular, Consolas, monospace',
-            fontSize: 12,
-            fontWeight: 700,
-          }}
-        >
-          {sku}
-        </code>
-        <strong style={{ fontSize: 13 }}>created</strong>
-      </span>
-    ),
-    duration: 4,
-  });
+  notify.success(name ? `${entityName} "${name}" created` : `${entityName} created`);
 };
 
 export const notifyEquipmentUpdated = (
@@ -59,33 +39,15 @@ export const notifyEquipmentUpdated = (
   const sku = toText(updated.sku) ?? toText(fallback.sku);
   const name = toText(updated.name) ?? toText(fallback.name);
 
-  if (!sku) {
-    message.success(`${entityName} ${name ?? 'record'} updated successfully`);
+  if (sku) {
+    notify.success(`${entityName} updated`, {
+      code: sku,
+      description: name && name !== sku ? name : undefined,
+    });
     return;
   }
 
-  message.open({
-    content: (
-      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap' }}>
-        <code
-          style={{
-            padding: '2px 7px',
-            border: '1px solid var(--lm-success-border)',
-            borderRadius: 4,
-            background: 'var(--lm-success-bg)',
-            color: 'var(--lm-success-fg)',
-            fontFamily: 'ui-monospace, SFMono-Regular, Consolas, monospace',
-            fontSize: 12,
-            fontWeight: 700,
-          }}
-        >
-          {sku}
-        </code>
-        <strong style={{ fontSize: 13 }}>updated</strong>
-      </span>
-    ),
-    duration: 4,
-  });
+  notify.success(name ? `${entityName} "${name}" updated` : `${entityName} updated`);
 };
 
 export const notifyMappingUpdated = (
@@ -130,43 +92,44 @@ export const notifyMappingUpdated = (
     const beforeIds = new Set(before.map(getId));
     const afterIds = new Set(after.map(getId));
     return [
-      ...after.filter((item) => !beforeIds.has(getId(item))).map((item) => ({ status: 'Added', type, item })),
-      ...before.filter((item) => !afterIds.has(getId(item))).map((item) => ({ status: 'Removed', type, item })),
+      ...after.filter((item) => !beforeIds.has(getId(item))).map((item) => ({ status: 'Added' as const, type, item })),
+      ...before.filter((item) => !afterIds.has(getId(item))).map((item) => ({ status: 'Removed' as const, type, item })),
     ];
   });
-  const mappedItems = changedItems
-    .map(({ status, type, item }) => {
+  const mappedItems: ToastDetailItem[] = changedItems
+    .flatMap(({ status, type, item }): ToastDetailItem[] => {
       const itemFields = item as Record<string, unknown>;
       const identity = toText(itemFields.sku) ?? toText(itemFields.name) ?? toText(itemFields.computer_name)
         ?? toText(itemFields.network_interface_name) ?? toText(itemFields.debug_hardware_name)
         ?? toText(itemFields.powersupply_name) ?? toText(itemFields.monitor_name) ?? toText(itemFields.accessory_name);
-      return identity ? { status, label: `${type}: ${identity}` } : null;
-    })
-    .filter((item): item is { status: string; label: string } => Boolean(item));
+      if (!identity) return [];
+      return [{
+        tone: status === 'Added' ? 'added' : 'removed',
+        label: `${status} ${status === 'Added' ? 'to' : 'from'} ${labLabel}:`,
+        value: `${type} ${identity}`,
+      }];
+    });
 
   if (!mappedItems.length) {
-    message.success('Mapping updated successfully');
+    notify.success('Mapping updated');
     return;
   }
 
-  message.success({
-    content: (
-      <span style={{ display: 'inline-flex', flexDirection: 'column', gap: 4 }}>
-        {mappedItems.map((item) => (
-          <span
-            key={`${item.status}-${item.label}`}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, textAlign: 'left' }}
-          >
-            {item.status === 'Added' ? <PlusCircleOutlined style={{ color: 'var(--lm-success-fg)' }} /> : <MinusCircleOutlined style={{ color: 'var(--lm-danger-fg)' }} />}
-            <span>
-              <strong>{item.status} {item.status === 'Added' ? 'to' : 'from'} {labLabel}:</strong> {item.label}
-            </span>
-          </span>
-        ))}
-      </span>
-    ),
-    duration: 4,
+  notify.success('Mapping updated', {
+    details: mappedItems,
+    duration: 5000,
   });
+};
+
+const notifiedErrors = new WeakSet<object>();
+
+export const isEquipmentErrorNotified = (error: unknown): boolean => {
+  if (!error || typeof error !== 'object') return false;
+  if (notifiedErrors.has(error)) return true;
+  if (error instanceof Error && error.cause && typeof error.cause === 'object') {
+    return notifiedErrors.has(error.cause);
+  }
+  return false;
 };
 
 export const notifyEquipmentError = (
@@ -174,24 +137,31 @@ export const notifyEquipmentError = (
   entityName: string,
   error: unknown,
 ): void => {
-  const parsed = parseFormApiError(error);
+  if (error && typeof error === 'object') {
+    notifiedErrors.add(error);
+  }
   const entityNameLower = entityName.toLowerCase();
-  message.error(parsed?.message ?? `Failed to ${action} ${entityNameLower}`);
+  const details = getApiErrorDetails(error);
+  notify.error(`Unable to ${action} ${entityNameLower}`, {
+    description: getApiErrorMessage(error, 'Please try again.'),
+    details: details.length > 0 ? details : undefined,
+  });
 };
 
-const getIdentityLabel = (identity: EquipmentIdentity, fallback: EquipmentIdentity = {}): string =>
-  toText(identity.sku) ?? toText(fallback.sku) ?? toText(identity.name) ?? toText(fallback.name)
-  ?? (identity.id != null ? `#${String(identity.id)}` : undefined)
-  ?? (fallback.id != null ? `#${String(fallback.id)}` : 'record');
+const getIdentityLabel = (identity: EquipmentIdentity, fallback: EquipmentIdentity = {}): string | undefined =>
+  toText(identity.sku) ?? toText(fallback.sku) ?? toText(identity.name) ?? toText(fallback.name);
 
 export const notifyEquipmentDeleted = (entityName: string, identity: EquipmentIdentity): void => {
-  message.success({
-    content: (
-      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-        <strong>{getIdentityLabel(identity)}</strong>
-        <span>{entityName} deleted successfully.</span>
-      </span>
-    ),
-    duration: 4,
-  });
+  const sku = toText(identity.sku);
+  const label = getIdentityLabel(identity);
+
+  if (sku) {
+    notify.success(`${entityName} deleted`, {
+      code: sku,
+      description: label && label !== sku ? label : undefined,
+    });
+    return;
+  }
+
+  notify.success(label ? `${entityName} "${label}" deleted` : `${entityName} deleted`);
 };

@@ -5,11 +5,11 @@
 // then rolls back on API failure. No refetch needed — star toggles instantly.
 import { useCallback } from 'react';
 import type { MouseEvent } from 'react';
-import { notification } from 'antd';
+import { getApiErrorMessage, notify } from '@/shared/notifications';
 import { useAddFavoriteMutation, useRemoveFavoriteMutation } from '../api';
 
 export interface DashboardFavoritesResult {
-handleFavoriteClick: (labId: number, isFavorite: boolean, e: MouseEvent) => void;
+  handleFavoriteClick: (labId: number, isFavorite: boolean, e: MouseEvent) => void;
 }
 
 export function useDashboardFavorites(): DashboardFavoritesResult {
@@ -23,10 +23,11 @@ export function useDashboardFavorites(): DashboardFavoritesResult {
       const mutation = isFavorite ? removeFavorite(arg) : addFavorite(arg);
       mutation.unwrap().catch((err: unknown) => {
         const status = (err as { status?: number })?.status;
-        notification.error({
-          message: 'Failed to update favourite',
-          description: status === 404 ? 'Feature not available yet.' : 'Please try again.',
-          duration: 3,
+        notify.error('Unable to update favorite', {
+          description:
+            status === 404
+              ? 'Favorites are not available for this workspace yet.'
+              : getApiErrorMessage(err, 'Please try again.'),
         });
       });
     },

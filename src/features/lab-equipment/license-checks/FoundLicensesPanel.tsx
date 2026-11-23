@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Alert, Button, Empty, Input, Segmented, Select, Table, Tag } from 'antd';
+import { Empty, Input, Segmented, Select, Table, Tag } from 'antd';
+import { InlineAlert } from '@/shared/notifications';
 import type { LabsLicenseObservationsRetrieveApiArg } from '@/shared/api/generated/api';
 import { useGetLicenseObservationsQuery } from './api';
 import { observationColumns } from './observationColumns';
@@ -57,7 +58,13 @@ export function FoundLicensesPanel({ checkId, onClearCheck }: { checkId?: number
         </div>
         <Input.Search allowClear placeholder="Product, serial, carrier or computer" onSearch={(value) => { setQ(value); setPage(1); }} style={{ maxWidth: 320 }} aria-label="Search found licenses" />
       </div>
-      {isError && <Alert type="warning" showIcon title="Found licenses could not be loaded" action={<Button size="small" onClick={() => void refetch()}>Retry</Button>} />}
+      {isError && (
+        <InlineAlert
+          variant="warning"
+          title="Unable to load found licenses"
+          onRetry={() => void refetch()}
+        />
+      )}
       <Table
         rowKey="id"
         size="middle"

@@ -1,5 +1,6 @@
 import React from 'react';
-import { Alert, Tag } from 'antd';
+import { Tag } from 'antd';
+import { InlineAlert } from '@/shared/notifications';
 import {
   CheckCircleFilled,
   CloseCircleFilled,
@@ -120,11 +121,10 @@ export const ResourceStatusRows: React.FC<ResourceStatusRowsProps> = ({
 
       {/* Warning/Alert banner when unavailable or in maintenance */}
       {isBlocked && (
-        <Alert
+        <InlineAlert
           className={styles.statusBanner}
-          type="warning"
-          showIcon
-          message={
+          variant="warning"
+          title={
             availability?.blocked_by ? (
               <span>
                 Resource is unavailable: blocked by{' '}
@@ -151,11 +151,10 @@ export const ResourceStatusRows: React.FC<ResourceStatusRowsProps> = ({
       )}
 
       {condition?.value === 'out_of_service' && !isBlocked && (
-        <Alert
+        <InlineAlert
           className={styles.statusBanner}
-          type="error"
-          showIcon
-          message="Resource is out of service due to an active fault or hold."
+          variant="error"
+          title="Resource is out of service due to an active fault or hold."
           description={currentDowntimeNote}
         />
       )}

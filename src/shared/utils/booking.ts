@@ -1,4 +1,5 @@
 import dayjs, { type Dayjs } from 'dayjs';
+import { getApiErrorMessage } from '../notifications/apiError.ts';
 
 export const DATE_FORMAT = 'YYYY-MM-DD';
 export const FULL_FORMAT = 'YYYY-MM-DD hh:mm A';
@@ -99,29 +100,8 @@ export function processBookingBody(booking: Record<string, unknown>): ProcessedB
 
 export function extractBookingErrorMessage(
   error: unknown,
-  fallback = 'Failed to process booking',
+  fallback = 'Unable to process booking. Please try again.',
 ): string {
-  if (typeof error === 'object' && error !== null) {
-    const errorData = 'data' in error ? (error as { data?: unknown }).data : error;
-    if (typeof errorData === 'object' && errorData !== null) {
-      const rec = errorData as Record<string, unknown>;
-      if (typeof rec.message === 'string' && rec.message.trim()) return rec.message;
-      if (typeof rec.detail === 'string' && rec.detail.trim()) return rec.detail;
-      if (typeof rec.error === 'string' && rec.error.trim()) return rec.error;
-      const nestedError = rec.error as Record<string, unknown> | undefined;
-      if (nestedError && typeof nestedError === 'object') {
-        if (typeof nestedError.message === 'string' && nestedError.message.trim()) {
-          return nestedError.message;
-        }
-        if (Array.isArray(nestedError.details) && nestedError.details.length > 0) {
-          const firstDetail = nestedError.details[0] as Record<string, unknown>;
-          if (typeof firstDetail?.message === 'string' && firstDetail.message.trim()) {
-            return firstDetail.message;
-          }
-        }
-      }
-    }
-  }
-  return fallback;
+  return getApiErrorMessage(error, fallback);
 }
 

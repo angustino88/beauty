@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { Button, Space, Table, Typography, message } from 'antd';
+import { Button, Space, Table, Typography } from 'antd';
+import { notify } from '@/shared/notifications';
 import type { ColumnsType } from 'antd/es/table';
 import { DownloadOutlined } from '@ant-design/icons';
 import { FullTextSearch } from '@/components/inputs/FullTextSearch';
@@ -102,9 +103,13 @@ export const FinancialReportItemsTable: React.FC<FinancialReportItemsTableProps>
       document.body.removeChild(anchor);
       URL.revokeObjectURL(url);
 
-      void message.success('Excel report exported successfully');
+      notify.success('Financial report exported', {
+        description: 'Your Excel ledger download has started.',
+      });
     } catch {
-      void message.error('Export failed');
+      notify.error('Unable to export financial report', {
+        description: 'Please try again.',
+      });
     } finally {
       setExportLoading(false);
     }

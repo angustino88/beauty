@@ -1,4 +1,5 @@
 import { baseApi } from '@/shared/lib/api';
+import { getApiErrorMessage } from '@/shared/notifications';
 import type {
   AgentDetailResponseRead,
   AgentListResponseRead,
@@ -88,8 +89,7 @@ export const {
   useRetireAgentMutation,
 } = agentApi;
 
-/** The backend's `{error: {message}}` envelope, or a fallback. */
+/** The backend's `{error: {message}}` envelope, or a sanitized fallback. */
 export function agentErrorMessage(error: unknown, fallback: string): string {
-  const message = (error as { data?: { error?: { message?: unknown } } } | undefined)?.data?.error?.message;
-  return typeof message === 'string' && message ? message : fallback;
+  return getApiErrorMessage(error, fallback);
 }

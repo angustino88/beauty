@@ -7,10 +7,10 @@ import {
   InputNumber,
   Select,
   Button,
-  message,
 } from 'antd';
 import dayjs from 'dayjs';
 import styles from '@/features/finance/components/FinanceWorkspace.module.css';
+import { getApiErrorMessage, notify } from '@/shared/notifications';
 import detailStyles from './PurchaseDetail.module.css';
 import type { IPurchase, IUpdatePurchaseDraftHeaderPayload } from '../types';
 import { getPurchaseEtag } from '../mapper';
@@ -98,18 +98,14 @@ export const EditPurchaseDraftModal: React.FC<EditPurchaseDraftModalProps> = ({
         ifMatch,
       }).unwrap();
 
-      void message.success('Purchase order updated successfully');
+      notify.success('Purchase order updated');
       form.resetFields();
       onClose();
       onSuccess?.();
     } catch (err: unknown) {
-      const errorData = (err as { data?: { error?: { message?: string } } })?.data;
-      const errorMsg =
-        errorData?.error?.message ||
-        (typeof errorData === 'string'
-          ? errorData
-          : 'Failed to update order');
-      void message.error(errorMsg);
+      notify.error('Unable to update purchase order', {
+        description: getApiErrorMessage(err, 'Please review your changes and try again.'),
+      });
     }
   };
 

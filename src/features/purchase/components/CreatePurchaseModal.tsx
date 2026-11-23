@@ -1,8 +1,9 @@
 import React from 'react';
-import { Modal, Form, Input, DatePicker, InputNumber, Select, Button, message } from 'antd';
+import { Modal, Form, Input, DatePicker, InputNumber, Select, Button } from 'antd';
 import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import styles from '@/features/finance/components/FinanceWorkspace.module.css';
+import { getApiErrorMessage, notify } from '@/shared/notifications';
 import type { ICreatePurchasePayload } from '../types';
 import { useCreatePurchaseMutation } from '../api';
 
@@ -52,17 +53,17 @@ export const CreatePurchaseModal: React.FC<CreatePurchaseModalProps> = ({ open, 
       };
       const created = await createPurchase(payload).unwrap();
       const orderReference = payload.purchase_order_number || (created && typeof created === 'object' && 'id' in created ? `#${String(created.id)}` : undefined);
-      void message.success(orderReference
-        ? `Purchase order ${orderReference} for ${payload.supplier} created successfully.`
-        : `Purchase order for ${payload.supplier} created successfully.`);
+      notify.success('Purchase order created', {
+        code: orderReference,
+        description: `Draft order saved for ${payload.supplier}.`,
+      });
       form.resetFields();
       onClose();
       onSuccess?.();
     } catch (err) {
-      const errorDetail = err && typeof err === 'object' && 'data' in err
-        ? JSON.stringify((err as { data: unknown }).data)
-        : 'Failed to create purchase order';
-      void message.error(errorDetail);
+      notify.error('Unable to create purchase order', {
+        description: getApiErrorMessage(err, 'Please review the order details and try again.'),
+      });
     }
   };
 

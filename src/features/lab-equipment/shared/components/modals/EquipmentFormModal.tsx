@@ -6,13 +6,15 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
     Form, Input, InputNumber, Select, Collapse,
-    DatePicker, Upload, Row, Col, Spin, message,
+    DatePicker, Upload, Row, Col, Spin,
 } from 'antd';
+import { confirmAction, getApiErrorDetails, getApiErrorMessage, notify } from '@/shared/notifications';
 import { InboxOutlined } from '@ant-design/icons';
 import { FormDialog } from '@/components/ui/form-dialog';
 import type { RcFile } from 'antd/es/upload/interface';
 import dayjs from 'dayjs';
 import { filterResourceOption } from '@/components/inputs/ResourceOption';
+import { isEquipmentErrorNotified } from '../../utils/equipmentNotifications';
 import { parseFormApiError } from '../../utils/formApiError';
 import { buildRequiredFieldRules } from '../../utils/formValidation';
 import { RESOURCE_IMAGE_ACCEPT, validateResourceImage } from '@/shared/lib/api/resourceImage';
@@ -41,6 +43,8 @@ export type SelectFieldOption = SelectOptionLeaf | SelectOptionGroup;
 
 export interface FieldConfig {
     name:            string;
+    /** Optional backend API field key when the form field name differs (e.g. max_power -> power_capacity_w). */
+    apiField?:       string;
     label:           string;
     type:            FieldType;
     required?:       boolean;
@@ -313,13 +317,28 @@ export default function EquipmentFormModal({
                 }
                 const firstField = validationError.errorFields[0]?.name;
                 if (firstField) requestAnimationFrame(() => form.scrollToField(firstField, { block: 'center', focus: true }));
-                message.warning('Please fill all required fields');
+                notify.warning('Please review the highlighted fields', {
+                    description: 'Complete all required fields before saving.',
+                });
             } else {
                 const parsed = parseFormApiError(err);
+                const apiToFormName = new Map<string, string>();
+                const fieldLabels: Record<string, string> = {};
+                for (const field of fields) {
+                    apiToFormName.set(field.name, field.name);
+                    fieldLabels[field.name] = field.label;
+                    if (field.apiField) {
+                        apiToFormName.set(field.apiField, field.name);
+                        fieldLabels[field.apiField] = field.label;
+                    }
+                }
                 if (parsed) {
-                    const fieldNameSet = new Set(fields.map((f) => f.name));
                     const matched = Object.entries(parsed.fieldErrors)
-                        .filter(([name]) => fieldNameSet.has(name));
+                        .map(([name, errors]): [string, string[]] | null => {
+                            const formName = apiToFormName.get(name);
+                            return formName ? [formName, errors] : null;
+                        })
+                        .filter((entry): entry is [string, string[]] => entry !== null);
                     if (matched.length > 0) {
                         setDetailsOpen(true);
                         form.setFields(matched.map(([name, errors]) => ({ name, errors })));
@@ -328,9 +347,13 @@ export default function EquipmentFormModal({
                         (form as unknown as { getFieldInstance?: (n: string) => { focus?: () => void } })
                             .getFieldInstance?.(first)?.focus?.();
                     }
-                    if (parsed.message) message.error(parsed.message);
-                } else {
-                    message.error('Failed to submit form');
+                }
+                if (!isEquipmentErrorNotified(err)) {
+                    const details = getApiErrorDetails(err, { fieldLabels });
+                    notify.error('Unable to save changes', {
+                        description: getApiErrorMessage(err, 'Please review your entries and try again.', { fieldLabels }),
+                        details: details.length > 0 ? details : undefined,
+                    });
                 }
             }
         } finally {
@@ -384,7 +407,7 @@ export default function EquipmentFormModal({
     const handleImageChange = (file: RcFile) => {
         const problem = validateResourceImage(file);
         if (problem) {
-            message.error(problem);
+            notify.warning('Invalid image file', { description: problem });
             return Upload.LIST_IGNORE;
         }
         if (previewUrl.current) URL.revokeObjectURL(previewUrl.current);
@@ -414,9 +437,14 @@ export default function EquipmentFormModal({
             onSubmit={handleOk}
             onCancel={() => {
                 if (form.isFieldsTouched()) {
-                    if (window.confirm('You are closing the form. All information will be discarded.')) {
-                        onCancel();
-                    }
+                    confirmAction({
+                        title: 'Discard unsaved changes?',
+                        description: 'Closing this form will discard all unsaved entries.',
+                        confirmText: 'Discard',
+                        cancelText: 'Continue editing',
+                        variant: 'danger',
+                        onConfirm: onCancel,
+                    });
                 } else {
                     onCancel();
                 }

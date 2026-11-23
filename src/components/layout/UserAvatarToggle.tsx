@@ -1,10 +1,11 @@
-import { Avatar, Button, Popconfirm, Popover, Upload, Tooltip, message, type UploadProps } from 'antd';
+import { Avatar, Button, Popconfirm, Popover, Upload, Tooltip, type UploadProps } from 'antd';
 import { CloudUploadOutlined, DeleteOutlined, DownOutlined, LoadingOutlined, LogoutOutlined, UserOutlined } from '@ant-design/icons';
 import React, { useState } from 'react';
 import styleCss from './layout.module.css';
 import { useUploadAvatarMutation, useRemoveAvatarMutation } from '@/features/auth/api';
 import { useLogout } from '@/features/auth/hooks';
 import { getAvatarUrl } from '@/shared/utils/avatar';
+import { getApiErrorMessage, notify } from '@/shared/notifications';
 
 interface UserAvatarToggleProps {
   username: string;
@@ -37,12 +38,16 @@ const UserAvatarToggle: React.FC<UserAvatarToggleProps> = ({
   const beforeUpload = (file: File): boolean | typeof Upload.LIST_IGNORE | Promise<boolean | typeof Upload.LIST_IGNORE> => {
     const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png';
     if (!isJpgOrPng) {
-      void message.error('You can only upload JPG/PNG files!');
+      notify.warning('Unsupported image format', {
+        description: 'Please upload a JPG or PNG image.',
+      });
       return Upload.LIST_IGNORE;
     }
     const isLt5M = file.size / 1024 / 1024 < 5;
     if (!isLt5M) {
-      void message.error('Image must be smaller than 5MB!');
+      notify.warning('Image exceeds size limit', {
+        description: 'Profile photos must be smaller than 5 MB.',
+      });
       return Upload.LIST_IGNORE;
     }
 
@@ -53,7 +58,9 @@ const UserAvatarToggle: React.FC<UserAvatarToggleProps> = ({
         URL.revokeObjectURL(objectUrl);
         const aspectRatio = img.width / img.height;
         if (aspectRatio < 0.5 || aspectRatio > 2) {
-          void message.error('Image aspect ratio must be between 1:2 and 2:1 for avatars!');
+          notify.warning('Image dimensions not supported', {
+            description: 'Use an image with an aspect ratio between 1:2 and 2:1.',
+          });
           resolve(Upload.LIST_IGNORE);
         } else {
           resolve(true);
@@ -61,7 +68,9 @@ const UserAvatarToggle: React.FC<UserAvatarToggleProps> = ({
       };
       img.onerror = () => {
         URL.revokeObjectURL(objectUrl);
-        void message.error('Failed to load image!');
+        notify.error('Unable to read image file', {
+          description: 'Select a valid JPG or PNG image and try again.',
+        });
         resolve(Upload.LIST_IGNORE);
       };
       img.src = objectUrl;
@@ -81,10 +90,12 @@ const UserAvatarToggle: React.FC<UserAvatarToggleProps> = ({
       onUploadSuccess?.(result.avatar);
       onSuccess?.(result.avatar);
       setPopoverOpen(false);
-      void message.success('Avatar updated successfully');
+      notify.success('Profile photo updated');
     } catch (err: unknown) {
       onError?.(err instanceof Error ? err : new Error('Upload failed'));
-      void message.error('Upload failed');
+      notify.error('Unable to update profile photo', {
+        description: getApiErrorMessage(err, 'Please try again.'),
+      });
     }
   };
 
@@ -93,9 +104,11 @@ const UserAvatarToggle: React.FC<UserAvatarToggleProps> = ({
       await removeAvatar().unwrap();
       onRemoveSuccess?.();
       setPopoverOpen(false);
-      void message.success('Avatar removed successfully');
-    } catch {
-      void message.error('Failed to remove avatar');
+      notify.success('Profile photo removed');
+    } catch (err: unknown) {
+      notify.error('Unable to remove profile photo', {
+        description: getApiErrorMessage(err, 'Please try again.'),
+      });
     }
   };
 

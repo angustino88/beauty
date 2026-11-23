@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Alert } from "antd";
+import { InlineAlert } from "@/shared/notifications";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { DashboardSummary } from "../components/DashboardSummary";
 import { BenchTable } from "../components/BenchTable";
@@ -116,12 +116,11 @@ export default function Dashboard() {
         statusCode !== 404 &&
         statusCode !== null &&
         statusCode < 500 && (
-          <Alert
-            type="error"
-            message="Failed to load dashboard data"
-            description="Please check your connection and try refreshing."
-            showIcon
-            action={<a onClick={() => void refetch()}>Retry</a>}
+          <InlineAlert
+            variant="error"
+            title="Unable to load dashboard data"
+            description="Check your network connection and retry."
+            onRetry={() => void refetch()}
           />
         )}
 

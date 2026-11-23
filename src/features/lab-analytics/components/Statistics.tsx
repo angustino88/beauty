@@ -1,4 +1,5 @@
-import { Alert, Button, Col, Modal, Row } from 'antd';
+import { Button, Col, Modal, Row } from 'antd';
+import { InlineAlert } from '@/shared/notifications';
 import { useMemo, useState } from 'react';
 import { ExportOutlined } from '@ant-design/icons';
 import { MiniBars, StatTriplet, TrendChip, useChartTheme } from '@/shared/charts';
@@ -136,7 +137,14 @@ export function Statistics() {
               ] : null}
               style={{ top: '10%' }}
             >
-              {entry.error && <Alert type="error" showIcon message="Unable to load metrics" action={<Button size="small" onClick={entry.retry}>Retry</Button>} />}
+              {entry.error && (
+                <InlineAlert
+                  variant="error"
+                  style={{ marginBottom: 12 }}
+                  title="Unable to load metrics"
+                  onRetry={entry.retry}
+                />
+              )}
               <DateUnitFilter
                 filterParams={{ unit: unitByKey[entry.key] }}
                 onChange={(params) => {

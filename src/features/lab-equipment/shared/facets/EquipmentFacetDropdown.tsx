@@ -1,7 +1,8 @@
 /* Column-config factory and its private dropdown are intentionally colocated. */
 /* eslint-disable react-refresh/only-export-components */
 import { useState } from 'react';
-import { Alert, Button, Checkbox, Input, Space, Spin, Typography } from 'antd';
+import { Button, Checkbox, Input, Space, Spin, Typography } from 'antd';
+import { InlineAlert } from '@/shared/notifications';
 import type { FilterDropdownProps } from 'antd/es/table/interface';
 import type { EquipmentFacetResponse } from '../../types/equipment';
 
@@ -26,7 +27,7 @@ function EquipmentFacetDropdown({ selectedKeys, setSelectedKeys, confirm, clearF
       <Input aria-label="Search filter options" placeholder="Search options" allowClear value={search} onChange={(event) => setSearch(event.target.value)} />
       <div style={{ maxHeight: 280, overflowY: 'auto', paddingBlock: 12 }}>
         {loading ? <Spin size="small" tip="Loading options" /> : facet.isError ? (
-          <Alert type="error" title="Unable to load options" description={<Button size="small" onClick={() => facet.refetch()}>Retry</Button>} />
+          <InlineAlert variant="error" compact title="Unable to load options" onRetry={() => void facet.refetch()} />
         ) : visible.length ? visible.map((option) => (
           <div key={option.id} style={{ paddingBlock: 5 }}>
             <Checkbox checked={selected.has(String(option.id))} onChange={(event) => {

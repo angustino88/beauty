@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, DatePicker, Form, Input, Select, message } from 'antd';
+import { DatePicker, Form, Input, Select } from 'antd';
+import { InlineAlert, getApiErrorMessage, notify } from '@/shared/notifications';
 import { usePagedOptions } from '@/shared/hooks/usePagedOptions';
 import { FormDialog } from '@/components/ui/form-dialog';
 import { equipmentStatusLabel, equipmentStatusTone, equipmentStatusValue } from '../../utils/equipmentStatus';
@@ -73,10 +74,10 @@ const actionLabels: Record<DisplayAction, string> = {
   transferred: 'Transfer equipment', retired: 'Retire equipment',
 };
 
-const getSuccessMessage = (action: DisplayAction, itemName: string) => {
+const getSuccessMessage = (action: DisplayAction, itemName: string): string => {
   const outcomes: Record<DisplayAction, string> = {
     available: 'status updated',
-    in_use: 'assigned to the bench',
+    in_use: 'assigned to bench',
     borrowed: 'handed over',
     maintenance: 'marked for maintenance',
     broken: 'marked as out of service',
@@ -85,12 +86,7 @@ const getSuccessMessage = (action: DisplayAction, itemName: string) => {
     retired: 'retired',
   };
 
-  return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-      <strong>{itemName}</strong>
-      <span>{outcomes[action]} successfully.</span>
-    </span>
-  );
+  return `${itemName} ${outcomes[action]}`;
 };
 
 export function UpdateEquipmentStatusModal({
@@ -207,13 +203,17 @@ export function UpdateEquipmentStatusModal({
           break;
       }
       if (!payload) {
-        if (record.is_calibration_overdue) message.info('Record a calibration to clear the overdue status.');
+        if (record.is_calibration_overdue) {
+          notify.info('Calibration required', {
+            description: 'Record a calibration to clear the overdue status.',
+          });
+        }
         return;
       }
       if (values.action === 'available' && currentAvailableStep !== 'none') {
         setSaving(true);
         await onSave(payload);
-        message.success({ content: getSuccessMessage(values.action, itemName), duration: 4 });
+        notify.success(getSuccessMessage(values.action, itemName));
         onCancel();
         return;
       }
@@ -228,7 +228,7 @@ export function UpdateEquipmentStatusModal({
         setSaving(true);
         if (values.action === 'lost' && onLoan) {
           await onSave(payload);
-          message.success({ content: getSuccessMessage(values.action, itemName), duration: 4 });
+          notify.success(getSuccessMessage(values.action, itemName));
           onCancel();
           return;
         }
@@ -241,7 +241,7 @@ export function UpdateEquipmentStatusModal({
           } });
           if (onBench) await onSave(payload);
           else {
-            message.success({ content: getSuccessMessage(values.action, itemName), duration: 4 });
+            notify.success(getSuccessMessage(values.action, itemName));
             onCancel();
           }
           return;
@@ -251,23 +251,24 @@ export function UpdateEquipmentStatusModal({
             ? { location_note: values.location_note?.trim() }
             : { [`${values.return_target}_id`]: values.return_target_id } });
           await onSave(payload);
-          message.success({ content: getSuccessMessage(values.action, itemName), duration: 4 });
+          notify.success(getSuccessMessage(values.action, itemName));
           onCancel();
           return;
         }
         await onSave(payload);
-        message.success({ content: getSuccessMessage(values.action, itemName), duration: 4 });
+        notify.success(getSuccessMessage(values.action, itemName));
         onCancel();
         return;
       }
       setSaving(true);
       await onSave(payload);
-      message.success({ content: getSuccessMessage(values.action, itemName), duration: 4 });
+      notify.success(getSuccessMessage(values.action, itemName));
       onCancel();
     } catch (error) {
       if (!(error && typeof error === 'object' && 'errorFields' in error) && !(error instanceof Error && error.message === 'cancelled')) {
-        const data = (error as { data?: { message?: string; error?: { message?: string } } })?.data;
-        message.error(data?.error?.message ?? data?.message ?? 'Could not update equipment status');
+        notify.error('Unable to update equipment status', {
+          description: getApiErrorMessage(error, 'Please try again.'),
+        });
       }
     } finally { setSaving(false); }
   };
@@ -303,9 +304,9 @@ export function UpdateEquipmentStatusModal({
       </Form.Item>
       {action && <div className={styles.actionFields}>
         {action === 'available' && availableReason && (availableActionable || record.is_calibration_overdue) && <p className={styles.helpText} role="status">{availableActionable ? `${availableReason}. ${currentAvailableStep === 'return' ? 'The loan will be closed; check the refreshed status afterward.' : 'Check the refreshed status afterward for any remaining steps.'}` : 'Record a calibration to clear the overdue status.'}</p>}
-        {action === 'available' && life === 'lost' && <Alert type="info" showIcon message="Found equipment returns in Maintenance. Record where it was found, then restore its condition to operational separately." />}
-        {(action === 'lost' || action === 'transferred' || action === 'retired') && onBench && <Alert type="warning" showIcon message="This action will move the unit off its bench to the selected room, station, or location note first." />}
-        {(action === 'transferred' || action === 'retired') && onLoan && <Alert type="warning" showIcon message="The open loan will be returned before this status change." />}
+        {action === 'available' && life === 'lost' && <InlineAlert variant="info" compact title="Found equipment returns in Maintenance" description="Record where it was found, then restore its condition to operational separately." />}
+        {(action === 'lost' || action === 'transferred' || action === 'retired') && onBench && <InlineAlert variant="warning" compact title="This action moves the unit off its bench to the selected room, station, or location note first." />}
+        {(action === 'transferred' || action === 'retired') && onLoan && <InlineAlert variant="warning" compact title="The open loan will be returned before this status change." />}
         {action === 'retired' && !lifecycleTargetBlocked && <p className={styles.warningText}>Retirement is final. You will be asked to confirm.</p>}
         {(action === 'maintenance' || action === 'broken' || action === 'lost' || action === 'retired' || action === 'transferred' || action === 'available' && (life !== 'in_service' || condition !== 'operational')) && <Form.Item name="reason" label={life === 'lost' && action === 'available' ? 'Where was it found? (optional)' : 'Reason (optional)'} rules={[{ max: 500 }]}><Input.TextArea rows={3} maxLength={500} showCount placeholder="Add context for this change" /></Form.Item>}
         {action === 'transferred' && <div className={styles.fieldGrid}>
@@ -314,7 +315,7 @@ export function UpdateEquipmentStatusModal({
         </div>}
         {action === 'in_use' && <Form.Item name="bench_id" label="Assign to bench" rules={[{ required: true, message: 'Select a bench' }]}><Select showSearch optionFilterProp="label" placeholder="Search for a bench" options={benchOptions.map(({ id, name, sku }) => ({ value: id, label: sku ? `${sku} — ${name}` : name }))} loading={loadingOptions} /></Form.Item>}
         {action === 'borrowed' && <>
-          {borrowBlocker && <Alert type="warning" showIcon message={borrowBlocker} />}
+          {borrowBlocker && <InlineAlert variant="warning" compact title={borrowBlocker} />}
           <div className={styles.fieldGrid}>
             <Form.Item name="borrower_id" label="Account borrower" extra="Choose an account or enter a borrower name."><Select allowClear {...borrowers.selectProps} placeholder="Choose an account, or type a username (optional)" options={borrowers.options} /></Form.Item>
             <Form.Item name="borrower_name" label="Borrower name" rules={[{ required: borrowerId == null, whitespace: true, message: 'Enter a borrower name' }]}><Input placeholder="Full name" /></Form.Item>

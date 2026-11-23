@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { message } from "antd";
 import dayjs from "dayjs";
 import { exportRowsToExcel } from "@/features/lab-analytics/utils/export";
+import { getApiErrorMessage, notify } from "@/shared/notifications";
 import {
   useLazyGetMappingsQuery,
   useLazyGetBenchAuditPageQuery,
@@ -36,8 +36,13 @@ export function useMappingExport(params: ResourceMappingParams) {
         `Resource_Mapping_${dayjs().format("YYYY-MM-DD")}`,
         "Resource Mapping",
       );
-    } catch {
-      void message.error("Failed to export the mapping");
+      notify.success("Resource mapping exported", {
+        description: `Exported ${rows.length} ${rows.length === 1 ? "row" : "rows"} to Excel.`,
+      });
+    } catch (err: unknown) {
+      notify.error("Unable to export resource mapping", {
+        description: getApiErrorMessage(err, "Please try again."),
+      });
     } finally {
       setExportMappingLoading(false);
     }
@@ -66,8 +71,13 @@ export function useMappingExport(params: ResourceMappingParams) {
         `Bench_Audits_${dayjs().format("YYYY-MM-DD")}`,
         "Bench audits",
       );
-    } catch {
-      void message.error("Failed to export the bench audits");
+      notify.success("Bench audits exported", {
+        description: `Exported ${rows.length} ${rows.length === 1 ? "record" : "records"} to Excel.`,
+      });
+    } catch (err: unknown) {
+      notify.error("Unable to export bench audits", {
+        description: getApiErrorMessage(err, "Please try again."),
+      });
     } finally {
       setExportAuditLoading(false);
     }

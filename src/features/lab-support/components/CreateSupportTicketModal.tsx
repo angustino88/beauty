@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Alert, DatePicker, Form, Input, Modal, Select, Space, Typography, Upload, message } from 'antd';
+import { DatePicker, Form, Input, Modal, Select, Space, Typography, Upload } from 'antd';
 import type { UploadFile } from 'antd';
+import { InlineAlert, notify } from '@/shared/notifications';
 import { InboxOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import {
@@ -67,18 +68,23 @@ export function CreateSupportTicketModal({
       }
 
       if (failed.length) {
-        void message.warning(
-          `Ticket ${ticketLabel} created, but ${failed.length} file(s) were not attached. ${failed.join(' ')} You can add them from the ticket page.`,
-          10,
-        );
+        notify.warning('Support ticket created, but some attachments failed', {
+          code: ticketLabel,
+          description: `${failed.join(' ')} You can upload them from the ticket page.`,
+          duration: 10000,
+        });
       } else {
-        void message.success(`Ticket ${ticketLabel} created successfully!`);
+        notify.success('Support ticket created', {
+          code: ticketLabel,
+        });
       }
       form.resetFields();
       setFiles([]);
       onSuccess();
     } catch (error: unknown) {
-      void message.error(`Error: ${apiErrorMessage(error, 'Failed to create support ticket')}`);
+      notify.error('Unable to create support ticket', {
+        description: apiErrorMessage(error, 'Please review the ticket details and try again.'),
+      });
     } finally {
       setSubmitting(false);
     }
@@ -116,10 +122,9 @@ export function CreateSupportTicketModal({
         Share the details our lab support team needs to route and resolve your request.
       </Typography.Paragraph>
       {(categoriesError || prioritiesError) && (
-        <Alert
-          type="error"
-          showIcon
-          message="Some ticket options could not be loaded"
+        <InlineAlert
+          variant="error"
+          title="Some ticket options could not be loaded"
           description="Refresh the page or try again shortly. Required options must be available before submitting."
         />
       )}

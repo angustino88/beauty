@@ -7,10 +7,10 @@ import {
   InputNumber,
   DatePicker,
   Button,
-  message,
 } from 'antd';
 import dayjs from 'dayjs';
 import styles from '@/features/finance/components/FinanceWorkspace.module.css';
+import { getApiErrorMessage, notify } from '@/shared/notifications';
 import type { BillingPeriodEnum, ExpenseTypeEnum, ICreateExpensePayload } from '../types';
 import { EXPENSE_TYPE_LABELS, BILLING_PERIOD_LABELS } from '../mapper';
 import { useCreateRoomExpenseMutation } from '../api';
@@ -76,16 +76,16 @@ export const CreateExpenseModal: React.FC<CreateExpenseModalProps> = ({
         body: payload,
       }).unwrap();
 
-      void message.success(`Expense “${payload.name}” created successfully.`);
+      notify.success('Expense created', {
+        description: `Saved "${payload.name}".`,
+      });
       form.resetFields();
       onClose();
       onSuccess?.();
     } catch (err) {
-      const errorDetail =
-        err && typeof err === 'object' && 'data' in err
-          ? JSON.stringify((err as { data: unknown }).data)
-          : 'Failed to create expense';
-      void message.error(errorDetail);
+      notify.error('Unable to create expense', {
+        description: getApiErrorMessage(err, 'Please review the expense details and try again.'),
+      });
     }
   };
 

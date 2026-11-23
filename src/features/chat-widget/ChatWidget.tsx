@@ -14,6 +14,7 @@ import { ChatHeader } from './components/ChatHeader';
 import { ChatMessageList } from './components/ChatMessageList';
 import { ChatChoices } from './components/ChatChoices';
 import { ChatCommandMenu } from './components/ChatCommandMenu';
+import { InlineAlert } from '@/shared/notifications';
 
 export const ChatWidget: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -143,7 +144,17 @@ export const ChatWidget: React.FC = () => {
         onClose={handleClose}
       />
 
-      {error && <div className={styles.errorBanner}>{error}</div>}
+      {error && (
+        <div style={{ padding: '8px 12px 0' }}>
+          <InlineAlert
+            variant="error"
+            compact
+            title={error}
+            onRetry={connect}
+            retryLabel="Reconnect"
+          />
+        </div>
+      )}
 
       <ChatMessageList
         status={status}

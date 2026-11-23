@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Alert, Badge, Button, Drawer, Empty, Input, Popconfirm, Switch, Table, Tag, Tooltip, message } from 'antd';
+import { Badge, Button, Drawer, Empty, Input, Popconfirm, Switch, Table, Tag, Tooltip } from 'antd';
+import { InlineAlert, getApiErrorMessage, notify } from '@/shared/notifications';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import type { LicenseCheckRead } from '@/shared/api/generated/api';
@@ -19,7 +20,14 @@ function RunsDrawer({ check, onClose }: { check: LicenseCheckRead | null; onClos
   const { data, isFetching, isError, refetch } = useGetLicenseCheckRunsQuery(check?.id ?? 0, { skip: !check });
   return (
     <Drawer open={Boolean(check)} onClose={onClose} title={check ? `Runs of ${check.name}` : ''} width={720}>
-      {isError && <Alert type="warning" showIcon title="Runs could not be loaded" action={<Button size="small" onClick={() => void refetch()}>Retry</Button>} />}
+      {isError && (
+        <InlineAlert
+          variant="warning"
+          style={{ marginBottom: 12 }}
+          title="Unable to load check runs"
+          onRetry={() => void refetch()}
+        />
+      )}
       <Table
         rowKey="id"
         size="small"
@@ -75,9 +83,11 @@ export function LicenseChecksPanel({
   const toggle = async (check: LicenseCheckRead, isEnabled: boolean) => {
     try {
       await update({ checkId: check.id, changes: { is_enabled: isEnabled } }).unwrap();
-      message.success(isEnabled ? 'Check enabled' : 'Check disabled');
-    } catch {
-      message.error('Could not change the check');
+      notify.success(isEnabled ? 'License check enabled' : 'License check disabled');
+    } catch (error) {
+      notify.error('Unable to update license check', {
+        description: getApiErrorMessage(error, 'Please try again.'),
+      });
     }
   };
 
@@ -160,7 +170,16 @@ export function LicenseChecksPanel({
               description="Agents stop running it, and its runs and found licenses are deleted. Licenses in the inventory stay."
               okText="Delete"
               okButtonProps={{ danger: true }}
-              onConfirm={() => remove(check.id).unwrap().then(() => message.success('Check deleted')).catch(() => message.error('Could not delete'))}
+              onConfirm={() =>
+                remove(check.id)
+                  .unwrap()
+                  .then(() => notify.success('License check deleted'))
+                  .catch((error) =>
+                    notify.error('Unable to delete license check', {
+                      description: getApiErrorMessage(error, 'Please try again.'),
+                    }),
+                  )
+              }
             >
               <Button size="small" danger>Delete</Button>
             </Popconfirm>
@@ -181,7 +200,13 @@ export function LicenseChecksPanel({
         <Input.Search allowClear placeholder="Name, key or vendor" onSearch={setQ} style={{ maxWidth: 320 }} aria-label="Search checks" />
         {canManageLicenseChecks && <Button type="primary" onClick={() => setCreating(true)}>New check</Button>}
       </div>
-      {isError && <Alert type="warning" showIcon title="License checks could not be loaded" action={<Button size="small" onClick={() => void refetch()}>Retry</Button>} />}
+      {isError && (
+        <InlineAlert
+          variant="warning"
+          title="Unable to load license checks"
+          onRetry={() => void refetch()}
+        />
+      )}
       <Table
         rowKey="id"
         size="middle"

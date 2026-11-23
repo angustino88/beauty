@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Alert, Button, Empty, Input, Popconfirm, Segmented, Select, Skeleton, Tag, message } from 'antd';
+import { Button, Empty, Input, Popconfirm, Segmented, Select, Skeleton, Tag } from 'antd';
 import { equipmentPagedConfig, usePagedOptions } from '@/shared/hooks/usePagedOptions';
 import { type EquipmentHardwareIdKindEnum } from '@/shared/api/generated/api';
+import { InlineAlert, getApiErrorMessage, notify } from '@/shared/notifications';
 import {
   useDeleteEquipmentHardwareIdMutation,
   useGetEquipmentHardwareIdsQuery,
@@ -19,11 +20,6 @@ const PLACEHOLDERS: Record<EquipmentHardwareIdKindEnum, string> = {
   pnp_id: 'USB\\VID_1248&PID_1008\\007113',
   vector_device: '007113-585343',
 };
-
-function problemMessage(error: unknown, fallback: string): string {
-  const body = (error as { data?: { error?: { message?: string } } } | undefined)?.data;
-  return body?.error?.message || fallback;
-}
 
 /** Computing unit a port-bound PnP ID is valid on. */
 function ComputingSelect({ value, onChange }: { value?: number; onChange: (id?: number) => void }) {
@@ -59,20 +55,24 @@ export function EquipmentHardwareIds({ equipmentId, canEdit }: { equipmentId: nu
   const submit = async () => {
     try {
       await register({ equipmentId, kind, value: value.trim(), computing_id: portBound ? computingId : null }).unwrap();
-      message.success('Hardware ID registered');
+      notify.success('Hardware ID registered');
       setValue('');
       setComputingId(undefined);
     } catch (error) {
-      message.error(problemMessage(error, 'Could not register this hardware ID'));
+      notify.error('Unable to register hardware ID', {
+        description: getApiErrorMessage(error, 'Please verify the ID format and try again.'),
+      });
     }
   };
 
   const onDelete = async (hardwareIdId: number) => {
     try {
       await remove({ equipmentId, hardwareIdId }).unwrap();
-      message.success('Hardware ID removed');
+      notify.success('Hardware ID removed');
     } catch (error) {
-      message.error(problemMessage(error, 'Could not remove this hardware ID'));
+      notify.error('Unable to remove hardware ID', {
+        description: getApiErrorMessage(error, 'Please try again.'),
+      });
     }
   };
 
@@ -85,7 +85,12 @@ export function EquipmentHardwareIds({ equipmentId, canEdit }: { equipmentId: nu
       </span>
       {isLoading && <Skeleton active paragraph={{ rows: 2 }} />}
       {isError && (
-        <Alert type="warning" showIcon title="Hardware IDs could not be loaded" action={<Button size="small" onClick={() => void refetch()}>Retry</Button>} />
+        <InlineAlert
+          variant="warning"
+          compact
+          title="Unable to load hardware IDs"
+          onRetry={() => void refetch()}
+        />
       )}
       {data && data.length === 0 && (
         <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="No hardware ID registered. Link a reported device in Lab Monitoring, or add its ID here." />

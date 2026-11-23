@@ -1,5 +1,4 @@
 import {
-  Alert,
   Button,
   Collapse,
   Descriptions,
@@ -15,8 +14,8 @@ import {
   Switch,
   Tag,
   Typography,
-  message,
 } from 'antd';
+import { InlineAlert, notify } from '@/shared/notifications';
 import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import { useMemo, useState } from 'react';
 import {
@@ -234,9 +233,12 @@ export function AddDeviceWizard({ open, onClose, onSaved, claimDevice, initialLo
       }
     }
     if (failures.length) {
-      void message.warning(`Device saved, but some sensors were not added. ${failures.join(' ')}`, 8);
+      notify.warning('Device saved, but some sensors were not added', {
+        description: failures.join(' '),
+        duration: 8000,
+      });
     } else {
-      void message.success(claiming ? 'Device claimed' : 'Device added');
+      notify.success(claiming ? 'Telemetry device claimed' : 'Telemetry device added');
     }
     onSaved?.(deviceId);
     close();
@@ -280,7 +282,15 @@ export function AddDeviceWizard({ open, onClose, onSaved, claimDevice, initialLo
           { title: 'Review' },
         ]}
       />
-      {banner && <Alert type="error" showIcon title={banner} style={{ marginBottom: 16 }} closable onClose={() => setBanner(null)} />}
+      {banner && (
+        <InlineAlert
+          variant="error"
+          title={banner}
+          dismissible
+          onDismiss={() => setBanner(null)}
+          style={{ marginBottom: 16 }}
+        />
+      )}
 
       <Form<WizardValues>
         form={form}
@@ -428,16 +438,20 @@ export function AddDeviceWizard({ open, onClose, onSaved, claimDevice, initialLo
             measurements are linked to what they measure (the install location by default). You can add sensors later.
           </Typography.Paragraph>
           {!profilesLoading && profileOptions.length === 0 && (
-            <Alert
-              type="warning"
-              showIcon
+            <InlineAlert
+              variant="warning"
               style={{ marginBottom: 12 }}
               title="No approved device profile yet"
-              description="Create one under Telemetry › Device profiles and ask a lab admin to approve it after the bench test."
+              description="Create one under Telemetry › Device profiles and ask a lab administrator to approve it after the bench test."
             />
           )}
           {duplicates.length > 0 && (
-            <Alert type="error" showIcon style={{ marginBottom: 12 }} title={`Modbus address ${duplicates.join(', ')} is used twice. Each sensor on one bus needs its own address.`} />
+            <InlineAlert
+              variant="error"
+              style={{ marginBottom: 12 }}
+              title={`Duplicate Modbus address: ${duplicates.join(', ')}`}
+              description="Each sensor on one bus requires a unique address."
+            />
           )}
           <Form.List name="sensors">
             {(fields, { add, remove }) => (

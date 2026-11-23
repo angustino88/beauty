@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Alert, Button, Descriptions, Drawer, Empty, Select, Skeleton, Switch, Timeline, Tooltip, message } from 'antd';
+import { Button, Descriptions, Drawer, Empty, Select, Skeleton, Switch, Timeline, Tooltip } from 'antd';
 import { equipmentPagedConfig, usePagedOptions } from '@/shared/hooks/usePagedOptions';
+import { InlineAlert, getApiErrorMessage, notify } from '@/shared/notifications';
 import dayjs from 'dayjs';
 import { skipToken } from '@reduxjs/toolkit/query';
 import {
@@ -17,12 +18,6 @@ import styles from './Devices.module.css';
 
 const DATETIME = 'DD MMM YYYY, HH:mm:ss';
 
-/** Message of a standard API problem response, or a generic fallback. */
-function problemMessage(error: unknown, fallback: string): string {
-  const body = (error as { data?: { error?: { message?: string } } } | undefined)?.data;
-  return body?.error?.message || fallback;
-}
-
 function LinkToInventory({ connectionId, hardwareId }: { connectionId: number; hardwareId: string }) {
   const [equipmentId, setEquipmentId] = useState<number>();
   const equipment = usePagedOptions(equipmentPagedConfig);
@@ -32,10 +27,18 @@ function LinkToInventory({ connectionId, hardwareId }: { connectionId: number; h
     if (!equipmentId) return;
     try {
       const result = await link({ connectionId, equipmentId }).unwrap();
-      message.success(result.match_status.value === 'matched' ? 'Linked to inventory' : `Hardware ID registered; match is ${result.match_status.label.toLowerCase()}`);
+      if (result.match_status.value === 'matched') {
+        notify.success('Device linked to inventory');
+      } else {
+        notify.success('Hardware ID registered', {
+          description: `Current match status: ${result.match_status.label.toLowerCase()}.`,
+        });
+      }
       setEquipmentId(undefined);
     } catch (error) {
-      message.error(problemMessage(error, 'Could not link this device'));
+      notify.error('Unable to link device', {
+        description: getApiErrorMessage(error, 'Please try again.'),
+      });
     }
   };
 
@@ -89,7 +92,9 @@ function ExpectationControls({
       if (checked) await create({ computingId, equipmentId, isDisconnectAlertEnabled: false }).unwrap();
       else if (expectedDeviceId) await remove(expectedDeviceId).unwrap();
     } catch (error) {
-      message.error(problemMessage(error, 'Could not change the expectation'));
+      notify.error('Unable to update device expectation', {
+        description: getApiErrorMessage(error, 'Please try again.'),
+      });
     }
   };
   const toggleAlert = async (checked: boolean) => {
@@ -97,7 +102,9 @@ function ExpectationControls({
     try {
       await update({ expectedDeviceId, isDisconnectAlertEnabled: checked }).unwrap();
     } catch (error) {
-      message.error(problemMessage(error, 'Could not change the alert'));
+      notify.error('Unable to update disconnect alert', {
+        description: getApiErrorMessage(error, 'Please try again.'),
+      });
     }
   };
 
@@ -144,7 +151,11 @@ export function DeviceDetailDrawer({ connectionId, onClose }: { connectionId: nu
       footer={<span className={styles.footnote}>Connection state comes from the computing agent. Inventory changes only when you link a device.</span>}
     >
       {isError && !connection && (
-        <Alert type="error" showIcon title="Could not load this device" action={<Button size="small" onClick={() => void refetch()}>Retry</Button>} />
+        <InlineAlert
+          variant="error"
+          title="Unable to load device details"
+          onRetry={() => void refetch()}
+        />
       )}
       {!connection && isFetching && <Skeleton active paragraph={{ rows: 8 }} />}
       {connection && presentation && (
@@ -157,10 +168,10 @@ export function DeviceDetailDrawer({ connectionId, onClose }: { connectionId: nu
 
           {presentation.canLink && <LinkToInventory connectionId={connection.id} hardwareId={presentation.hardwareId} />}
           {presentation.inventoryFix && (
-            <Alert type="warning" showIcon title="Fix this in the equipment inventory" description={presentation.inventoryFix} />
+            <InlineAlert variant="warning" title="Fix this in the equipment inventory" description={presentation.inventoryFix} />
           )}
           {connection.match_status.value === 'unmatched' && !presentation.hardwareId && (
-            <Alert type="info" showIcon title="This device reported no hardware ID" description="It cannot be linked to inventory until the agent reports its PnP ID." />
+            <InlineAlert variant="info" title="This device reported no hardware ID" description="It cannot be linked to inventory until the agent reports its PnP ID." />
           )}
 
           <section className={styles.panel} aria-labelledby="evidence-title">

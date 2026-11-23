@@ -6,8 +6,8 @@ import {
   Select,
   Tabs,
   Button,
-  Alert,
 } from 'antd';
+import { InlineAlert } from '@/shared/notifications';
 import {
   ReloadOutlined,
   FundOutlined,
@@ -185,8 +185,21 @@ export const FinanceReportPage: React.FC = () => {
         </div>
       </section>
 
-      {analyticsError && <Alert type="error" showIcon message={analyticsErrorMessage} />}
-      {reportError && <Alert type="error" showIcon message="Unable to load the expense report. Please retry." />}
+      {analyticsError && (
+        <InlineAlert
+          variant="error"
+          title={analyticsErrorMessage}
+          onRetry={handleRefresh}
+        />
+      )}
+      {reportError && (
+        <InlineAlert
+          variant="error"
+          title="Unable to load the expense report"
+          description="Try refreshing the report."
+          onRetry={() => void refetchReport()}
+        />
+      )}
 
       {/* Summary KPI Cards */}
       <FinanceSummaryCards

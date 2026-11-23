@@ -14,8 +14,8 @@ import {
   Space,
   Tag,
   Typography,
-  message,
 } from "antd";
+import { getApiErrorMessage, notify } from "@/shared/notifications";
 import { DeleteOutlined, PlusOutlined } from "@ant-design/icons";
 import { usePagedOptions } from "@/shared/hooks/usePagedOptions";
 import {
@@ -73,13 +73,13 @@ export function EquipmentAssignmentModal({
         },
       }).unwrap();
 
-      message.success("Equipment assigned successfully");
+      notify.success("Equipment assigned to bench");
       form.resetFields();
       onSuccess();
     } catch (err: unknown) {
-      const errorMsg =
-        (err as { data?: { message?: string } })?.data?.message ?? "Failed to assign equipment";
-      message.error(errorMsg);
+      notify.error("Unable to assign equipment", {
+        description: getApiErrorMessage(err, "Please review the selection and try again."),
+      });
     }
   };
 
@@ -91,12 +91,15 @@ export function EquipmentAssignmentModal({
         benchId: row.id,
       }).unwrap();
 
-      message.success(`Unassigned ${equipment.name || equipment.sku} from bench`);
+      notify.success("Equipment unassigned from bench", {
+        code: equipment.sku || undefined,
+        description: equipment.name || undefined,
+      });
       onSuccess();
     } catch (err: unknown) {
-      const errorMsg =
-        (err as { data?: { message?: string } })?.data?.message ?? "Failed to unassign equipment";
-      message.error(errorMsg);
+      notify.error("Unable to unassign equipment", {
+        description: getApiErrorMessage(err, "Please try again."),
+      });
     }
   };
 

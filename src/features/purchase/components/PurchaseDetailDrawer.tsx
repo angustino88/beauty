@@ -9,8 +9,8 @@ import {
   Typography,
   Popconfirm,
   Tooltip,
-  message,
 } from 'antd';
+import { getApiErrorMessage, notify } from '@/shared/notifications';
 import {
   PlusOutlined,
   DollarOutlined,
@@ -181,16 +181,12 @@ export const PurchaseDetailDrawer: React.FC<PurchaseDetailDrawerProps> = ({
         itemId: item.id,
         ifMatch: getItemEtag(item),
       }).unwrap();
-      void message.success('Line item deleted successfully');
+      notify.success('Line item deleted');
       void refetchItems();
     } catch (err: unknown) {
-      const errorData = (err as { data?: { error?: { message?: string } } })?.data;
-      const errorMsg =
-        errorData?.error?.message ||
-        (typeof errorData === 'string'
-          ? errorData
-          : 'Failed to delete line item');
-      void message.error(errorMsg);
+      notify.error('Unable to delete line item', {
+        description: getApiErrorMessage(err, 'Please try again.'),
+      });
     }
   };
 

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Button, DatePicker, Flex, Form, Tag, Table, message } from "antd";
+import { Button, DatePicker, Flex, Form, Tag, Table } from "antd";
+import { getApiErrorMessage, notify } from "@/shared/notifications";
 import { CloseOutlined, ExportOutlined, ReloadOutlined } from "@ant-design/icons";
 import type { TablePaginationConfig } from "antd/es/table";
 import type { Dayjs } from "dayjs";
@@ -76,9 +77,15 @@ export function MonitoringEventsPanel({ benchId, computingId, computingLabel, on
     setExportLoading(true);
     try {
       const result = await fetchExport(filter).unwrap();
-      await exportMonitoringExcel(result.value ?? [], "Lab_Monitoring");
-    } catch {
-      message.error("Export failed");
+      const rows = result.value ?? [];
+      await exportMonitoringExcel(rows, "Lab_Monitoring");
+      notify.success("Monitoring events exported", {
+        description: `Exported ${rows.length} ${rows.length === 1 ? "event" : "events"} to Excel.`,
+      });
+    } catch (error) {
+      notify.error("Unable to export monitoring events", {
+        description: getApiErrorMessage(error, "Please try again."),
+      });
     } finally {
       setExportLoading(false);
     }

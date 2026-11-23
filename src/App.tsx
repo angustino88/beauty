@@ -6,6 +6,7 @@ import AppRoutes from "@/app/routes";
 import { bootstrapAuth } from "@/features/auth/session/bootstrapAuth";
 import { FullscreenLoading } from "@/components/layout/FullscreenLoading";
 import { ThemeContext } from "@/shared/theme/ThemeContext";
+import { ToastViewport } from "@/shared/notifications";
 import "./App.css";
 
 const THEME_STORAGE_KEY = "labmango:theme";
@@ -49,6 +50,14 @@ export default function App() {
     components: {
       Badge: { statusSize: 10 },
       Message: { contentPadding: "10px 16px" },
+      Modal: {
+        borderRadiusLG: 10,
+        titleFontSize: 16,
+      },
+      Alert: {
+        borderRadiusLG: 8,
+        defaultPadding: "10px 14px",
+      },
     },
     // antd derives its palettes from literal colours, so these mirror the
     // --lm-* values in shared/styles/tokens.css. Keep both in sync.
@@ -91,6 +100,7 @@ export default function App() {
   return (
     <ThemeContext.Provider value={themeContextValue}>
       <ConfigProvider theme={antdThemeConfig}>
+        <ToastViewport />
         <Suspense fallback={<FullscreenLoading />}>
           {bootstrapStatus === "loading" && !isRedirectRoute ? (
             <FullscreenLoading />

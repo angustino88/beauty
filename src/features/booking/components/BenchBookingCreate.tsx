@@ -1,5 +1,5 @@
 import { CalendarOutlined } from '@ant-design/icons';
-import { Form, message, Modal, type ModalProps } from 'antd';
+import { Form, Modal, type ModalProps } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
@@ -8,6 +8,7 @@ import {
   processBookingBody,
   roundUpToNearest5Minutes,
 } from '@/shared/utils/booking';
+import { confirmAction, notify } from '@/shared/notifications';
 import type { IBenchBookingFormValues } from '../types';
 import type { BenchBookingCreateRequest } from '../mapper';
 import { BookingForm } from './BookingForm';
@@ -32,7 +33,6 @@ export const BenchBookingCreate: React.FC<CustomModalProps> = ({
 }) => {
   const [formInstance] = Form.useForm<IBenchBookingFormValues>();
   const [searchParams] = useSearchParams();
-  const [messageApi, contextHolder] = message.useMessage();
   const [loading, setLoading] = useState(false);
 
   // Same query (and cache entry) as the form's bench select.
@@ -66,59 +66,54 @@ export const BenchBookingCreate: React.FC<CustomModalProps> = ({
       const startsAt = dayjs(values.starts_at as string | Dayjs);
       const endsAt = dayjs(values.ends_at as string | Dayjs);
       const durationInHours = endsAt.startOf('minute').diff(startsAt.startOf('minute'), 'hours', true);
+      const requiresApproval = durationInHours > 4;
 
       const doCreate = async () => {
         try {
           const body = processBookingBody(values as Record<string, unknown>);
           const response = await createBooking(body as BenchBookingCreateRequest).unwrap();
-          if (!response.booking_code) {
-            void message.success('Booking created successfully');
-          } else {
-            void message.success({
-              content: (
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap' }}>
-                  <code
-                    style={{
-                      padding: '2px 7px',
-                      border: '1px solid var(--lm-success-border)',
-                      borderRadius: 4,
-                      background: 'var(--lm-success-bg)',
-                      color: 'var(--lm-success-fg)',
-                      fontFamily: 'ui-monospace, SFMono-Regular, Consolas, monospace',
-                      fontSize: 12,
-                      fontWeight: 700,
-                    }}
-                  >
-                    {response.booking_code}
-                  </code>
-                  <span>Booking created successfully!</span>
-                </span>
-              ),
-              duration: 4,
-            });
+          const successTitle = requiresApproval
+            ? 'Booking submitted for approval'
+            : 'Booking created';
 
+          if (!response.booking_code) {
+            notify.success(successTitle);
+          } else {
+            let copied = false;
             try {
-              if (!navigator.clipboard?.writeText) throw new Error('Clipboard unavailable');
-              await navigator.clipboard.writeText(response.booking_code);
-              void message.success('Booking code copied to clipboard!');
+              if (navigator.clipboard?.writeText) {
+                await navigator.clipboard.writeText(response.booking_code);
+                copied = true;
+              }
             } catch {
-              void message.info(`Booking code: ${response.booking_code}`);
+              copied = false;
             }
+
+            notify.success(successTitle, {
+              code: response.booking_code,
+              description: copied
+                ? 'Booking code copied to clipboard.'
+                : 'Save this booking code for your session.',
+              duration: 5000,
+            });
           }
           closeModal?.(response.bench?.id ?? 0);
           refetchBooking?.();
         } catch (error: unknown) {
-          void messageApi.error(extractBookingErrorMessage(error, 'Failed to create booking'));
+          notify.error('Unable to create booking', {
+            description: extractBookingErrorMessage(error, 'Please review your booking details and try again.'),
+          });
         }
       };
 
-      if (durationInHours > 4) {
-        Modal.confirm({
-          title: 'Approval Required',
-          content: `This booking spans ${durationInHours.toFixed(1)} hours, exceeding the 4-hour limit. Do you want to submit this request for coordinator approval?`,
-          okText: 'Submit',
+      if (requiresApproval) {
+        confirmAction({
+          title: 'Coordinator approval required',
+          description: `This booking spans ${durationInHours.toFixed(1)} hours, which exceeds the 4-hour standard limit. Submit it for coordinator approval?`,
+          confirmText: 'Submit for approval',
           cancelText: 'Cancel',
-          onOk: async () => {
+          variant: 'warning',
+          onConfirm: async () => {
             await doCreate();
           },
         });
@@ -161,7 +156,6 @@ export const BenchBookingCreate: React.FC<CustomModalProps> = ({
       width={640}
       style={{ top: 24 }}
     >
-      {contextHolder}
       <BookingForm form={formInstance} formProps={{ onFinish: handleOnFinish }} />
     </Modal>
   );

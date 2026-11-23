@@ -1,4 +1,5 @@
 import type { TicketAttachmentRead } from '@/shared/api/generated/api';
+import { getApiErrorMessage } from '../../shared/notifications/apiError.ts';
 
 /**
  * File types the server accepts by default (`DEFAULT_ALLOWED_EXTENSIONS` in the backend support desk
@@ -36,16 +37,7 @@ export function isImageAttachment(attachment: Pick<SupportAttachment, 'content_t
 
 /** The server's message for a failed request, or a generic fallback. */
 export function apiErrorMessage(error: unknown, fallback = 'Please try again.'): string {
-  if (typeof error === 'object' && error !== null && 'data' in error) {
-    const data = (error as { data?: unknown }).data;
-    if (typeof data === 'object' && data !== null) {
-      const record = data as { detail?: unknown; message?: unknown; error?: { message?: unknown } };
-      if (typeof record.error?.message === 'string') return record.error.message;
-      if (typeof record.detail === 'string') return record.detail;
-      if (typeof record.message === 'string') return record.message;
-    }
-  }
-  return error instanceof Error ? error.message : fallback;
+  return getApiErrorMessage(error, fallback);
 }
 
 /** Narrow the untyped `attachments` array of the ticket detail payload. */

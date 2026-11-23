@@ -1,5 +1,6 @@
 import React from 'react';
-import { Alert, Button, Spin } from 'antd';
+import { Spin } from 'antd';
+import { InlineAlert } from '@/shared/notifications';
 import { Link } from 'react-router-dom';
 import {
   Activity, IdCard, KeyRound, Network, ReceiptText, Users, Waypoints, Wrench,
@@ -128,7 +129,12 @@ export const EquipmentCompactSummary: React.FC<EquipmentCompactSummaryProps> = (
         {mappingLoading ? (
           <div className="tw:grid tw:min-h-24 tw:place-items-center"><Spin size="small" /></div>
         ) : mappingError ? (
-          <Alert type="warning" showIcon message="The equipment mapping could not be loaded" action={onRetryMapping && <Button size="small" onClick={onRetryMapping}>Retry</Button>} />
+          <InlineAlert
+            variant="warning"
+            compact
+            title="Equipment mapping could not be loaded"
+            onRetry={onRetryMapping}
+          />
         ) : connectedRows.length > 0 ? (
           <>
             <p className="tw:m-0 tw:text-xs tw:text-muted-foreground">Room → Station → Bench → Equipment → Licenses. This unit is highlighted.</p>

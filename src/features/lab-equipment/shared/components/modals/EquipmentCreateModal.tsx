@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { InboxOutlined } from '@ant-design/icons';
-import { Col, DatePicker, Form, Input, InputNumber, Modal, Row, Select, Upload, message, type UploadFile } from 'antd';
+import { Col, DatePicker, Form, Input, InputNumber, Modal, Row, Select, Upload, type UploadFile } from 'antd';
+import { confirmAction, notify } from '@/shared/notifications';
 import type { RcFile } from 'antd/es/upload/interface';
 import type { FormInstance, UploadProps } from 'antd';
 import dayjs from 'dayjs';
@@ -104,12 +105,13 @@ export default function EquipmentCreateModal({
       onCancel();
       return;
     }
-    Modal.confirm({
-      title: 'Discard changes?',
-      content: 'You have unsaved changes. Do you want to discard them?',
-      okText: 'Discard',
+    confirmAction({
+      title: 'Discard unsaved changes?',
+      description: 'Closing this dialog will discard your unsaved changes.',
+      confirmText: 'Discard',
       cancelText: 'Continue editing',
-      onOk: onCancel,
+      variant: 'danger',
+      onConfirm: onCancel,
     });
   }, [form, imageFile, imageList.length, onCancel, preparedImageList.length]);
 
@@ -118,12 +120,16 @@ export default function EquipmentCreateModal({
     const mimeAllowed = ALLOWED_IMAGE_MIME.has(nextFile.type);
     const extAllowed = /\.(jpe?g|png|gif|webp)$/i.test(nextFile.name);
     if (!mimeAllowed && !extAllowed) {
-      message.error('Only JPG, JPEG, PNG, GIF, WEBP files are allowed.');
+      notify.warning('Unsupported image format', {
+        description: 'Upload a JPG, PNG, GIF, or WebP image.',
+      });
       return Upload.LIST_IGNORE;
     }
     const sizeInMb = nextFile.size / (1024 * 1024);
     if (sizeInMb > MAX_IMAGE_SIZE_MB) {
-      message.error(`Image must be smaller than ${MAX_IMAGE_SIZE_MB}MB.`);
+      notify.warning('Image exceeds size limit', {
+        description: `Images must be smaller than ${MAX_IMAGE_SIZE_MB} MB.`,
+      });
       return Upload.LIST_IGNORE;
     }
     setImageFile(nextFile);

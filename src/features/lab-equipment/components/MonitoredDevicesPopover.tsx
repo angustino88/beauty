@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Alert, Button, Empty, Popover, Spin } from 'antd';
+import { Button, Empty, Popover, Spin } from 'antd';
+import { InlineAlert } from '@/shared/notifications';
 import { RadarChartOutlined } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
 import { useGetDeviceConnectionsQuery } from '../devices/devicesApi';
@@ -77,11 +78,11 @@ export default function MonitoredDevicesPopover({ computingId, computingName }: 
       </header>
 
       {isError && (
-        <Alert
-          type="error"
-          showIcon
+        <InlineAlert
+          variant="error"
+          compact
           style={{ marginTop: 10 }}
-          title="Could not load devices"
+          title="Unable to load monitored devices"
           description={currentData ? 'Showing the last loaded data.' : undefined}
           action={<Button size="small" onClick={() => void refetch()} loading={isFetching}>Retry</Button>}
         />

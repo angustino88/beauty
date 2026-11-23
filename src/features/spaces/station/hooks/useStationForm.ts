@@ -12,10 +12,10 @@ import {
   useEquipmentCrudActions,
   type GuardedForceDeleteResult,
 } from "@/features/lab-equipment/shared";
-import { message } from "antd";
+import { parseFormApiError } from "@/features/lab-equipment/shared/utils/formApiError";
+import { getApiErrorMessage, notify } from "@/shared/notifications";
 import { useAppDispatch } from "@/app/store";
 import { generatedApi, useLabsStationsSlotsCreateByStationIdMutation } from "@/shared/api/generated/api";
-import { parseFormApiError } from "@/features/lab-equipment/shared/utils/formApiError";
 import type { IStationPayload } from "../types";
 
 const toCount = (value: unknown): number | null => {
@@ -24,10 +24,8 @@ const toCount = (value: unknown): number | null => {
   return Number.isInteger(n) && n >= 0 ? n : null;
 };
 
-const errorText = (err: unknown): string => {
-  const parsed = parseFormApiError(err);
-  return parsed?.message || parsed?.nonFieldErrors[0] || Object.values(parsed?.fieldErrors ?? {})[0]?.[0] || "unknown error";
-};
+const errorText = (err: unknown): string =>
+  getApiErrorMessage(err, "The bench slots could not be created.");
 
 export function useStationForm() {
   const [createStation, { isLoading: creating }] = useCreateStationMutation();
@@ -65,7 +63,9 @@ export function useStationForm() {
         await createSlot({ stationId, stationSlotCreate: { position_index: position, slot_code: code } }).unwrap();
       }
     } catch (err) {
-      message.warning(`Station saved, but its bench slots were not created: ${errorText(err)}.`);
+      notify.warning("Station saved, but bench slots were not created", {
+        description: errorText(err),
+      });
     }
   };
 
@@ -93,7 +93,7 @@ export function useStationForm() {
       if (result?.released?.equipment) {
         parts.push(`cleared ${result.released.equipment} resting equipment placement${result.released.equipment === 1 ? "" : "s"}`);
       }
-      message.success(
+      notify.success(
         parts.length > 0 ? `Force-deleted ${label} (${parts.join(", ")}).` : `Force-deleted ${label}.`,
       );
       return { ok: true };

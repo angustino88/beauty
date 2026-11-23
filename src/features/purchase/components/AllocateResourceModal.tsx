@@ -8,9 +8,9 @@ import {
   Radio,
   Segmented,
   Typography,
-  message,
 } from 'antd';
 import { usePagedOptions } from '@/shared/hooks/usePagedOptions';
+import { getApiErrorMessage, notify } from '@/shared/notifications';
 import type { IAllocateResourcePayload, ResourceKind } from '../types';
 import { useCreatePurchaseItemResourceMutation } from '../api';
 import {
@@ -80,18 +80,16 @@ export const AllocateResourceModal: React.FC<AllocateResourceModalProps> = ({
       };
 
       await allocateResource({ purchaseItemId, body: payload }).unwrap();
-      void message.success(
-        `Successfully allocated ${values.resource_kind} #${values.resource_id} to purchase line item`,
-      );
+      notify.success('Resource allocated', {
+        description: `Linked ${values.resource_kind} #${values.resource_id} to this line item.`,
+      });
       form.resetFields();
       onClose();
       onSuccess?.();
     } catch (err) {
-      const errorDetail =
-        err && typeof err === 'object' && 'data' in err
-          ? JSON.stringify((err as { data: unknown }).data)
-          : 'Failed to allocate resource';
-      void message.error(errorDetail);
+      notify.error('Unable to allocate resource', {
+        description: getApiErrorMessage(err, 'Please review the selection and try again.'),
+      });
     }
   };
 
