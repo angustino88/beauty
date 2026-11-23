@@ -198,3 +198,91 @@ export function mapBenchMappingList(raw: unknown): ResourceMappingListResponse {
     ) as unknown as MappingSummary,
   };
 }
+
+export interface RoomAssignedStationItem {
+  id: number;
+  sku: string;
+  name: string;
+  slotCode: string | null;
+  benchCount: number;
+  equipmentCount: number;
+}
+
+/**
+ * Extract all stations assigned to a room from `GET /api/labs/rooms/{id}/mapping`,
+ * enriched with their room slot code, hosted bench count, and assigned equipment count.
+ */
+export function mapRoomMappingStations(rawData: unknown, roomId?: number): RoomAssignedStationItem[] {
+  const envelope = asRecord(rawData);
+  const data = asRecord(envelope.data ?? envelope);
+
+  const slotCodeById = new Map<number, string>();
+  for (const s of asList(data.room_slots)) {
+    const id = asNumber(s.id);
+    const code = asString(s.slot_code);
+    if (id && code) slotCodeById.set(id, code);
+  }
+
+  const stationIdBySlotId = new Map<number, number>();
+  for (const ss of asList(data.station_slots)) {
+    const id = asNumber(ss.id);
+    const stId = asNumber(ss.station_id);
+    if (id && stId) stationIdBySlotId.set(id, stId);
+  }
+
+  const equipmentCountByBenchId = new Map<number, number>();
+  for (const eq of asList(data.equipment)) {
+    const benchId = asNullableNumber(eq.bench_id);
+    if (benchId == null) continue;
+    equipmentCountByBenchId.set(benchId, (equipmentCountByBenchId.get(benchId) ?? 0) + 1);
+  }
+
+  const benchCountByStationId = new Map<number, number>();
+  const equipmentCountByStationId = new Map<number, number>();
+  for (const b of asList(data.benches)) {
+    const benchId = asNumber(b.id);
+    if (!benchId) continue;
+    const stationSlotId = asNullableNumber(b.station_slot_id);
+    const stationId =
+      (stationSlotId ? stationIdBySlotId.get(stationSlotId) : undefined) ??
+      asNullableNumber(b.setup_location_id);
+    if (stationId == null) continue;
+    benchCountByStationId.set(stationId, (benchCountByStationId.get(stationId) ?? 0) + 1);
+    equipmentCountByStationId.set(
+      stationId,
+      (equipmentCountByStationId.get(stationId) ?? 0) + (equipmentCountByBenchId.get(benchId) ?? 0),
+    );
+  }
+
+  return asList(data.stations)
+    .filter((st) => {
+      const id = asNumber(st.id);
+      if (!id) return false;
+      if (roomId != null) {
+        const stRoomId = asNullableNumber(st.room_id);
+        if (stRoomId != null && stRoomId !== roomId) return false;
+      }
+      return true;
+    })
+    .map((st): RoomAssignedStationItem => {
+      const id = asNumber(st.id);
+      const slotId = asNullableNumber(st.slot_id);
+      return {
+        id,
+        sku: asString(st.sku),
+        name: asString(st.name),
+        slotCode: slotId ? slotCodeById.get(slotId) ?? null : null,
+        benchCount: benchCountByStationId.get(id) ?? 0,
+        equipmentCount: equipmentCountByStationId.get(id) ?? 0,
+      };
+    })
+    .sort((a, b) => {
+      if (a.slotCode && !b.slotCode) return -1;
+      if (!a.slotCode && b.slotCode) return 1;
+      if (a.slotCode && b.slotCode && a.slotCode !== b.slotCode) {
+        return a.slotCode.localeCompare(b.slotCode, undefined, { numeric: true });
+      }
+      return (a.sku || a.name).localeCompare(b.sku || b.name, undefined, { numeric: true });
+    });
+}
+

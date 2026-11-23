@@ -4,7 +4,7 @@ import { PersonIcon } from '@/components/display/PersonIcon';
  * Eliminates duplication of audit, image, status, info, and action columns.
  */
 /* eslint-disable react-refresh/only-export-components */
-import { Button, Dropdown, Image, Popconfirm, Popover, Space, Tag, Tooltip, Upload } from 'antd';
+import { Button, Dropdown, Image, Popover, Space, Tag, Tooltip, Upload } from 'antd';
 import type { MenuProps } from 'antd';
 import { CheckCircleOutlined, CloseCircleOutlined, DeleteOutlined, EditOutlined, HistoryOutlined, LoadingOutlined, MoreOutlined, PlusOutlined, PrinterOutlined } from '@ant-design/icons';
 import { useState, type ReactNode } from 'react';
@@ -224,10 +224,9 @@ export function createActionsRenderer<TRecord extends { id: number }>(options: {
   canManageLabOperations: boolean;
   deleting: boolean;
   onEdit: (id: number) => void;
-  onDelete: (id: number) => void;
+  onDelete: (id: number, record: TRecord) => void;
   onHistory?: (id: number, record?: TRecord) => void;
   onPrint?: (record: TRecord) => void;
-  deleteConfirmText?: string;
   extraMenuItems?: (record: TRecord) => Array<{ key: string; label: string; onClick: () => void }>;
 }) {
   return (_: unknown, record: TRecord) => {
@@ -269,25 +268,19 @@ export function createActionsRenderer<TRecord extends { id: number }>(options: {
           />
         </Tooltip>
         {options.canManageLabOperations && (
-          <Popconfirm
-            title={options.deleteConfirmText ?? `Delete ${label}?`}
-            description="This cannot be undone."
-            okText="Delete"
-            okButtonProps={{ danger: true }}
-            placement="topRight"
-            onConfirm={() => options.onDelete(record.id)}
-          >
-            <Tooltip title={`Delete ${label}`}>
-              <Button
-                aria-label={`Delete ${label}`}
-                size="small"
-                icon={<DeleteOutlined />}
-                danger
-                loading={options.deleting}
-                onClick={(event) => event.stopPropagation()}
-              />
-            </Tooltip>
-          </Popconfirm>
+          <Tooltip title={`Delete ${label}`}>
+            <Button
+              aria-label={`Delete ${label}`}
+              size="small"
+              icon={<DeleteOutlined />}
+              danger
+              loading={options.deleting}
+              onClick={(event) => {
+                event.stopPropagation();
+                options.onDelete(record.id, record);
+              }}
+            />
+          </Tooltip>
         )}
         <Dropdown
           placement="bottomRight"

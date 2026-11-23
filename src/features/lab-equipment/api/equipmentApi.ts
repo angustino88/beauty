@@ -226,6 +226,38 @@ export const equipmentApi = baseApi.injectEndpoints({
       invalidatesTags: ['Equipment'],
     }),
 
+    // POST /api/labs/equipment/{id}/actions/force-delete
+    forceDeleteEquipment: build.mutation<
+      {
+        id: number;
+        released: {
+          bench_assignments: number;
+          loans: number;
+          license_assignments: number;
+          bookings: number;
+        };
+      },
+      { category: string; id: number; reason: string; confirm: true }
+    >({
+      query: ({ id, reason, confirm }) => ({
+        url: `/api/labs/equipment/${id}/actions/force-delete`,
+        method: 'POST',
+        body: { reason, confirm },
+      }),
+      transformResponse: (response: {
+        data: {
+          id: number;
+          released: {
+            bench_assignments: number;
+            loans: number;
+            license_assignments: number;
+            bookings: number;
+          };
+        };
+      }) => response.data,
+      invalidatesTags: ['Equipment'],
+    }),
+
     changeEquipmentCondition: build.mutation<EquipmentItem, { category: string; id: number; body: EquipmentChangeCondition }>({
       query: ({ id, body }) => ({
         url: `/api/labs/equipment/${id}/actions/change-condition`,
@@ -277,6 +309,7 @@ export const {
   useCreateEquipmentMutation,
   useUpdateEquipmentMutation,
   useDeleteEquipmentMutation,
+  useForceDeleteEquipmentMutation,
   useChangeEquipmentConditionMutation,
   useChangeEquipmentLifecycleMutation,
   useUpdateEquipmentImageMutation,

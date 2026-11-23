@@ -1,6 +1,7 @@
 import {
   useCreateStationMutation,
   useDeleteStationMutation,
+  useForceDeleteStationMutation,
   useUpdateStationMutation,
   useUpdateStationImageMutation,
   useDeleteStationImageMutation,
@@ -9,6 +10,7 @@ import {
   notifyEquipmentCreated,
   notifyEquipmentError,
   useEquipmentCrudActions,
+  type GuardedForceDeleteResult,
 } from "@/features/lab-equipment/shared";
 import { message } from "antd";
 import { useAppDispatch } from "@/app/store";
@@ -31,6 +33,7 @@ export function useStationForm() {
   const [createStation, { isLoading: creating }] = useCreateStationMutation();
   const [updateStation, { isLoading: updating }] = useUpdateStationMutation();
   const [deleteStation, { isLoading: deleting }] = useDeleteStationMutation();
+  const [forceDeleteStation, { isLoading: forceDeleting }] = useForceDeleteStationMutation();
   const [updateStationImage] = useUpdateStationImageMutation();
   const [deleteStationImage] = useDeleteStationImageMutation();
   const [createSlot] = useLabsStationsSlotsCreateByStationIdMutation();
@@ -75,6 +78,36 @@ export function useStationForm() {
     labels: { entityName: "Station", entityNameLower: "station", errorPrefix: "station" },
   });
 
+  const forceDeleteById = async (
+    id: number,
+    reason: string,
+    item?: { sku?: string | null; name?: string | null },
+  ): Promise<GuardedForceDeleteResult> => {
+    try {
+      const result = await forceDeleteStation({ id, reason, confirm: true }).unwrap();
+      const label = item?.sku || item?.name || `Station #${id}`;
+      const parts: string[] = [];
+      if (result?.released?.benches) {
+        parts.push(`detached ${result.released.benches} bench${result.released.benches === 1 ? "" : "es"}`);
+      }
+      if (result?.released?.equipment) {
+        parts.push(`cleared ${result.released.equipment} resting equipment placement${result.released.equipment === 1 ? "" : "s"}`);
+      }
+      message.success(
+        parts.length > 0 ? `Force-deleted ${label} (${parts.join(", ")}).` : `Force-deleted ${label}.`,
+      );
+      return { ok: true };
+    } catch (err) {
+      const parsed = parseFormApiError(err);
+      const errMsg =
+        parsed?.message ||
+        parsed?.nonFieldErrors[0] ||
+        Object.values(parsed?.fieldErrors ?? {})[0]?.[0] ||
+        "Failed to force-delete station.";
+      return { ok: false, error: errMsg };
+    }
+  };
+
   const createFromValues = async (values: Record<string, unknown>, imageFile?: File | null) => {
     const payload: IStationPayload = {
       sku: typeof values.sku === "string" ? values.sku : undefined,
@@ -106,9 +139,11 @@ export function useStationForm() {
   return {
     createFromValues,
     syncSlots,
+    forceDeleteById,
     ...actions,
     creating,
     updating,
     deleting,
+    forceDeleting,
   };
 }
