@@ -860,10 +860,7 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
         rows={rows}
         totalRecords={rows.length}
         clientPagination
-        extraControls={<>
-          <WorkbookImportButton />
-          {(listData?.meta?.pagination?.count ?? rows.length) > rows.length ? <Tag color="warning">Showing {rows.length} of {listData?.meta?.pagination?.count} records returned by this request. Additional pages are unavailable until the backend's paging parameters are confirmed.</Tag> : null}
-        </>}
+        extraControls={<WorkbookImportButton />}
         loading={isListLoading || isListFetching}
         onRefetch={refetchList}
         page={page}
