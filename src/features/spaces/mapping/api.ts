@@ -102,6 +102,9 @@ export const mappingApi = baseApi.injectEndpoints({
         ...generateItemTag(TAG, benchId),
         ...invalidateList(TAG),
         { type: "Bench", id: benchId },
+        { type: "Bench", id: "LIST" },
+        { type: "Station", id: "SLOTS" },
+        { type: "Station", id: "LIST" },
       ],
     }),
 

@@ -30,6 +30,7 @@ export interface SelectOptionLeaf {
     label: React.ReactNode;
     value: string | number;
     title?: string;
+    disabled?: boolean;
     /** Resource options (toResourceOption): short text for the closed select, and the text search matches. */
     selectedLabel?: string;
     searchText?: string;

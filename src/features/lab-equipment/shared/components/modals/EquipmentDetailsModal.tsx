@@ -110,7 +110,7 @@ const SUMMARY_GROUPS_BY_TYPE: Record<string, SummaryGroup[]> = {
     { title: 'Record details', fields: ['label', 'remark'] },
   ],
   bench: [
-    { title: 'Placement', fields: ['room', 'station', 'location_name', 'station_slot_id'] },
+    { title: 'Placement', fields: ['room', 'station', 'location_name', 'station_slot_name'] },
     { title: 'Bench configuration', fields: ['bench_group', 'bench_type', 'equipment_count', 'is_favorite'] },
     { title: 'Record details', fields: ['primary_owner', 'remark'] },
   ],
@@ -178,6 +178,7 @@ const FIELD_LABELS: Record<string, string> = {
   power_capacity_w: 'Power capacity (W)',
   power_reserved_w: 'Reserved power (W)',
   network_port_count: 'Network ports',
+  station_slot_name: 'Station slot',
   station_slot_id: 'Station slot ID',
   equipment_count: 'Assigned equipment',
   bench_group: 'Bench group',

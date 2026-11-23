@@ -2,37 +2,28 @@ import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { Link } from 'react-router-dom';
 import type { ColumnsType } from 'antd/es/table';
-import { Tag, Tooltip, Typography } from 'antd';
-import { TagCell } from '@/components/display/TagCell';
+import { Tooltip } from 'antd';
 import type { SupportTicket, SupportUserRef } from '../types';
+import { getTicketStatusMeta, getTicketTypeMeta } from '../ticketPresentation';
+import {
+  TicketPriorityBadge,
+  TicketSlaBadge,
+  TicketStatusBadge,
+  TicketUserChip,
+} from './TicketBadges';
+import styles from './SupportTickets.module.css';
 
 const DATETIME_FORMAT = 'YYYY-MM-DD HH:mm:ss';
+const SHORT_DATE_FORMAT = 'MMM D, YYYY';
 dayjs.extend(relativeTime);
 
 const isObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
 
-const readName = (value: unknown, fallback = ''): string => {
+const readUserObject = (value: unknown): SupportUserRef | string | null => {
   if (typeof value === 'string') return value;
-  if (isObject(value) && typeof value.name === 'string') return value.name;
-  return fallback;
-};
-
-const readUserObject = (value: unknown): SupportUserRef | null => {
   if (!isObject(value)) return null;
   return value as SupportUserRef;
-};
-
-const formatDate = (value: string | null | undefined): string =>
-  value && dayjs(value).isValid() ? dayjs(value).format(DATETIME_FORMAT) : '–';
-
-const labelColor = (value: string): string => {
-  const state = value.toLowerCase();
-  if (state.includes('resolv') || state.includes('closed') || state.includes('done')) return 'green';
-  if (state.includes('progress') || state.includes('investig')) return 'blue';
-  if (state.includes('hold') || state.includes('pending')) return 'orange';
-  if (state.includes('cancel')) return 'default';
-  return 'gold';
 };
 
 export function buildLabSupportColumns(): ColumnsType<SupportTicket> {
@@ -42,89 +33,184 @@ export function buildLabSupportColumns(): ColumnsType<SupportTicket> {
       dataIndex: 'key',
       key: 'key',
       align: 'left',
-      minWidth: 120,
-      render: (value: string, record) => value || record.key
-        ? <Link to={`/support-tickets/${encodeURIComponent(value || record.key)}`}>{value || record.key}</Link>
-        : '–',
+      width: 130,
+      render: (value: string, record) => {
+        const ticketKey = value || record.key;
+        if (!ticketKey) return '–';
+        return (
+          <Link
+            className={styles.keyLink}
+            to={`/support-tickets/${encodeURIComponent(ticketKey)}`}
+          >
+            {ticketKey}
+          </Link>
+        );
+      },
     },
     {
       title: 'Subject',
       key: 'summary',
       align: 'left',
-      minWidth: 260,
-      render: (_, record) => (
-        <div style={{ minWidth: 220 }}>
-          <div style={{ fontWeight: 600, color: 'var(--lm-text)' }}>{record.subject ?? record.summary ?? record.fields?.summary ?? 'Untitled ticket'}</div>
-          {record.key && <Typography.Text type="secondary">{record.key}</Typography.Text>}
-        </div>
-      ),
-    },
-    {
-      title: 'Category',
-      key: 'category',
-      align: 'left',
-      minWidth: 120,
-      render: (_, record) => record.category?.name ?? '–',
-    },
-    {
-      title: 'Priority',
-      key: 'priority',
-      align: 'left',
-      minWidth: 110,
+      minWidth: 280,
       render: (_, record) => {
-        const p = record.priority ?? record.fields?.priority;
-        const name = readName(p, typeof p === 'string' ? p : p?.name ?? '–');
-        return <Tag color={name.toLowerCase().includes('high') || name.toLowerCase().includes('critical') ? 'red' : name.toLowerCase().includes('low') ? 'default' : 'blue'}>{name}</Tag>;
+        const ticketKey = record.key;
+        const subjectText =
+          record.subject ?? record.summary ?? record.fields?.summary ?? 'Untitled ticket';
+        const typeMeta = record.ticket_type ? getTicketTypeMeta(record.ticket_type) : null;
+        const labels = record.labels ?? [];
+
+        return (
+          <div className={styles.subjectCell}>
+            {ticketKey ? (
+              <Link
+                className={styles.subjectLink}
+                to={`/support-tickets/${encodeURIComponent(ticketKey)}`}
+              >
+                {subjectText}
+              </Link>
+            ) : (
+              <span className={styles.subjectLink}>{subjectText}</span>
+            )}
+            <div className={styles.subjectMeta}>
+              {typeMeta && <span>{typeMeta.label}</span>}
+              {record.team?.name && <span>· Team: {record.team.name}</span>}
+              <TicketSlaBadge sla={record.sla} status={record.status ?? record.fields?.status} />
+              {labels.slice(0, 3).map((label) => (
+                <span key={label} className={styles.labelPill}>
+                  {label}
+                </span>
+              ))}
+              {labels.length > 3 && (
+                <span className={styles.labelPill}>+{labels.length - 3}</span>
+              )}
+            </div>
+          </div>
+        );
       },
     },
     {
       title: 'Status',
       key: 'status',
       align: 'left',
-      minWidth: 110,
+      width: 155,
       render: (_, record) => {
         const s = record.status ?? record.fields?.status;
-        const name = readName(s, typeof s === 'string' ? s : s?.name ?? '–');
-        return <Tag color={labelColor(name)}>{name}</Tag>;
+        const systemState =
+          isObject(s) && 'system_state' in s && typeof s.system_state === 'string'
+            ? s.system_state
+            : undefined;
+        return <TicketStatusBadge status={s} systemState={systemState} />;
       },
+    },
+    {
+      title: 'Priority',
+      key: 'priority',
+      align: 'left',
+      width: 130,
+      render: (_, record) => {
+        const p = record.priority ?? record.fields?.priority;
+        return <TicketPriorityBadge priority={p} />;
+      },
+    },
+    {
+      title: 'Category',
+      key: 'category',
+      align: 'left',
+      width: 145,
+      render: (_, record) =>
+        record.category?.name ? (
+          <span className={styles.categoryChip}>{record.category.name}</span>
+        ) : (
+          '–'
+        ),
     },
     {
       title: 'Requester',
       key: 'reporter',
       align: 'left',
-      minWidth: 140,
+      width: 165,
       render: (_, record) => {
-        const user = readUserObject(record.requester ?? record.reporter ?? record.fields?.reporter);
-        if (!user) return typeof record.reporter === 'string' ? record.reporter : '–';
-        return <TagCell item={user} displayKey="username" tooltipKey="displayName" />;
+        const user = readUserObject(
+          record.requester ?? record.reporter ?? record.fields?.reporter,
+        );
+        return <TicketUserChip user={user} emptyLabel="–" />;
       },
     },
     {
       title: 'Assignee',
       key: 'assignee',
       align: 'left',
-      minWidth: 140,
+      width: 165,
       render: (_, record) => {
         const user = readUserObject(record.assignee ?? record.fields?.assignee);
-        if (!user) return typeof record.assignee === 'string' ? record.assignee : '–';
-        return <TagCell item={user} displayKey="username" tooltipKey="displayName" />;
+        return <TicketUserChip user={user} emptyLabel="Unassigned" />;
       },
     },
     {
-      title: 'Created Date',
-      key: 'created',
+      title: 'Due Date',
+      key: 'due_date',
       align: 'left',
-      minWidth: 160,
-      render: (_, record) => formatDate(record.created_at ?? record.created ?? record.fields?.created),
+      width: 135,
+      render: (_, record) => {
+        const dueDate = record.due_date ?? record.duedate ?? record.fields?.duedate;
+        if (!dueDate || !dayjs(dueDate).isValid()) return '–';
+        const parsed = dayjs(dueDate);
+        const statusMeta = getTicketStatusMeta(record.status ?? record.fields?.status);
+        const today = dayjs().startOf('day');
+        const isOverdue = !statusMeta.isTerminal && parsed.isBefore(today, 'day');
+        const isDueSoon = !statusMeta.isTerminal && !isOverdue && parsed.diff(today, 'day') <= 2;
+        const formatted = parsed.format(SHORT_DATE_FORMAT);
+        const isoDate = parsed.format('YYYY-MM-DD');
+
+        if (isOverdue) {
+          return (
+            <Tooltip title={`Overdue · ${isoDate}`}>
+              <span className={styles.dueOverdue}>{formatted}</span>
+            </Tooltip>
+          );
+        }
+        if (isDueSoon) {
+          return (
+            <Tooltip title={`Due soon · ${isoDate}`}>
+              <span className={styles.dueSoon}>{formatted}</span>
+            </Tooltip>
+          );
+        }
+        return (
+          <Tooltip title={isoDate}>
+            <span>{formatted}</span>
+          </Tooltip>
+        );
+      },
     },
     {
-      title: 'Updated Date',
+      title: 'Created',
+      key: 'created',
+      align: 'left',
+      width: 140,
+      render: (_, record) => {
+        const created = record.created_at ?? record.created ?? record.fields?.created;
+        if (!created || !dayjs(created).isValid()) return '–';
+        return (
+          <Tooltip title={dayjs(created).format(DATETIME_FORMAT)}>
+            <span>{dayjs(created).format(SHORT_DATE_FORMAT)}</span>
+          </Tooltip>
+        );
+      },
+    },
+    {
+      title: 'Updated',
       key: 'updated',
       align: 'left',
-      minWidth: 160,
+      width: 140,
       render: (_, record) => {
         const updatedAt = record.last_activity_at ?? record.updated_at;
-        return updatedAt ? <Tooltip title={dayjs(updatedAt).isValid() ? dayjs(updatedAt).format(DATETIME_FORMAT) : 'Unknown date'}>{dayjs(updatedAt).isValid() ? dayjs(updatedAt).fromNow() : '–'}</Tooltip> : '–';
+        if (!updatedAt || !dayjs(updatedAt).isValid()) return '–';
+        return (
+          <Tooltip title={dayjs(updatedAt).format(DATETIME_FORMAT)}>
+            <span>{dayjs(updatedAt).fromNow()}</span>
+          </Tooltip>
+        );
       },
     },
   ];

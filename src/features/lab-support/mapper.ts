@@ -57,6 +57,25 @@ export function mapSupportTicket(rawItem: unknown): SupportTicket {
       }
     : null;
 
+  const teamRec = asRecord(item.team);
+  const team = teamRec.id != null ? { id: asNumber(teamRec.id), name: asString(teamRec.name) } : null;
+
+  const typeRec = asRecord(item.ticket_type);
+  const ticketType =
+    typeRec.value != null
+      ? { value: asString(typeRec.value), label: asString(typeRec.label || typeRec.value) }
+      : typeof item.ticket_type === 'string'
+        ? item.ticket_type
+        : null;
+
+  const sourceRec = asRecord(item.source);
+  const source =
+    sourceRec.value != null
+      ? { value: asString(sourceRec.value), label: asString(sourceRec.label || sourceRec.value) }
+      : typeof item.source === 'string'
+        ? item.source
+        : null;
+
   const key = asString(item.key || item.id);
   const subject = asString(item.subject || item.summary || fields.summary);
   const createdAt = asString(item.created_at || item.created || fields.created);
@@ -70,12 +89,17 @@ export function mapSupportTicket(rawItem: unknown): SupportTicket {
     number: item.number != null ? asNumber(item.number) : undefined,
     subject,
     summary: subject,
+    ticket_type: ticketType,
+    source,
+    impact: asString(item.impact) || null,
+    urgency: asString(item.urgency) || null,
     category,
     priority,
     status,
     requester,
     reporter: requester,
     assignee,
+    team,
     created_at: createdAt,
     created: createdAt,
     updated_at: updatedAt,
@@ -86,6 +110,7 @@ export function mapSupportTicket(rawItem: unknown): SupportTicket {
     description: asString(item.description),
     labels: Array.isArray(item.labels) ? item.labels.filter((label): label is string => typeof label === 'string') : [],
     sla: Object.keys(asRecord(item.sla)).length > 0 ? asRecord(item.sla) : undefined,
+    version: item.version != null ? asNumber(item.version, 1) : undefined,
     duedate: duedate || null,
     resolutiondate: resolutiondate || null,
     fields: {

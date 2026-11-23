@@ -24,6 +24,7 @@ export interface ResourceSelectOption {
   title: string;
   selectedLabel: string;
   searchText: string;
+  disabled?: boolean;
 }
 
 interface ResourceOptionLabelProps {
@@ -55,7 +56,11 @@ export const resourceText = (sku?: string | null, name?: string | null): string 
 
 export function toResourceOption(
   item: ResourceOptionSource,
-  extra: Pick<ResourceOptionLabelProps, 'aside' | 'detail'> & { title?: string; selectedLabel?: string } = {},
+  extra: Pick<ResourceOptionLabelProps, 'aside' | 'detail'> & {
+    title?: string;
+    selectedLabel?: string;
+    disabled?: boolean;
+  } = {},
 ): ResourceSelectOption {
   const text = resourceText(item.sku, item.name) || String(item.id);
   return {
@@ -64,6 +69,7 @@ export function toResourceOption(
     title: extra.title ?? text,
     selectedLabel: extra.selectedLabel ?? text,
     searchText: [item.sku, item.name, ...(item.keywords ?? [])].filter(Boolean).join(' ').toLowerCase(),
+    ...(extra.disabled ? { disabled: true } : {}),
   };
 }
 
