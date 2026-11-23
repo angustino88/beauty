@@ -10,8 +10,6 @@ interface TooltipButtonProps extends ButtonProps {
   disabledReason?: string;
   responsive?: boolean;
   placement?: TooltipProps['placement'];
-  /** @deprecated use styles.body — kept as prop name for call-site readability */
-  overlayInnerStyle?: React.CSSProperties;
 }
 
 export function TooltipButton({
@@ -19,7 +17,6 @@ export function TooltipButton({
   disabledReason,
   responsive,
   placement,
-  overlayInnerStyle,
   children,
   ...props
 }: TooltipButtonProps) {
@@ -33,7 +30,6 @@ export function TooltipButton({
       placement={placement ?? 'top'}
       title={title}
       mouseEnterDelay={0.3}
-      styles={overlayInnerStyle ? { container: overlayInnerStyle } : undefined}
     >
       <Button aria-label={content ? undefined : tooltip} {...props}>{content}</Button>
     </Tooltip>

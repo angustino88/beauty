@@ -77,9 +77,6 @@ export interface IStation extends LocationState {
   slots?: IStationSlot[];
 }
 
-/** Legacy alias for interactive dashboard compatibility */
-export type IRack = IStation;
-
 export interface IStationListResponse {
   total_count: number;
   data: IStation[];

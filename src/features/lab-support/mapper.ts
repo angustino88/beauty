@@ -165,6 +165,3 @@ export function mapSupportTicketsResponse(rawResponse: unknown): SupportTicketLi
     base_url: asString(envelope.base_url),
   };
 }
-
-/** Legacy alias */
-export const mapJiraIssuesResponse = mapSupportTicketsResponse;

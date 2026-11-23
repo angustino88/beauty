@@ -15,22 +15,18 @@ test('a bench type is loaded from the API and can be set or cleared without rese
   assert.equal(changedReference(undefined, bench.bench_type?.id), null);
 });
 
-test('bench requirements round trip while legacy inspection dates are read-only', () => {
+test('bench requirements round trip zero and JSON objects', () => {
   const bench = mapBenchApiItem({
     requested_power_w: 0,
     required_utilities: { network: true },
-    last_inspected_at: '2026-11-23T22:30:00+07:00',
     commissioning_date: '2026-11-23',
   });
   const existing = { ...bench };
-  assert.equal(Reflect.get(bench, 'last_inspected_at'), '2026-11-23T22:30:00+07:00');
-  assert.ok(!editableDetails(BENCH_DETAILS).some(({ name }) => name === 'last_inspected_at' || name === 'next_inspection_due_at'));
   assert.deepEqual(detailPayload(BENCH_DETAILS, existing, existing), {});
   assert.deepEqual(detailPayload(BENCH_DETAILS, {
     ...existing,
     requested_power_w: null,
     required_utilities: undefined,
-    last_inspected_at: null,
   }, existing), { requested_power_w: null, required_utilities: {} });
   assert.deepEqual(detailPayload(BENCH_DETAILS, { requested_power_w: 0 }), { requested_power_w: 0 });
 });

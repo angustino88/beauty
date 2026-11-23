@@ -180,9 +180,6 @@ export function mapDashboardBench(
   };
 }
 
-/** Legacy alias */
-export const mapDashboardItem = mapDashboardBench;
-
 // ─── Map Dashboard List Response ──────────────────────────────────────────────
 
 export function mapDashboardListResponse(
@@ -305,16 +302,6 @@ export function mapBenchGroupsResponse(
     };
   });
 }
-
-/** Legacy alias */
-export const mapDashboardLabGroups = (dto: unknown) => {
-  const groups = mapBenchGroupsResponse(dto as LabsBenchGroupsRetrieveApiResponse);
-  return groups.map((g) => ({
-    id: g.id,
-    name: g.name,
-    lab_group_name: g.name,
-  }));
-};
 
 // ─── Map Bench Detail ─────────────────────────────────────────────────────────
 
@@ -598,10 +585,6 @@ export function mapBenchDetailResponse(
     },
   };
 }
-
-/** Legacy alias */
-export const mapLabDetailResponse = (dto: unknown) =>
-  mapBenchDetailResponse(dto as LabsDashboardBenchesRetrieveByBenchIdApiResponse);
 
 // ─── Map Favorite Response ────────────────────────────────────────────────────
 

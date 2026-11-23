@@ -124,9 +124,6 @@ export interface DashboardBench {
   remote_user?: RemoteUser | null;
 }
 
-/** Legacy alias for DashboardBench */
-export type LabDashboardItem = DashboardBench;
-
 // ─── Filter Options ───────────────────────────────────────────────────────────
 
 export interface BenchFilterOptions {

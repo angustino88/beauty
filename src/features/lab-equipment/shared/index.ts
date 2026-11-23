@@ -37,19 +37,6 @@ export { useEquipmentCrudActions } from "./hooks/useEquipmentCrudActions";
 export { useInlineEquipmentEdit } from "./hooks/useInlineEquipmentEdit";
 export { useEquipmentTableState } from "./hooks/useEquipmentTableState";
 export { useServerEquipmentFilter } from "./hooks/useServerEquipmentFilter";
-export {
-  toId,
-  toIdArray,
-  remapPayloadKeys,
-  createMappedCrudQueries,
-  POWER_SUPPLY_PAYLOAD_KEY_MAP,
-  ACCESSORY_PAYLOAD_KEY_MAP,
-  MONITOR_PAYLOAD_KEY_MAP,
-  NETWORK_INTERFACE_PAYLOAD_KEY_MAP,
-  DEBUG_HARDWARE_PAYLOAD_KEY_MAP,
-  LICENSE_PAYLOAD_KEY_MAP,
-  createLicenseMappedCrudQueries,
-} from "./hooks/useEquipmentPayloadMapper";
 export { useGetEquipmentSummaryQuery } from "./components/cards/EquipmentSummary";
 export type {
   FieldConfig,

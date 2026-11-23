@@ -46,15 +46,10 @@ export interface IBench extends ResourceState {
   lab_audit?: ILabAudit | null;
 }
 
-/** Legacy alias for compatibility during migration */
-export type ILabInfo = IBench;
-
 export interface IBenchListResponse {
   total_count: number;
   data: IBench[];
 }
-
-export type ILabInfoListResponse = IBenchListResponse;
 
 export interface IBenchParams {
   page?: number;
@@ -73,8 +68,6 @@ export interface IBenchParams {
   favorite?: boolean;
 }
 
-export type ILabInfoParams = IBenchParams;
-
 export interface IBenchPayload extends Partial<Omit<BenchCreate, "remark">> {
   sku?: string;
   name?: string;
@@ -89,8 +82,6 @@ export interface IBenchPayload extends Partial<Omit<BenchCreate, "remark">> {
   station_slot_id?: number | null;
   remark?: string | null;
 }
-
-export type ILabInfoUpsertPayload = IBenchPayload;
 
 export interface IBenchGroup {
   id: number;

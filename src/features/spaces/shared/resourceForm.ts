@@ -14,8 +14,6 @@ export const BENCH_DETAILS = [
   { name: 'requested_cooling_w', label: 'Requested cooling (W)', type: 'number' },
   { name: 'required_utilities', label: 'Required utilities', type: 'json-object' },
   { name: 'commissioning_date', label: 'Commissioning date', type: 'date' },
-  { name: 'last_inspected_at', label: 'Last inspected (legacy)', type: 'datetime', readOnly: true },
-  { name: 'next_inspection_due_at', label: 'Next inspection due (legacy)', type: 'datetime', readOnly: true },
 ] satisfies DetailField<BenchCreate>[];
 
 export const ROOM_DETAILS = [

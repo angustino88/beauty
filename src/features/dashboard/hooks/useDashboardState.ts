@@ -8,7 +8,7 @@ import type { FilterValue, TableCurrentDataSource, TablePaginationConfig } from 
 import type {
   DashboardColumnFilters,
   DashboardPageParams,
-  LabDashboardItem,
+  DashboardBench,
   SummaryStatus,
 } from '../types';
 import { INITIAL_COLUMN_FILTERS, SUMMARY_STATUS_VALUES } from '../types';
@@ -36,7 +36,7 @@ export interface DashboardState {
     pagination: TablePaginationConfig,
     filters: Record<string, FilterValue | null>,
     sorter: unknown,
-    extra: TableCurrentDataSource<LabDashboardItem>,
+    extra: TableCurrentDataSource<DashboardBench>,
   ) => void;
   clearAllFilters: () => void;
   setSearch: (v: string) => void;
@@ -134,7 +134,7 @@ export function useDashboardState(): DashboardState {
       pagination: TablePaginationConfig,
       filters: Record<string, FilterValue | null>,
       _sorter: unknown,
-      extra: TableCurrentDataSource<LabDashboardItem>,
+      extra: TableCurrentDataSource<DashboardBench>,
     ) => {
       if (extra.action === 'paginate') {
         if (pagination.current) setPage(pagination.current);

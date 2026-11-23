@@ -2,7 +2,7 @@
  * useFilterDropdownGuard
  *
  * WHY THIS HOOK EXISTS:
- * LabDeviceTable uses a WebSocket to auto-refetch lab data when the server
+ * BenchTable uses a WebSocket to auto-refetch lab data when the server
  * pushes a `monitoring_dashboard` event. However, if the user has a column
  * filter dropdown open, we must NOT refetch — it would close the dropdown
  * mid-interaction and lose the user's pending filter selection.

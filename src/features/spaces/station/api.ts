@@ -289,11 +289,3 @@ export const {
   useGetStationDropdownQuery,
   useGetStationFiltersQuery,
 } = stationApi;
-
-/** Legacy alias for backwards compatibility during migration */
-export const useGetRacksQuery = useGetStationsQuery;
-export const useGetRackByIdQuery = useGetStationByIdQuery;
-export const useCreateRackMutation = useCreateStationMutation;
-export const useUpdateRackMutation = useUpdateStationMutation;
-export const useDeleteRackMutation = useDeleteStationMutation;
-export const usePlaceRackMutation = usePlaceStationMutation;

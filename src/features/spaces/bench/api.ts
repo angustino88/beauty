@@ -201,8 +201,3 @@ export const {
   useDeleteBenchImageMutation,
   useChangeBenchLifecycleMutation,
 } = benchApi;
-
-/** Legacy aliases for compatibility during migration */
-export const useGetLabInfoListQuery = useGetBenchesQuery;
-export const useGetLabInfoByIdQuery = useGetBenchByIdQuery;
-export const useGetLabGroupsQuery = useGetBenchGroupsQuery;
