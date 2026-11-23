@@ -13,6 +13,9 @@ import {
   type GuardedDeleteInitialMode,
 } from "@/features/lab-equipment/shared";
 import type { FieldConfig } from "@/features/lab-equipment/shared";
+import { BENCH_DETAILS, detailPayload } from "../../shared/resourceForm";
+import { changedReference, ownershipFormValues, ownershipPayload } from '../../../../shared/utils/resourceReferences.ts';
+import { referenceOptions, useOwnershipFields } from "@/features/lab-equipment/shared/hooks/useOwnershipFields";
 import type { IBench, IBenchPayload } from "../types";
 import SpaceOverview from "../../shared/SpaceOverview";
 import { useGetBenchGroupsQuery, useGetBenchFiltersQuery } from "../api";
@@ -35,6 +38,8 @@ export default function BenchPage() {
   const [deleteModal, setDeleteModal] = useState<{ item: IBench; mode: GuardedDeleteInitialMode } | null>(null);
   const [managingBench, setManagingBench] = useState<IBench | null>(null);
 
+  const ownership = useOwnershipFields(createModalOpen || editingBench !== null, editingBench);
+
   const { data: managingMappingRow, refetch: refetchManagingMapping } = useGetBenchMappingQuery(
     managingBench ? managingBench.id : skipToken,
   );
@@ -50,7 +55,7 @@ export default function BenchPage() {
 
   // The slot list follows the station chosen in whichever form is open.
   const [formStationId, setFormStationId] = useState<number | null>(null);
-  const { data: slotsData, isFetching: slotsLoading, isSuccess: slotsLoaded } = useLabsStationsSlotsRetrieveByStationIdQuery(
+  const { currentData: slotsData, isFetching: slotsLoading, isSuccess: slotsLoaded } = useLabsStationsSlotsRetrieveByStationIdQuery(
     formStationId == null ? skipToken : { stationId: formStationId, pageSize: 100 },
   );
   const slotOptions = useMemo(
@@ -67,16 +72,12 @@ export default function BenchPage() {
       : slotOptions.length === 0
         ? "All slots of this station are out of service."
         : undefined;
-  const handleFormValues = useCallback((values: Record<string, unknown>) => {
+  const handleFormValues = (values: Record<string, unknown>) => {
+    ownership.setDepartmentId(values.department_id);
     setFormStationId(values.setup_location_id == null || values.setup_location_id === '' ? null : Number(values.setup_location_id));
-  }, []);
+  };
 
-  const groupOptions = useMemo(() => {
-    return (benchGroups ?? []).map((g) => ({
-      label: g.name,
-      value: g.id,
-    }));
-  }, [benchGroups]);
+  const groupOptions = referenceOptions(benchGroups, editingBench?.bench_group);
 
   const facetFilters = useCallback((keys: string[], fallback?: Array<{ text: string; value: string }>) =>
     facetToAntdFilters(getFacetOptions(facets, ...keys))?.map(({ text, value }) => ({
@@ -95,15 +96,24 @@ export default function BenchPage() {
   const locationFilters = useMemo(() => facetFilters(['setup_location', 'setup_location_id', 'location', 'room'], stationFallback), [facetFilters, stationFallback]);
   const ownerFilters = useMemo(() => facetFilters(['owner', 'owner_id', 'primary_owner'], ownerFallback), [facetFilters, ownerFallback]);
 
-  const formFields: FieldConfig[] = useMemo(
-    () => [
+  const [benchTypeSearch, setBenchTypeSearch] = useState('');
+  const formBenchTypes = useLabsBenchTypesOptionsRetrieveQuery({
+    q: benchTypeSearch.trim() || undefined,
+    includeIds: editingBench?.bench_type ? [editingBench.bench_type.id] : undefined,
+  }, { skip: !createModalOpen && !editingBench });
+  const formFields: FieldConfig[] = [
       // The SKU identifies the bench and cannot change after creation (the API refuses a changed SKU).
       { name: "sku", label: "SKU", type: "text", required: true, disabledInEdit: true },
       { name: "name", label: "Name", type: "text", required: true },
-      { name: "bench_group_id", label: "Bench Group", type: "select", options: groupOptions },
+      { name: "type_id", apiField: "type", label: "Bench Type", type: "select", essential: true,
+        options: referenceOptions(formBenchTypes.currentData?.data, editingBench?.bench_type),
+        onSearch: setBenchTypeSearch, loading: formBenchTypes.isFetching },
+      { name: "bench_group_id", apiField: "bench_group", label: "Bench Group", type: "select", options: groupOptions },
+      ...ownership.fields,
       { name: "setup_location_id", label: "Station", type: "select", options: stationOptions },
       {
         name: "station_slot_id",
+        apiField: "station_slot",
         label: "Station Slot",
         type: "select",
         dependsOn: ["setup_location_id"],
@@ -114,10 +124,9 @@ export default function BenchPage() {
         help: slotsHint && !slotsLoading ? slotsHint : undefined,
       },
       { name: "remark", label: "Remark", type: "textarea" },
-      { name: "image", label: "Image", type: "image" as const },
-    ],
-    [groupOptions, stationOptions, slotOptions, formStationId, slotsLoading, slotsHint],
-  );
+      ...BENCH_DETAILS,
+      { name: "image", label: "Image", type: "image" },
+  ];
 
   const actionsRenderer = createActionsRenderer<IBench>({
     canManageLabOperations,
@@ -220,15 +229,20 @@ export default function BenchPage() {
         onValuesChange={handleFormValues}
         initialValues={editingBench ? {
           ...editingBench,
+          ...ownershipFormValues(editingBench),
           bench_group_id: editingBench.bench_group?.id,
+          type_id: editingBench.bench_type?.id,
           setup_location_id: editingBench.setup_location_id ?? editingBench.station?.id,
           station_slot_id: editingBench.station_slot_id,
         } : undefined}
         onSubmit={async (values, imageFile) => {
           if (!editingBench) return;
           const payload: IBenchPayload = {
+            ...ownershipPayload(values, editingBench),
+            ...detailPayload(BENCH_DETAILS, values, { ...editingBench }),
             name: String(values.name ?? ''),
-            bench_group_id: values.bench_group_id == null ? null : Number(values.bench_group_id),
+            bench_group_id: changedReference(values.bench_group_id, editingBench.bench_group?.id),
+            type_id: changedReference(values.type_id, editingBench.bench_type?.id),
             remark: values.remark == null ? (editingBench.remark ?? "") : String(values.remark),
           };
           const nextStation = values.setup_location_id == null ? null : Number(values.setup_location_id);

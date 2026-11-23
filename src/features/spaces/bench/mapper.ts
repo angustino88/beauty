@@ -1,4 +1,6 @@
 import type { IBench, IBenchListResponse } from "./types";
+import { BENCH_DETAILS, readDetails } from "../shared/resourceForm.ts";
+import { namedReference } from '../../../shared/utils/resourceReferences.ts';
 import { normalizeSpaceStatus } from "../shared/spaceStatus.ts";
 import {
   mapAvailability,
@@ -44,12 +46,14 @@ export function mapBenchApiItem(raw: unknown): IBench {
   const status = isRecord(b.status) ? b.status : null;
 
   return {
+    ...readDetails(BENCH_DETAILS, b),
     id: asNumber(b.id),
     uid: asNullableString(b.uid) ?? undefined,
     sku: asString(b.sku),
     name: asString(b.name || b.lab_name),
     bench_group: group ? { id: asNumber(group.id), name: asString(group.name || group.lab_group_name) } : null,
     bench_type: type ? { id: asNumber(type.id), name: asString(type.name) } : null,
+    group: namedReference(b.group),
     department: dept ? { id: asNumber(dept.id), name: asString(dept.name) } : null,
     primary_owner: toUserRef(owner),
     setup_location_id: station ? asNumber(station.id) : asNullableNumber(b.setup_location_id),
@@ -77,6 +81,9 @@ export function mapBenchApiItem(raw: unknown): IBench {
     remark: asNullableString(b.remark),
     image: asNullableString(b.image_url ?? b.image),
     location_name: asNullableString(b.location_name || b.location),
+    created_at: asNullableString(b.created_at),
+    updated_at: asNullableString(b.updated_at),
+    equipment_url: asNullableString(b.equipment_url),
   };
 }
 

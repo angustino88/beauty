@@ -92,7 +92,7 @@ const SUMMARY_GROUPS_BY_TYPE: Record<string, SummaryGroup[]> = {
     { title: 'Record details', fields: ['log_label', 'remark', 'details'] },  
   ],
   license: [
-    { title: 'License entitlement', fields: ['license_product', 'license_vendor', 'license_type', 'license_category', 'license_restriction', 'license_seats', 'maximum_version', 'license_ID', 'expiry_date', 'acquisition_price'] },
+    { title: 'License entitlement', fields: ['department', 'group', 'license_product', 'license_vendor', 'license_type', 'license_category', 'license_restriction', 'license_seats', 'maximum_version', 'license_ID', 'expiry_date', 'acquisition_price'] },
     { title: 'License assignment', fields: ['serial_number', 'carrier_device'] },
     { title: 'Record details', fields: ['log_label', 'remark', 'details'] },  
   ],

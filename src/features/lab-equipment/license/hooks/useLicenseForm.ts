@@ -76,6 +76,8 @@ export function useLicenseForm() {
       license_type: toNullableId(values.license_type),
       license_restriction: toNullableId(values.license_restriction),
       primary_owner: toNullableId(values.primary_owner),
+      department_id: toNullableId(values.department_id),
+      group_id: toNullableId(values.group_id),
     };
 
     try {

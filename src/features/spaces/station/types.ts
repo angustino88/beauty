@@ -1,3 +1,5 @@
+import type { StationCreate } from "@/shared/api/generated/api";
+import type { NamedReference } from '@/shared/utils/resourceReferences';
 import type { IEquipmentStatus, ILabAudit, IPrimaryOwner } from "@/features/lab-equipment/shared";
 import type {
   AccessPolicy,
@@ -32,7 +34,13 @@ export interface IStation extends LocationState {
   room_id?: number | null;
   slot_id?: number | null;
   slot_code?: string | null;
-  power_reserved_w?: string | null;
+  power_reserved_w?: number | null;
+  station_type?: NamedReference | null;
+  available_slot_count?: number | null;
+  slot_count?: number | null;
+  slots_url?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
   width_mm?: number | null;
   depth_mm?: number | null;
   height_mm?: number | null;
@@ -92,12 +100,12 @@ export interface IStationParams {
   status?: string;
 }
 
-export interface IStationPayload {
+export interface IStationPayload extends Partial<Omit<StationCreate, "remark" | "power_reserved_w">> {
   sku?: string;
   name?: string;
   room_id?: number | null;
   slot_id?: number | null;
-  power_reserved_w?: string | null;
+  power_reserved_w?: number | string | null;
   width_mm?: number | null;
   depth_mm?: number | null;
   height_mm?: number | null;

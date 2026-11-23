@@ -1,3 +1,6 @@
+import { ownershipPayload } from '../../../../shared/utils/resourceReferences.ts';
+import { useOwnershipFields } from "@/features/lab-equipment/shared/hooks/useOwnershipFields";
+import { roomDetailsPayload } from "../mapper";
 import { useMemo, useState } from "react";
 import { WorkbookImportButton } from "@/features/data-import";
 import { skipToken } from "@reduxjs/toolkit/query";
@@ -35,7 +38,6 @@ const toRoomUpdatePayload = (values: Record<string, unknown>): IRoomPayload & Re
   city: nullableNumber(values.city),
   building: nullableNumber(values.building),
   max_power: nullableNumber(values.max_power),
-  primary_owner: nullableNumber(values.primary_owner),
 });
 
 export default function RoomPage() {
@@ -55,7 +57,12 @@ export default function RoomPage() {
     historyId === null ? skipToken : { id: historyId, page: historyPage, pageSize: historyPageSize },
   );
 
-  const formFields = useMemo(() => buildRoomFormFields(table.optionsMap), [table.optionsMap]);
+  const ownership = useOwnershipFields(createOpen || editingRoom !== null, editingRoom);
+  const formFields = [
+    ...buildRoomFormFields(table.optionsMap),
+    ...ownership.fields,
+  ];
+  const updateDepartment = (values: Record<string, unknown>) => ownership.setDepartmentId(values.department_id);
   const editValues = useMemo(() => (editingRoom ? toRoomFormValues(editingRoom) : undefined), [editingRoom]);
 
   const actionsRenderer = createActionsRenderer<IRoom>({
@@ -132,6 +139,7 @@ export default function RoomPage() {
         title="New Room"
         professionalForm
         fields={formFields}
+        onValuesChange={updateDepartment}
         onSubmit={async (values, imageFile) => {
           await form.createFromValues(values, imageFile);
           setCreateOpen(false);
@@ -146,10 +154,15 @@ export default function RoomPage() {
         title={editingRoom ? `Edit Room ${editingRoom.sku}` : "Edit Room"}
         professionalForm
         fields={formFields}
+        onValuesChange={updateDepartment}
         initialValues={editValues}
         onSubmit={async (values, imageFile) => {
           if (!editingRoom) return;
-          await form.updateInline(editingRoom.id, toRoomUpdatePayload(values));
+          await form.updateInline(editingRoom.id, {
+            ...toRoomUpdatePayload(values),
+            ...ownershipPayload(values, editingRoom),
+            ...roomDetailsPayload(values, editingRoom),
+          });
           await form.syncSlots(editingRoom.id, values);
           if (imageFile) await form.updateImage(editingRoom.id, imageFile);
           else if (imageFile === null) await form.removeImage(editingRoom.id);

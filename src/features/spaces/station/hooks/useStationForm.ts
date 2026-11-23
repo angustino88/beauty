@@ -16,6 +16,8 @@ import { parseFormApiError } from "@/features/lab-equipment/shared/utils/formApi
 import { getApiErrorMessage, notify } from "@/shared/notifications";
 import { useAppDispatch } from "@/app/store";
 import { generatedApi, useLabsStationsSlotsCreateByStationIdMutation } from "@/shared/api/generated/api";
+import { STATION_DETAILS, detailPayload } from "../../shared/resourceForm";
+import { nullableNumber, ownershipPayload } from '../../../../shared/utils/resourceReferences.ts';
 import type { IStationPayload } from "../types";
 
 const toCount = (value: unknown): number | null => {
@@ -110,13 +112,16 @@ export function useStationForm() {
 
   const createFromValues = async (values: Record<string, unknown>, imageFile?: File | null) => {
     const payload: IStationPayload = {
+      ...ownershipPayload(values),
+      ...detailPayload(STATION_DETAILS, values),
+      type_id: nullableNumber(values.type_id),
       sku: typeof values.sku === "string" ? values.sku : undefined,
       name: typeof values.name === "string" ? values.name : undefined,
       room_id: values.room_id ? Number(values.room_id) : null,
       slot_id: values.slot_id ? Number(values.slot_id) : null,
-      power_capacity_w: values.power_capacity_w ? Number(values.power_capacity_w) : null,
+      power_capacity_w: nullableNumber(values.power_capacity_w),
       max_load_kg: values.max_load_kg ? Number(values.max_load_kg) : null,
-      network_port_capacity: values.network_port_capacity ? Number(values.network_port_capacity) : null,
+      network_port_capacity: nullableNumber(values.network_port_capacity),
       bench_capacity: toCount(values.bench_capacity),
       height_mm: values.height_mm ? Number(values.height_mm) : null,
       width_mm: values.width_mm ? Number(values.width_mm) : null,

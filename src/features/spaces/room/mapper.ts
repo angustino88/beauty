@@ -1,4 +1,6 @@
 import type { IRoom, IRoomListResponse, IRoomPayload } from './types';
+import { ROOM_DETAILS, detailPayload, readDetails } from "../shared/resourceForm.ts";
+import { namedReference } from '../../../shared/utils/resourceReferences.ts';
 import { normalizeSpaceStatus } from '../shared/spaceStatus.ts';
 import {
   mapAvailability,
@@ -35,6 +37,13 @@ export function mapRoomApiItem(raw: unknown): IRoom {
   const floor = room.floor != null && room.floor !== '' ? String(room.floor) : null;
 
   return {
+    ...readDetails(ROOM_DETAILS, room),
+    uid: typeof room.uid === 'string' ? room.uid : undefined,
+    department: namedReference(room.department),
+    group: namedReference(room.group),
+    coordinate_unit: typeof room.coordinate_unit === 'string' ? room.coordinate_unit : null,
+    created_at: typeof room.created_at === 'string' ? room.created_at : null,
+    updated_at: typeof room.updated_at === 'string' ? room.updated_at : null,
     id: (room.id as number) ?? 0,
     sku: (room.sku as string) ?? '',
     name: (room.name as string) ?? '',
@@ -60,7 +69,7 @@ export function mapRoomApiItem(raw: unknown): IRoom {
     size: room.area_m2 == null ? null : String(room.area_m2),
     temperature: 0,
     humidity: 0,
-    max_power: (room.power_capacity_w as number) ?? 0,
+    max_power: toNumber(room.power_capacity_w),
     power_usage: 0,
     label: (room.label as string) ?? '',
     primary_owner: toUserRef(room.owner),
@@ -102,6 +111,10 @@ export function mapRoomDetailApiResponse(response: unknown): IRoom {
   return mapRoomApiItem(data);
 }
 
+export function roomDetailsPayload(values: Record<string, unknown>, previous?: IRoom) {
+  return detailPayload(ROOM_DETAILS, values, previous && { ...previous });
+}
+
 export function mapRoomWritePayload(payload: IRoomPayload): RoomWriteApiPayload {
   const body: RoomWriteApiPayload = {};
   const fields: Array<[keyof IRoomPayload, string]> = [
@@ -118,6 +131,10 @@ export function mapRoomWritePayload(payload: IRoomPayload): RoomWriteApiPayload 
     ["floor", "floor"],
     ["rows", "layout_rows"],
     ["cols", "layout_columns"],
+    ["department_id", "department_id"],
+    ["group_id", "group_id"],
+    ["owner_id", "owner_id"],
+    ...ROOM_DETAILS.map(({ name }): [keyof IRoomPayload, string] => [name, name]),
   ];
 
   for (const [source, target] of fields) {
@@ -132,7 +149,7 @@ export function mapRoomWritePayload(payload: IRoomPayload): RoomWriteApiPayload 
   // Inline edit also sends the table's own names for capacity and owner.
   const draft = payload as Record<string, unknown>;
   if (draft.max_power !== undefined) body.power_capacity_w = draft.max_power;
-  if (draft.primary_owner !== undefined) body.owner_id = draft.primary_owner;
+  if (payload.owner_id === undefined && payload.primary_owner !== undefined) body.owner_id = payload.primary_owner;
 
   return body;
 }

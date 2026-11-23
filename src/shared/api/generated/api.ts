@@ -14882,6 +14882,7 @@ export type LicenseRead = {
   name: string;
   owner: UserReferenceRead | null;
   department: LabsNamedReferenceRead | null;
+  group: LabsNamedReferenceRead | null;
   remark: string;
   image_url: string | null;
   product: LabsNamedReferenceRead | null;

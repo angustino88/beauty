@@ -1,3 +1,5 @@
+import type { BenchCreate } from "@/shared/api/generated/api";
+import type { NamedReference } from '@/shared/utils/resourceReferences';
 import type { IEquipmentStatus, ILabAudit, IPrimaryOwner } from "@/features/lab-equipment/shared";
 import type {
   ActivityStatus,
@@ -15,7 +17,8 @@ export interface IBench extends ResourceState {
   name: string;
   bench_group?: { id: number; name: string } | null;
   bench_type?: { id: number; name: string } | null;
-  department?: { id: number; name: string } | null;
+  department?: NamedReference | null;
+  group?: NamedReference | null;
   primary_owner?: IPrimaryOwner | null;
   setup_location_id?: number | null;
   station_slot_id?: number | null;
@@ -25,6 +28,9 @@ export interface IBench extends ResourceState {
   station?: { id: number; sku: string; name: string } | null;
   room?: { id: number; sku: string; name: string } | null;
   equipment_count?: number;
+  equipment_url?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
   is_favorite?: boolean;
   lifecycle_status: Choice<LifecycleStatus>;
   condition: Choice<Condition>;
@@ -69,7 +75,7 @@ export interface IBenchParams {
 
 export type ILabInfoParams = IBenchParams;
 
-export interface IBenchPayload {
+export interface IBenchPayload extends Partial<Omit<BenchCreate, "remark">> {
   sku?: string;
   name?: string;
   type_id?: number | null;

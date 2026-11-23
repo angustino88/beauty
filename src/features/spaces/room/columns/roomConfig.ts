@@ -1,3 +1,5 @@
+import { ROOM_DETAILS } from "../../shared/resourceForm";
+import { ownershipFormValues } from '../../../../shared/utils/resourceReferences.ts';
 import type { IRoom } from "../types";
 import type { FieldConfig } from "@/features/lab-equipment/shared";
 
@@ -96,7 +98,6 @@ export const buildRoomFormFields = (optionsMap: Record<string, SelectOption[]>):
   { name: "sku", label: "SKU", type: "text", required: true, maxLength: 255, disabledInEdit: true, section: "Identification" },
   { name: "name", label: "Name", type: "text", required: true, maxLength: 255, section: "Identification" },
   { name: "label", label: "Short label", type: "text", essential: true, placeholder: "e.g. A101", section: "Identification" },
-  { name: "primary_owner", apiField: "owner_id", label: "Owner", type: "select", essential: true, options: optionsMap.primary_owner, section: "Identification" },
   { name: "rows", apiField: "layout_rows", label: "Grid rows", type: "number", required: true, section: "Layout" },
   { name: "cols", apiField: "layout_columns", label: "Grid columns", type: "number", required: true, section: "Layout" },
   {
@@ -112,16 +113,17 @@ export const buildRoomFormFields = (optionsMap: Record<string, SelectOption[]>):
   { name: "floor", label: "Floor", type: "text", placeholder: "e.g. 1 or B1", section: "Location" },
   { name: "location", apiField: "map_url", label: "Map link", type: "text", placeholder: "https://…", section: "Location" },
   { name: "remark", label: "Remark", type: "textarea", section: "Location" },
+  ...ROOM_DETAILS.map((field): FieldConfig => ({ ...field, section: "Specifications" })),
   { name: "image", label: "Image", type: "image" },
 ];
 
 /** A room record as form values (ids for the selects). */
 export const toRoomFormValues = (room: IRoom): Record<string, unknown> => ({
-  id: room.id,
+  ...room,
+  ...ownershipFormValues(room),
   sku: room.sku,
   name: room.name,
   label: room.label,
-  primary_owner: room.primary_owner?.id ?? null,
   rows: room.rows,
   cols: room.cols,
   setup_capacity: room.setup_capacity,

@@ -1,7 +1,7 @@
 import { CarrierCell } from './CarrierCells';
 import type { EquipmentOption } from '../hooks/useEquipmentSearchOptions';
 import type { Key, ReactNode, UIEventHandler } from 'react';
-import { DatePicker, Input, Select } from 'antd';
+import { DatePicker, Input, InputNumber, Select } from 'antd';
 import dayjs, { type Dayjs } from 'dayjs';
 import {
   InlineImageUpload,
@@ -37,6 +37,9 @@ export interface LicenseInlineDraft {
   serial_number: string;
   license_ID: string;
   assigned_equipment_ids: number[];
+  license_seats: number | null;
+  department_id: number | null;
+  group_id: number | null;
   license_category: number | null;
   license_type: number | null;
   license_restriction: number | null;
@@ -63,6 +66,11 @@ interface BuildColumnsArgs {
   typeOptions: SelectOption[];
   restrictionOptions: SelectOption[];
   ownerOptions: UserSelectOption[];
+  departmentOptions: SelectOption[];
+  groupOptions: SelectOption[];
+  onDepartmentSearch: (query: string) => void;
+  onGroupSearch: (query: string) => void;
+  onDepartmentChange: (departmentId: number | null) => void;
   carrierOptions: EquipmentOption[];
   onCarrierSearch: (query: string) => void;
   onCarrierOpenChange: (open: boolean) => void;
@@ -88,6 +96,9 @@ export const toLicenseInlineDraft = (item: ILicense): LicenseInlineDraft => ({
   maximum_version: item.maximum_version == null ? '' : String(item.maximum_version),
   serial_number: item.serial_number ?? '',
   license_ID: item.license_ID ?? '',
+  license_seats: item.license_seats ?? null,
+  department_id: item.department?.id ?? null,
+  group_id: item.group?.id ?? null,
   assigned_equipment_ids: (item.assigned_equipment ?? []).map((equipment) => equipment.id),
   license_category: item.license_category?.id ?? item.category?.id ?? null,
   license_type: item.license_type?.id ?? null,
@@ -113,6 +124,11 @@ export const buildLicenseColumns = ({
   typeOptions,
   restrictionOptions,
   ownerOptions,
+  departmentOptions,
+  groupOptions,
+  onDepartmentSearch,
+  onGroupSearch,
+  onDepartmentChange,
   carrierOptions,
   onCarrierSearch,
   onCarrierOpenChange,
@@ -257,6 +273,44 @@ export const buildLicenseColumns = ({
     ),
   },
   {
+    title: 'Department',
+    key: 'department',
+    width: 170,
+    render: (_: unknown, record: ILicense) => isEditing(record)
+      ? <Select aria-label="License department" showSearch allowClear filterOption={false}
+          style={{ width: '100%' }}
+          value={editingDraft?.department_id ?? undefined}
+          options={departmentOptions}
+          onSearch={onDepartmentSearch}
+          onChange={(value) => onDepartmentChange(value ?? null)} />
+      : (record.department?.name ?? '—'),
+  },
+  {
+    title: 'Owning group',
+    key: 'group',
+    width: 170,
+    render: (_: unknown, record: ILicense) => isEditing(record)
+      ? <Select aria-label="License owning group" showSearch allowClear filterOption={false}
+          style={{ width: '100%' }}
+          disabled={editingDraft?.department_id == null}
+          value={editingDraft?.group_id ?? undefined}
+          options={groupOptions}
+          onSearch={onGroupSearch}
+          onChange={(value) => updateDraftField('group_id', value ?? null)} />
+      : (record.group?.name ?? '—'),
+  },
+  {
+    title: 'Seats',
+    dataIndex: 'license_seats',
+    key: 'license_seats',
+    width: 100,
+    render: (value: number | null, record: ILicense) => isEditing(record)
+      ? <InputNumber aria-label="License seats" min={1} max={32767} precision={0}
+          value={editingDraft?.license_seats}
+          onChange={(seats) => updateDraftField('license_seats', seats)} />
+      : (value ?? '—'),
+  },
+  {
     title: 'License Carrier',
     key: 'assigned_equipment',
     width: 240,
@@ -267,7 +321,7 @@ export const buildLicenseColumns = ({
         editing={isEditing(record)}
         value={editingDraft?.assigned_equipment_ids ?? []}
         onChange={(ids) => updateDraftField('assigned_equipment_ids', ids)}
-        seats={record.license_seats}
+        seats={isEditing(record) ? editingDraft?.license_seats ?? record.license_seats : record.license_seats}
         options={carrierOptions}
         onSearch={onCarrierSearch}
         onOpenChange={onCarrierOpenChange}
