@@ -38,8 +38,9 @@ export const getSlotAnchorPosition = (
     const { floorWidth, floorDepth } = computeFloorDimensions(safeRows, safeCols);
     const cellW = floorWidth / safeCols;
     const cellD = floorDepth / safeRows;
-    const x = -floorWidth / 2 + cellW * (colIndex - 0.5);
-    const z = FLOOR_Z_OFFSET + (-floorDepth / 2 + cellD * (rowIndex - 0.5));
+    // RoomSlot row_index and col_index are 0-based (0..rows-1, 0..cols-1).
+    const x = -floorWidth / 2 + cellW * (colIndex + 0.5);
+    const z = FLOOR_Z_OFFSET + (-floorDepth / 2 + cellD * (rowIndex + 0.5));
     return [x, 0, z];
 };
 

@@ -83,7 +83,7 @@ export const benchApi = baseApi.injectEndpoints({
         body,
       }),
       transformResponse: (res: unknown) => mapBenchDetailApiResponse(res),
-      invalidatesTags: invalidateList(TAG),
+      invalidatesTags: [...invalidateList(TAG), { type: "Station", id: "SLOTS" }, { type: "Station", id: "LIST" }],
     }),
 
     updateBench: build.mutation<IBench, { id: number; body: Partial<IBenchPayload> }>({
@@ -96,12 +96,14 @@ export const benchApi = baseApi.injectEndpoints({
       invalidatesTags: (_res, _err, { id }) => [
         ...generateItemTag(TAG, id),
         ...invalidateList(TAG),
+        { type: "Station", id: "SLOTS" },
+        { type: "Station", id: "LIST" },
       ],
     }),
 
     deleteBench: build.mutation<void, number>({
       query: (id) => ({ url: ENDPOINTS.DELETE(id), method: "DELETE" }),
-      invalidatesTags: invalidateList(TAG),
+      invalidatesTags: [...invalidateList(TAG), { type: "Station", id: "SLOTS" }, { type: "Station", id: "LIST" }],
     }),
 
     forceDeleteBench: build.mutation<
@@ -121,6 +123,7 @@ export const benchApi = baseApi.injectEndpoints({
         ...generateItemTag(TAG, id),
         ...invalidateList(TAG),
         { type: "Station", id: "LIST" },
+        { type: "Station", id: "SLOTS" },
         { type: "ResourceMapping", id: "LIST" },
         { type: "Equipment", id: "LIST" },
         { type: "Booking", id: "LIST" },

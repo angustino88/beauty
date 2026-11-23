@@ -21,6 +21,7 @@ import { useStationForm } from "../hooks/useStationForm";
 import { buildStationColumns } from "../columns/stationColumns";
 import { facetToAntdFilters, getFacetOptions } from "@/features/lab-equipment/shared/facets/filterFacets";
 import { usePermission } from '@/features/auth/hooks/useCan';
+import { buildRoomSlotOptions, getRoomSlotsHint } from "../../shared/slotOptions";
 
 export default function StationPage() {
   const canManageLabOperations = usePermission("lab_operations.manage");
@@ -45,10 +46,9 @@ export default function StationPage() {
     return (dropdownData?.rooms ?? []).map((room) => toResourceOption(room));
   }, [dropdownData?.rooms]);
 
-  // The slot list follows the room chosen in whichever form is open; occupied slots are hidden
-  // except the one this station already holds.
+  // The slot list follows the room chosen in whichever form is open; occupied and blocked slots are
+  // disabled with status badges except the slot this station already holds.
   const [formRoomId, setFormRoomId] = useState<number | null>(null);
-  const [formSlotId, setFormSlotId] = useState<number | null>(null);
   // Slots arrive 100 per page; read up to three pages so large rooms stay selectable.
   const roomSlotsPage1 = useLabsRoomsSlotsRetrieveByRoomIdQuery(
     formRoomId == null ? skipToken : { roomId: formRoomId, pageSize: 100, page: 1 },
@@ -63,24 +63,16 @@ export default function StationPage() {
     () => [roomSlotsPage1.data, roomSlotsPage2.data, roomSlotsPage3.data].flatMap((page) => page?.data ?? []),
     [roomSlotsPage1.data, roomSlotsPage2.data, roomSlotsPage3.data],
   );
-  const currentSlotId = editingStation?.slot_id ?? null;
-  const slotOptions = useMemo(
-    () => roomSlots
-      .filter((slot) => !slot.is_occupied || slot.id === currentSlotId || slot.id === formSlotId)
-      .map((slot) => ({ label: slot.slot_code, value: slot.id })),
-    [roomSlots, currentSlotId, formSlotId],
+  const editingRoomId = editingStation ? (editingStation.room?.id ?? editingStation.room_id ?? null) : null;
+  const currentSlotId = editingStation && formRoomId === editingRoomId ? (editingStation.slot_id ?? null) : null;
+  const currentSlotLabel = editingStation && formRoomId === editingRoomId ? (editingStation.slot_code ?? null) : null;
+  const { classified: classifiedSlots, options: slotOptions } = useMemo(
+    () => buildRoomSlotOptions(roomSlots, { currentSlotId, currentSlotLabel }),
+    [roomSlots, currentSlotId, currentSlotLabel],
   );
-  // Why the slot list is empty, in words the user can act on.
-  const roomSlotsHint = formRoomId == null || !roomSlotsPage1.isSuccess
-    ? undefined
-    : roomSlots.length === 0
-      ? "This room has no slots yet. Edit the room, set its layout (rows × columns) and save: one slot is created per cell."
-      : slotOptions.length === 0
-        ? "Every slot in this room already holds a station. Enlarge the room layout or move a station."
-        : undefined;
+  const roomSlotsHint = getRoomSlotsHint(formRoomId != null, roomSlotsPage1.isSuccess, roomSlots, classifiedSlots);
   const handleFormValues = useCallback((values: Record<string, unknown>) => {
     setFormRoomId(values.room_id == null || values.room_id === '' ? null : Number(values.room_id));
-    setFormSlotId(values.slot_id == null || values.slot_id === '' ? null : Number(values.slot_id));
   }, []);
 
   const roomFallback = useMemo(() => (dropdownData?.rooms ?? []).map((room) => ({
@@ -202,9 +194,13 @@ export default function StationPage() {
         onSubmit={async (values, imageFile) => {
           await form.createFromValues(values, imageFile);
           setCreateModalOpen(false);
+          setFormRoomId(null);
           void table.refetch();
         }}
-        onCancel={() => setCreateModalOpen(false)}
+        onCancel={() => {
+          setCreateModalOpen(false);
+          setFormRoomId(null);
+        }}
         loading={form.creating}
       />
       <EquipmentFormModal
@@ -238,9 +234,13 @@ export default function StationPage() {
           if (imageFile) await form.updateImage(editingStation.id, imageFile);
           else if (imageFile === null) await form.removeImage(editingStation.id);
           setEditingStation(null);
+          setFormRoomId(null);
           void table.refetch();
         }}
-        onCancel={() => setEditingStation(null)}
+        onCancel={() => {
+          setEditingStation(null);
+          setFormRoomId(null);
+        }}
         loading={form.updating}
       />
 

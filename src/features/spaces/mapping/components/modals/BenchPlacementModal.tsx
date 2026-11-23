@@ -1,8 +1,10 @@
-import { Form, Modal, Select, Space, Button } from "antd";
+import { useMemo } from "react";
+import { Form, Modal, Select, Space, Button, Spin } from "antd";
 import { InlineAlert, getApiErrorMessage, notify } from "@/shared/notifications";
 import { useLabsStationsOptionsRetrieveQuery } from "@/shared/api/generated/api";
 import { filterResourceOption, toResourceOption } from "@/components/inputs/ResourceOption";
 import { useGetStationSlotsQuery } from "@/features/spaces/station/api";
+import { buildStationSlotOptions, getStationSlotsHint } from "@/features/spaces/shared/slotOptions";
 import { useGetMappingFilterOptionsQuery, usePlaceBenchMutation } from "../../api";
 import type { ResourceMappingRow } from "../../types";
 
@@ -42,9 +44,13 @@ export function BenchPlacementModal({
     { skip: !open },
   );
 
-  const { data: slots, isFetching: loadingSlots } = useGetStationSlotsQuery(
+  const {
+    data: slots,
+    isFetching: loadingSlots,
+    isSuccess: slotsLoaded,
+  } = useGetStationSlotsQuery(
     selectedStationId as number,
-    { skip: !selectedStationId },
+    { skip: !open || !selectedStationId },
   );
 
   const [placeBench, { isLoading: saving }] = usePlaceBenchMutation();
@@ -102,7 +108,13 @@ export function BenchPlacementModal({
   const roomOptions = (filterOptions?.rooms ?? []).map((room) => toResourceOption(room));
   const stationOptions = (stationData && Array.isArray(stationData.data) ? stationData.data : filterOptions?.stations ?? [])
     .map((station) => toResourceOption(station));
-  const slotOptions = (slots ?? []).map((slot) => toResourceOption({ id: slot.id, sku: slot.slot_code, name: slot.label }));
+  const currentSlotId = selectedStationId === initialStationId ? initialSlotId : null;
+  const currentSlotLabel = selectedStationId === initialStationId ? (row?.station_slot?.slot_code ?? null) : null;
+  const { classified: classifiedSlots, options: slotOptions } = useMemo(
+    () => buildStationSlotOptions(slots ?? [], { currentSlotId, currentSlotLabel }),
+    [slots, currentSlotId, currentSlotLabel],
+  );
+  const slotsHint = getStationSlotsHint(selectedStationId != null, slotsLoaded, slots ?? [], classifiedSlots);
 
   return (
     <Modal
@@ -182,15 +194,19 @@ export function BenchPlacementModal({
           <Form.Item
             name="slotId"
             label="3. Station Slot"
+            extra={slotsHint && !loadingSlots ? slotsHint : undefined}
             rules={[{ required: false }]}
           >
             <Select
               placeholder={
-                selectedStationId ? "Select Slot" : "Select a station first"
+                selectedStationId ? "Select Slot (optional)" : "Select a station first"
               }
               options={slotOptions}
               optionLabelProp="selectedLabel"
+              showSearch
+              filterOption={filterResourceOption}
               loading={loadingSlots}
+              notFoundContent={loadingSlots ? <Spin size="small" /> : slotsHint}
               disabled={!selectedStationId}
               allowClear
             />
