@@ -23,6 +23,7 @@ import { facetToAntdFilters, getFacetOptions } from "@/features/lab-equipment/sh
 import { usePermission } from '@/features/auth/hooks/useCan';
 import { useGetBenchMappingQuery } from "@/features/spaces/mapping/api";
 import { EquipmentAssignmentModal } from "@/features/spaces/mapping/components/modals/EquipmentAssignmentModal";
+import { buildStationSlotOptions, getStationSlotsHint } from "../../shared/slotOptions";
 
 export default function BenchPage() {
   const canManageLabOperations = usePermission("lab_operations.manage");
@@ -53,20 +54,14 @@ export default function BenchPage() {
   const { data: slotsData, isFetching: slotsLoading, isSuccess: slotsLoaded } = useLabsStationsSlotsRetrieveByStationIdQuery(
     formStationId == null ? skipToken : { stationId: formStationId, pageSize: 100 },
   );
-  const slotOptions = useMemo(
-    () => (slotsData?.data ?? [])
-      .filter((slot) => slot.is_active !== false)
-      .map((slot) => toResourceOption({ id: slot.id, sku: slot.slot_code, name: slot.label })),
-    [slotsData],
+  const editingStationId = editingBench ? (editingBench.setup_location_id ?? editingBench.station?.id ?? null) : null;
+  const currentSlotId = editingBench && formStationId === editingStationId ? (editingBench.station_slot_id ?? null) : null;
+  const currentSlotLabel = editingBench && formStationId === editingStationId ? (editingBench.station_slot_name ?? null) : null;
+  const { classified: classifiedSlots, options: slotOptions } = useMemo(
+    () => buildStationSlotOptions(slotsData?.data ?? [], { currentSlotId, currentSlotLabel }),
+    [slotsData, currentSlotId, currentSlotLabel],
   );
-  // Why the slot list is empty, in words the user can act on.
-  const slotsHint = formStationId == null || !slotsLoaded
-    ? undefined
-    : (slotsData?.data ?? []).length === 0
-      ? "This station has no bench slots yet. Edit the station, set its Bench Capacity and save: slots S1, S2, … are created."
-      : slotOptions.length === 0
-        ? "All slots of this station are out of service."
-        : undefined;
+  const slotsHint = getStationSlotsHint(formStationId != null, slotsLoaded, slotsData?.data ?? [], classifiedSlots);
   const handleFormValues = useCallback((values: Record<string, unknown>) => {
     setFormStationId(values.setup_location_id == null || values.setup_location_id === '' ? null : Number(values.setup_location_id));
   }, []);
@@ -207,9 +202,13 @@ export default function BenchPage() {
         onSubmit={async (values, imageFile) => {
           await form.createFromValues(values, imageFile);
           setCreateModalOpen(false);
+          setFormStationId(null);
           void table.refetch();
         }}
-        onCancel={() => setCreateModalOpen(false)}
+        onCancel={() => {
+          setCreateModalOpen(false);
+          setFormStationId(null);
+        }}
         loading={form.creating}
       />
       <EquipmentFormModal
@@ -243,9 +242,13 @@ export default function BenchPage() {
           if (imageFile) await form.updateImage(editingBench.id, imageFile);
           else if (imageFile === null) await form.removeImage(editingBench.id);
           setEditingBench(null);
+          setFormStationId(null);
           void table.refetch();
         }}
-        onCancel={() => setEditingBench(null)}
+        onCancel={() => {
+          setEditingBench(null);
+          setFormStationId(null);
+        }}
         loading={form.updating}
       />
 

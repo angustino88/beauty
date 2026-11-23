@@ -54,7 +54,19 @@ const num = (record: Record<string, unknown>, ...paths: string[]): number | null
 
 const ICONS: Record<SpaceKind, React.ReactNode> = { room: <Building2 />, station: <Server />, bench: <Cpu /> };
 
-function locationOf(kind: SpaceKind, record: Record<string, unknown>): string {
+function stationSlotCodeOf(record: Record<string, unknown>, benchRow?: ResourceMappingRow): string | null {
+  return (
+    text(record, 'station_slot_name', 'station_slot.slot_code', 'station_slot.name') ??
+    benchRow?.station_slot?.slot_code ??
+    null
+  );
+}
+
+function roomSlotCodeOf(record: Record<string, unknown>): string | null {
+  return text(record, 'slot_code', 'slot.slot_code', 'slot.name');
+}
+
+function locationOf(kind: SpaceKind, record: Record<string, unknown>, benchRow?: ResourceMappingRow): string {
   if (kind === 'room') {
     const building = text(record, 'location_info.building', 'building', 'building_name');
     const floor = text(record, 'floor', 'location_info.floor');
@@ -65,11 +77,11 @@ function locationOf(kind: SpaceKind, record: Record<string, unknown>): string {
   }
   const room = text(record, 'room_name', 'room', 'room_id');
   if (kind === 'station') {
-    const slot = text(record, 'slot_code', 'slot_id');
+    const slot = roomSlotCodeOf(record);
     return room ? `${room}${slot ? ` › Slot ${slot}` : ''}` : 'Not placed in a room';
   }
   const station = text(record, 'station_name', 'station', 'setup_location_id');
-  const slot = text(record, 'station_slot.slot_code', 'station_slot_id');
+  const slot = stationSlotCodeOf(record, benchRow);
   if (!station) return 'Not placed on a station';
   return [room, `${station}${slot ? ` › Slot ${slot}` : ''}`].filter(Boolean).join(' › ');
 }
@@ -154,7 +166,7 @@ function CapacityStats({ kind, record, equipmentCount }: { kind: SpaceKind; reco
   );
 }
 
-function properties(kind: SpaceKind, record: Record<string, unknown>) {
+function properties(kind: SpaceKind, record: Record<string, unknown>, benchRow?: ResourceMappingRow) {
   const sku = text(record, 'sku');
   const label = text(record, 'label');
   if (kind === 'room') {
@@ -179,13 +191,15 @@ function properties(kind: SpaceKind, record: Record<string, unknown>) {
       ['SKU', sku && <Code>{sku}</Code>],
       ['Label', label],
       ['Room', text(record, 'room_name', 'room')],
-      ['Slot', text(record, 'slot_code', 'slot_id')],
+      ['Slot', roomSlotCodeOf(record)],
       ['Dimensions (H × W × D)', h && w && d ? `${h} × ${w} × ${d} mm` : null],
       ['Owner', text(record, 'primary_owner')],
     ] as const;
   }
   return [
     ['SKU', sku && <Code>{sku}</Code>],
+    ['Station', text(record, 'station_name', 'station')],
+    ['Slot', stationSlotCodeOf(record, benchRow)],
     ['Group', text(record, 'group_name', 'bench_group')],
     ['Type', text(record, 'type_name', 'bench_type')],
     ['Owner', text(record, 'primary_owner', 'owner')],
@@ -388,7 +402,7 @@ export const SpaceDetailSummary: React.FC<SpaceDetailSummaryProps> = ({
   const equipmentCount = spaceKind !== 'bench' ? null
     : benchRow?.equipment?.length ?? (Array.isArray(record.equipment) ? record.equipment.length : num(record, 'equipment_count'));
 
-  const facts: HeroFact[] = [{ label: 'Location', value: locationOf(spaceKind, record) }];
+  const facts: HeroFact[] = [{ label: 'Location', value: locationOf(spaceKind, record, benchRow) }];
   if (state.availability?.blocked_by) {
     const blocker = state.availability.blocked_by;
     facts.push({ label: 'Blocked by', value: `${blocker.type.charAt(0).toUpperCase()}${blocker.type.slice(1)} ${blocker.name}`, tone: 'warning' });
@@ -411,7 +425,7 @@ export const SpaceDetailSummary: React.FC<SpaceDetailSummaryProps> = ({
         onNavigate={onNavigate}
       />
       {(() => {
-        const items = properties(spaceKind, record);
+        const items = properties(spaceKind, record, benchRow);
         return items.some(([, value]) => value) ? (
           <DetailSection title="Details" icon={<Info />}><PropertyList items={[...items]} /></DetailSection>
         ) : null;

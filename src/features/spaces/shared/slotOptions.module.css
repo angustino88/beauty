@@ -1,0 +1,24 @@
+.tag {
+  margin-left: auto;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.current {
+  background: var(--lm-accent-soft, #f3e8ff);
+  color: var(--lm-accent-text, #6d28d9);
+}
+
+.occupied {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.unavailable {
+  background: #fef2f2;
+  color: #b91c1c;
+}

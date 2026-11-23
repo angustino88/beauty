@@ -37,6 +37,19 @@ generatedApi.enhanceEndpoints({
     labsRoomsOptionsRetrieve: { providesTags: invalidateList(TAG) },
     labsRoomsStatusSummaryRetrieve: { providesTags: invalidateList(TAG) },
     labsRoomsCreate: { invalidatesTags: invalidateList(TAG) },
+    labsRoomsSlotsRetrieveByRoomId: {
+      providesTags: (_res, _err, arg) => [
+        { type: TAG, id: "SLOTS" },
+        { type: TAG, id: `slots-${arg.roomId}` },
+      ],
+    },
+    labsRoomsActionsGenerateSlotsCreateByRoomId: {
+      invalidatesTags: (_res, _err, arg) => [
+        { type: TAG, id: "SLOTS" },
+        { type: TAG, id: `slots-${arg.roomId}` },
+        ...generateItemTag(TAG, arg.roomId),
+      ],
+    },
   },
 });
 

@@ -30,7 +30,20 @@ generatedApi.enhanceEndpoints({
     labsStationsRetrieve: { providesTags: invalidateList(TAG) },
     labsStationsOptionsRetrieve: { providesTags: invalidateList(TAG) },
     labsStationsStatusSummaryRetrieve: { providesTags: invalidateList(TAG) },
-    labsStationsCreate: { invalidatesTags: invalidateList(TAG) },
+    labsStationsCreate: { invalidatesTags: [...invalidateList(TAG), { type: "Room", id: "SLOTS" }] },
+    labsStationsSlotsRetrieveByStationId: {
+      providesTags: (_res, _err, arg) => [
+        { type: TAG, id: "SLOTS" },
+        { type: TAG, id: `slots-${arg.stationId}` },
+      ],
+    },
+    labsStationsSlotsCreateByStationId: {
+      invalidatesTags: (_res, _err, arg) => [
+        { type: TAG, id: "SLOTS" },
+        { type: TAG, id: `slots-${arg.stationId}` },
+        ...generateItemTag(TAG, arg.stationId),
+      ],
+    },
   },
 });
 
@@ -81,7 +94,7 @@ export const stationApi = baseApi.injectEndpoints({
         body: mapStationWritePayload(body),
       }),
       transformResponse: (res: unknown) => mapStationDetailApiResponse(res),
-      invalidatesTags: invalidateList(TAG),
+      invalidatesTags: [...invalidateList(TAG), { type: "Room", id: "SLOTS" }],
     }),
 
     updateStation: build.mutation<IStation, { id: number; body: IStationPayload }>({
@@ -94,12 +107,13 @@ export const stationApi = baseApi.injectEndpoints({
       invalidatesTags: (_res, _err, { id }) => [
         ...generateItemTag(TAG, id),
         ...invalidateList(TAG),
+        { type: "Room", id: "SLOTS" },
       ],
     }),
 
     deleteStation: build.mutation<void, number>({
       query: (id) => ({ url: ENDPOINTS.DELETE(id), method: "DELETE" }),
-      invalidatesTags: invalidateList(TAG),
+      invalidatesTags: [...invalidateList(TAG), { type: "Room", id: "SLOTS" }],
     }),
 
     forceDeleteStation: build.mutation<
@@ -119,6 +133,7 @@ export const stationApi = baseApi.injectEndpoints({
         ...generateItemTag(TAG, id),
         ...invalidateList(TAG),
         { type: "Room", id: "LIST" },
+        { type: "Room", id: "SLOTS" },
         { type: "Bench", id: "LIST" },
         { type: "ResourceMapping", id: "LIST" },
         { type: "Equipment", id: "LIST" },
@@ -137,6 +152,7 @@ export const stationApi = baseApi.injectEndpoints({
       invalidatesTags: (_res, _err, { stationId }) => [
         ...generateItemTag(TAG, stationId),
         ...invalidateList(TAG),
+        { type: "Room", id: "SLOTS" },
       ],
     }),
 
@@ -195,8 +211,18 @@ export const stationApi = baseApi.injectEndpoints({
       providesTags: (_res, _err, { id }) => [{ type: "ChangeLog", id }],
     }),
 
-    getStationSlots: build.query<Array<{ id: number; slot_code: string; label?: string }>, number>({
-      query: (stationId) => ({ url: `/api/labs/stations/${stationId}/slots` }),
+    getStationSlots: build.query<
+      Array<{
+        id: number;
+        slot_code: string;
+        label?: string;
+        is_occupied: boolean;
+        is_active: boolean;
+        service_status?: { value?: string; label?: string } | string | null;
+      }>,
+      number
+    >({
+      query: (stationId) => ({ url: `/api/labs/stations/${stationId}/slots`, params: { page_size: 100 } }),
       transformResponse: (res: unknown) => {
         const envelope = (res as Record<string, unknown>) ?? {};
         const list = Array.isArray(envelope.data) ? envelope.data : [];
@@ -204,8 +230,15 @@ export const stationApi = baseApi.injectEndpoints({
           id: s.id as number,
           slot_code: String(s.slot_code ?? ""),
           label: s.label ? String(s.label) : undefined,
+          is_occupied: Boolean(s.is_occupied),
+          is_active: s.is_active !== false,
+          service_status: (s.service_status as { value?: string; label?: string } | string | null | undefined) ?? null,
         }));
       },
+      providesTags: (_res, _err, stationId) => [
+        { type: TAG, id: "SLOTS" },
+        { type: TAG, id: `slots-${stationId}` },
+      ],
     }),
 
     // Reference lists come from the selector endpoints; `/stations/filters` only describes filters.
