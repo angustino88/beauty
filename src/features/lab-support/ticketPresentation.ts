@@ -379,13 +379,17 @@ export function getTransitionRequirements(
 /**
  * Formats structured activity event payload into clear human-readable detail lines.
  */
-export function formatTicketActivityLines(activity: {
-  event_type?: { value?: string; label?: string } | null;
-  payload?: unknown;
-}): string[] {
+export function formatTicketActivityLines(
+  activity: {
+    event_type?: { value?: string; label?: string } | null;
+    payload?: unknown;
+  },
+  resolveUserName?: (raw: string) => string,
+): string[] {
   if (!activity.payload || typeof activity.payload !== 'object') return [];
   const payload = activity.payload as Record<string, unknown>;
   const lines: string[] = [];
+  const formatName = (name: string) => (resolveUserName ? resolveUserName(name) : name);
 
   if (typeof payload.from_status === 'string' && typeof payload.to_status === 'string') {
     lines.push(`${payload.from_status} → ${payload.to_status}`);
@@ -400,10 +404,10 @@ export function formatTicketActivityLines(activity: {
     lines.push(`Reason: ${payload.reason.trim()}`);
   }
   if (typeof payload.assignee === 'string' && payload.assignee) {
-    lines.push(`Assignee: ${payload.assignee}`);
+    lines.push(`Assignee: ${formatName(payload.assignee)}`);
   }
   if (typeof payload.user_name === 'string' && payload.user_name) {
-    lines.push(`Watcher: ${payload.user_name}`);
+    lines.push(`Watcher: ${formatName(payload.user_name)}`);
   }
 
   if (payload.changes && typeof payload.changes === 'object' && !Array.isArray(payload.changes)) {

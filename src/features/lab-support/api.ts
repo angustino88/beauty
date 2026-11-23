@@ -10,7 +10,9 @@ import {
   type SupportTicketsCreateApiResponse,
   type SupportTicketsRetrieveApiArg,
   type TicketAttachmentRead,
+  type UsersRetrieveApiResponse,
 } from '@/shared/api/generated/api';
+import { normalizeAvatarUrl } from '@/shared/utils/avatar';
 import type {
   SupportTicketListResponse,
   SupportTicketQueryParams,
@@ -88,6 +90,15 @@ const supportAttachmentApi = baseApi.injectEndpoints({
         params: userId !== undefined ? { user_id: userId } : undefined,
       }),
     }),
+    getSupportUserAvatar: build.query<string | null, string>({
+      query: (username) => ({ url: '/api/users', params: { username } }),
+      transformResponse: (response: UsersRetrieveApiResponse, _meta, username) => {
+        const list = Array.isArray(response?.data) ? response.data : [];
+        const user = list.find((item) => item?.username === username);
+        return normalizeAvatarUrl(user?.avatar_url ?? null);
+      },
+      keepUnusedDataFor: 300,
+    }),
   }),
 });
 
@@ -95,6 +106,7 @@ export const {
   useUploadSupportAttachmentMutation,
   useDownloadSupportAttachmentMutation,
   useRemoveSupportWatcherMutation,
+  useGetSupportUserAvatarQuery,
 } = supportAttachmentApi;
 
 function saveBlob(blob: Blob, fileName: string) {

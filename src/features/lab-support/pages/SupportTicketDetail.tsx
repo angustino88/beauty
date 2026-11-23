@@ -610,6 +610,53 @@ export default function SupportTicketDetail() {
       }));
   }, [ticket, users]);
 
+  const userDirectoryByUsername = useMemo(() => {
+    const map = new Map<
+      string,
+      {
+        id?: number;
+        username?: string | null;
+        display_name?: string | null;
+        avatar_url?: string | null;
+      }
+    >();
+    const register = (
+      entry:
+        | {
+            id?: number;
+            username?: string | null;
+            display_name?: string | null;
+            avatar_url?: string | null;
+          }
+        | null
+        | undefined,
+    ) => {
+      if (!entry) return;
+      const uname = entry.username?.trim().toLowerCase();
+      const dname = entry.display_name?.trim().toLowerCase();
+      const existing = uname ? map.get(uname) : undefined;
+      const merged = {
+        id: entry.id ?? existing?.id,
+        username: entry.username ?? existing?.username,
+        display_name: entry.display_name || existing?.display_name,
+        avatar_url: entry.avatar_url ?? existing?.avatar_url,
+      };
+      if (uname) map.set(uname, merged);
+      if (dname) map.set(dname, merged);
+    };
+
+    for (const u of users?.data ?? []) register(u);
+    if (ticket) {
+      register(ticket.requester);
+      register(ticket.created_by);
+      register(ticket.assignee);
+      register(ticket.resolved_by);
+      for (const w of ticket.watchers ?? []) register(w.user);
+    }
+    for (const c of comments?.data ?? []) register(c.author);
+    return map;
+  }, [users, ticket, comments]);
+
   if (!key) return <InlineAlert variant="error" title="Missing ticket key" />;
   if (isLoading) {
     return (
@@ -1316,13 +1363,31 @@ export default function SupportTicketDetail() {
                       <div style={{ paddingTop: 8 }}>
                         <Timeline
                           items={activityList.map((event) => {
-                            const details = formatTicketActivityLines(event);
+                            const resolveUserName = (raw: string) => {
+                              const match = userDirectoryByUsername.get(
+                                raw.trim().toLowerCase(),
+                              );
+                              return match
+                                ? userLabel(match) || raw
+                                : raw;
+                            };
+                            const matchedActor = userDirectoryByUsername.get(
+                              (event.actor_name || '').trim().toLowerCase(),
+                            );
+                            const details = formatTicketActivityLines(
+                              event,
+                              resolveUserName,
+                            );
                             return {
                               key: event.id,
                               children: (
                                 <div className={styles.activityItem}>
                                   <div className={styles.activityTitle}>
-                                    <strong>{event.actor_name}</strong>
+                                    {matchedActor ? (
+                                      <TicketUserChip user={matchedActor} />
+                                    ) : (
+                                      <strong>{event.actor_name}</strong>
+                                    )}
                                     <span>·</span>
                                     <span>{activityLabel(event)}</span>
                                     <Typography.Text

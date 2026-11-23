@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import type { ColumnsType } from 'antd/es/table';
 import { Tooltip } from 'antd';
 import type { SupportTicket, SupportUserRef } from '../types';
-import { getTicketTypeMeta } from '../ticketPresentation';
+import { getTicketStatusMeta, getTicketTypeMeta } from '../ticketPresentation';
 import {
   TicketPriorityBadge,
   TicketSlaBadge,
@@ -58,7 +58,6 @@ export function buildLabSupportColumns(): ColumnsType<SupportTicket> {
           record.subject ?? record.summary ?? record.fields?.summary ?? 'Untitled ticket';
         const typeMeta = record.ticket_type ? getTicketTypeMeta(record.ticket_type) : null;
         const labels = record.labels ?? [];
-        const dueDate = record.due_date ?? record.duedate ?? record.fields?.duedate;
 
         return (
           <div className={styles.subjectCell}>
@@ -75,9 +74,6 @@ export function buildLabSupportColumns(): ColumnsType<SupportTicket> {
             <div className={styles.subjectMeta}>
               {typeMeta && <span>{typeMeta.label}</span>}
               {record.team?.name && <span>· Team: {record.team.name}</span>}
-              {dueDate && dayjs(dueDate).isValid() && (
-                <span>· Due {dayjs(dueDate).format(SHORT_DATE_FORMAT)}</span>
-              )}
               <TicketSlaBadge sla={record.sla} status={record.status ?? record.fields?.status} />
               {labels.slice(0, 3).map((label) => (
                 <span key={label} className={styles.labelPill}>
@@ -148,6 +144,43 @@ export function buildLabSupportColumns(): ColumnsType<SupportTicket> {
       render: (_, record) => {
         const user = readUserObject(record.assignee ?? record.fields?.assignee);
         return <TicketUserChip user={user} emptyLabel="Unassigned" />;
+      },
+    },
+    {
+      title: 'Due Date',
+      key: 'due_date',
+      align: 'left',
+      width: 135,
+      render: (_, record) => {
+        const dueDate = record.due_date ?? record.duedate ?? record.fields?.duedate;
+        if (!dueDate || !dayjs(dueDate).isValid()) return '–';
+        const parsed = dayjs(dueDate);
+        const statusMeta = getTicketStatusMeta(record.status ?? record.fields?.status);
+        const today = dayjs().startOf('day');
+        const isOverdue = !statusMeta.isTerminal && parsed.isBefore(today, 'day');
+        const isDueSoon = !statusMeta.isTerminal && !isOverdue && parsed.diff(today, 'day') <= 2;
+        const formatted = parsed.format(SHORT_DATE_FORMAT);
+        const isoDate = parsed.format('YYYY-MM-DD');
+
+        if (isOverdue) {
+          return (
+            <Tooltip title={`Overdue · ${isoDate}`}>
+              <span className={styles.dueOverdue}>{formatted}</span>
+            </Tooltip>
+          );
+        }
+        if (isDueSoon) {
+          return (
+            <Tooltip title={`Due soon · ${isoDate}`}>
+              <span className={styles.dueSoon}>{formatted}</span>
+            </Tooltip>
+          );
+        }
+        return (
+          <Tooltip title={isoDate}>
+            <span>{formatted}</span>
+          </Tooltip>
+        );
       },
     },
     {

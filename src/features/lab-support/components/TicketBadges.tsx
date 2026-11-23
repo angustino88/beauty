@@ -1,8 +1,10 @@
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Tooltip } from 'antd';
 import { CloseOutlined } from '@ant-design/icons';
 import { PersonIcon } from '@/components/display/PersonIcon';
 import type { StatusTone } from '@/shared/status/statusTone';
+import { normalizeAvatarUrl } from '@/shared/utils/avatar';
+import { useGetSupportUserAvatarQuery } from '../api';
 import {
   getTicketPriorityMeta,
   getTicketSlaMeta,
@@ -268,6 +270,7 @@ export function TicketUserChip({
         displayName?: string | null;
         display_name?: string | null;
         email?: string | null;
+        avatar_url?: string | null;
       }
     | string
     | null
@@ -276,6 +279,16 @@ export function TicketUserChip({
   onRemove?: () => void;
   removing?: boolean;
 }) {
+  const userObj = typeof user === 'object' && user !== null ? user : null;
+  const username = (userObj?.username || '').trim();
+  const directAvatar = normalizeAvatarUrl(userObj?.avatar_url);
+  const { data: fetchedAvatar } = useGetSupportUserAvatarQuery(username, {
+    skip: !username || Boolean(directAvatar),
+  });
+  const resolvedAvatar = directAvatar ?? fetchedAvatar ?? null;
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
+  const showImage = Boolean(resolvedAvatar && failedSrc !== resolvedAvatar);
+
   if (!user) {
     return <span className={styles.unassignedChip}>{emptyLabel}</span>;
   }
@@ -300,7 +313,17 @@ export function TicketUserChip({
       <span
         className={`${styles.userChip} ${onRemove ? styles.userChipRemovable : ''}`}
       >
-        <PersonIcon size={18} />
+        {showImage && resolvedAvatar ? (
+          <img
+            src={resolvedAvatar}
+            alt=""
+            aria-hidden="true"
+            className={styles.userAvatarImg}
+            onError={() => setFailedSrc(resolvedAvatar)}
+          />
+        ) : (
+          <PersonIcon size={18} />
+        )}
         <span className={styles.userName}>{displayName}</span>
         {onRemove && (
           <button
