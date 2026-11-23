@@ -1,6 +1,5 @@
 import type { Key, ReactNode } from "react";
 import type { ColumnsType } from "antd/es/table";
-import { Tag } from "antd";
 import {
   renderImageCell,
   renderOwnerCell,
@@ -8,6 +7,7 @@ import {
 import { pageIcons } from "@/components/layout/pageIcons";
 import type { IBench } from "../types";
 import { buildStateColumns } from "@/features/spaces/shared/stateColumns";
+import { BenchEquipmentCell } from "./BenchEquipmentCell";
 import { BenchLocationCell } from "./BenchLocationCell";
 
 interface BuildBenchColumnsArgs {
@@ -18,15 +18,18 @@ interface BuildBenchColumnsArgs {
   locationFilters: Array<{ text: string; value: string }>;
   ownerFilters: Array<{ text: string; value: string }>;
   actionsRenderer: (_: unknown, record: IBench) => ReactNode;
+  onManageEquipment: (bench: IBench) => void;
 }
 
 export const buildBenchColumns = ({
+  canManageLabOperations,
   activeFilters,
   groupFilters,
   typeFilters,
   locationFilters,
   ownerFilters,
   actionsRenderer,
+  onManageEquipment,
 }: BuildBenchColumnsArgs): ColumnsType<IBench> => {
   return [
     {
@@ -92,10 +95,14 @@ export const buildBenchColumns = ({
       title: "Assigned Equipment",
       dataIndex: "equipment_count",
       key: "equipment_count",
-      width: 140,
+      width: 150,
       align: "center",
-      render: (count: number) => (
-        <Tag color={count > 0 ? "geekblue" : "default"}>{count} {count === 1 ? "asset" : "assets"}</Tag>
+      render: (_count: number, record) => (
+        <BenchEquipmentCell
+          bench={record}
+          canManageLabOperations={canManageLabOperations}
+          onManageEquipment={onManageEquipment}
+        />
       ),
     },
     {

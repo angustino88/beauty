@@ -7,7 +7,12 @@ import { Pencil, Settings2 } from 'lucide-react';
 import { AppstoreOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { useGetBenchMappingQuery, useGetEquipmentMappingQuery } from '@/features/spaces/mapping/api';
+import {
+  useGetBenchMappingQuery,
+  useGetEquipmentMappingQuery,
+  useGetRoomMappingQuery,
+  useGetStationMappingQuery,
+} from '@/features/spaces/mapping/api';
 import { MappingVisualization } from '@/features/spaces/mapping/components/MappingVisualization';
 import type { ResourceMappingRow } from '@/features/spaces/mapping/types';
 import { SpaceDetailSummary } from '@/features/spaces/shared/components/SpaceDetailSummary';
@@ -579,25 +584,61 @@ export default function EquipmentDetailsModal({
     : null;
   const carrierId = Number(carrierDevice?.id);
   const mappingQuery = useGetBenchMappingQuery(recordId, {
-    skip: !open || isEquipment || !Number.isFinite(recordId),
+    skip: !open || normalizedSpaceType !== 'bench' || !Number.isFinite(recordId),
   });
-  const equipmentMappingQuery = useGetEquipmentMappingQuery(recordId, { skip: !open || !isEquipment || !Number.isFinite(recordId) });
+  const stationMappingQuery = useGetStationMappingQuery(recordId, {
+    skip: !open || normalizedSpaceType !== 'station' || !Number.isFinite(recordId),
+  });
+  const roomMappingQuery = useGetRoomMappingQuery(recordId, {
+    skip: !open || normalizedSpaceType !== 'room' || !Number.isFinite(recordId),
+  });
+  const equipmentMappingQuery = useGetEquipmentMappingQuery(
+    summaryType === 'license' ? carrierId : recordId,
+    {
+      skip:
+        !open ||
+        (summaryType === 'license'
+          ? !Number.isFinite(carrierId) || carrierId <= 0
+          : !isEquipment || !Number.isFinite(recordId)),
+    },
+  );
 
   const connectedMappingRows = useMemo(() => {
-    const allRows = isEquipment
-      ? equipmentMappingQuery.currentData ?? []
-      : mappingQuery.currentData ? [mappingQuery.currentData] : [];
     if (!open || !Number.isFinite(recordId)) return [];
-
+    if (normalizedSpaceType === 'station') {
+      return stationMappingQuery.currentData ?? [];
+    }
+    if (normalizedSpaceType === 'bench') {
+      return mappingQuery.currentData ? [mappingQuery.currentData] : [];
+    }
     if (summaryType === 'license') {
       if (!carrierId) return [];
-      return allRows.filter((r: ResourceMappingRow) => r.equipment.some((e) => e.id === carrierId));
+      return (equipmentMappingQuery.currentData ?? []).filter((r: ResourceMappingRow) =>
+        r.equipment.some((e) => e.id === carrierId),
+      );
     }
-    if (summaryType === 'bench' || summaryType === 'lab_info') {
-      return allRows.filter((r: ResourceMappingRow) => r.bench.id === recordId);
-    }
-    return allRows.filter((r: ResourceMappingRow) => r.equipment.some((e) => e.id === recordId));
-  }, [mappingQuery.currentData, equipmentMappingQuery.currentData, isEquipment, open, recordId, summaryType, carrierId]);
+    return (equipmentMappingQuery.currentData ?? []).filter((r: ResourceMappingRow) =>
+      r.equipment.some((e) => e.id === recordId),
+    );
+  }, [
+    mappingQuery.currentData,
+    stationMappingQuery.currentData,
+    equipmentMappingQuery.currentData,
+    normalizedSpaceType,
+    open,
+    recordId,
+    summaryType,
+    carrierId,
+  ]);
+
+  const spaceConnectedLoading =
+    normalizedSpaceType === 'bench'
+      ? mappingQuery.isFetching
+      : normalizedSpaceType === 'station'
+        ? stationMappingQuery.isFetching
+        : normalizedSpaceType === 'room'
+          ? roomMappingQuery.isFetching
+          : false;
 
   if (!record) return null;
 
@@ -741,6 +782,9 @@ export default function EquipmentDetailsModal({
                     spaceKind={normalizedSpaceType}
                     record={record}
                     connectedRows={connectedMappingRows}
+                    roomStations={normalizedSpaceType === 'room' ? roomMappingQuery.currentData : undefined}
+                    connectedLoading={spaceConnectedLoading}
+                    onNavigate={onClose}
                   />
                 ),
               },

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mapBenchMappingList, mapResourceMappingDataToRows } from "./mapper.ts";
+import { mapBenchMappingList, mapResourceMappingDataToRows, mapRoomMappingStations } from "./mapper.ts";
 
 test("mapResourceMappingDataToRows maps OpenAPI ResourceMappingData graph into ResourceMappingRow hierarchy", () => {
   const backendData = {
@@ -226,4 +226,40 @@ test("mapBenchMappingList tolerates a missing summary", () => {
 
   assert.equal(response.total_count, 0);
   assert.equal(response.summary.benches, 0);
+});
+
+test("mapRoomMappingStations extracts stations with slot code, bench count, and equipment count", () => {
+  const stations = mapRoomMappingStations(
+    {
+      data: {
+        rooms: [{ id: 1, sku: "RM-01", name: "Main Lab" }],
+        room_slots: [
+          { id: 10, room_id: 1, row_index: 0, col_index: 1, slot_code: "A2" },
+          { id: 11, room_id: 1, row_index: 0, col_index: 0, slot_code: "A1" },
+        ],
+        stations: [
+          { id: 20, sku: "ST-02", name: "Station Two", room_id: 1, slot_id: 10 },
+          { id: 21, sku: "ST-01", name: "Station One", room_id: 1, slot_id: 11 },
+          { id: 22, sku: "ST-03", name: "Unplaced Slot Station", room_id: 1, slot_id: null },
+        ],
+        station_slots: [{ id: 30, station_id: 21, position_index: 0, slot_code: "S1" }],
+        benches: [
+          { id: 100, sku: "BN-01", name: "Bench 1", setup_location_id: 21, station_slot_id: 30 },
+          { id: 101, sku: "BN-02", name: "Bench 2", setup_location_id: 21, station_slot_id: null },
+        ],
+        equipment: [
+          { id: 200, sku: "PC-01", name: "Host", bench_id: 100 },
+          { id: 201, sku: "MON-01", name: "Monitor", bench_id: 100 },
+          { id: 202, sku: "PSU-01", name: "Power", bench_id: 101 },
+        ],
+      },
+    },
+    1,
+  );
+
+  assert.deepEqual(stations, [
+    { id: 21, sku: "ST-01", name: "Station One", slotCode: "A1", benchCount: 2, equipmentCount: 3 },
+    { id: 20, sku: "ST-02", name: "Station Two", slotCode: "A2", benchCount: 0, equipmentCount: 0 },
+    { id: 22, sku: "ST-03", name: "Unplaced Slot Station", slotCode: null, benchCount: 0, equipmentCount: 0 },
+  ]);
 });

@@ -13,7 +13,12 @@ import type {
   ResourceMappingParams,
   ResourceMappingRow,
 } from "./types";
-import { mapBenchMappingList, mapResourceMappingDataToRows } from "./mapper";
+import {
+  mapBenchMappingList,
+  mapResourceMappingDataToRows,
+  mapRoomMappingStations,
+  type RoomAssignedStationItem,
+} from "./mapper";
 
 const TAG = "ResourceMapping";
 
@@ -63,6 +68,30 @@ export const mappingApi = baseApi.injectEndpoints({
       providesTags: (_res, _err, id) => generateItemTag(TAG, id),
     }),
 
+    getStationMapping: build.query<ResourceMappingRow[], number>({
+      query: (stationId) => ({
+        url: `/api/labs/stations/${stationId}/mapping`,
+        params: { page_size: 100 },
+      }),
+      transformResponse: (res: unknown) => mapResourceMappingDataToRows(res),
+      providesTags: (_res, _err, id) => [
+        { type: "Station", id },
+        { type: TAG, id: "LIST" },
+      ],
+    }),
+
+    getRoomMapping: build.query<RoomAssignedStationItem[], number>({
+      query: (roomId) => ({
+        url: `/api/labs/rooms/${roomId}/mapping`,
+        params: { page_size: 100 },
+      }),
+      transformResponse: (res: unknown, _meta, roomId) => mapRoomMappingStations(res, roomId),
+      providesTags: (_res, _err, id) => [
+        { type: "Room", id },
+        { type: TAG, id: "LIST" },
+      ],
+    }),
+
     placeBench: build.mutation<void, { benchId: number; body: BenchPlacementPayload }>({
       query: ({ benchId, body }) => ({
         url: `/api/labs/benches/${benchId}/actions/place`,
@@ -85,6 +114,8 @@ export const mappingApi = baseApi.injectEndpoints({
       invalidatesTags: (_res, _err, { body }) => [
         ...generateItemTag(TAG, body.bench_id),
         ...invalidateList(TAG),
+        { type: "Bench", id: body.bench_id },
+        { type: "Bench", id: "LIST" },
         { type: "Equipment", id: "LIST" },
       ],
     }),
@@ -97,6 +128,8 @@ export const mappingApi = baseApi.injectEndpoints({
       invalidatesTags: (_res, _err, { benchId }) => [
         ...(benchId ? generateItemTag(TAG, benchId) : []),
         ...invalidateList(TAG),
+        ...(benchId ? [{ type: "Bench" as const, id: benchId }] : []),
+        { type: "Bench", id: "LIST" },
         { type: "Equipment", id: "LIST" },
       ],
     }),
@@ -153,6 +186,8 @@ export const {
   useGetEquipmentMappingQuery,
   useLazyGetMappingsQuery,
   useGetBenchMappingQuery,
+  useGetStationMappingQuery,
+  useGetRoomMappingQuery,
   usePlaceBenchMutation,
   useAssignEquipmentMutation,
   useUnassignEquipmentMutation,

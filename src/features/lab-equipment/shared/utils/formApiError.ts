@@ -78,6 +78,33 @@ const findDescriptiveFieldError = (fieldErrors: Record<string, string[]>): strin
 };
 
 export const parseFormApiError = (error: unknown): ParsedFormApiError | null => {
+  if (isRecord(error) && typeof error.status === 'string') {
+    if (error.status === 'PARSING_ERROR') {
+      const httpStatus = typeof error.originalStatus === 'number' ? error.originalStatus : undefined;
+      let friendly: string;
+      if (httpStatus === 404) {
+        friendly = 'This action endpoint was not found on the server (HTTP 404). Make sure the backend service is updated to the latest version.';
+      } else if (httpStatus === 403) {
+        friendly = 'Access was denied by the server (HTTP 403). Refresh the page or verify your operator permissions.';
+      } else if (httpStatus && httpStatus >= 500) {
+        friendly = `The server returned an unexpected error (HTTP ${httpStatus}). Please try again or check server logs.`;
+      } else {
+        friendly = httpStatus
+          ? `Server returned an unexpected non-JSON response (HTTP ${httpStatus}).`
+          : 'Server returned an unexpected non-JSON response.';
+      }
+      return { fieldErrors: {}, nonFieldErrors: [friendly], message: friendly };
+    }
+    if (error.status === 'FETCH_ERROR') {
+      const friendly = 'Unable to reach the server. Check your network connection and try again.';
+      return { fieldErrors: {}, nonFieldErrors: [friendly], message: friendly };
+    }
+    if (error.status === 'TIMEOUT_ERROR') {
+      const friendly = 'The request timed out. Please try again.';
+      return { fieldErrors: {}, nonFieldErrors: [friendly], message: friendly };
+    }
+  }
+
   const payload = readPayload(error);
   if (!payload) return null;
 

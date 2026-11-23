@@ -7,8 +7,10 @@ import { skipToken } from "@reduxjs/toolkit/query";
 import {
   EquipmentPageLayout,
   EquipmentFormModal,
+  GuardedDeleteModal,
   createActionsRenderer,
   printDeviceLabel,
+  type GuardedDeleteInitialMode,
 } from "@/features/lab-equipment/shared";
 import type { FieldConfig } from "@/features/lab-equipment/shared";
 import type { IBench, IBenchPayload } from "../types";
@@ -19,6 +21,8 @@ import { useBenchForm } from "../hooks/useBenchForm";
 import { buildBenchColumns } from "../columns/benchColumns";
 import { facetToAntdFilters, getFacetOptions } from "@/features/lab-equipment/shared/facets/filterFacets";
 import { usePermission } from '@/features/auth/hooks/useCan';
+import { useGetBenchMappingQuery } from "@/features/spaces/mapping/api";
+import { EquipmentAssignmentModal } from "@/features/spaces/mapping/components/modals/EquipmentAssignmentModal";
 
 export default function BenchPage() {
   const canManageLabOperations = usePermission("lab_operations.manage");
@@ -28,6 +32,12 @@ export default function BenchPage() {
 
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editingBench, setEditingBench] = useState<IBench | null>(null);
+  const [deleteModal, setDeleteModal] = useState<{ item: IBench; mode: GuardedDeleteInitialMode } | null>(null);
+  const [managingBench, setManagingBench] = useState<IBench | null>(null);
+
+  const { data: managingMappingRow, refetch: refetchManagingMapping } = useGetBenchMappingQuery(
+    managingBench ? managingBench.id : skipToken,
+  );
 
   const { data: benchGroups } = useGetBenchGroupsQuery();
   const { data: facets } = useGetBenchFiltersQuery();
@@ -112,8 +122,8 @@ export default function BenchPage() {
   const actionsRenderer = createActionsRenderer<IBench>({
     canManageLabOperations,
     onEdit: (id) => setEditingBench(table.rows.find((bench) => bench.id === id) ?? null),
-    deleting: form.deleting,
-    onDelete: form.deleteById,
+    deleting: form.deleting || form.forceDeleting,
+    onDelete: (_id, record) => setDeleteModal({ item: record, mode: 'standard' }),
     onPrint: (item) => printDeviceLabel({ sku: item.sku, name: item.name }),
   });
 
@@ -125,7 +135,36 @@ export default function BenchPage() {
     locationFilters,
     ownerFilters,
     actionsRenderer,
+    onManageEquipment: (bench) => setManagingBench(bench),
   });
+
+  const fallbackMappingRow = useMemo(() => {
+    if (!managingBench) return null;
+    return {
+      id: managingBench.id,
+      bench: {
+        id: managingBench.id,
+        sku: managingBench.sku,
+        name: managingBench.name,
+        setup_location_id: managingBench.setup_location_id ?? null,
+        station_slot_id: managingBench.station_slot_id ?? null,
+      },
+      station: managingBench.station ?? null,
+      station_slot: null,
+      room: managingBench.room ?? null,
+      room_slot: null,
+      equipment: [],
+      licenses: [],
+      status: {
+        state: "needs_equipment" as const,
+        is_fully_mapped: false,
+        has_room: Boolean(managingBench.room),
+        has_station: Boolean(managingBench.station),
+        equipment_count: managingBench.equipment_count ?? 0,
+        license_count: 0,
+      },
+    };
+  }, [managingBench]);
 
   return (
     <>
@@ -208,6 +247,34 @@ export default function BenchPage() {
         }}
         onCancel={() => setEditingBench(null)}
         loading={form.updating}
+      />
+
+      <GuardedDeleteModal
+        key={deleteModal ? `${deleteModal.item.id}-${deleteModal.mode}` : 'closed'}
+        open={deleteModal !== null}
+        resourceKind="bench"
+        item={deleteModal?.item ?? null}
+        initialMode={deleteModal?.mode ?? 'standard'}
+        deleting={form.deleting}
+        forceDeleting={form.forceDeleting}
+        onCancel={() => setDeleteModal(null)}
+        onConfirm={(id) => form.tryDeleteById(id, deleteModal?.item)}
+        onForceDelete={(id, reason) => form.forceDeleteById(id, reason, deleteModal?.item)}
+        onManageEquipment={
+          canManageLabOperations && deleteModal
+            ? () => setManagingBench(deleteModal.item)
+            : undefined
+        }
+      />
+
+      <EquipmentAssignmentModal
+        open={managingBench !== null}
+        row={managingMappingRow ?? fallbackMappingRow}
+        onClose={() => setManagingBench(null)}
+        onSuccess={() => {
+          void refetchManagingMapping();
+          void table.refetch();
+        }}
       />
     </>
   );

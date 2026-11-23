@@ -102,6 +102,29 @@ export const stationApi = baseApi.injectEndpoints({
       invalidatesTags: invalidateList(TAG),
     }),
 
+    forceDeleteStation: build.mutation<
+      { id: number; released: { benches: number; equipment: number } },
+      { id: number; reason: string; confirm: true }
+    >({
+      query: ({ id, reason, confirm }) => ({
+        url: `/api/labs/stations/${id}/actions/force-delete`,
+        method: "POST",
+        body: { reason, confirm },
+      }),
+      transformResponse: (res: unknown) => {
+        const envelope = (res ?? {}) as { data?: { id: number; released: { benches: number; equipment: number } } };
+        return envelope.data ?? (res as { id: number; released: { benches: number; equipment: number } });
+      },
+      invalidatesTags: (_r, _e, { id }) => [
+        ...generateItemTag(TAG, id),
+        ...invalidateList(TAG),
+        { type: "Room", id: "LIST" },
+        { type: "Bench", id: "LIST" },
+        { type: "ResourceMapping", id: "LIST" },
+        { type: "Equipment", id: "LIST" },
+      ],
+    }),
+
     placeStation: build.mutation<
       void,
       { stationId: number; body: { room_id?: number | null; slot_id?: number | null; power_reserved_w?: string | null } }
@@ -222,6 +245,7 @@ export const {
   useCreateStationMutation,
   useUpdateStationMutation,
   useDeleteStationMutation,
+  useForceDeleteStationMutation,
   usePlaceStationMutation,
   useChangeStationStatusMutation,
   useChangeStationLifecycleMutation,

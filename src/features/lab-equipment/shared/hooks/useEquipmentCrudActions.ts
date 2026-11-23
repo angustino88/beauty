@@ -111,11 +111,22 @@ export function useEquipmentCrudActions<TUpdateBody>({
     }
   };
 
+  const tryDeleteById = async (id: number, item?: { sku?: string | null; name?: string | null }) => {
+    try {
+      await deleteMutation(id).unwrap();
+      notifyEquipmentDeleted(labels.entityName, { id, sku: item?.sku, name: item?.name });
+      return { ok: true as const };
+    } catch (err) {
+      return { ok: false as const, error: err };
+    }
+  };
+
   return {
     updateInline,
     updateImage,
     removeImage,
     updateStatus,
     deleteById,
+    tryDeleteById,
   };
 }

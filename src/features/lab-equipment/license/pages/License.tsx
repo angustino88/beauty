@@ -9,6 +9,7 @@ import { useGetLicenseHistoryQuery } from '../api';
 import {
   EquipmentPageLayout,
   EquipmentFormModal,
+  GuardedDeleteModal,
   createActionsRenderer,
   InlineEditActions,
   printDeviceLabel,
@@ -41,6 +42,7 @@ function LicenseInventory() {
   const form = useLicenseForm();
 
   const [modalOpen, setModalOpen] = useState(false);
+  const [deletingLicense, setDeletingLicense] = useState<ILicense | null>(null);
   const [historyId, setHistoryId] = useState<number | null>(null);
   const [inlineImageFile, setInlineImageFile] = useState<File | null>(null);
 
@@ -177,7 +179,7 @@ function LicenseInventory() {
     canManageLabOperations,
     deleting: form.deleting,
     onEdit: handleEdit,
-    onDelete: form.deleteById,
+    onDelete: (_id, record) => setDeletingLicense(record),
     onHistory: setHistoryId,
     onPrint: printDeviceLabel,
   });
@@ -296,6 +298,16 @@ function LicenseInventory() {
         onSubmit={handleCreateSubmit}
         onCancel={() => setModalOpen(false)}
         loading={form.creating}
+      />
+
+      <GuardedDeleteModal
+        key={deletingLicense ? deletingLicense.id : 'closed'}
+        open={deletingLicense !== null}
+        resourceKind="license"
+        item={deletingLicense}
+        deleting={form.deleting}
+        onCancel={() => setDeletingLicense(null)}
+        onConfirm={(id) => form.tryDeleteById(id, deletingLicense ?? undefined)}
       />
     </>
   );

@@ -111,3 +111,12 @@ export {
   notifyMappingUpdated,
   notifyEquipmentError,
 } from "./utils/equipmentNotifications";
+export { GuardedDeleteModal } from "./components/modals/GuardedDeleteModal";
+export type {
+  GuardedDeleteAttemptResult,
+  GuardedDeleteInitialMode,
+  GuardedDeleteModalProps,
+  GuardedDeleteResourceKind,
+  GuardedDeleteTarget,
+  GuardedForceDeleteResult,
+} from "./components/modals/GuardedDeleteModal";
