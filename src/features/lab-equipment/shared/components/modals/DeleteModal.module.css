@@ -269,53 +269,74 @@
   gap: 6px;
 }
 
+.reasonGroup {
+  margin-bottom: 6px;
+}
+
+.reasonTextArea {
+  margin-bottom: 2px;
+}
+
+.confirmGroup {
+  margin-top: 6px;
+}
+
 .fieldLabelRow {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  flex-wrap: wrap;
+  min-height: 26px;
 }
 
 .fieldLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   color: var(--lm-text, #0f172a);
   font-size: 13px;
   font-weight: 600;
+  line-height: 1.4;
 }
 
 .requiredMark {
   color: var(--lm-danger-solid, #dc2626);
-  margin-left: 2px;
+  margin-left: 1px;
 }
 
 .fieldHint {
   color: var(--lm-text-tertiary, #64748b);
   font-size: 11px;
+  line-height: 1.4;
 }
 
 .matchBadge {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 1px 7px;
+  padding: 2px 8px;
   border-radius: 999px;
   background: var(--lm-success-bg, #f0fdf4);
   border: 1px solid var(--lm-success-border, #bbf7d0);
   color: var(--lm-success-fg, #15803d);
   font-size: 11px;
   font-weight: 600;
+  line-height: 1.3;
+  flex-shrink: 0;
+  align-self: center;
 }
 
 .matchBadge svg {
-  width: 11px;
-  height: 11px;
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
 }
 
 .tokenChip {
   display: inline-flex;
   align-items: center;
   padding: 1px 6px;
-  margin: 0 2px;
+  margin: 0;
   border-radius: 5px;
   border: 1px solid var(--lm-border, #cbd5e1);
   background: var(--lm-surface-muted, #f1f5f9);
@@ -323,6 +344,7 @@
   font-family: var(--lm-font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
   font-size: 12px;
   font-weight: 650;
+  line-height: 1.3;
   user-select: all;
 }
 

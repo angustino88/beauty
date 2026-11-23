@@ -319,7 +319,7 @@ export const DeleteEquipmentModal: React.FC<DeleteEquipmentModalProps> = ({
               </ul>
             </div>
 
-            <div className={styles.fieldGroup}>
+            <div className={`${styles.fieldGroup} ${styles.reasonGroup}`}>
               <div className={styles.fieldLabelRow}>
                 <span className={styles.fieldLabel}>
                   Audit reason<span className={styles.requiredMark}>*</span>
@@ -334,18 +334,21 @@ export const DeleteEquipmentModal: React.FC<DeleteEquipmentModalProps> = ({
                 value={reason}
                 onChange={(event) => setReason(event.target.value)}
                 disabled={busy}
+                className={styles.reasonTextArea}
               />
             </div>
 
-            <div className={styles.fieldGroup}>
+            <div className={`${styles.fieldGroup} ${styles.confirmGroup}`}>
               <div className={styles.fieldLabelRow}>
                 <span className={styles.fieldLabel}>
-                  Type <span className={styles.tokenChip}>{confirmToken}</span> to confirm
+                  <span>Type</span>
+                  <span className={styles.tokenChip}>{confirmToken}</span>
+                  <span>to confirm</span>
                   <span className={styles.requiredMark}>*</span>
                 </span>
                 {tokenMatched && (
-                  <span className={styles.matchBadge}>
-                    <Check /> Matched
+                  <span className={styles.matchBadge} role="status">
+                    <Check size={12} /> Matched
                   </span>
                 )}
               </div>
