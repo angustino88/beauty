@@ -31,6 +31,9 @@ const TONE_BY_STATUS: Record<string, StatusTone> = {
   planned: 'info',
   on_order: 'info',
   trial: 'info',
+  open: 'info',
+  new: 'info',
+  reopened: 'info',
 
   reserved: 'reserved',
   booked: 'reserved',
@@ -38,12 +41,21 @@ const TONE_BY_STATUS: Record<string, StatusTone> = {
   on_loan: 'reserved',
   closed: 'reserved',
   restricted: 'reserved',
+  waiting: 'reserved',
+  waiting_for_customer: 'reserved',
+  waiting_on_customer: 'reserved',
+  waiting_on_requester: 'reserved',
+  on_hold: 'reserved',
+  pending: 'reserved',
 
   maintenance: 'warning',
   in_maintenance: 'warning',
   needs_review: 'warning',
   calibration_overdue: 'warning',
   suspended: 'warning',
+  in_progress: 'warning',
+  investigating: 'warning',
+  triaged: 'warning',
 
   issue: 'danger',
   broken: 'danger',
@@ -52,6 +64,9 @@ const TONE_BY_STATUS: Record<string, StatusTone> = {
   fault: 'danger',
   revoked: 'danger',
   expired: 'danger',
+
+  resolved: 'success',
+  done: 'success',
 
   retired: 'neutral',
   transferred: 'neutral',
@@ -67,6 +82,79 @@ export function normalizeStatusKey(status: unknown): string {
 
 export function toneForStatus(status: unknown): StatusTone {
   return TONE_BY_STATUS[normalizeStatusKey(status)] ?? 'neutral';
+}
+
+const SUPPORT_TICKET_STATUS_TONES: Record<string, StatusTone> = {
+  open: 'info',
+  new: 'info',
+  reopened: 'info',
+  in_progress: 'warning',
+  active: 'warning',
+  investigating: 'warning',
+  triaged: 'warning',
+  waiting: 'reserved',
+  waiting_for_customer: 'reserved',
+  waiting_on_customer: 'reserved',
+  waiting_on_requester: 'reserved',
+  waiting_for_support: 'info',
+  on_hold: 'reserved',
+  hold: 'reserved',
+  pending: 'reserved',
+  paused: 'reserved',
+  resolved: 'success',
+  done: 'success',
+  completed: 'success',
+  closed: 'neutral',
+  cancelled: 'neutral',
+  canceled: 'neutral',
+};
+
+export function supportTicketStatusTone(status: unknown, systemState?: unknown): StatusTone {
+  const key = normalizeStatusKey(status);
+  if (key && SUPPORT_TICKET_STATUS_TONES[key]) {
+    return SUPPORT_TICKET_STATUS_TONES[key];
+  }
+  if (key.includes('resolv') || key.includes('complete')) return 'success';
+  if (key.includes('close') || key.includes('cancel')) return 'neutral';
+  if (key.includes('wait') || key.includes('hold') || key.includes('pend') || key.includes('pause')) return 'reserved';
+  if (key.includes('progress') || key.includes('investig') || key.includes('triage') || key.includes('active')) return 'warning';
+  if (key.includes('open') || key.includes('new')) return 'info';
+
+  const stateKey = normalizeStatusKey(systemState);
+  if (stateKey && SUPPORT_TICKET_STATUS_TONES[stateKey]) {
+    return SUPPORT_TICKET_STATUS_TONES[stateKey];
+  }
+  return 'neutral';
+}
+
+const SUPPORT_TICKET_PRIORITY_TONES: Record<string, StatusTone> = {
+  critical: 'danger',
+  urgent: 'danger',
+  blocker: 'danger',
+  p1: 'danger',
+  highest: 'danger',
+  high: 'warning',
+  major: 'warning',
+  p2: 'warning',
+  medium: 'info',
+  normal: 'info',
+  standard: 'info',
+  p3: 'info',
+  low: 'neutral',
+  minor: 'neutral',
+  trivial: 'neutral',
+  p4: 'neutral',
+};
+
+export function supportTicketPriorityTone(priority: unknown): StatusTone {
+  const key = normalizeStatusKey(priority);
+  if (key && SUPPORT_TICKET_PRIORITY_TONES[key]) {
+    return SUPPORT_TICKET_PRIORITY_TONES[key];
+  }
+  if (key.includes('crit') || key.includes('urgent') || key.includes('block') || key.includes('p1')) return 'danger';
+  if (key.includes('high') || key.includes('major') || key.includes('p2')) return 'warning';
+  if (key.includes('med') || key.includes('norm') || key.includes('p3')) return 'info';
+  return 'neutral';
 }
 
 /**

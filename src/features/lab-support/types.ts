@@ -10,18 +10,28 @@ export interface SupportUserRef {
 
 export type JiraUserRef = SupportUserRef;
 
+export interface SupportChoiceRef {
+  value: string;
+  label: string;
+}
+
 export interface SupportTicket {
   id: number | string;
   key: string;
   number?: number;
   subject: string;
   summary: string;
+  ticket_type?: SupportChoiceRef | string | null;
+  source?: SupportChoiceRef | string | null;
+  impact?: string | null;
+  urgency?: string | null;
   category?: { id: number; name: string } | null;
-  priority?: { id: number; name: string; level?: number } | string | null;
+  priority?: { id: number; name: string; level?: number; rank?: number } | string | null;
   status?: { id: number; name: string; system_state?: string } | string | null;
   requester?: SupportUserRef | string | null;
   reporter?: SupportUserRef | string | null;
   assignee?: SupportUserRef | string | null;
+  team?: { id: number; name: string } | null;
   created_at?: string | null;
   created?: string | null;
   updated_at?: string | null;
@@ -32,6 +42,7 @@ export interface SupportTicket {
   description?: string;
   labels?: string[];
   sla?: Record<string, unknown>;
+  version?: number;
   duedate?: string | null;
   resolutiondate?: string | null;
   fields?: {
