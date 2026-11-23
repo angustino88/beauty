@@ -13,7 +13,7 @@ import {
   type GuardedDeleteInitialMode,
 } from "@/features/lab-equipment/shared";
 import type { FieldConfig } from "@/features/lab-equipment/shared";
-import { STATION_DETAILS, detailPayload } from "../../shared/resourceForm";
+import { STATION_DETAILS, detailPayload, editableDetails } from "../../shared/resourceForm";
 import { changedReference, ownershipFormValues, ownershipPayload } from '../../../../shared/utils/resourceReferences.ts';
 import { referenceOptions, useOwnershipFields } from "@/features/lab-equipment/shared/hooks/useOwnershipFields";
 import type { IStation, IStationPayload } from "../types";
@@ -129,7 +129,7 @@ export default function StationPage() {
       },
       { name: "label", label: "Position Label", type: "text" },
       { name: "remark", label: "Remark", type: "textarea" },
-      ...STATION_DETAILS,
+      ...editableDetails(STATION_DETAILS),
       { name: "image", label: "Image", type: "image" },
   ];
 

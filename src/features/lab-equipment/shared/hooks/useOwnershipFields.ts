@@ -45,7 +45,7 @@ export function useOwnershipFields(open: boolean, editing: (Ownership & {
       loading: departments.isFetching, onSearch: setDepartmentSearch,
     },
     {
-      name: 'group_id', apiField: 'group', label: 'Owning group', type: 'select', section: 'Ownership',
+      name: 'group_id', apiField: 'group', label: 'Group', type: 'select', section: 'Ownership',
       dependsOn: ['department_id'], options: groupOptions,
       loading: groups.isFetching, onSearch: setGroupSearch,
     },

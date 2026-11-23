@@ -1,4 +1,4 @@
-import { ownershipPayload } from '../../../../shared/utils/resourceReferences.ts';
+import { nullableNumber, ownershipPayload } from '../../../../shared/utils/resourceReferences.ts';
 import { useOwnershipFields } from "@/features/lab-equipment/shared/hooks/useOwnershipFields";
 import { roomDetailsPayload } from "../mapper";
 import { useMemo, useState } from "react";
@@ -15,13 +15,12 @@ import {
 } from "@/features/lab-equipment/shared";
 import type { IRoom, IRoomPayload } from "../types";
 import SpaceOverview from "../../shared/SpaceOverview";
+import { roomLocationIds } from "../roomFilters";
+import { useRoomLocationOptions } from "../hooks/useRoomLocationOptions";
 import { useRoomTable } from "../hooks/useRoomTable";
 import { useRoomForm } from "../hooks/useRoomForm";
 import { buildRoomColumns, buildRoomFormFields, toRoomFormValues } from "../columns/roomColumns";
 import { usePermission } from '@/features/auth/hooks/useCan';
-
-const nullableNumber = (value: unknown): number | null =>
-  value == null || value === "" || Number.isNaN(Number(value)) ? null : Number(value);
 
 /** Form values → the room write payload. The SKU is never sent on edit: it cannot change after creation. */
 const toRoomUpdatePayload = (values: Record<string, unknown>): IRoomPayload & Record<string, unknown> => ({
@@ -57,12 +56,18 @@ export default function RoomPage() {
     historyId === null ? skipToken : { id: historyId, page: historyPage, pageSize: historyPageSize },
   );
 
-  const ownership = useOwnershipFields(createOpen || editingRoom !== null, editingRoom);
+  const formOpen = createOpen || editingRoom !== null;
+  const ownership = useOwnershipFields(formOpen, editingRoom);
+  const [formLocation, setFormLocation] = useState(() => roomLocationIds({}));
+  const locationOptions = useRoomLocationOptions(formLocation, formOpen, editingRoom?.location_info ?? undefined);
   const formFields = [
-    ...buildRoomFormFields(table.optionsMap),
+    ...buildRoomFormFields(locationOptions),
     ...ownership.fields,
   ];
-  const updateDepartment = (values: Record<string, unknown>) => ownership.setDepartmentId(values.department_id);
+  const handleFormValues = (values: Record<string, unknown>) => {
+    ownership.setDepartmentId(values.department_id);
+    setFormLocation(roomLocationIds(values));
+  };
   const editValues = useMemo(() => (editingRoom ? toRoomFormValues(editingRoom) : undefined), [editingRoom]);
 
   const actionsRenderer = createActionsRenderer<IRoom>({
@@ -80,7 +85,8 @@ export default function RoomPage() {
 
   const columns = buildRoomColumns({
     activeFilters: table.filters,
-    filtersMap: table.filtersMap,
+    locationOptions: table.locationOptions,
+    ownerFilters: table.ownerFilters,
     actionsRenderer,
   });
 
@@ -125,12 +131,7 @@ export default function RoomPage() {
           setHistoryPageSize(nextPageSize);
         }}
         onHistoryClose={() => setHistoryId(null)}
-        searchPlaceholder="Search by SKU, Name, Location, Country, etc."
-        detailValueLabels={{
-          Country: Object.fromEntries(
-            (table.optionsMap.country ?? []).map((option) => [String(option.value), option.label]),
-          ),
-        }}
+        searchPlaceholder="Search by SKU, name, or label"
       />
 
       <EquipmentFormModal
@@ -139,7 +140,7 @@ export default function RoomPage() {
         title="New Room"
         professionalForm
         fields={formFields}
-        onValuesChange={updateDepartment}
+        onValuesChange={handleFormValues}
         onSubmit={async (values, imageFile) => {
           await form.createFromValues(values, imageFile);
           setCreateOpen(false);
@@ -154,7 +155,7 @@ export default function RoomPage() {
         title={editingRoom ? `Edit Room ${editingRoom.sku}` : "Edit Room"}
         professionalForm
         fields={formFields}
-        onValuesChange={updateDepartment}
+        onValuesChange={handleFormValues}
         initialValues={editValues}
         onSubmit={async (values, imageFile) => {
           if (!editingRoom) return;

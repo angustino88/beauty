@@ -34,7 +34,7 @@ import { usePermission } from '@/features/auth/hooks/useCan';
 /** Shown until the user changes View options; every one of these can be hidden there. */
 const LICENSE_DEFAULT_COLUMNS = [
   'id', 'sku', 'name', 'license_product', 'license_vendor', 'license_category', 'license_type', 'license_restriction',
-  'assigned_equipment', 'license_seats', 'expiry_date', 'primary_owner', 'department', 'group', 'status', 'actions',
+  'assigned_equipment', 'license_seats', 'expiry_date', 'primary_owner', 'department', 'group_id', 'status', 'actions',
 ];
 
 function LicenseInventory() {

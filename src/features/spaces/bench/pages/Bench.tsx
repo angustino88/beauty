@@ -13,7 +13,7 @@ import {
   type GuardedDeleteInitialMode,
 } from "@/features/lab-equipment/shared";
 import type { FieldConfig } from "@/features/lab-equipment/shared";
-import { BENCH_DETAILS, detailPayload } from "../../shared/resourceForm";
+import { BENCH_DETAILS, detailPayload, editableDetails } from "../../shared/resourceForm";
 import { changedReference, ownershipFormValues, ownershipPayload } from '../../../../shared/utils/resourceReferences.ts';
 import { referenceOptions, useOwnershipFields } from "@/features/lab-equipment/shared/hooks/useOwnershipFields";
 import type { IBench, IBenchPayload } from "../types";
@@ -119,7 +119,7 @@ export default function BenchPage() {
         help: slotsHint && !slotsLoading ? slotsHint : undefined,
       },
       { name: "remark", label: "Remark", type: "textarea" },
-      ...BENCH_DETAILS,
+      ...editableDetails(BENCH_DETAILS),
       { name: "image", label: "Image", type: "image" },
   ];
 

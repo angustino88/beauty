@@ -286,11 +286,11 @@ export const buildLicenseColumns = ({
       : (record.department?.name ?? '—'),
   },
   {
-    title: 'Owning group',
-    key: 'group',
+    title: 'Group',
+    key: 'group_id',
     width: 170,
     render: (_: unknown, record: ILicense) => isEditing(record)
-      ? <Select aria-label="License owning group" showSearch allowClear filterOption={false}
+      ? <Select aria-label="License group" showSearch allowClear filterOption={false}
           style={{ width: '100%' }}
           disabled={editingDraft?.department_id == null}
           value={editingDraft?.group_id ?? undefined}

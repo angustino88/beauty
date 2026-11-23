@@ -1,3 +1,4 @@
+import { specificationColumns } from '../shared/columns/specificationColumns';
 import { useUrlSearch } from '@/shared/hooks/useUrlSearch';
 import { SpaceLocationRow } from '@/features/spaces/shared/components/SpaceLocation';
 import React, { useState, useMemo, useCallback, type Key } from 'react';
@@ -419,7 +420,6 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
           for (const [field, previous] of Object.entries(relations)) {
             if (previous && values[field] == null) payload[field] = null;
           }
-          if (editingItem.metadata != null) payload.metadata = values.metadata ?? {};
           if (editingItem.warranty_end_date) payload.warranty_end_date = values.warranty_end_date ?? null;
           if (editingItem.replacement_date) payload.replacement_date = values.replacement_date ?? null;
           if (monitored) {
@@ -683,8 +683,31 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
       },
     );
 
+    cols.push(...specificationColumns<EquipmentItem>([
+      { name: 'firmware_version', label: 'Firmware Version' },
+      { name: 'power_draw_w', label: 'Power Draw (W)', type: 'number' },
+      { name: 'weight_kg', label: 'Weight (kg)', type: 'number' },
+      { name: 'metadata', label: 'Metadata', type: 'json' },
+    ]));
+    if (calibratable) {
+      cols.push(...specificationColumns<EquipmentItem>([{ name: 'is_calibration_required', label: 'Calibration Required' }]));
+    }
+    cols.push({
+      title: 'Lifecycle',
+      key: 'lifecycle_state',
+      width: 145,
+      render: (_, record) => record.lifecycle_state?.label ?? '—',
+    });
+
     if (config.supportsTelemetry) {
       cols.push(
+      {
+        title: 'Technical User',
+        key: 'technical_user',
+        width: 150,
+        render: (_, record) => record.technical_user?.username ?? '—',
+      },
+      ...specificationColumns<EquipmentItem>([{ name: 'mac_address', label: 'MAC Address' }]),
       {
         title: 'Disk Usage',
         dataIndex: 'disk_usage',
@@ -879,7 +902,7 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
     const priorityKeys = ['id', 'sku', 'name', 'image', 'status', 'agent', 'placement', 'owner', 'kind', 'type', 'manufacturer', 'product_model', 'serial_number'];
     const priorityColumns = priorityKeys.flatMap((key) => cols.filter((column) => column.key === key));
     return [...priorityColumns, ...cols.filter((column) => !priorityKeys.includes(String(column.key)))];
-  }, [config, refData, facets, filters, kindFacetQuery, typeFacetQuery, manufacturerFacetQuery, modelFacetQuery, departmentFacetQuery, groupFacetQuery, actionsRenderer, handleOpenStatus, agentsByEquipment, agentsLoading, agentsData, openAgent]);
+  }, [config, refData, facets, filters, kindFacetQuery, typeFacetQuery, manufacturerFacetQuery, modelFacetQuery, departmentFacetQuery, groupFacetQuery, actionsRenderer, handleOpenStatus, agentsByEquipment, agentsLoading, agentsData, openAgent, calibratable]);
 
   return (
     <>

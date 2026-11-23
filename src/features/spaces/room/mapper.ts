@@ -91,8 +91,10 @@ export function mapRoomListApiResponse(response: unknown): IRoomListResponse {
   const data = envelope.data;
 
   if (Array.isArray(data)) {
+    const meta = isRecord(envelope.meta) ? envelope.meta : {};
+    const pagination = isRecord(meta.pagination) ? meta.pagination : {};
     return {
-      total_count: data.length,
+      total_count: toNumber(pagination.count) ?? data.length,
       data: data.map(mapRoomApiItem),
     };
   }

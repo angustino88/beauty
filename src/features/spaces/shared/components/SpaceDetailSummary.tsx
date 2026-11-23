@@ -183,7 +183,7 @@ function properties(kind: SpaceKind, record: Record<string, unknown>, benchRow?:
       ['Floor area', length && width ? `${length} × ${width} m` : text(record, 'size')],
       ['Owner', text(record, 'primary_owner')],
       ['Department', text(record, 'department')],
-      ['Owning group', text(record, 'group')],
+      ['Group', text(record, 'group')],
     ] as const;
   }
   if (kind === 'station') {
@@ -199,7 +199,7 @@ function properties(kind: SpaceKind, record: Record<string, unknown>, benchRow?:
       ['Dimensions (H × W × D)', h && w && d ? `${h} × ${w} × ${d} mm` : null],
       ['Owner', text(record, 'primary_owner')],
       ['Department', text(record, 'department')],
-      ['Owning group', text(record, 'group')],
+      ['Group', text(record, 'group')],
     ] as const;
   }
   return [
@@ -208,7 +208,7 @@ function properties(kind: SpaceKind, record: Record<string, unknown>, benchRow?:
     ['Slot', stationSlotCodeOf(record, benchRow)],
     ['Bench group', text(record, 'bench_group', 'group_name')],
     ['Bench type', text(record, 'bench_type', 'type', 'type_name')],
-    ['Owning group', text(record, 'group')],
+    ['Group', text(record, 'group')],
     ['Owner', text(record, 'primary_owner', 'owner')],
     ['Department', text(record, 'department')],
     ['Location note', text(record, 'location_name')],

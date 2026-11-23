@@ -3,7 +3,7 @@ import type { FieldConfig } from '@/features/lab-equipment/shared';
 
 import { nullableNumber } from '../../../shared/utils/resourceReferences.ts';
 
-type DetailField<T> = FieldConfig & { name: Extract<keyof T, string>; decimal?: boolean; emptyNumber?: number };
+type DetailField<T> = FieldConfig & { name: Extract<keyof T, string>; decimal?: boolean; emptyNumber?: number; readOnly?: boolean };
 
 export const BENCH_DETAILS = [
   { name: 'description', label: 'Description', type: 'textarea' },
@@ -14,8 +14,8 @@ export const BENCH_DETAILS = [
   { name: 'requested_cooling_w', label: 'Requested cooling (W)', type: 'number' },
   { name: 'required_utilities', label: 'Required utilities', type: 'json-object' },
   { name: 'commissioning_date', label: 'Commissioning date', type: 'date' },
-  { name: 'last_inspected_at', label: 'Last inspected (legacy)', type: 'datetime' },
-  { name: 'next_inspection_due_at', label: 'Next inspection due (legacy)', type: 'datetime' },
+  { name: 'last_inspected_at', label: 'Last inspected (legacy)', type: 'datetime', readOnly: true },
+  { name: 'next_inspection_due_at', label: 'Next inspection due (legacy)', type: 'datetime', readOnly: true },
 ] satisfies DetailField<BenchCreate>[];
 
 export const ROOM_DETAILS = [
@@ -29,7 +29,7 @@ export const ROOM_DETAILS = [
 ] satisfies DetailField<RoomCreate>[];
 
 export const STATION_DETAILS = [
-  { name: 'position', label: 'Position', type: 'json-object', placeholder: '{"x": 0, "y": 0, "z": 0}' },
+  { name: 'position', label: 'Map Coordinates (X, Y, Z)', type: 'json-object', readOnly: true },
   { name: 'orientation_degrees', label: 'Orientation (degrees)', type: 'number', emptyNumber: 0 },
   { name: 'max_concurrent_users', label: 'Maximum concurrent users', type: 'number' },
   { name: 'usable_surface_mm2', label: 'Usable surface (mm²)', type: 'number' },
@@ -38,6 +38,10 @@ export const STATION_DETAILS = [
   { name: 'utilities', label: 'Utilities', type: 'json-object' },
   { name: 'safety_classification', label: 'Safety classification', type: 'text', maxLength: 64 },
 ] satisfies DetailField<StationCreate>[];
+
+export function editableDetails(fields: DetailField<Record<string, unknown>>[]): FieldConfig[] {
+  return fields.filter((field) => !field.readOnly);
+}
 
 export function readDetails(fields: DetailField<Record<string, unknown>>[], record: Record<string, unknown>) {
   return Object.fromEntries(fields
@@ -68,7 +72,7 @@ export function detailPayload(
   values: Record<string, unknown>,
   previous: Record<string, unknown> = {},
 ) {
-  return Object.fromEntries(fields.flatMap((field) => {
+  return Object.fromEntries(fields.filter((field) => !field.readOnly).flatMap((field) => {
     const next = normalizeDetail(field, values[field.name]);
     const before = normalizeDetail(field, previous[field.name]);
     return JSON.stringify(next) === JSON.stringify(before) ? [] : [[field.name, next]];

@@ -39,7 +39,6 @@ export function buildEquipmentFormFields({
     { name: 'firmware_version', label: 'Firmware Version', type: 'text', maxLength: 255 },
     { name: 'power_draw_w', label: 'Power Draw (W)', type: 'number' },
     { name: 'weight_kg', label: 'Weight (kg)', type: 'number' },
-    { name: 'metadata', label: 'Metadata', type: 'json' },
     { name: 'warranty_end_date', label: 'Warranty Until', type: 'date', placeholder: 'Select warranty expiration date' },
     { name: 'replacement_date', label: 'Replacement Date', type: 'date', placeholder: 'Select replacement date' },
     { name: 'image', label: 'Image', type: 'image' },
@@ -90,7 +89,7 @@ export function buildEquipmentFormFields({
     owner_id: 'Ownership & location', department_id: 'Ownership & location', group_id: 'Ownership & location',
     image: 'Identification',
     warranty_end_date: 'Lifecycle', replacement_date: 'Lifecycle', lifecycle_state: 'Lifecycle',
-    is_calibration_required: 'Lifecycle', details: 'Notes', metadata: 'Notes',
+    is_calibration_required: 'Lifecycle', details: 'Notes',
   };
   return fields.map((field) => ({ ...field,
     section: sectionByField[field.name] ?? 'Specifications',
@@ -134,7 +133,7 @@ export function equipmentFormInitialValues(editingItem: EquipmentItem | null, co
     firmware_version: editingItem.firmware_version, power_draw_w: editingItem.power_draw_w,
     weight_kg: editingItem.weight_kg == null ? null : Number(editingItem.weight_kg),
     is_calibration_required: editingItem.is_calibration_required ? 'yes' : 'no',
-    metadata: editingItem.metadata, technical_user_id: editingItem.technical_user?.id,
+    technical_user_id: editingItem.technical_user?.id,
     monitored_devices: editingItem.monitored_devices,
     details: editingItem.details, ...extraValues,
   };

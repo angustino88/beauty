@@ -3,7 +3,7 @@ import test from 'node:test';
 import { mapBenchApiItem } from '../bench/mapper.ts';
 import { mapRoomApiItem, mapRoomWritePayload, roomDetailsPayload } from '../room/mapper.ts';
 import { mapStationApiItem, mapStationWritePayload } from '../station/mapper.ts';
-import { BENCH_DETAILS, STATION_DETAILS, detailPayload } from './resourceForm.ts';
+import { BENCH_DETAILS, STATION_DETAILS, detailPayload, editableDetails } from './resourceForm.ts';
 import { changedReference, ownershipPayload } from '../../../shared/utils/resourceReferences.ts';
 
 test('a bench type is loaded from the API and can be set or cleared without resending an unchanged type', () => {
@@ -15,7 +15,7 @@ test('a bench type is loaded from the API and can be set or cleared without rese
   assert.equal(changedReference(undefined, bench.bench_type?.id), null);
 });
 
-test('bench requirements round trip zero, JSON objects, and nullable inspection dates', () => {
+test('bench requirements round trip while legacy inspection dates are read-only', () => {
   const bench = mapBenchApiItem({
     requested_power_w: 0,
     required_utilities: { network: true },
@@ -23,12 +23,14 @@ test('bench requirements round trip zero, JSON objects, and nullable inspection 
     commissioning_date: '2026-11-23',
   });
   const existing = { ...bench };
+  assert.equal(Reflect.get(bench, 'last_inspected_at'), '2026-11-23T22:30:00+07:00');
+  assert.ok(!editableDetails(BENCH_DETAILS).some(({ name }) => name === 'last_inspected_at' || name === 'next_inspection_due_at'));
   assert.deepEqual(detailPayload(BENCH_DETAILS, existing, existing), {});
   assert.deepEqual(detailPayload(BENCH_DETAILS, {
     ...existing,
     requested_power_w: null,
     required_utilities: undefined,
-    last_inspected_at: '2026-11-23T15:30:00.000Z',
+    last_inspected_at: null,
   }, existing), { requested_power_w: null, required_utilities: {} });
   assert.deepEqual(detailPayload(BENCH_DETAILS, { requested_power_w: 0 }), { requested_power_w: 0 });
 });
@@ -42,7 +44,7 @@ test('room specifications and ownership use the API field names and decimal form
   }), { department_id: 4, group_id: 6, usable_height_m: '2.75', max_occupancy: 0 });
 });
 
-test('station type, position, capacities and ownership map to accepted request keys', () => {
+test('station edit keeps existing coordinates and maps type, capacity and ownership', () => {
   const station = mapStationApiItem({
     type: { id: 5, name: 'Cabinet' },
     orientation_degrees: 0,
@@ -51,12 +53,14 @@ test('station type, position, capacities and ownership map to accepted request k
   });
   assert.equal(station.station_type?.id, 5);
   assert.equal(station.power_reserved_w, 0);
+  assert.deepEqual(Reflect.get(station, 'position'), { x: 0, y: 1, z: 2 });
+  assert.ok(!editableDetails(STATION_DETAILS).some(({ name }) => name === 'position'));
   const payload = mapStationWritePayload({
     type_id: 6,
     ...ownershipPayload({ department_id: 1, group_id: 2, owner_id: 3 }),
     ...detailPayload(STATION_DETAILS, { ...station, position: null, orientation_degrees: 90 }, { ...station }),
   });
   assert.deepEqual(JSON.parse(JSON.stringify(payload)), {
-    department_id: 1, group_id: 2, owner_id: 3, type_id: 6, position: null, orientation_degrees: 90,
+    department_id: 1, group_id: 2, owner_id: 3, type_id: 6, orientation_degrees: 90,
   });
 });

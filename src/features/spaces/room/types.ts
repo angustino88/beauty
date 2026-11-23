@@ -95,6 +95,10 @@ export interface IRoomListResponse {
 }
 
 export interface IRoomParams {
+  country_id?: string;
+  city_id?: string;
+  building_id?: string;
+  owner_id?: string;
   page?: number;
   page_size?: number;
   search?: string;
@@ -123,13 +127,6 @@ export interface IRoomPayload extends Partial<Omit<RoomCreate, "remark" | "power
   width?: number | null;
   rows?: number | null;
   cols?: number | null;
-}
-
-export interface IRoomDropdownOptions {
-  countries: ILocationCountry[];
-  cities: ILocationCity[];
-  buildings: ILocationBuilding[];
-  floors?: Array<{ id: number; name: string }>;
 }
 
 export interface IRoomDashboardRack {

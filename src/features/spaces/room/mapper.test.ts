@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { mapRoomApiItem } from './mapper.ts';
+import { mapRoomApiItem, mapRoomListApiResponse } from './mapper.ts';
 
 test('room mapper maps lifecycle_status, access_policy, condition, availability, activity_status', () => {
   const result = mapRoomApiItem({
@@ -50,4 +50,10 @@ test('room mapper maps lifecycle_status, access_policy, condition, availability,
   assert.equal(result.location_info?.location_string, 'Germany / Berlin / B1 / Room 12');
   assert.equal(result.location_info?.city?.id, 2);
   assert.equal(result.floor, '2');
+});
+
+test('a filtered page uses the room API pagination total', () => {
+  const result = mapRoomListApiResponse({ data: [{ id: 12 }], meta: { pagination: { count: 22 } } });
+  assert.equal(result.data.length, 1);
+  assert.equal(result.total_count, 22);
 });
