@@ -31,7 +31,6 @@ export function useBenchForm() {
     deleteMutation: deleteBench,
     updateImageMutation: updateBenchImage,
     deleteImageMutation: deleteBenchImage,
-    mapStatusBody: (values) => values as unknown as IBenchPayload,
     labels: { entityName: "Bench", entityNameLower: "bench", errorPrefix: "bench" },
   });
 

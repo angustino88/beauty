@@ -1,27 +1,22 @@
 import type { SupportTicket, SupportUserRef } from '../types';
 
-const LAB_SUPPORT_COLUMNS: { title: string; read: (issue: SupportTicket) => string }[] = [
-  { title: 'Key', read: (issue) => issue.key ?? '' },
-  { title: 'Subject', read: (issue) => String(issue.subject ?? issue.summary ?? issue.fields?.summary ?? '') },
-  { title: 'Category', read: (issue) => issue.category?.name ?? '' },
-  { title: 'Priority', read: (issue) => readNestedName(issue.priority, issue.fields?.priority) },
-  { title: 'Status', read: (issue) => readNestedName(issue.status, issue.fields?.status) },
-  { title: 'Requester', read: (issue) => readUser(issue.requester ?? issue.reporter ?? issue.fields?.reporter) },
-  { title: 'Assignee', read: (issue) => readUser(issue.assignee ?? issue.fields?.assignee) },
-  { title: 'Created Date', read: (issue) => String(issue.created_at ?? issue.created ?? issue.fields?.created ?? '') },
-  { title: 'Due Date', read: (issue) => String(issue.duedate ?? issue.fields?.duedate ?? '') },
-  { title: 'Resolved Date', read: (issue) => String(issue.resolved_at ?? issue.resolutiondate ?? issue.fields?.resolutiondate ?? '') },
+const LAB_SUPPORT_COLUMNS: { title: string; read: (ticket: SupportTicket) => string }[] = [
+  { title: 'Key', read: (ticket) => ticket.key ?? '' },
+  { title: 'Subject', read: (ticket) => String(ticket.subject ?? '') },
+  { title: 'Category', read: (ticket) => ticket.category?.name ?? '' },
+  { title: 'Priority', read: (ticket) => readNestedName(ticket.priority) },
+  { title: 'Status', read: (ticket) => readNestedName(ticket.status) },
+  { title: 'Requester', read: (ticket) => readUser(ticket.requester) },
+  { title: 'Assignee', read: (ticket) => readUser(ticket.assignee) },
+  { title: 'Created Date', read: (ticket) => String(ticket.created_at ?? '') },
+  { title: 'Due Date', read: (ticket) => String(ticket.due_date ?? '') },
+  { title: 'Resolved Date', read: (ticket) => String(ticket.resolved_at ?? '') },
 ];
 
-function readNestedName(value: unknown, fallback?: unknown): string {
+function readNestedName(value: unknown): string {
   if (typeof value === 'string') return value;
   if (typeof value === 'object' && value !== null && 'name' in value) {
     const name = (value as { name?: unknown }).name;
-    if (typeof name === 'string') return name;
-  }
-  if (typeof fallback === 'string') return fallback;
-  if (typeof fallback === 'object' && fallback !== null && 'name' in fallback) {
-    const name = (fallback as { name?: unknown }).name;
     if (typeof name === 'string') return name;
   }
   return '';

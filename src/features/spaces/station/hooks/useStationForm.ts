@@ -76,7 +76,6 @@ export function useStationForm() {
     deleteMutation: deleteStation,
     updateImageMutation: updateStationImage,
     deleteImageMutation: deleteStationImage,
-    mapStatusBody: (values) => values as unknown as IStationPayload,
     labels: { entityName: "Station", entityNameLower: "station", errorPrefix: "station" },
   });
 

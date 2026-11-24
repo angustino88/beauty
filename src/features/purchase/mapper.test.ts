@@ -177,7 +177,6 @@ test('mapPurchaseItemResource maps allocated physical resources', () => {
     purchase_item: { id: 5 },
     resource: { id: 101, name: 'Keysight Oscilloscope DSO-X' },
     resource_kind: 'equipment',
-    resource_type_id: 2,
     resource_id: 101,
     acquisition_price: '250.00',
     created_at: '2026-11-01T12:00:00Z',

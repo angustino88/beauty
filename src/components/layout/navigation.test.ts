@@ -40,17 +40,6 @@ test('deep links select the most specific page and its section', () => {
   assert.equal(findNavigationPage('/dashboard-not-a-route', sections), undefined);
 });
 
-test('legacy links highlight canonical destinations', () => {
-  const sections = getNavigationSections(everything);
-  for (const section of sections) {
-    for (const page of section.pages) {
-      for (const alias of page.aliases ?? []) {
-        assert.equal(findNavigationPage(alias, sections)?.page.path, page.path);
-      }
-    }
-  }
-});
-
 test('search matches page and section names regardless of case or whitespace', () => {
   const sections = getNavigationSections(everything);
   assert.equal(searchNavigationPages('  EQUIPMENT   licenses ', sections)[0]?.page.path, '/lab-equipment/license');

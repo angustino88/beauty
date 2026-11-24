@@ -4,7 +4,6 @@ export interface NavigationPage {
   path: string;
   label: string;
   icon: string;
-  aliases?: string[];
 }
 
 export interface NavigationSection {
@@ -38,12 +37,12 @@ export const navigationSections: NavigationSection[] = [
     { path: '/spaces/bench', label: 'Benches', icon: 'benches' },
   ] },
   { key: 'equipment', label: 'Equipment', requires: 'lab_operations.manage', pages: [
-    { path: '/lab-equipment/computing', label: 'Computing', icon: 'computing', aliases: ['/lab-equipment/computer'] },
-    { path: '/lab-equipment/display', label: 'Display', icon: 'display', aliases: ['/lab-equipment/monitor'] },
-    { path: '/lab-equipment/debugging', label: 'Debugging', icon: 'debugging', aliases: ['/lab-equipment/debug-hardware'] },
-    { path: '/lab-equipment/networking', label: 'Networking', icon: 'networking', aliases: ['/lab-equipment/network-interface'] },
-    { path: '/lab-equipment/power', label: 'Power', icon: 'power', aliases: ['/lab-equipment/power-supply'] },
-    { path: '/lab-equipment/accessory', label: 'Accessories', icon: 'accessories', aliases: ['/lab-equipment/accessories'] },
+    { path: '/lab-equipment/computing', label: 'Computing', icon: 'computing' },
+    { path: '/lab-equipment/display', label: 'Display', icon: 'display' },
+    { path: '/lab-equipment/debugging', label: 'Debugging', icon: 'debugging' },
+    { path: '/lab-equipment/networking', label: 'Networking', icon: 'networking' },
+    { path: '/lab-equipment/power', label: 'Power', icon: 'power' },
+    { path: '/lab-equipment/accessory', label: 'Accessories', icon: 'accessories' },
     { path: '/lab-equipment/sample', label: 'Samples', icon: 'samples' },
     { path: '/lab-equipment/furniture', label: 'Furniture', icon: 'furniture' },
     { path: '/lab-equipment/instrument', label: 'Instruments', icon: 'instruments' },
@@ -57,16 +56,16 @@ export const navigationSections: NavigationSection[] = [
     { path: '/telemetry/profiles', label: 'Device profiles', icon: 'device-profiles' },
   ] },
   { key: 'finance', label: 'Finance', requires: 'finance.manage', pages: [
-    { path: '/purchases', label: 'Purchases', icon: 'purchases', aliases: ['/procurement'] },
+    { path: '/purchases', label: 'Purchases', icon: 'purchases' },
     { path: '/expenses', label: 'Expenses', icon: 'expenses' },
-    { path: '/finance-report', label: 'Finance Report', icon: 'finance-report', aliases: ['/finance'] },
+    { path: '/finance-report', label: 'Finance Report', icon: 'finance-report' },
   ] },
   { key: 'insights', label: 'Insights', requires: 'lab_operations.manage', pages: [
     { path: '/lab-analytics', label: 'Analytics', icon: 'analytics' },
     { path: '/lab-monitoring', label: 'Monitoring', icon: 'monitoring' },
   ] },
   { key: 'help', label: 'Help', pages: [
-    { path: '/support-tickets', label: 'Support Tickets', icon: 'support-tickets', aliases: ['/lab-support'] },
+    { path: '/support-tickets', label: 'Support Tickets', icon: 'support-tickets' },
   ] },
 ];
 
@@ -76,9 +75,7 @@ export function getNavigationSections(can: (permission: LabsPermission) => boole
 
 export function findNavigationPage(pathname: string, sections: NavigationSection[]) {
   return sections.flatMap((section) => section.pages.map((page) => ({ section, page })))
-    .filter(({ page }) => [page.path, ...(page.aliases ?? [])].some(
-      (path) => pathname === path || pathname.startsWith(`${path}/`),
-    ))
+    .filter(({ page }) => pathname === page.path || pathname.startsWith(`${page.path}/`))
     .sort((a, b) => b.page.path.length - a.page.path.length)[0];
 }
 

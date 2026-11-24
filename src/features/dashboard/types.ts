@@ -129,12 +129,9 @@ export interface DashboardBench {
 
 export interface BenchFilterOptions {
   bench_groups: BenchGroup[];
-  lab_groups?: BenchGroup[];
   locations: string[];
   statuses: string[];
 }
-
-export type LabFilterOptions = BenchFilterOptions;
 
 // ─── Column Filters ───────────────────────────────────────────────────────────
 
@@ -166,7 +163,6 @@ export interface DashboardPageParams {
   page_size: number;
   search?: string;
   status?: string[];
-  lab_group?: number[];
   bench_group?: number[];
   sample_ids?: number[];
   license_ids?: number[];

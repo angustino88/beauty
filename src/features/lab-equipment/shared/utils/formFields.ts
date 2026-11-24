@@ -76,13 +76,10 @@ export function buildEquipmentFormFields({
   }
 
   if (monitored && formMode === 'edit') {
-    fields.push(
-      {
-        name: 'technical_user_id', span: config.key === 'computing' ? 12 : 24, apiField: 'computing.technical_user', label: 'Technical User', type: 'select',
-        options: refData?.technical_users?.map(({ id, username }) => ({ value: id, label: username })),
-      },
-      { name: 'monitored_devices', apiField: 'computing.monitored_devices', label: 'Monitored Devices', type: 'json' },
-    );
+    fields.push({
+      name: 'technical_user_id', span: config.key === 'computing' ? 12 : 24, apiField: 'computing.technical_user', label: 'Technical User', type: 'select',
+      options: refData?.technical_users?.map(({ id, username }) => ({ value: id, label: username })),
+    });
   }
   fields.push({ name: 'details', label: 'Details', type: 'textarea' });
   const sectionByField: Record<string, string> = {
@@ -136,7 +133,6 @@ export function equipmentFormInitialValues(editingItem: EquipmentItem | null, co
     weight_kg: editingItem.weight_kg == null ? null : Number(editingItem.weight_kg),
     is_calibration_required: editingItem.is_calibration_required ? 'yes' : 'no',
     technical_user_id: editingItem.technical_user?.id,
-    monitored_devices: editingItem.monitored_devices,
     details: editingItem.details, ...extraValues,
   };
 }

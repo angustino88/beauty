@@ -106,7 +106,7 @@ export function useDashboardState(): DashboardState {
       page_size: pageSize,
       ...(deferredSearch && { search: deferredSearch }),
       ...(effectiveStatus.length > 0 && { status: effectiveStatus }),
-      ...(columnFilters.lab_group_ids.length > 0 && { lab_group: columnFilters.lab_group_ids }),
+      ...(columnFilters.lab_group_ids.length > 0 && { bench_group: columnFilters.lab_group_ids }),
       ...(columnFilters.sample_ids.length > 0 && { sample_ids: columnFilters.sample_ids }),
       ...(columnFilters.license_ids.length > 0 && { license_ids: columnFilters.license_ids }),
       ...(showFavoritesOnly && { is_favorite: true }),
@@ -148,7 +148,7 @@ export function useDashboardState(): DashboardState {
       const rawLicenseValues = (filters['lab_equipment__license_list'] as string[] | null) ?? [];
       setColumnFilters({
         status: (filters['status'] as string[] | null) ?? [],
-        lab_group_ids: ((filters['lab_group'] as Array<string | number> | null) ?? []).map(Number),
+        lab_group_ids: ((filters['bench_group'] as Array<string | number> | null) ?? []).map(Number),
         // Store encoded strings for filteredValue UI matching
         sample_filter_values: rawSampleValues,
         // Expand "id1|id2|..." → individual IDs sent to the server

@@ -43,10 +43,6 @@ export function useLicenseForm() {
     updateMutation: updateLicense,
     updateImageMutation,
     deleteMutation: deleteLicense,
-    mapStatusBody: (values) => ({
-      status: values.status_type,
-      current_status: values,
-    }),
     labels: {
       entityName: 'License',
       entityNameLower: 'license',

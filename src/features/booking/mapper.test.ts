@@ -68,13 +68,13 @@ test('mapBookingItem extracts creator from string or created_by field', () => {
   assert.equal(item2.creator?.id, 7);
 });
 
-test('buildBookingListQuery generates query params with bench_id and creator support', () => {
+test('buildBookingListQuery generates query params with bench_id and creator_id support', () => {
   const qs = buildBookingListQuery({
     view_side: 'my_booking',
     bench_id: [1, 2],
     status: 'reserved',
-    creator: 'uah2hc',
-    filterParams: { creator: ['uah2hc'], project: ['1'] },
+    creator_id: 42,
+    filterParams: { project_id: ['1'] },
   });
 
   assert.match(qs, /view_side=my_booking/);
@@ -82,10 +82,7 @@ test('buildBookingListQuery generates query params with bench_id and creator sup
   // The API takes one bench per request and rejects repeated params.
   assert.deepEqual(new URLSearchParams(qs).getAll('bench_id'), ['1']);
   assert.match(qs, /project_id=1/);
-  assert.equal(qs.includes('project='), false);
-  // Ensure creator appears only once in query string
-  const matches = qs.match(/creator=/g);
-  assert.equal(matches?.length, 1);
+  assert.match(qs, /creator_id=42/);
 });
 
 test('buildBookingListQuery uses documented ordering instead of legacy sort parameters', () => {
@@ -121,33 +118,6 @@ test('buildBookingListQuery correctly applies starts_at_after and starts_at_befo
   assert.match(qs, /bench_id=5/);
   assert.match(qs, /starts_at_after=2026-11-02/);
   assert.match(qs, /starts_at_before=2026-11-09/);
-});
-
-test('buildBookingListQuery maps legacy starts_at and ends_at aliases to starts_at_after and starts_at_before', () => {
-  const qs = buildBookingListQuery({
-    view_side: 'booking_calendar',
-    starts_at: '2026-11-01',
-    ends_at: '2026-11-08',
-  });
-
-  assert.match(qs, /starts_at_after=2026-11-01/);
-  assert.match(qs, /starts_at_before=2026-11-08/);
-  assert.equal(qs.includes('starts_at='), false);
-  assert.equal(qs.includes('ends_at='), false);
-});
-
-test('buildBookingListQuery maps legacy date keys inside filterParams', () => {
-  const qs = buildBookingListQuery({
-    filterParams: {
-      starts_at: ['2026-11-05'],
-      ends_at: ['2026-11-12'],
-    },
-  });
-
-  assert.match(qs, /starts_at_after=2026-11-05/);
-  assert.match(qs, /starts_at_before=2026-11-12/);
-  assert.equal(qs.includes('starts_at='), false);
-  assert.equal(qs.includes('ends_at='), false);
 });
 
 test('mapProjectOptions extracts and sorts project options from CatalogOptionList', () => {

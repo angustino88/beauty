@@ -3,7 +3,7 @@ import test from 'node:test';
 import { equipmentWriteBody } from './equipmentAdapter.ts';
 
 test('equipment edit maps optional specifications and nested computing fields', () => {
-  const computing = { technical_user_id: null, monitored_devices: { meter: true } };
+  const computing = { technical_user_id: null };
   assert.deepEqual(equipmentWriteBody({
     firmware_version: '',
     power_draw_w: 0,

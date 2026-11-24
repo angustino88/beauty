@@ -428,10 +428,6 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
             if (technicalUserId !== (editingItem.technical_user?.id ?? null)) {
               computing.technical_user_id = technicalUserId;
             }
-            const monitoredDevices = values.monitored_devices ?? {};
-            if (JSON.stringify(monitoredDevices) !== JSON.stringify(editingItem.monitored_devices ?? {})) {
-              computing.monitored_devices = monitoredDevices;
-            }
             if (Object.keys(computing).length) payload.computing = computing;
           }
         }

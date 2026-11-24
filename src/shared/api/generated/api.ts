@@ -505,7 +505,6 @@ const injectedRtkApi = api.injectEndpoints({
           approval_status: queryArg.approvalStatus,
           bench_id: queryArg.benchId,
           booking_code: queryArg.bookingCode,
-          creator: queryArg.creator,
           creator_id: queryArg.creatorId,
           ordering: queryArg.ordering,
           page: queryArg.page,
@@ -1814,33 +1813,6 @@ const injectedRtkApi = api.injectEndpoints({
         url: `/api/labs/equipment/${queryArg.equipmentId}/activity`,
       }),
     }),
-    labsEquipmentAssignmentRetrieveByEquipmentId: build.query<
-      LabsEquipmentAssignmentRetrieveByEquipmentIdApiResponse,
-      LabsEquipmentAssignmentRetrieveByEquipmentIdApiArg
-    >({
-      query: (queryArg) => ({
-        url: `/api/labs/equipment/${queryArg.equipmentId}/assignment`,
-      }),
-    }),
-    labsEquipmentAssignmentUpdateByEquipmentId: build.mutation<
-      LabsEquipmentAssignmentUpdateByEquipmentIdApiResponse,
-      LabsEquipmentAssignmentUpdateByEquipmentIdApiArg
-    >({
-      query: (queryArg) => ({
-        url: `/api/labs/equipment/${queryArg.equipmentId}/assignment`,
-        method: "PUT",
-        body: queryArg.equipmentAssignment,
-      }),
-    }),
-    labsEquipmentAssignmentDestroyByEquipmentId: build.mutation<
-      LabsEquipmentAssignmentDestroyByEquipmentIdApiResponse,
-      LabsEquipmentAssignmentDestroyByEquipmentIdApiArg
-    >({
-      query: (queryArg) => ({
-        url: `/api/labs/equipment/${queryArg.equipmentId}/assignment`,
-        method: "DELETE",
-      }),
-    }),
     labsEquipmentHardwareIdsRetrieveByEquipmentId: build.query<
       LabsEquipmentHardwareIdsRetrieveByEquipmentIdApiResponse,
       LabsEquipmentHardwareIdsRetrieveByEquipmentIdApiArg
@@ -2755,17 +2727,6 @@ const injectedRtkApi = api.injectEndpoints({
         method: "DELETE",
       }),
     }),
-    labsExpectedDevicesLegacySuggestionsRetrieve: build.query<
-      LabsExpectedDevicesLegacySuggestionsRetrieveApiResponse,
-      LabsExpectedDevicesLegacySuggestionsRetrieveApiArg
-    >({
-      query: (queryArg) => ({
-        url: `/api/labs/expected-devices/legacy-suggestions`,
-        params: {
-          computing_id: queryArg.computingId,
-        },
-      }),
-    }),
     labsExpensesPaymentsRetrieveByExpenseId: build.query<
       LabsExpensesPaymentsRetrieveByExpenseIdApiResponse,
       LabsExpensesPaymentsRetrieveByExpenseIdApiArg
@@ -3303,28 +3264,6 @@ const injectedRtkApi = api.injectEndpoints({
         body: queryArg.licenseStatus,
       }),
     }),
-    labsLicensesAgreementsRetrieveByLicenseId: build.query<
-      LabsLicensesAgreementsRetrieveByLicenseIdApiResponse,
-      LabsLicensesAgreementsRetrieveByLicenseIdApiArg
-    >({
-      query: (queryArg) => ({
-        url: `/api/labs/licenses/${queryArg.licenseId}/agreements`,
-        params: {
-          page: queryArg.page,
-          page_size: queryArg.pageSize,
-        },
-      }),
-    }),
-    labsLicensesAgreementsCreateByLicenseId: build.mutation<
-      LabsLicensesAgreementsCreateByLicenseIdApiResponse,
-      LabsLicensesAgreementsCreateByLicenseIdApiArg
-    >({
-      query: (queryArg) => ({
-        url: `/api/labs/licenses/${queryArg.licenseId}/agreements`,
-        method: "POST",
-        body: queryArg.licenseAgreementWrite,
-      }),
-    }),
     labsLicensesHistoryRetrieveByLicenseId: build.query<
       LabsLicensesHistoryRetrieveByLicenseIdApiResponse,
       LabsLicensesHistoryRetrieveByLicenseIdApiArg
@@ -3712,17 +3651,13 @@ const injectedRtkApi = api.injectEndpoints({
         params: {
           action: queryArg.action,
           bench_id: queryArg.benchId,
-          computer_id: queryArg.computerId,
           computer_sku: queryArg.computerSku,
           computing_id: queryArg.computingId,
           from_date: queryArg.fromDate,
-          from_date_time: queryArg.fromDateTime,
-          lab: queryArg.lab,
           page: queryArg.page,
           page_size: queryArg.pageSize,
           subject_type: queryArg.subjectType,
           to_date: queryArg.toDate,
-          to_date_time: queryArg.toDateTime,
         },
       }),
     }),
@@ -3753,15 +3688,11 @@ const injectedRtkApi = api.injectEndpoints({
         params: {
           action: queryArg.action,
           bench_id: queryArg.benchId,
-          computer_id: queryArg.computerId,
           computer_sku: queryArg.computerSku,
           computing_id: queryArg.computingId,
           from_date: queryArg.fromDate,
-          from_date_time: queryArg.fromDateTime,
-          lab: queryArg.lab,
           subject_type: queryArg.subjectType,
           to_date: queryArg.toDate,
-          to_date_time: queryArg.toDateTime,
         },
       }),
     }),
@@ -5978,7 +5909,6 @@ export type LabsBenchBookingsRetrieveApiArg = {
   approvalStatus?: string;
   benchId?: number;
   bookingCode?: string;
-  creator?: string;
   creatorId?: number;
   /** Comma-separated ordering fields: starts_at, ends_at, created_at, id; prefix with '-' for descending. Defaults to -starts_at,-id. An id tie-breaker is added when omitted. */
   ordering?: string;
@@ -6867,21 +6797,6 @@ export type LabsEquipmentActivityRetrieveByEquipmentIdApiResponse =
 export type LabsEquipmentActivityRetrieveByEquipmentIdApiArg = {
   equipmentId: number;
 };
-export type LabsEquipmentAssignmentRetrieveByEquipmentIdApiResponse =
-  /** status 200  */ EquipmentAssignmentDetailSerializersEquipmentAssignmentResultDetailResponseRead;
-export type LabsEquipmentAssignmentRetrieveByEquipmentIdApiArg = {
-  equipmentId: number;
-};
-export type LabsEquipmentAssignmentUpdateByEquipmentIdApiResponse =
-  /** status 200  */ EquipmentAssignmentSerializersEquipmentAssignmentResultDetailResponseRead;
-export type LabsEquipmentAssignmentUpdateByEquipmentIdApiArg = {
-  equipmentId: number;
-  equipmentAssignment: EquipmentAssignment;
-};
-export type LabsEquipmentAssignmentDestroyByEquipmentIdApiResponse = unknown;
-export type LabsEquipmentAssignmentDestroyByEquipmentIdApiArg = {
-  equipmentId: number;
-};
 export type LabsEquipmentHardwareIdsRetrieveByEquipmentIdApiResponse =
   /** status 200  */ EquipmentHardwareIdListHardwareIdsEquipmentHardwareIdListDetailResponseRead;
 export type LabsEquipmentHardwareIdsRetrieveByEquipmentIdApiArg = {
@@ -7511,11 +7426,6 @@ export type LabsExpectedDevicesDestroyByExpectedDeviceIdApiResponse = unknown;
 export type LabsExpectedDevicesDestroyByExpectedDeviceIdApiArg = {
   expectedDeviceId: number;
 };
-export type LabsExpectedDevicesLegacySuggestionsRetrieveApiResponse =
-  /** status 200  */ LegacyDeviceSuggestionListConnectionsLegacyDeviceSuggestionListDetailResponseRead;
-export type LabsExpectedDevicesLegacySuggestionsRetrieveApiArg = {
-  computingId: number;
-};
 export type LabsExpensesPaymentsRetrieveByExpenseIdApiResponse =
   /** status 200  */ ExpensePaymentListSerializersExpensePaymentPaginatedResponseRead;
 export type LabsExpensesPaymentsRetrieveByExpenseIdApiArg = {
@@ -7884,19 +7794,6 @@ export type LabsLicensesActionsChangeStatusCreateByLicenseIdApiArg = {
   licenseId: number;
   licenseStatus: LicenseStatus;
 };
-export type LabsLicensesAgreementsRetrieveByLicenseIdApiResponse =
-  /** status 200  */ LicenseAgreementListSerializersLicenseAgreementPaginatedResponseRead;
-export type LabsLicensesAgreementsRetrieveByLicenseIdApiArg = {
-  licenseId: number;
-  page?: number;
-  pageSize?: number;
-};
-export type LabsLicensesAgreementsCreateByLicenseIdApiResponse =
-  /** status 201  */ LicenseAgreementSerializersLicenseAgreementDetailResponseRead;
-export type LabsLicensesAgreementsCreateByLicenseIdApiArg = {
-  licenseId: number;
-  licenseAgreementWrite: LicenseAgreementWrite;
-};
 export type LabsLicensesHistoryRetrieveByLicenseIdApiResponse =
   /** status 200  */ LicenseHistorySerializersLicenseStatusRecordPaginatedResponseRead;
 export type LabsLicensesHistoryRetrieveByLicenseIdApiArg = {
@@ -8123,17 +8020,13 @@ export type LabsMonitoringEventsRetrieveApiResponse =
 export type LabsMonitoringEventsRetrieveApiArg = {
   action?: string;
   benchId?: number;
-  computerId?: number;
   computerSku?: string;
   computingId?: number;
   fromDate?: string;
-  fromDateTime?: string;
-  lab?: number;
   page?: number;
   pageSize?: number;
   subjectType?: string;
   toDate?: string;
-  toDateTime?: string;
 };
 export type LabsMonitoringEventsCreateApiResponse =
   /** status 201  */ MonitoringEventSerializersMonitoringEventDetailResponseRead;
@@ -8150,15 +8043,11 @@ export type LabsMonitoringEventsExportRetrieveApiResponse =
 export type LabsMonitoringEventsExportRetrieveApiArg = {
   action?: string;
   benchId?: number;
-  computerId?: number;
   computerSku?: string;
   computingId?: number;
   fromDate?: string;
-  fromDateTime?: string;
-  lab?: number;
   subjectType?: string;
   toDate?: string;
-  toDateTime?: string;
 };
 export type LabsPurchaseItemsResourcesRetrieveByPurchaseItemIdApiResponse =
   /** status 200  */ PurchaseItemResourceListSerializersPurchaseItemResourcePaginatedResponseRead;
@@ -12067,7 +11956,6 @@ export type EquipmentComputingProfileRead = {
   os_name: string;
   disk_usage: any;
   system_info: any;
-  monitored_devices: any;
   rdp_file: string | null;
   technical_user: TechnicalUserReferenceRead | null;
 };
@@ -12769,35 +12657,6 @@ export type ComputingActivityDetailApiComputingActivityDetailResponse = {
 export type ComputingActivityDetailApiComputingActivityDetailResponseRead = {
   data: ComputingActivityRead;
 };
-export type EquipmentAssignmentResult = {};
-export type EquipmentAssignmentResultRead = {
-  id: number;
-  equipment: LabsUidNamedReferenceRead;
-  bench: LabsUidNamedReferenceRead;
-  role: string;
-  position: number;
-};
-export type EquipmentAssignmentDetailSerializersEquipmentAssignmentResultDetailResponse =
-  {
-    data: EquipmentAssignmentResult;
-  };
-export type EquipmentAssignmentDetailSerializersEquipmentAssignmentResultDetailResponseRead =
-  {
-    data: EquipmentAssignmentResultRead;
-  };
-export type EquipmentAssignmentSerializersEquipmentAssignmentResultDetailResponse =
-  {
-    data: EquipmentAssignmentResult;
-  };
-export type EquipmentAssignmentSerializersEquipmentAssignmentResultDetailResponseRead =
-  {
-    data: EquipmentAssignmentResultRead;
-  };
-export type EquipmentAssignment = {
-  bench_id: number;
-  role?: string;
-  position?: number;
-};
 export type EquipmentHardwareId = {
   id: number;
   value: string;
@@ -12916,7 +12775,6 @@ export type EquipmentDetailApiViewResponseCollectionEquipmentDetailDetailRespons
     data: EquipmentDetailRead;
   };
 export type EquipmentComputingProfileUpdate = {
-  monitored_devices?: any;
   technical_user_id?: number | null;
 };
 export type EquipmentUpdate = {
@@ -14035,43 +13893,6 @@ export type ExpectedDeviceUpdateConnectionsExpectedDeviceDetailResponseRead = {
 export type PatchedUpdateExpectedDeviceRequest = {
   is_disconnect_alert_enabled?: boolean;
 };
-export type LegacyDeviceSuggestion = {
-  /** Windows PnP device instance ID from the legacy list (normalised). */
-  pnp_id: string;
-  /** Label a coordinator gave the entry in the legacy list. */
-  label: string;
-  /** Read from a USB port: register it for this computer only. */
-  is_port_bound: boolean;
-  /** Unit the ID is registered on, if any. */
-  equipment: LabsUidNamedReference | null;
-  expected_device_id: number | null;
-};
-export type LegacyDeviceSuggestionRead = {
-  /** Windows PnP device instance ID from the legacy list (normalised). */
-  pnp_id: string;
-  /** Label a coordinator gave the entry in the legacy list. */
-  label: string;
-  /** Read from a USB port: register it for this computer only. */
-  is_port_bound: boolean;
-  status: ChoiceRead;
-  /** Unit the ID is registered on, if any. */
-  equipment: LabsUidNamedReferenceRead | null;
-  expected_device_id: number | null;
-};
-export type LegacyDeviceSuggestionList = {
-  items: LegacyDeviceSuggestion[];
-};
-export type LegacyDeviceSuggestionListRead = {
-  items: LegacyDeviceSuggestionRead[];
-};
-export type LegacyDeviceSuggestionListConnectionsLegacyDeviceSuggestionListDetailResponse =
-  {
-    data: LegacyDeviceSuggestionList;
-  };
-export type LegacyDeviceSuggestionListConnectionsLegacyDeviceSuggestionListDetailResponseRead =
-  {
-    data: LegacyDeviceSuggestionListRead;
-  };
 export type ExpensePaymentListSerializersExpensePaymentPagination = {
   count: number;
   page: number;
@@ -15104,48 +14925,6 @@ export type LicenseStatus = {
   status: LicenseStatusEnum;
   details?: any;
 };
-export type LicenseAgreementListSerializersLicenseAgreementPagination = {
-  count: number;
-  page: number;
-  page_size: number;
-  next: string | null;
-  previous: string | null;
-};
-export type LicenseAgreementListSerializersLicenseAgreementPaginationMeta = {
-  pagination: LicenseAgreementListSerializersLicenseAgreementPagination;
-};
-export type LicenseAgreement = {};
-export type LicenseAgreementRead = {
-  id: number;
-  license: LabsNamedReferenceRead;
-  price: LabsMoneyRead;
-  billing_period: ChoiceRead;
-  start_date: string;
-  end_date: string | null;
-  created_at: string;
-};
-export type LicenseAgreementListSerializersLicenseAgreementPaginatedResponse = {
-  meta: LicenseAgreementListSerializersLicenseAgreementPaginationMeta;
-  data: LicenseAgreement[];
-};
-export type LicenseAgreementListSerializersLicenseAgreementPaginatedResponseRead =
-  {
-    meta: LicenseAgreementListSerializersLicenseAgreementPaginationMeta;
-    data: LicenseAgreementRead[];
-  };
-export type LicenseAgreementSerializersLicenseAgreementDetailResponse = {
-  data: LicenseAgreement;
-};
-export type LicenseAgreementSerializersLicenseAgreementDetailResponseRead = {
-  data: LicenseAgreementRead;
-};
-export type BillingPeriodEnum = "one_time" | "monthly" | "quarterly" | "annual";
-export type LicenseAgreementWrite = {
-  price: Money;
-  billing_period?: BillingPeriodEnum;
-  start_date: string;
-  end_date?: string | null;
-};
 export type LicenseHistorySerializersLicenseStatusRecordPagination = {
   count: number;
   page: number;
@@ -15700,12 +15479,6 @@ export type MonitoringEventCreate = {
   agent_id?: string;
   agent_version?: string;
   event_id?: string;
-  source?: string;
-  event_type?: string;
-  category?: string;
-  object_name?: string;
-  object_id?: string;
-  details?: any;
 };
 export type MonitoringEventDetailSerializersMonitoringEventDetailResponse = {
   data: MonitoringEvent;
@@ -15767,8 +15540,21 @@ export type PurchaseItemResourceSerializersPurchaseItemResourceDetailResponseRea
   {
     data: PurchaseItemResourceRead;
   };
-export type PurchaseItemResourceCreate = any;
-export type PurchaseItemResourceCreateWrite = any;
+export type PurchaseItemResourceCreate = {
+  resource_id: number;
+};
+export type ResourceKindEnum = "bench" | "equipment" | "license" | "station";
+export type PurchaseItemResourceCreateWrite = {
+  /** Stable resource kind (bench, equipment, license, or station).
+    
+    * `bench` - bench
+    * `equipment` - equipment
+    * `license` - license
+    * `station` - station */
+  resource_kind: ResourceKindEnum;
+  resource_id: number;
+  acquisition_price: Money;
+};
 export type PurchasePriorityOption = {};
 export type PurchasePriorityOptionRead = {
   id: number;
@@ -16516,6 +16302,7 @@ export type ExpenseTypeEnum =
   | "insurance"
   | "service"
   | "other";
+export type BillingPeriodEnum = "one_time" | "monthly" | "quarterly" | "annual";
 export type ExpenseWrite = {
   name: string;
   expense_type: ExpenseTypeEnum;
@@ -19279,9 +19066,6 @@ export const {
   useLabsEquipmentActionsHandOverCreateByEquipmentIdMutation,
   useLabsEquipmentActionsReturnCreateByEquipmentIdMutation,
   useLabsEquipmentActivityRetrieveByEquipmentIdQuery,
-  useLabsEquipmentAssignmentRetrieveByEquipmentIdQuery,
-  useLabsEquipmentAssignmentUpdateByEquipmentIdMutation,
-  useLabsEquipmentAssignmentDestroyByEquipmentIdMutation,
   useLabsEquipmentHardwareIdsRetrieveByEquipmentIdQuery,
   useLabsEquipmentHardwareIdsCreateByEquipmentIdMutation,
   useLabsEquipmentHardwareIdsDestroyByEquipmentIdHardwareIdIdMutation,
@@ -19362,7 +19146,6 @@ export const {
   useLabsExpectedDevicesCreateMutation,
   useLabsExpectedDevicesPartialUpdateByExpectedDeviceIdMutation,
   useLabsExpectedDevicesDestroyByExpectedDeviceIdMutation,
-  useLabsExpectedDevicesLegacySuggestionsRetrieveQuery,
   useLabsExpensesPaymentsRetrieveByExpenseIdQuery,
   useLabsExpensesPaymentsCreateByExpenseIdMutation,
   useLabsExpensesReportRetrieveQuery,
@@ -19411,8 +19194,6 @@ export const {
   useLabsLicensesActionsAssignCreateByLicenseIdMutation,
   useLabsLicensesActionsAssignDestroyByLicenseIdMutation,
   useLabsLicensesActionsChangeStatusCreateByLicenseIdMutation,
-  useLabsLicensesAgreementsRetrieveByLicenseIdQuery,
-  useLabsLicensesAgreementsCreateByLicenseIdMutation,
   useLabsLicensesHistoryRetrieveByLicenseIdQuery,
   useLabsLicensesImageRetrieveByLicenseIdQuery,
   useLabsLicensesImageUpdateByLicenseIdMutation,

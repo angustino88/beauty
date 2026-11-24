@@ -82,6 +82,4 @@ export interface ILicensePayload {
   license_type?: number | null; license_category?: number | null;
   license_restriction?: number | null; primary_owner?: number | null;
   status?: string | null;
-  current_status?: { status_type: string; status_data: Record<string, unknown> };
-  status_type?: string; status_data?: Record<string, unknown>;
 }

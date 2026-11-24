@@ -153,14 +153,11 @@ const FIELD_LABELS: Record<string, string> = {
   os_name: 'Operating System',
   rdp_file: 'RDP File',
   system_info: 'System information',
-  monitored_devices: 'Monitored devices',
-  monitoring: 'Monitored devices',
   lab_equipment_list: 'Assigned labs',
   current_capacity: 'Capacity used',
   setup_capacity: 'Capacity total',
   location_string: 'Location',
   location_info: 'Location details',
-  sys_info: 'System information',
   lab_audit: 'Last audited',
   license_skus: 'License SKUs',
   license_names: 'License names',
@@ -690,7 +687,7 @@ export default function EquipmentDetailsModal({
       { title: 'Ownership & location', fields: ['owner', 'department', 'group', 'storage_room', 'technical_user'] },
       { title: 'Lifecycle & acquisition', fields: ['status', 'acquisition_price', 'warranty_end_date', 'replacement_date'] },
       { title: 'Licenses & audit', fields: ['licenses', 'lab_audit'] },
-      { title: 'Computing & telemetry', fields: ['hostname', 'ip_address', 'mac_address', 'os_name', 'rdp_file', 'disk_usage', 'system_info', 'sys_info', 'monitored_devices', 'monitoring', 'activity'] },
+      { title: 'Computing & telemetry', fields: ['hostname', 'ip_address', 'mac_address', 'os_name', 'rdp_file', 'disk_usage', 'system_info', 'activity'] },
       { title: 'Notes & record history', fields: ['information', 'details', 'remark', 'created_at', 'updated_at'] },
     ];
     const usedKeys = new Set(groups.flatMap((group) => group.fields));

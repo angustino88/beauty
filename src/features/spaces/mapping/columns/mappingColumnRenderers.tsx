@@ -11,33 +11,34 @@ import type {
 } from "../types";
 import { MAPPING_STATE_LABELS } from "../utils/mappingExportConfig";
 import {
-  AccessoriesIcon,
-  ComputerIcon,
-  DebugHardwareIcon,
+  AccessoryIcon,
+  ComputingIcon,
+  DebuggingIcon,
+  DisplayIcon,
+  FurnitureIcon,
   LabIcon,
   LicenseIcon,
-  MonitorIcon,
-  NetworkInterfaceIcon,
-  PowerSupplyIcon,
-  RackIcon,
+  NetworkingIcon,
+  PowerIcon,
   SampleIcon,
+  StationIcon,
 } from "@/features/lab-equipment/shared/components/EquipmentIcons";
 import { useCategoryKeyById } from "../hooks/useCategoryKeyById";
 import { resolveCategoryKey } from "../utils/categoryKey";
 import styles from "./MappingTable.module.css";
 
 const CATEGORY_ICONS: Record<string, ReactNode> = {
-  computing: <ComputerIcon />,
-  display: <MonitorIcon />,
-  debugging: <DebugHardwareIcon />,
-  networking: <NetworkInterfaceIcon />,
-  power: <PowerSupplyIcon />,
-  accessory: <AccessoriesIcon />,
+  computing: <ComputingIcon />,
+  display: <DisplayIcon />,
+  debugging: <DebuggingIcon />,
+  networking: <NetworkingIcon />,
+  power: <PowerIcon />,
+  accessory: <AccessoryIcon />,
   sample: <SampleIcon />,
-  furniture: <RackIcon />,
-  instrument: <DebugHardwareIcon />,
+  furniture: <FurnitureIcon />,
+  instrument: <DebuggingIcon />,
   laboratory: <LabIcon />,
-  mechanical: <PowerSupplyIcon />,
+  mechanical: <PowerIcon />,
 };
 
 export const ENTITY_PATHS = {
@@ -47,7 +48,7 @@ export const ENTITY_PATHS = {
   license: "/lab-equipment/license",
 } as const;
 
-export const categoryIcon = (key: string | null) => (key && CATEGORY_ICONS[key]) || <AccessoriesIcon />;
+export const categoryIcon = (key: string | null) => (key && CATEGORY_ICONS[key]) || <AccessoryIcon />;
 /** Equipment page of a category key; categories without a page get no link. */
 export const categoryPath = (key: string | null) => (key ? `/lab-equipment/${key}` : null);
 
@@ -128,7 +129,7 @@ export const renderMappingStatus = (row: ResourceMappingRow) => {
 };
 
 export const renderBenchTag = (row: ResourceMappingRow) => (
-  <MappingAsset sku={row.bench.sku} name={row.bench.name} path={ENTITY_PATHS.bench} icon={<ComputerIcon />} />
+  <MappingAsset sku={row.bench.sku} name={row.bench.name} path={ENTITY_PATHS.bench} icon={<ComputingIcon />} />
 );
 
 export const renderStationTag = (row: ResourceMappingRow) => {
@@ -139,7 +140,7 @@ export const renderStationTag = (row: ResourceMappingRow) => {
       name={row.station.name}
       meta={row.station_slot ? `Slot ${row.station_slot.slot_code}` : null}
       path={ENTITY_PATHS.station}
-      icon={<RackIcon />}
+      icon={<StationIcon />}
     />
   );
 };

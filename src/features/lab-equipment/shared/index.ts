@@ -4,18 +4,8 @@ export {
   LICENSE_STATUS_META,
   LICENSE_STATUS_OPTIONS,
 } from "./components/status/LicenseStatus";
-export {
-  useGetUsersQuery,
-  useGetRacksWithLabListQuery,
-  useGetRoomsForDropdownQuery,
-} from "./api/dropdownApi";
-export type {
-  IUserOption,
-  IRackListOption,
-  IRoomOption,
-  ILabEquipmentSkuItem,
-  ILabEquipmentSkuList,
-} from "./api/dropdownApi";
+export { useGetUsersQuery } from "./api/dropdownApi";
+export type { IUserOption } from "./api/dropdownApi";
 export { default as ChangeLogModal } from "./components/modals/ChangeLogModal";
 export { default as FormListModal } from "./components/modals/FormListModal";
 export { default as EquipmentPageLayout } from "./components/layout/EquipmentPageLayout";
@@ -78,7 +68,6 @@ export type { ParsedFormApiError } from "./utils/formApiError";
 export {
   notifyEquipmentCreated,
   notifyEquipmentUpdated,
-  notifyMappingUpdated,
   notifyEquipmentError,
 } from "./utils/equipmentNotifications";
 export { GuardedDeleteModal } from "./components/modals/GuardedDeleteModal";

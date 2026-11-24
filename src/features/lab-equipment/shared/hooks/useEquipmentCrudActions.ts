@@ -6,11 +6,6 @@ type UpdateMutation<TBody> = (args: { id: number; body: TBody }) => MutationResu
 type UpdateImageMutation = (args: { id: number; image: File }) => MutationResult;
 type DeleteImageMutation = (id: number) => MutationResult;
 type DeleteMutation = (id: number) => MutationResult;
-export interface EquipmentStatusValues {
-  status_type: string;
-  status_data: Record<string, unknown>;
-}
-
 export interface EquipmentCrudLabels {
   entityName: string;
   entityNameLower: string;
@@ -23,39 +18,10 @@ interface UseEquipmentCrudActionsConfig<TUpdateBody> {
   deleteImageMutation?: DeleteImageMutation;
   deleteMutation: DeleteMutation;
   labels: EquipmentCrudLabels;
-  mapStatusBody: (values: EquipmentStatusValues) => TUpdateBody;
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
-
-const normalizeStatusBody = <TUpdateBody>(
-  body: TUpdateBody,
-  fallbackValues: EquipmentStatusValues,
-): TUpdateBody => {
-  if (!isRecord(body) || 'current_status' in body) {
-    return body;
-  }
-
-  const hasStatusFields = 'status_type' in body || 'status_data' in body;
-  if (!hasStatusFields) {
-    return body;
-  }
-
-  const statusType = typeof body.status_type === 'string' ? body.status_type : fallbackValues.status_type;
-  const statusData = isRecord(body.status_data) ? body.status_data : fallbackValues.status_data;
-  const nextBody: Record<string, unknown> = { ...body };
-  delete nextBody.status_type;
-  delete nextBody.status_data;
-
-  return {
-    ...nextBody,
-    current_status: {
-      status_type: statusType,
-      status_data: statusData,
-    },
-  } as TUpdateBody;
-};
 
 export function useEquipmentCrudActions<TUpdateBody>({
   updateMutation,
@@ -63,7 +29,6 @@ export function useEquipmentCrudActions<TUpdateBody>({
   deleteImageMutation,
   deleteMutation,
   labels,
-  mapStatusBody,
 }: UseEquipmentCrudActionsConfig<TUpdateBody>) {
   const updateInline = async (id: number, payload: TUpdateBody) => {
     try {
@@ -92,16 +57,6 @@ export function useEquipmentCrudActions<TUpdateBody>({
     }
   };
 
-  const updateStatus = async (id: number, values: EquipmentStatusValues) => {
-    try {
-      const body = normalizeStatusBody(mapStatusBody(values), values);
-      await updateMutation({ id, body }).unwrap();
-      notifyEquipmentUpdated(labels.entityName, { id });
-    } catch (err) {
-      notifyEquipmentError('update', 'status', err);
-    }
-  };
-
   const deleteById = async (id: number) => {
     try {
       await deleteMutation(id).unwrap();
@@ -125,7 +80,6 @@ export function useEquipmentCrudActions<TUpdateBody>({
     updateInline,
     updateImage,
     removeImage,
-    updateStatus,
     deleteById,
     tryDeleteById,
   };

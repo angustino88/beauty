@@ -59,7 +59,6 @@ export function useRoomForm() {
         updateImageMutation: updateRoomImageMutation,
         deleteImageMutation: deleteRoomImageMutation,
         deleteMutation:      deleteRoom,
-        mapStatusBody:       (values) => values as unknown as IRoomPayload,
         labels: { entityName: 'Room', entityNameLower: 'room', errorPrefix: 'room' },
     });
 

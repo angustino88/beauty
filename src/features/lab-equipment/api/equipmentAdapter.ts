@@ -48,6 +48,5 @@ export function mapEquipmentRead(item: EquipmentItemRead | EquipmentDetailRead):
     technical_user: computing?.technical_user,
     disk_usage: computing?.disk_usage,
     system_info: computing?.system_info,
-    monitored_devices: computing?.monitored_devices,
   } as EquipmentItem;
 }
