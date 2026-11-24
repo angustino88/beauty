@@ -13,16 +13,17 @@ import type {
   ResourceMappingRow,
 } from "../types";
 import {
-  AccessoriesIcon,
-  ComputerIcon,
-  DebugHardwareIcon,
+  AccessoryIcon,
+  ComputingIcon,
+  DebuggingIcon,
+  DisplayIcon,
+  FurnitureIcon,
   LabIcon,
   LicenseIcon,
-  MonitorIcon,
-  NetworkInterfaceIcon,
-  PowerSupplyIcon,
-  RackIcon,
+  NetworkingIcon,
+  PowerIcon,
   SampleIcon,
+  StationIcon,
 } from "@/features/lab-equipment/shared/components/EquipmentIcons";
 import { MAPPING_STATE_LABELS } from "../utils/mappingExportConfig";
 import styles from "./MappingVisualization.module.css";
@@ -80,18 +81,18 @@ const CATEGORY_TONE_MAP: Record<string, AssetTone> = {
 };
 
 const CATEGORY_ICON_MAP: Record<string, ReactNode> = {
-  computing: <ComputerIcon />,
-  display: <MonitorIcon />,
-  debugging: <DebugHardwareIcon />,
-  networking: <NetworkInterfaceIcon />,
-  power: <PowerSupplyIcon />,
-  accessory: <AccessoriesIcon />,
+  computing: <ComputingIcon />,
+  display: <DisplayIcon />,
+  debugging: <DebuggingIcon />,
+  networking: <NetworkingIcon />,
+  power: <PowerIcon />,
+  accessory: <AccessoryIcon />,
   sample: <SampleIcon />,
-  furniture: <RackIcon />,
-  instrument: <DebugHardwareIcon />,
+  furniture: <FurnitureIcon />,
+  instrument: <DebuggingIcon />,
   laboratory: <LabIcon />,
-  mechanical: <PowerSupplyIcon />,
-  other: <AccessoriesIcon />,
+  mechanical: <PowerIcon />,
+  other: <AccessoryIcon />,
 };
 
 const Node = ({
@@ -218,7 +219,7 @@ const MappingLane = ({
       {/* 2. Station & Bench Nodes */}
       <div className={styles.coreNodes}>
         <Node
-          icon={<RackIcon />}
+          icon={<StationIcon />}
           type="Station"
           name={row.station?.name ?? null}
           sku={row.station?.sku ?? null}
@@ -230,7 +231,7 @@ const MappingLane = ({
           selected={isSelected("station", row.station?.id)}
         />
         <Node
-          icon={<ComputerIcon />}
+          icon={<ComputingIcon />}
           type="Bench"
           name={row.bench.name}
           sku={row.bench.sku}
@@ -247,7 +248,7 @@ const MappingLane = ({
       <div className={styles.equipmentLicenseMap}>
         {row.equipment.length === 0 ? (
           <Node
-            icon={<AccessoriesIcon />}
+            icon={<AccessoryIcon />}
             type="Equipment"
             name={null}
             sku={null}
@@ -260,7 +261,7 @@ const MappingLane = ({
           <div className={styles.connectionRows}>
             {Array.from(equipmentByCategory.entries()).map(([groupId, { key: catKey, label: categoryName, items }]) => {
               const tone = (catKey && CATEGORY_TONE_MAP[catKey]) || "other";
-              const icon = (catKey && CATEGORY_ICON_MAP[catKey]) || <AccessoriesIcon />;
+              const icon = (catKey && CATEGORY_ICON_MAP[catKey]) || <AccessoryIcon />;
               const path = catKey ? `/lab-equipment/${catKey}` : null;
 
               return (

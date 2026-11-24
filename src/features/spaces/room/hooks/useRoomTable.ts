@@ -1,47 +1,34 @@
-﻿import { useUrlSearch } from '@/shared/hooks/useUrlSearch';
-import { useMemo, useState, type Key } from 'react';
+import { useUrlSearch } from '@/shared/hooks/useUrlSearch';
+import { useMemo, useState } from 'react';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
-import { useGetRoomsQuery, useGetRoomDropdownQuery, useGetRoomFiltersQuery } from '../api';
+import { useGetRoomsQuery, useGetRoomFiltersQuery } from '../api';
 import { useGetStationsQuery } from '../../station/api';
-import { mapRoomApiItem } from '../mapper';
-import { useGetUsersQuery, useServerEquipmentFilter } from '@/features/lab-equipment/shared';
-import { EQUIPMENT_FILTER_RULES } from '@/features/lab-equipment/shared/utils/equipmentFilterRules';
-import type { IRoom } from '../types';
-import { ROOM_OPTIONS_CONFIG } from '../columns/roomConfig';
+import { useGetUsersQuery } from '@/features/lab-equipment/shared';
 import { facetToAntdFilters, getFacetOptions } from '@/features/lab-equipment/shared/facets/filterFacets';
-import { toUserOption } from '@/shared/utils/userOption';
-
-type FilterItem   = { text: string; value: string };
-type SelectOption = { label: string; value: number };
+import { roomFilterParams, selectedRoomLocation, updateRoomFilters, type RoomFilters } from '../roomFilters';
+import { useRoomLocationOptions } from './useRoomLocationOptions';
+import type { IRoom } from '../types';
 
 export function useRoomTable() {
-  const [search,   setSearch]   = useUrlSearch();
-  const [page,     setPage]     = useState(1);
+  const [search, setSearch] = useUrlSearch();
+  const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [filters,  setFilters]  = useState<Record<string, Key[] | null>>({});
+  const [filters, setFilters] = useState<RoomFilters>({});
   const debouncedSearch = useDebouncedValue(search, 500);
 
   const listQuery = useGetRoomsQuery(
-    { page, page_size: pageSize, search: debouncedSearch || undefined, ordering: 'id' },
-    {
-      pollingInterval: 45000,
-      skipPollingIfUnfocused: true,
-    },
+    { page, page_size: pageSize, search: debouncedSearch || undefined, ordering: 'id', ...roomFilterParams(filters) },
+    { pollingInterval: 45000, skipPollingIfUnfocused: true },
   );
-  // The state columns (status = lifecycle, availability, activity) filter on the server's
-  // lifecycle_status, condition and activity_status parameters.
-  const serverFilters = useMemo(() => {
-    const { status, availability, activity, ...rest } = filters;
-    return { ...rest, lifecycle_status: status ?? null, condition: availability ?? null, activity_status: activity ?? null };
-  }, [filters]);
-  const serverFilter = useServerEquipmentFilter<IRoom>({ filters: serverFilters, filterKey: 'Room', filterRules: EQUIPMENT_FILTER_RULES.Room, page, mapItem: mapRoomApiItem });
-  const dropdownQuery = useGetRoomDropdownQuery();
+  const locationOptions = useRoomLocationOptions(selectedRoomLocation(filters));
   const facetsQuery = useGetRoomFiltersQuery();
-  const usersQuery    = useGetUsersQuery();
+  const usersQuery = useGetUsersQuery();
+  const ownerFilters = facetToAntdFilters(getFacetOptions(facetsQuery.data, 'owner_id', 'owner', 'primary_owner'))
+    ?? usersQuery.data?.map((user) => ({ text: user.display_name || user.username, value: user.id }));
 
-  const baseRows    = useMemo(() => serverFilter.hasActiveFilters ? serverFilter.data : listQuery.data?.data ?? [], [listQuery.data?.data, serverFilter.data, serverFilter.hasActiveFilters]);
+  const baseRows = listQuery.currentData?.data;
   // The room payload carries no stations, so load those of the rooms on this page and attach them.
-  const pageRoomIds = useMemo(() => baseRows.map((room) => room.id).join(','), [baseRows]);
+  const pageRoomIds = useMemo(() => (baseRows ?? []).map((room) => room.id).join(','), [baseRows]);
   const pageStationsQuery = useGetStationsQuery(
     { page: 1, page_size: 100, ordering: 'id', room_id: pageRoomIds },
     { skip: !pageRoomIds },
@@ -55,71 +42,24 @@ export function useRoomTable() {
       list.push({ id: station.id, sku: station.sku, name: station.name });
       byRoom.set(roomId, list);
     }
-    return baseRows.map((room) => ({ ...room, rack_list: byRoom.get(room.id) ?? room.rack_list }));
+    return (baseRows ?? []).map((room) => ({ ...room, rack_list: byRoom.get(room.id) ?? room.rack_list }));
   }, [baseRows, pageStationsQuery.data?.data]);
-  // Collect raw data keyed by ROOM_OPTIONS_CONFIG key
-  const rawSources = useMemo(() => {
-    const owners = (usersQuery.data ?? []).map((u) => ({
-      id: u.id,
-      username: u.username || u.display_name || String(u.id),
-    }));
-    return {
-      city:          dropdownQuery.data?.cities     ?? [],
-      building:      dropdownQuery.data?.buildings  ?? [],
-      country:       dropdownQuery.data?.countries  ?? [],
-      primary_owner: owners,
-    } as unknown as Record<string, Record<string, unknown>[]>;
-  }, [dropdownQuery.data, usersQuery.data]);
 
-  // One pass over ROOM_OPTIONS_CONFIG builds both maps  no per-field boilerplate
-  const { optionsMap, filtersMap } = useMemo(() => {
-    const optionsMap: Record<string, SelectOption[]> = {};
-    const filtersMap: Record<string, FilterItem[]>   = {};
-    for (const cfg of ROOM_OPTIONS_CONFIG) {
-      const items = rawSources[cfg.key] ?? [];
-      optionsMap[cfg.key] = items.map((item) => ({
-        label: String(item[cfg.labelField] ?? ''),
-        value: item[cfg.valueField] as number,
-      }));
-      filtersMap[cfg.key] = items.map((item) => {
-        const label = String(item[cfg.labelField] ?? '');
-        const id = item[cfg.valueField];
-        return { text: label, value: String(id ?? label) };
-      });
-    }
-    optionsMap.primary_owner = (usersQuery.data ?? []).map(toUserOption) as unknown as SelectOption[];
-    for (const key of ['country', 'city', 'building', 'primary_owner']) {
-      const facetKey = key === 'primary_owner' ? ['primary_owner', 'owner', 'owner_id'] : [key, `${key}_id`];
-      const facetItems = facetToAntdFilters(getFacetOptions(facetsQuery.data, ...facetKey));
-      if (facetItems?.length) {
-        filtersMap[key] = facetItems.map(({ text, value }) => ({ text: String(text), value: String(value) }));
-        if (key !== 'primary_owner') {
-          optionsMap[key] = facetItems
-            .filter(({ value }) => typeof value === 'number' || /^\d+$/.test(String(value)))
-            .map(({ text, value }) => ({ label: String(text), value: Number(value) }));
-        }
-      }
-    }
-    return { optionsMap, filtersMap };
-  }, [rawSources, facetsQuery.data, usersQuery.data]);
-
-  const statusFacetFilters = facetToAntdFilters(getFacetOptions(facetsQuery.data, 'status', 'status_type'));
-  const statusFilters = useMemo(
-    () => statusFacetFilters?.map(({ text, value }) => ({ text, value: String(value) })) ?? [],
-    [statusFacetFilters],
-  );
+  const setTableFilters = (nextFilters: RoomFilters) => {
+    setFilters((previous) => updateRoomFilters(previous, nextFilters));
+    setPage(1);
+  };
 
   return {
-    search,   setSearch,
-    page,     setPage,
+    search, setSearch,
+    page, setPage,
     pageSize, setPageSize,
-    filters,  setFilters,
+    filters, setFilters: setTableFilters,
     rows,
-    totalRecords: serverFilter.hasActiveFilters ? serverFilter.totalCount : listQuery.data?.total_count ?? 0,
-    isFetching:   serverFilter.isFetching || listQuery.isFetching,
-    refetch:      serverFilter.hasActiveFilters ? serverFilter.refetch : listQuery.refetch,
-    optionsMap,
-    filtersMap,
-    statusFilters,
+    totalRecords: listQuery.currentData?.total_count ?? 0,
+    isFetching: listQuery.isFetching,
+    refetch: listQuery.refetch,
+    locationOptions,
+    ownerFilters,
   };
 }

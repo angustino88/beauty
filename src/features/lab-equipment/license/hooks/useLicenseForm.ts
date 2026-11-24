@@ -1,4 +1,5 @@
 import dayjs from 'dayjs';
+import { nullableNumber } from '@/shared/utils/resourceReferences';
 import {
   useCreateLicenseMutation,
   useDeleteLicenseMutation,
@@ -9,19 +10,12 @@ import {
   useReleaseLicenseMutation,
 } from '../api';
 import { diffAssignments } from '../assignments';
-import { notifyEquipmentCreated, notifyEquipmentError, toId, useEquipmentCrudActions } from '../../shared';
+import { notifyEquipmentCreated, notifyEquipmentError, useEquipmentCrudActions } from '../../shared';
 import type { ILicensePayload } from '../types';
 
 export type LicenseUpsertPayload = Omit<ILicensePayload, 'carrier_device'> & {
   maximum_version?: string | null;
   license_ID?: string | null;
-};
-
-const toNullableId = (value: unknown): number | null => {
-  const id = toId(value);
-  if (id == null || id === '') return null;
-  const numericId = Number(id);
-  return Number.isNaN(numericId) ? null : numericId;
 };
 
 const toDateString = (value: unknown): string | null | undefined => {
@@ -49,10 +43,6 @@ export function useLicenseForm() {
     updateMutation: updateLicense,
     updateImageMutation,
     deleteMutation: deleteLicense,
-    mapStatusBody: (values) => ({
-      status: values.status_type,
-      current_status: values,
-    }),
     labels: {
       entityName: 'License',
       entityNameLower: 'license',
@@ -70,12 +60,14 @@ export function useLicenseForm() {
       license_seats: toSeats(values.license_seats),
       remark: typeof values.remark === 'string' ? values.remark : undefined,
       expiry_date: toDateString(values.expiry_date),
-      license_product: toNullableId(values.license_product),
-      license_vendor: toNullableId(values.license_vendor),
-      license_category: toNullableId(values.license_category),
-      license_type: toNullableId(values.license_type),
-      license_restriction: toNullableId(values.license_restriction),
-      primary_owner: toNullableId(values.primary_owner),
+      license_product: nullableNumber(values.license_product),
+      license_vendor: nullableNumber(values.license_vendor),
+      license_category: nullableNumber(values.license_category),
+      license_type: nullableNumber(values.license_type),
+      license_restriction: nullableNumber(values.license_restriction),
+      primary_owner: nullableNumber(values.primary_owner),
+      department_id: nullableNumber(values.department_id),
+      group_id: nullableNumber(values.group_id),
     };
 
     try {

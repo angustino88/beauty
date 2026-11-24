@@ -28,11 +28,11 @@ export function MonitoringEventsPanel({ benchId, computingId, computingLabel, on
   const [rowAdded, setRowAdded] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
   const prevLengthRef = useRef(0);
-  const [period, setPeriod] = useState<{ from_date_time?: string; to_date_time?: string }>({});
+  const [period, setPeriod] = useState<{ from_date?: string; to_date?: string }>({});
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  const filter = { lab: benchId, computing_id: computingId, ...period };
+  const filter = { bench_id: benchId, computing_id: computingId, ...period };
   const [fetchExport] = useLazyGetLabMonitoringExportQuery();
   const { data, currentData, isFetching, refetch } = useGetLabMonitoringListQuery({ ...filter, page, page_size: pageSize });
   // Spinner only while the shown rows are for other filters/page; a live or manual refetch swaps rows silently.
@@ -54,7 +54,7 @@ export function MonitoringEventsPanel({ benchId, computingId, computingLabel, on
 
   const handleFilterChange = useCallback((_: unknown, allValues: Record<string, unknown>) => {
     const range = allValues?.period as [Dayjs, Dayjs] | undefined;
-    setPeriod({ from_date_time: range?.[0]?.format() ?? undefined, to_date_time: range?.[1]?.format() ?? undefined });
+    setPeriod({ from_date: range?.[0]?.format() ?? undefined, to_date: range?.[1]?.format() ?? undefined });
     setPage(1);
   }, []);
 

@@ -1,3 +1,6 @@
+import { nullableNumber, ownershipPayload } from '../../../../shared/utils/resourceReferences.ts';
+import { useOwnershipFields } from "@/features/lab-equipment/shared/hooks/useOwnershipFields";
+import { roomDetailsPayload } from "../mapper";
 import { useMemo, useState } from "react";
 import { WorkbookImportButton } from "@/features/data-import";
 import { skipToken } from "@reduxjs/toolkit/query";
@@ -12,13 +15,12 @@ import {
 } from "@/features/lab-equipment/shared";
 import type { IRoom, IRoomPayload } from "../types";
 import SpaceOverview from "../../shared/SpaceOverview";
+import { roomLocationIds, selectedRoomLocation } from "../roomFilters";
+import { useRoomLocationOptions } from "../hooks/useRoomLocationOptions";
 import { useRoomTable } from "../hooks/useRoomTable";
 import { useRoomForm } from "../hooks/useRoomForm";
 import { buildRoomColumns, buildRoomFormFields, toRoomFormValues } from "../columns/roomColumns";
 import { usePermission } from '@/features/auth/hooks/useCan';
-
-const nullableNumber = (value: unknown): number | null =>
-  value == null || value === "" || Number.isNaN(Number(value)) ? null : Number(value);
 
 /** Form values → the room write payload. The SKU is never sent on edit: it cannot change after creation. */
 const toRoomUpdatePayload = (values: Record<string, unknown>): IRoomPayload & Record<string, unknown> => ({
@@ -35,7 +37,6 @@ const toRoomUpdatePayload = (values: Record<string, unknown>): IRoomPayload & Re
   city: nullableNumber(values.city),
   building: nullableNumber(values.building),
   max_power: nullableNumber(values.max_power),
-  primary_owner: nullableNumber(values.primary_owner),
 });
 
 export default function RoomPage() {
@@ -55,7 +56,18 @@ export default function RoomPage() {
     historyId === null ? skipToken : { id: historyId, page: historyPage, pageSize: historyPageSize },
   );
 
-  const formFields = useMemo(() => buildRoomFormFields(table.optionsMap), [table.optionsMap]);
+  const formOpen = createOpen || editingRoom !== null;
+  const ownership = useOwnershipFields(formOpen, editingRoom);
+  const [formLocation, setFormLocation] = useState(() => roomLocationIds({}));
+  const locationOptions = useRoomLocationOptions(formLocation, formOpen, editingRoom?.location_info ?? undefined);
+  const formFields = [
+    ...buildRoomFormFields(locationOptions),
+    ...ownership.fields,
+  ];
+  const handleFormValues = (values: Record<string, unknown>) => {
+    ownership.setDepartmentId(values.department_id);
+    setFormLocation(roomLocationIds(values));
+  };
   const editValues = useMemo(() => (editingRoom ? toRoomFormValues(editingRoom) : undefined), [editingRoom]);
 
   const actionsRenderer = createActionsRenderer<IRoom>({
@@ -73,7 +85,8 @@ export default function RoomPage() {
 
   const columns = buildRoomColumns({
     activeFilters: table.filters,
-    filtersMap: table.filtersMap,
+    locationOptions: table.locationOptions,
+    ownerFilters: table.ownerFilters,
     actionsRenderer,
   });
 
@@ -118,20 +131,17 @@ export default function RoomPage() {
           setHistoryPageSize(nextPageSize);
         }}
         onHistoryClose={() => setHistoryId(null)}
-        searchPlaceholder="Search by SKU, Name, Location, Country, etc."
-        detailValueLabels={{
-          Country: Object.fromEntries(
-            (table.optionsMap.country ?? []).map((option) => [String(option.value), option.label]),
-          ),
-        }}
+        searchPlaceholder="Search by SKU, name, or label"
       />
 
       <EquipmentFormModal
         open={createOpen}
         mode="create"
         title="New Room"
+        initialValues={selectedRoomLocation(table.filters)}
         professionalForm
         fields={formFields}
+        onValuesChange={handleFormValues}
         onSubmit={async (values, imageFile) => {
           await form.createFromValues(values, imageFile);
           setCreateOpen(false);
@@ -146,10 +156,15 @@ export default function RoomPage() {
         title={editingRoom ? `Edit Room ${editingRoom.sku}` : "Edit Room"}
         professionalForm
         fields={formFields}
+        onValuesChange={handleFormValues}
         initialValues={editValues}
         onSubmit={async (values, imageFile) => {
           if (!editingRoom) return;
-          await form.updateInline(editingRoom.id, toRoomUpdatePayload(values));
+          await form.updateInline(editingRoom.id, {
+            ...toRoomUpdatePayload(values),
+            ...ownershipPayload(values, editingRoom),
+            ...roomDetailsPayload(values, editingRoom),
+          });
           await form.syncSlots(editingRoom.id, values);
           if (imageFile) await form.updateImage(editingRoom.id, imageFile);
           else if (imageFile === null) await form.removeImage(editingRoom.id);

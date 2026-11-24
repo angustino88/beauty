@@ -9,5 +9,5 @@ export { BenchPage } from "./bench";
 export { MappingPage, MappingVisualization } from "./mapping";
 export type { ResourceMappingRow } from "./mapping";
 export type { IRoom, IRoomDashboardLayout, IRoomDashboardSlot, IRoomDashboardRack } from "./room";
-export type { IStation, IRack } from "./station";
-export type { IBench, ILabInfo } from "./bench";
+export type { IStation } from "./station";
+export type { IBench } from "./bench";

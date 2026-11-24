@@ -346,7 +346,6 @@ export function mapPurchaseItemResource(raw: unknown): IPurchaseItemResource {
     return {
       id: 0,
       purchase_item_id: 0,
-      resource_type_id: 0,
       resource_id: 0,
       created_at: '',
     };
@@ -377,7 +376,6 @@ export function mapPurchaseItemResource(raw: unknown): IPurchaseItemResource {
     id: typeof res.id === 'number' ? res.id : Number(res.id ?? 0),
     purchase_item_id: extractIdFromObject(res.purchase_item) ?? Number(res.purchase_item_id ?? 0),
     resource_kind: resourceKind,
-    resource_type_id: res.resource_type_id ? Number(res.resource_type_id) : undefined,
     resource_id: Number(res.resource_id ?? 0),
     resource_name: resourceName,
     acquisition_price: acquisitionPrice,

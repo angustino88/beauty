@@ -1,4 +1,6 @@
-import type { IEquipmentStatus, ILabAudit, IPrimaryOwner } from "@/features/lab-equipment/shared";
+import type { BenchCreate } from "@/shared/api/generated/api";
+import type { NamedReference } from '@/shared/utils/resourceReferences';
+import type { ILabAudit, IPrimaryOwner } from "@/features/lab-equipment/shared";
 import type {
   ActivityStatus,
   Availability,
@@ -15,7 +17,8 @@ export interface IBench extends ResourceState {
   name: string;
   bench_group?: { id: number; name: string } | null;
   bench_type?: { id: number; name: string } | null;
-  department?: { id: number; name: string } | null;
+  department?: NamedReference | null;
+  group?: NamedReference | null;
   primary_owner?: IPrimaryOwner | null;
   setup_location_id?: number | null;
   station_slot_id?: number | null;
@@ -25,30 +28,24 @@ export interface IBench extends ResourceState {
   station?: { id: number; sku: string; name: string } | null;
   room?: { id: number; sku: string; name: string } | null;
   equipment_count?: number;
+  equipment_url?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
   is_favorite?: boolean;
   lifecycle_status: Choice<LifecycleStatus>;
   condition: Choice<Condition>;
   availability: Availability;
   activity_status: Choice<ActivityStatus>;
-  /** @deprecated use lifecycle_status, condition, availability, activity_status */
-  status?: string | null;
-  status_label?: string | null;
-  current_status?: IEquipmentStatus | null;
   remark?: string | null;
   image?: string | null;
   location_name?: string | null;
   lab_audit?: ILabAudit | null;
 }
 
-/** Legacy alias for compatibility during migration */
-export type ILabInfo = IBench;
-
 export interface IBenchListResponse {
   total_count: number;
   data: IBench[];
 }
-
-export type ILabInfoListResponse = IBenchListResponse;
 
 export interface IBenchParams {
   page?: number;
@@ -62,14 +59,10 @@ export interface IBenchParams {
   lifecycle_status?: string;
   condition?: string;
   activity_status?: string;
-  /** @deprecated */
-  status?: string;
   favorite?: boolean;
 }
 
-export type ILabInfoParams = IBenchParams;
-
-export interface IBenchPayload {
+export interface IBenchPayload extends Partial<Omit<BenchCreate, "remark">> {
   sku?: string;
   name?: string;
   type_id?: number | null;
@@ -83,8 +76,6 @@ export interface IBenchPayload {
   station_slot_id?: number | null;
   remark?: string | null;
 }
-
-export type ILabInfoUpsertPayload = IBenchPayload;
 
 export interface IBenchGroup {
   id: number;

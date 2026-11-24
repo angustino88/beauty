@@ -73,7 +73,6 @@ export const stationApi = baseApi.injectEndpoints({
         if (params.condition) queryParams.set("condition", params.condition);
         if (params.activity_status) queryParams.set("activity_status", params.activity_status);
         if (params.lifecycle_status) queryParams.set("lifecycle_status", params.lifecycle_status);
-        if (params.status) queryParams.set("status", params.status);
         const qs = queryParams.toString();
         return { url: `${ENDPOINTS.LIST}${qs ? `?${qs}` : ""}` };
       },
@@ -156,21 +155,6 @@ export const stationApi = baseApi.injectEndpoints({
       ],
     }),
 
-    changeStationStatus: build.mutation<
-      void,
-      { stationId: number; body: { status: string; effective_date?: string; reason?: string } }
-    >({
-      query: ({ stationId, body }) => ({
-        url: `/api/labs/stations/${stationId}/actions/change-status`,
-        method: "POST",
-        body,
-      }),
-      invalidatesTags: (_res, _err, { stationId }) => [
-        ...generateItemTag(TAG, stationId),
-        ...invalidateList(TAG),
-      ],
-    }),
-
     changeStationLifecycle: build.mutation<
       IStation,
       {
@@ -217,7 +201,6 @@ export const stationApi = baseApi.injectEndpoints({
         slot_code: string;
         label?: string;
         is_occupied: boolean;
-        is_active: boolean;
         service_status?: { value?: string; label?: string } | string | null;
       }>,
       number
@@ -231,7 +214,6 @@ export const stationApi = baseApi.injectEndpoints({
           slot_code: String(s.slot_code ?? ""),
           label: s.label ? String(s.label) : undefined,
           is_occupied: Boolean(s.is_occupied),
-          is_active: s.is_active !== false,
           service_status: (s.service_status as { value?: string; label?: string } | string | null | undefined) ?? null,
         }));
       },
@@ -280,7 +262,6 @@ export const {
   useDeleteStationMutation,
   useForceDeleteStationMutation,
   usePlaceStationMutation,
-  useChangeStationStatusMutation,
   useChangeStationLifecycleMutation,
   useUpdateStationImageMutation,
   useDeleteStationImageMutation,
@@ -289,11 +270,3 @@ export const {
   useGetStationDropdownQuery,
   useGetStationFiltersQuery,
 } = stationApi;
-
-/** Legacy alias for backwards compatibility during migration */
-export const useGetRacksQuery = useGetStationsQuery;
-export const useGetRackByIdQuery = useGetStationByIdQuery;
-export const useCreateRackMutation = useCreateStationMutation;
-export const useUpdateRackMutation = useUpdateStationMutation;
-export const useDeleteRackMutation = useDeleteStationMutation;
-export const usePlaceRackMutation = usePlaceStationMutation;

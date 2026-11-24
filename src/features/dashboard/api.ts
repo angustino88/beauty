@@ -45,7 +45,7 @@ const patchDashboardPageCaches = (
 export const dashboardApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
     /**
-     * GET /api/labs/dashboard/?page=N&page_size=M&q=...&status=...&bench_group=...
+     * GET /api/labs/dashboard/?page=N&page_size=M&q=...&activity_status=...&bench_group=...
      * Operational dashboard bench listing with real-time telemetry and schedule data.
      */
     getDashboardPage: build.query<DashboardPageResponse, DashboardPageParams>({
@@ -59,8 +59,7 @@ export const dashboardApi = baseApi.injectEndpoints({
         // The list takes one value per filter and rejects repeated or unknown params, so a
         // multi-select sends its first value; sample and license filters are applied on the page.
         if (params.status?.length) searchParams.set('activity_status', params.status[0]);
-        const groups = params.bench_group ?? params.lab_group;
-        if (groups?.length) searchParams.set('bench_group', String(groups[0]));
+        if (params.bench_group?.length) searchParams.set('bench_group', String(params.bench_group[0]));
         if (params.is_favorite !== undefined) {
           searchParams.set('is_favorite', String(params.is_favorite));
         }
@@ -89,15 +88,11 @@ export const dashboardApi = baseApi.injectEndpoints({
      */
     getBenchFilterOptions: build.query<BenchFilterOptions, void>({
       query: () => '/api/labs/bench-groups',
-      transformResponse: (res: LabsBenchGroupsRetrieveApiResponse) => {
-        const benchGroups = mapBenchGroupsResponse(res);
-        return {
-          bench_groups: benchGroups,
-          lab_groups: benchGroups,
-          locations: [],
-          statuses: [],
-        };
-      },
+      transformResponse: (res: LabsBenchGroupsRetrieveApiResponse) => ({
+        bench_groups: mapBenchGroupsResponse(res),
+        locations: [],
+        statuses: [],
+      }),
       keepUnusedDataFor: 300,
     }),
 
@@ -116,21 +111,16 @@ export const dashboardApi = baseApi.injectEndpoints({
      * POST /api/labs/benches/{bench_id}/actions/favorite
      * Mark bench as favorite with optimistic cache update.
      */
-    addFavorite: build.mutation<{ data: { is_favorite: boolean } }, { labId?: number; benchId?: number }>({
-      query: ({ labId, benchId }) => {
-        const id = benchId ?? labId;
-        return {
-          url: `/api/labs/benches/${id}/actions/favorite`,
-          method: 'POST',
-        };
-      },
+    addFavorite: build.mutation<{ data: { is_favorite: boolean } }, { benchId: number }>({
+      query: ({ benchId }) => ({
+        url: `/api/labs/benches/${benchId}/actions/favorite`,
+        method: 'POST',
+      }),
       transformResponse: (res: LabsBenchesActionsFavoriteCreateByBenchIdApiResponse) =>
         mapFavoriteResponse(res),
-      async onQueryStarted({ labId, benchId }, { dispatch, getState, queryFulfilled }) {
-        const targetId = benchId ?? labId;
-        if (targetId == null) return;
+      async onQueryStarted({ benchId }, { dispatch, getState, queryFulfilled }) {
         const patchResults = patchDashboardPageCaches(dispatch, getState, (draft) => {
-          const item = draft.results.find((l) => l.id === targetId);
+          const item = draft.results.find((l) => l.id === benchId);
           if (item) item.is_favorite = true;
         });
         try {
@@ -147,20 +137,15 @@ export const dashboardApi = baseApi.injectEndpoints({
      * DELETE /api/labs/benches/{bench_id}/actions/favorite
      * Unfavorite bench with optimistic cache update.
      */
-    removeFavorite: build.mutation<void, { labId?: number; benchId?: number }>({
-      query: ({ labId, benchId }) => {
-        const id = benchId ?? labId;
-        return {
-          url: `/api/labs/benches/${id}/actions/favorite`,
-          method: 'DELETE',
-        };
-      },
-      async onQueryStarted({ labId, benchId }, { dispatch, getState, queryFulfilled }) {
-        const targetId = benchId ?? labId;
-        if (targetId == null) return;
+    removeFavorite: build.mutation<void, { benchId: number }>({
+      query: ({ benchId }) => ({
+        url: `/api/labs/benches/${benchId}/actions/favorite`,
+        method: 'DELETE',
+      }),
+      async onQueryStarted({ benchId }, { dispatch, getState, queryFulfilled }) {
         const patchResults = patchDashboardPageCaches(dispatch, getState, (draft, args) => {
           if (args.is_favorite) {
-            const idx = draft.results.findIndex((l) => l.id === targetId);
+            const idx = draft.results.findIndex((l) => l.id === benchId);
             if (idx !== -1) {
               draft.results.splice(idx, 1);
               draft.total_count = Math.max(0, draft.total_count - 1);
@@ -168,7 +153,7 @@ export const dashboardApi = baseApi.injectEndpoints({
             return;
           }
 
-          const item = draft.results.find((l) => l.id === targetId);
+          const item = draft.results.find((l) => l.id === benchId);
           if (item) item.is_favorite = false;
         });
         try {
@@ -191,6 +176,3 @@ export const {
   useAddFavoriteMutation,
   useRemoveFavoriteMutation,
 } = dashboardApi;
-
-export const useGetLabFilterOptionsQuery = useGetBenchFilterOptionsQuery;
-export const useGetLabDetailQuery = useGetBenchDetailQuery;

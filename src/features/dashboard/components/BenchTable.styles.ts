@@ -75,5 +75,3 @@ export const useBenchTableStyles = createStyles(({ css }) => ({
     &:hover .anticon { color: var(--lm-primary) !important; }
   `,
 }));
-
-export const useLabDeviceTableStyles = useBenchTableStyles;

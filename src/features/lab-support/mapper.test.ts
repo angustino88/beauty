@@ -25,7 +25,6 @@ test('mapSupportTicket maps native support ticket data correctly', () => {
   assert.equal(ticket.id, 101);
   assert.equal(ticket.key, 'TIC-101');
   assert.equal(ticket.subject, 'Oscilloscope calibration error');
-  assert.equal(ticket.summary, 'Oscilloscope calibration error');
   assert.equal(ticket.category?.name, 'Measurement');
   assert.equal(typeof ticket.priority === 'object' ? ticket.priority?.name : ticket.priority, 'High');
   assert.equal(typeof ticket.status === 'object' ? ticket.status?.name : ticket.status, 'Open');

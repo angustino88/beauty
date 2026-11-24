@@ -15,7 +15,6 @@ export interface StationSlotLike {
   slot_code: string;
   label?: string | null;
   is_occupied?: boolean | null;
-  is_active?: boolean | null;
   service_status?: ChoiceLike | string | null;
 }
 
@@ -45,9 +44,7 @@ function readChoiceValue(field: ChoiceLike | string | null | undefined): string 
 }
 
 function stationSlotServiceStatus(slot: StationSlotLike): string {
-  const explicit = readChoiceValue(slot.service_status);
-  if (explicit) return explicit;
-  return slot.is_active === false ? "out_of_service" : "in_service";
+  return readChoiceValue(slot.service_status) ?? "in_service";
 }
 
 function roomSlotServiceStatus(slot: RoomSlotLike): string {
