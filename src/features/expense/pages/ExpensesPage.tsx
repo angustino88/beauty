@@ -23,10 +23,11 @@ import { formatMoney } from '@/features/finance/components/formatMoney';
 import styles from '@/features/finance/components/FinanceWorkspace.module.css';
 import { FullTextSearch } from '@/components/inputs/FullTextSearch';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
-import type { BillingPeriodEnum, ExpenseTypeEnum, IExpense } from '../types';
+import type { BillingPeriodEnum, ExpenseResourceKind, ExpenseTypeEnum, IExpense } from '../types';
 import {
-  EXPENSE_TYPE_LABELS,
   BILLING_PERIOD_LABELS,
+  EXPENSE_RESOURCE_KIND_LABELS,
+  EXPENSE_TYPE_LABELS,
 } from '../mapper';
 import {
   useGetExpenseRoomsQuery,
@@ -40,6 +41,7 @@ import tableStyles from '@/components/tables/AppTable.module.css';
 const EMPTY_EXPENSES: IExpense[] = [];
 
 export const ExpensesPage: React.FC = () => {
+  const [selectedResourceKind, setSelectedResourceKind] = useState<ExpenseResourceKind | undefined>(undefined);
   const [selectedRoomId, setSelectedRoomId] = useState<number | undefined>(undefined);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -61,6 +63,7 @@ export const ExpensesPage: React.FC = () => {
     refetch,
   } = useGetFacilityExpensesQuery({
     roomId: selectedRoomId,
+    resource_kind: selectedRoomId ? 'room' : selectedResourceKind,
     page,
     page_size: pageSize,
     expense_type: typeFilter,
@@ -76,6 +79,7 @@ export const ExpensesPage: React.FC = () => {
     return rawExpenses.filter(
       (e) =>
         e.name.toLowerCase().includes(term) ||
+        e.resource_name?.toLowerCase().includes(term) ||
         e.supplier?.toLowerCase().includes(term) ||
         e.reference?.toLowerCase().includes(term) ||
         e.notes?.toLowerCase().includes(term),
@@ -117,12 +121,15 @@ export const ExpensesPage: React.FC = () => {
       ),
     },
     {
-      title: 'Room',
-      dataIndex: 'room_name',
-      key: 'room_name',
-      width: 140,
-      render: (roomName?: string, record?: IExpense) => (
-        <span>{roomName || (record ? `Room #${record.room_id}` : '—')}</span>
+      title: 'Resource',
+      dataIndex: 'resource_name',
+      key: 'resource_name',
+      width: 185,
+      render: (_: string | undefined, record: IExpense) => (
+        <Space size={6}>
+          <span className={styles.mutedTag}>{record.resource_kind_label}</span>
+          <span>{record.resource_name || `${record.resource_kind_label} #${record.resource_id}`}</span>
+        </Space>
       ),
     },
     {
@@ -228,21 +235,44 @@ export const ExpensesPage: React.FC = () => {
 
       <section className={styles.surface} aria-label="Facility expense register">
         <div className={styles.surfaceHeading}>
-          <div><h2 className={styles.surfaceTitle}>Expense register</h2><p className={styles.surfaceDescription}>Filter by room, category or billing cycle to find an obligation.</p></div>
+          <div><h2 className={styles.surfaceTitle}>Expense register</h2><p className={styles.surfaceDescription}>Filter by resource type, room, category or billing cycle to find an obligation.</p></div>
           <span className={styles.count}>{totalCount.toLocaleString()} expenses</span>
         </div>
         <div className={styles.toolbar}>
           <div className={styles.filters}>
             <div className={styles.filterField}>
+              <label htmlFor="expense-resource-kind-filter">Resource type</label>
+              <Select
+                id="expense-resource-kind-filter"
+                style={{ width: 150 }}
+                allowClear
+                placeholder="All Resources"
+                value={selectedResourceKind}
+                onChange={(val: ExpenseResourceKind | undefined) => {
+                  setSelectedResourceKind(val);
+                  if (val && val !== 'room') {
+                    setSelectedRoomId(undefined);
+                  }
+                  setPage(1);
+                }}
+                options={Object.entries(EXPENSE_RESOURCE_KIND_LABELS).map(([value, label]) => ({
+                  value,
+                  label,
+                }))}
+              />
+            </div>
+
+            <div className={styles.filterField}>
               <label htmlFor="expense-room-filter">Facility / room</label>
               <Select
                 id="expense-room-filter"
-                style={{ width: 230 }}
+                style={{ width: 210 }}
                 loading={roomsLoading}
                 allowClear
                 value={selectedRoomId}
                 onChange={(val) => {
                   setSelectedRoomId(val);
+                  if (val) setSelectedResourceKind('room');
                   setPage(1);
                 }}
                 options={rooms.map((r) => ({
@@ -254,7 +284,7 @@ export const ExpensesPage: React.FC = () => {
                   ),
                   value: r.id,
                 }))}
-                placeholder="Entire Facility (All Rooms)"
+                placeholder="All Rooms"
               />
             </div>
 
@@ -301,7 +331,7 @@ export const ExpensesPage: React.FC = () => {
               <FullTextSearch
                 value={search}
                 onSearch={setSearch}
-                placeholder="Search name, supplier, ref..."
+                placeholder="Search name, resource, supplier, ref..."
               />
             </div>
           </div>
@@ -331,6 +361,7 @@ export const ExpensesPage: React.FC = () => {
       <CreateExpenseModal
         open={isCreateOpen}
         rooms={rooms}
+        defaultResourceKind={selectedResourceKind ?? 'room'}
         defaultRoomId={selectedRoomId ?? rooms[0]?.id}
         onClose={() => setIsCreateOpen(false)}
         onSuccess={() => void refetch()}

@@ -1,6 +1,7 @@
 import { baseApi } from '@/shared/lib/api';
 import type {
   BillingPeriodEnum,
+  ExpenseResourceKind,
   ExpenseTypeEnum,
   ICreateExpensePaymentPayload,
   ICreateExpensePayload,
@@ -29,6 +30,8 @@ export const expenseApi = baseApi.injectEndpoints({
       IExpenseListResponse,
       {
         roomId?: number;
+        resource_kind?: ExpenseResourceKind;
+        resource_id?: number;
         page?: number;
         page_size?: number;
         expense_type?: ExpenseTypeEnum;
@@ -36,59 +39,50 @@ export const expenseApi = baseApi.injectEndpoints({
       } | void
     >({
       query: (params) => {
-        if (params?.roomId) {
-          return {
-            url: `/api/labs/rooms/${params.roomId}/expenses`,
-            params: {
-              page: params.page ?? 1,
-              page_size: params.page_size ?? 10,
-              expense_type: params.expense_type,
-              billing_period: params.billing_period,
-            },
-          };
-        }
+        const resourceKind = params?.roomId ? 'room' : params?.resource_kind;
+        const resourceId = params?.roomId ?? params?.resource_id;
         return {
-          url: '/api/labs/expenses/report',
+          url: '/api/labs/expenses',
           params: {
-            expense_type: params?.expense_type,
-            billing_period: params?.billing_period,
+            page: params?.page ?? 1,
+            page_size: params?.page_size ?? 10,
+            ...(resourceKind ? { resource_kind: resourceKind } : {}),
+            ...(resourceKind && resourceId ? { resource_id: resourceId } : {}),
+            ...(params?.expense_type ? { expense_type: params.expense_type } : {}),
+            ...(params?.billing_period ? { billing_period: params.billing_period } : {}),
           },
         };
       },
-      transformResponse: (res: unknown, _meta, arg) => {
-        if (arg?.roomId) {
-          return mapExpenseListResponse(res, arg.roomId);
-        }
-        if (!res || typeof res !== 'object') {
-          return {
-            data: [],
-            pagination: { count: 0, page: 1, page_size: 10, next: null, previous: null },
-          };
-        }
-        const envelope = res as Record<string, unknown>;
-        const dataObj = (envelope.data && typeof envelope.data === 'object'
-          ? envelope.data
-          : envelope) as Record<string, unknown>;
-        const rawItems = Array.isArray(dataObj.items) ? dataObj.items : [];
-        const mapped = rawItems.map((it) => mapExpense(it));
-        return {
-          data: mapped,
-          pagination: {
-            count: mapped.length,
-            page: 1,
-            page_size: mapped.length || 10,
-            next: null,
-            previous: null,
-          },
-        };
-      },
+      transformResponse: (res: unknown, _meta, arg) =>
+        mapExpenseListResponse(res, arg?.roomId),
       providesTags: (_result, _err, arg) => [
         { type: 'Expense' as const, id: arg?.roomId ? `room-${arg.roomId}` : 'ALL' },
         { type: 'Expense' as const, id: 'LIST' },
       ],
     }),
 
-    getRoomExpenses: build.query<IExpenseListResponse, IExpenseQueryParams>({
+    createExpense: build.mutation<
+      IExpense,
+      ICreateExpensePayload & { resource_kind: ExpenseResourceKind; resource_id: number }
+    >({
+      query: (body) => ({
+        url: '/api/labs/expenses',
+        method: 'POST',
+        body: toExpenseWriteBody(body),
+      }),
+      transformResponse: (res: unknown, _meta, arg) => {
+        const envelope = (res as { data?: unknown })?.data ?? res;
+        return mapExpense(envelope, arg.resource_kind === 'room' ? arg.resource_id : undefined);
+      },
+      invalidatesTags: (_res, _err, arg) => [
+        ...(arg.resource_kind === 'room' ? [{ type: 'Expense' as const, id: `room-${arg.resource_id}` }] : []),
+        { type: 'Expense', id: 'ALL' },
+        { type: 'Expense', id: 'LIST' },
+        { type: 'FinanceReport', id: 'SUMMARY' },
+      ],
+    }),
+
+    getRoomExpenses: build.query<IExpenseListResponse, IExpenseQueryParams & { roomId: number }>({
       query: ({ roomId, page = 1, page_size = 10, expense_type, billing_period }) => ({
         url: `/api/labs/rooms/${roomId}/expenses`,
         params: {
@@ -193,6 +187,7 @@ export const expenseApi = baseApi.injectEndpoints({
 
 export const {
   useGetFacilityExpensesQuery,
+  useCreateExpenseMutation,
   useGetRoomExpensesQuery,
   useCreateRoomExpenseMutation,
   useGetExpensePaymentsQuery,

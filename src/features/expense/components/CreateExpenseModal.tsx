@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Modal,
   Form,
@@ -10,22 +10,33 @@ import {
 } from 'antd';
 import dayjs from 'dayjs';
 import styles from '@/features/finance/components/FinanceWorkspace.module.css';
+import {
+  useLabsBenchesOptionsRetrieveQuery,
+  useLabsStationsOptionsRetrieveQuery,
+} from '@/shared/api/generated/api';
+import { usePagedOptions } from '@/shared/hooks/usePagedOptions';
 import { getApiErrorMessage, notify } from '@/shared/notifications';
-import type { BillingPeriodEnum, ExpenseTypeEnum, ICreateExpensePayload } from '../types';
-import { EXPENSE_TYPE_LABELS, BILLING_PERIOD_LABELS } from '../mapper';
-import { useCreateRoomExpenseMutation } from '../api';
+import type { BillingPeriodEnum, ExpenseResourceKind, ExpenseTypeEnum } from '../types';
+import {
+  BILLING_PERIOD_LABELS,
+  EXPENSE_RESOURCE_KIND_LABELS,
+  EXPENSE_TYPE_LABELS,
+} from '../mapper';
+import { useCreateExpenseMutation } from '../api';
 import type { IRoomOption } from '../api';
 
 interface CreateExpenseModalProps {
   open: boolean;
   rooms: IRoomOption[];
+  defaultResourceKind?: ExpenseResourceKind;
   defaultRoomId?: number;
   onClose: () => void;
   onSuccess?: () => void;
 }
 
 interface FormValues {
-  room_id: number;
+  resource_kind: ExpenseResourceKind;
+  resource_id: number;
   name: string;
   expense_type: ExpenseTypeEnum;
   billing_period: BillingPeriodEnum;
@@ -46,20 +57,86 @@ const CURRENCY_OPTIONS = [
   { label: 'CHF (Fr)', value: 'CHF' },
 ];
 
+const RESOURCE_KIND_OPTIONS = (
+  Object.entries(EXPENSE_RESOURCE_KIND_LABELS) as [ExpenseResourceKind, string][]
+).map(([value, label]) => ({ value, label }));
+
 export const CreateExpenseModal: React.FC<CreateExpenseModalProps> = ({
   open,
   rooms,
+  defaultResourceKind = 'room',
   defaultRoomId,
   onClose,
   onSuccess,
 }) => {
   const [form] = Form.useForm<FormValues>();
-  const [createExpense, { isLoading }] = useCreateRoomExpenseMutation();
+  const [selectedKind, setSelectedKind] = useState<ExpenseResourceKind>(defaultResourceKind);
+  const [createExpense, { isLoading }] = useCreateExpenseMutation();
+
+  const { data: benchOptions, isFetching: loadingBenches } =
+    useLabsBenchesOptionsRetrieveQuery({}, { skip: !open || selectedKind !== 'bench' });
+  const { data: stationOptions, isFetching: loadingStations } =
+    useLabsStationsOptionsRetrieveQuery({}, { skip: !open || selectedKind !== 'station' });
+
+  const equipmentPaged = usePagedOptions({
+    path: '/api/labs/equipment',
+    noun: 'equipment',
+    enabled: open && selectedKind === 'equipment',
+    toOption: (row: { id: number; name?: string | null; sku?: string | null }) => ({
+      label: `${row.name ?? ''}${row.sku ? ` (${row.sku})` : ''} — ID #${row.id}`,
+      value: row.id,
+    }),
+  });
+
+  const licensePaged = usePagedOptions({
+    path: '/api/labs/licenses',
+    noun: 'licenses',
+    enabled: open && selectedKind === 'license',
+    toOption: (row: { id: number; name?: string | null; sku?: string | null }) => ({
+      label: `${row.name || row.sku || 'License'}${row.sku && row.name ? ` (${row.sku})` : ''} — ID #${row.id}`,
+      value: row.id,
+    }),
+  });
+
+  const paged =
+    selectedKind === 'equipment'
+      ? equipmentPaged
+      : selectedKind === 'license'
+        ? licensePaged
+        : null;
+
+  const resourceOptions = (() => {
+    if (paged) return paged.options;
+    if (selectedKind === 'room') {
+      return rooms.map((r) => ({ label: r.name, value: r.id }));
+    }
+    if (selectedKind === 'bench') {
+      return (benchOptions?.data ?? []).map((item) => ({
+        label: `${item.name}${item.sku ? ` (${item.sku})` : ''} — ID #${item.id}`,
+        value: item.id,
+      }));
+    }
+    if (selectedKind === 'station') {
+      return (stationOptions?.data ?? []).map((item) => ({
+        label: `${item.name}${item.sku ? ` (${item.sku})` : ''} — ID #${item.id}`,
+        value: item.id,
+      }));
+    }
+    return [];
+  })();
+
+  const isResourceOptionsLoading =
+    (paged?.loading ?? false) ||
+    (selectedKind === 'bench' && loadingBenches) ||
+    (selectedKind === 'station' && loadingStations);
 
   const handleFinish = async (values: FormValues) => {
     try {
-      const payload: ICreateExpensePayload = {
-        name: values.name.trim(),
+      const name = values.name.trim();
+      await createExpense({
+        resource_kind: values.resource_kind,
+        resource_id: Number(values.resource_id),
+        name,
         expense_type: values.expense_type,
         billing_period: values.billing_period,
         amount: Number(values.amount).toFixed(2),
@@ -69,17 +146,13 @@ export const CreateExpenseModal: React.FC<CreateExpenseModalProps> = ({
         supplier: values.supplier?.trim() || undefined,
         reference: values.reference?.trim() || undefined,
         notes: values.notes?.trim() || undefined,
-      };
-
-      await createExpense({
-        roomId: values.room_id,
-        body: payload,
       }).unwrap();
 
       notify.success('Expense created', {
-        description: `Saved "${payload.name}".`,
+        description: `Saved "${name}".`,
       });
       form.resetFields();
+      setSelectedKind(defaultResourceKind);
       onClose();
       onSuccess?.();
     } catch (err) {
@@ -101,7 +174,7 @@ export const CreateExpenseModal: React.FC<CreateExpenseModalProps> = ({
 
   return (
     <Modal
-      title="Create Room Expense"
+      title="Create Resource Expense"
       open={open}
       onCancel={onClose}
       width={680}
@@ -114,26 +187,50 @@ export const CreateExpenseModal: React.FC<CreateExpenseModalProps> = ({
         layout="vertical"
         onFinish={handleFinish}
         initialValues={{
-          room_id: defaultRoomId ?? rooms[0]?.id,
-          expense_type: 'maintenance',
+          resource_kind: defaultResourceKind,
+          resource_id: defaultResourceKind === 'room' ? (defaultRoomId ?? rooms[0]?.id) : undefined,
+          expense_type: defaultResourceKind === 'license' ? 'license_fee' : 'maintenance',
           billing_period: 'monthly',
           currency: 'EUR',
           valid_from: dayjs(),
           amount: 0,
         }}
       >
-        <div className={styles.formIntro}><strong>New facility obligation</strong>Specify the room and billing schedule first. Track payments from the expense details after creation.</div>
+        <div className={styles.formIntro}>
+          <strong>New operational obligation</strong>
+          Attach an ongoing cost to a room, station, bench, equipment item, or software license, then record payments from its detail drawer.
+        </div>
         <div className={styles.formGrid}>
           <Form.Item
-            className={styles.formFull}
-            name="room_id"
-            label="Lab Facility / Room"
-            rules={[{ required: true, message: 'Please select a lab room or zone' }]}
-            help="Select the lab room or facility zone where this expense is incurred"
+            name="resource_kind"
+            label="Resource Type"
+            rules={[{ required: true, message: 'Please select a resource type' }]}
           >
             <Select
-              options={rooms.map((r) => ({ label: r.name, value: r.id }))}
-              placeholder="Select lab room or zone"
+              options={RESOURCE_KIND_OPTIONS}
+              onChange={(kind: ExpenseResourceKind) => {
+                setSelectedKind(kind);
+                form.setFieldValue('resource_id', kind === 'room' ? (defaultRoomId ?? rooms[0]?.id) : undefined);
+                if (kind === 'license') {
+                  form.setFieldValue('expense_type', 'license_fee');
+                }
+              }}
+            />
+          </Form.Item>
+
+          <Form.Item
+            name="resource_id"
+            label={`Target ${EXPENSE_RESOURCE_KIND_LABELS[selectedKind]}`}
+            rules={[{ required: true, message: `Please select a ${selectedKind}` }]}
+          >
+            <Select
+              showSearch
+              loading={isResourceOptionsLoading}
+              options={resourceOptions}
+              placeholder={`Select ${selectedKind}...`}
+              filterOption={paged ? false : (input, option) => String(option?.label ?? '').toLowerCase().includes(input.toLowerCase())}
+              onSearch={paged ? paged.onSearch : undefined}
+              onPopupScroll={paged ? paged.onPopupScroll : undefined}
             />
           </Form.Item>
 
@@ -142,7 +239,7 @@ export const CreateExpenseModal: React.FC<CreateExpenseModalProps> = ({
             label="Expense Name"
             rules={[{ required: true, message: 'Please enter expense name' }]}
           >
-            <Input placeholder="e.g. Monthly Electricity, Annual HVAC Check" />
+            <Input placeholder="e.g. Monthly Electricity, Annual CANoe Renewal" />
           </Form.Item>
 
           <Form.Item
@@ -190,7 +287,7 @@ export const CreateExpenseModal: React.FC<CreateExpenseModalProps> = ({
           </Form.Item>
 
           <Form.Item name="supplier" label="Supplier / Vendor">
-            <Input placeholder="e.g. Stadtwerke, EnBW, Facility Co" />
+            <Input placeholder="e.g. Vector, Stadtwerke, Facility Co" />
           </Form.Item>
 
           <Form.Item name="reference" label="Contract / Invoice Ref">

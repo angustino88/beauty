@@ -1,5 +1,6 @@
 import type {
   BillingPeriodEnum,
+  ExpenseResourceKind,
   ExpenseTypeEnum,
   ICreateExpensePaymentPayload,
   ICreateExpensePayload,
@@ -8,6 +9,14 @@ import type {
   IExpenseListResponse,
   IExpensePayment,
 } from './types';
+
+export const EXPENSE_RESOURCE_KIND_LABELS: Record<ExpenseResourceKind, string> = {
+  room: 'Room',
+  station: 'Station',
+  bench: 'Bench',
+  equipment: 'Equipment',
+  license: 'License',
+};
 
 export const EXPENSE_TYPE_LABELS: Record<ExpenseTypeEnum, string> = {
   rent: 'Rent / Lease',
@@ -42,6 +51,14 @@ export const BILLING_PERIOD_LABELS: Record<BillingPeriodEnum, string> = {
   annual: 'Annual',
 };
 
+function normalizeResourceKind(kind: unknown): ExpenseResourceKind {
+  const str = String(kind ?? '').toLowerCase();
+  if (str in EXPENSE_RESOURCE_KIND_LABELS) {
+    return str as ExpenseResourceKind;
+  }
+  return 'room';
+}
+
 function normalizeExpenseType(type: unknown): ExpenseTypeEnum {
   const str = String(type ?? '').toLowerCase();
   if (str in EXPENSE_TYPE_LABELS) {
@@ -58,17 +75,17 @@ function normalizeBillingPeriod(period: unknown): BillingPeriodEnum {
   return 'one_time';
 }
 
-function extractRoomInfo(room: unknown, fallbackRoomId?: number): { id: number; name?: string } {
-  if (typeof room === 'number') {
-    return { id: room };
+function extractNamedRef(ref: unknown, fallbackId?: number): { id: number; name?: string } {
+  if (typeof ref === 'number') {
+    return { id: ref };
   }
-  if (room && typeof room === 'object') {
-    const r = room as Record<string, unknown>;
-    const id = typeof r.id === 'number' ? r.id : Number(r.id ?? fallbackRoomId ?? 0);
+  if (ref && typeof ref === 'object') {
+    const r = ref as Record<string, unknown>;
+    const id = typeof r.id === 'number' ? r.id : Number(r.id ?? fallbackId ?? 0);
     const name = typeof r.name === 'string' ? r.name : typeof r.room_name === 'string' ? r.room_name : undefined;
     return { id, name };
   }
-  return { id: fallbackRoomId ?? 0 };
+  return { id: fallbackId ?? 0 };
 }
 
 type MoneyRead = { amount: string; currency: string };
@@ -115,6 +132,9 @@ export function mapExpense(raw: unknown, defaultRoomId?: number): IExpense {
   if (!raw || typeof raw !== 'object') {
     return {
       id: 0,
+      resource_kind: 'room',
+      resource_kind_label: EXPENSE_RESOURCE_KIND_LABELS.room,
+      resource_id: defaultRoomId ?? 0,
       room_id: defaultRoomId ?? 0,
       name: '',
       expense_type: 'other',
@@ -130,16 +150,22 @@ export function mapExpense(raw: unknown, defaultRoomId?: number): IExpense {
     };
   }
 
-  // Wire shape: `expense_type` / `billing_period` are {value, label}; `cost` is {amount, currency};
-  // dates are `start_date` / `end_date`. The UI keeps its own names (`amount`, `valid_from`, ...).
+  // Wire shape: `expense_type` / `billing_period` / `resource_kind` are {value, label};
+  // `cost` is {amount, currency}; dates are `start_date` / `end_date`.
   const ex = raw as Record<string, unknown>;
-  const roomInfo = extractRoomInfo(ex.room, defaultRoomId);
+  const resourceKind = normalizeResourceKind(choiceValue(ex.resource_kind));
+  const resourceInfo = extractNamedRef(ex.resource ?? ex.room, defaultRoomId);
+  const roomInfo = ex.room != null ? extractNamedRef(ex.room, defaultRoomId) : { id: resourceKind === 'room' ? resourceInfo.id : 0, name: resourceKind === 'room' ? resourceInfo.name : undefined };
   const expenseType = normalizeExpenseType(choiceValue(ex.expense_type));
   const billingPeriod = normalizeBillingPeriod(choiceValue(ex.billing_period));
   const cost = readMoney(ex.cost);
 
   return {
     id: typeof ex.id === 'number' ? ex.id : Number(ex.id ?? 0),
+    resource_kind: resourceKind,
+    resource_kind_label: EXPENSE_RESOURCE_KIND_LABELS[resourceKind],
+    resource_id: resourceInfo.id,
+    resource_name: resourceInfo.name,
     room_id: roomInfo.id,
     room_name: roomInfo.name,
     name: typeof ex.name === 'string' ? ex.name : '',

@@ -144,6 +144,18 @@ export function mapFinancialReport(raw: unknown): IFinancialReport {
   const items: IFinancialReportItem[] = rawItems.map((item: Record<string, unknown>) => {
     const expenseType = choiceValue(item.expense_type, 'other');
     const cost = item.cost as { currency?: unknown } | undefined;
+    const resourceKind = choiceValue(item.resource_kind, 'room');
+    const resourceKindLabel =
+      item.resource_kind && typeof item.resource_kind === 'object' && typeof (item.resource_kind as { label?: unknown }).label === 'string'
+        ? String((item.resource_kind as { label?: unknown }).label)
+        : resourceKind.charAt(0).toUpperCase() + resourceKind.slice(1);
+    const rawResource = (item.resource ?? item.room) as { id?: unknown; name?: unknown } | null | undefined;
+    const resourceId = Math.round(parseNumber(rawResource?.id));
+    const resourceName =
+      typeof rawResource?.name === 'string' && rawResource.name
+        ? rawResource.name
+        : `${resourceKindLabel} #${resourceId}`;
+    const room = item.room ? roomOf(item.room) : { room_id: 0, room_name: resourceName };
     return {
       id: Math.round(parseNumber(item.id)),
       name: String(item.name ?? ''),
@@ -159,7 +171,11 @@ export function mapFinancialReport(raw: unknown): IFinancialReport {
       reference: typeof item.reference === 'string' ? item.reference : undefined,
       valid_from: String(item.start_date ?? ''),
       valid_until: typeof item.end_date === 'string' ? item.end_date : null,
-      ...roomOf(item.room),
+      resource_kind: resourceKind,
+      resource_kind_label: resourceKindLabel,
+      resource_id: resourceId,
+      resource_name: resourceName,
+      ...room,
     };
   });
 

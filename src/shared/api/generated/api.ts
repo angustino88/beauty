@@ -2727,6 +2727,32 @@ const injectedRtkApi = api.injectEndpoints({
         method: "DELETE",
       }),
     }),
+    labsExpensesRetrieve: build.query<
+      LabsExpensesRetrieveApiResponse,
+      LabsExpensesRetrieveApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/expenses`,
+        params: {
+          billing_period: queryArg.billingPeriod,
+          expense_type: queryArg.expenseType,
+          page: queryArg.page,
+          page_size: queryArg.pageSize,
+          resource_id: queryArg.resourceId,
+          resource_kind: queryArg.resourceKind,
+        },
+      }),
+    }),
+    labsExpensesCreate: build.mutation<
+      LabsExpensesCreateApiResponse,
+      LabsExpensesCreateApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/expenses`,
+        method: "POST",
+        body: queryArg.expenseCreate,
+      }),
+    }),
     labsExpensesPaymentsRetrieveByExpenseId: build.query<
       LabsExpensesPaymentsRetrieveByExpenseIdApiResponse,
       LabsExpensesPaymentsRetrieveByExpenseIdApiArg
@@ -2760,6 +2786,8 @@ const injectedRtkApi = api.injectEndpoints({
           currency: queryArg.currency,
           expense_type: queryArg.expenseType,
           from_date: queryArg.fromDate,
+          resource_id: queryArg.resourceId,
+          resource_kind: queryArg.resourceKind,
           room_id: queryArg.roomId,
           status: queryArg.status,
           to_date: queryArg.toDate,
@@ -4093,6 +4121,8 @@ const injectedRtkApi = api.injectEndpoints({
       query: (queryArg) => ({
         url: `/api/labs/rooms/${queryArg.roomId}/expenses`,
         params: {
+          billing_period: queryArg.billingPeriod,
+          expense_type: queryArg.expenseType,
           page: queryArg.page,
           page_size: queryArg.pageSize,
         },
@@ -4119,6 +4149,8 @@ const injectedRtkApi = api.injectEndpoints({
           currency: queryArg.currency,
           expense_type: queryArg.expenseType,
           from_date: queryArg.fromDate,
+          resource_id: queryArg.resourceId,
+          resource_kind: queryArg.resourceKind,
           room_id: queryArg.queryRoomId,
           status: queryArg.status,
           to_date: queryArg.toDate,
@@ -7484,6 +7516,50 @@ export type LabsExpectedDevicesDestroyByExpectedDeviceIdApiResponse = unknown;
 export type LabsExpectedDevicesDestroyByExpectedDeviceIdApiArg = {
   expectedDeviceId: number;
 };
+export type LabsExpensesRetrieveApiResponse =
+  /** status 200  */ ExpenseListSerializersExpensePaginatedResponseRead;
+export type LabsExpensesRetrieveApiArg = {
+  /** * `one_time` - One-time
+   * `monthly` - Monthly
+   * `quarterly` - Quarterly
+   * `annual` - Annual */
+  billingPeriod?: "one_time" | "monthly" | "quarterly" | "annual";
+  /** * `rent` - Rent
+   * `utilities` - Utilities
+   * `maintenance` - Maintenance
+   * `calibration` - Calibration
+   * `repair` - Repair
+   * `service_contract` - Service contract
+   * `license_fee` - License fee
+   * `insurance` - Insurance
+   * `service` - Service (legacy)
+   * `other` - Other */
+  expenseType?:
+    | "rent"
+    | "utilities"
+    | "maintenance"
+    | "calibration"
+    | "repair"
+    | "service_contract"
+    | "license_fee"
+    | "insurance"
+    | "service"
+    | "other";
+  page?: number;
+  pageSize?: number;
+  resourceId?: number;
+  /** * `room` - Room
+   * `station` - Station
+   * `bench` - Bench
+   * `equipment` - Equipment
+   * `license` - License */
+  resourceKind?: "room" | "station" | "bench" | "equipment" | "license";
+};
+export type LabsExpensesCreateApiResponse =
+  /** status 201  */ ExpenseSerializersExpenseDetailResponseRead;
+export type LabsExpensesCreateApiArg = {
+  expenseCreate: ExpenseCreate;
+};
 export type LabsExpensesPaymentsRetrieveByExpenseIdApiResponse =
   /** status 200  */ ExpensePaymentListSerializersExpensePaymentPaginatedResponseRead;
 export type LabsExpensesPaymentsRetrieveByExpenseIdApiArg = {
@@ -7504,6 +7580,13 @@ export type LabsExpensesReportRetrieveApiArg = {
   currency?: string;
   expenseType?: string;
   fromDate?: string;
+  resourceId?: number;
+  /** * `room` - Room
+   * `station` - Station
+   * `bench` - Bench
+   * `equipment` - Equipment
+   * `license` - License */
+  resourceKind?: "room" | "station" | "bench" | "equipment" | "license";
   roomId?: number;
   status?: string;
   toDate?: string;
@@ -8370,6 +8453,32 @@ export type LabsRoomsActionsGenerateSlotsCreateByRoomIdApiArg = {
 export type LabsRoomsExpensesRetrieveByRoomIdApiResponse =
   /** status 200  */ RoomExpenseListSerializersExpensePaginatedResponseRead;
 export type LabsRoomsExpensesRetrieveByRoomIdApiArg = {
+  /** * `one_time` - One-time
+   * `monthly` - Monthly
+   * `quarterly` - Quarterly
+   * `annual` - Annual */
+  billingPeriod?: "one_time" | "monthly" | "quarterly" | "annual";
+  /** * `rent` - Rent
+   * `utilities` - Utilities
+   * `maintenance` - Maintenance
+   * `calibration` - Calibration
+   * `repair` - Repair
+   * `service_contract` - Service contract
+   * `license_fee` - License fee
+   * `insurance` - Insurance
+   * `service` - Service (legacy)
+   * `other` - Other */
+  expenseType?:
+    | "rent"
+    | "utilities"
+    | "maintenance"
+    | "calibration"
+    | "repair"
+    | "service_contract"
+    | "license_fee"
+    | "insurance"
+    | "service"
+    | "other";
   page?: number;
   pageSize?: number;
   roomId: number;
@@ -8387,6 +8496,13 @@ export type LabsRoomsExpensesReportRetrieveByRoomIdApiArg = {
   currency?: string;
   expenseType?: string;
   fromDate?: string;
+  resourceId?: number;
+  /** * `room` - Room
+   * `station` - Station
+   * `bench` - Bench
+   * `equipment` - Equipment
+   * `license` - License */
+  resourceKind?: "room" | "station" | "bench" | "equipment" | "license";
   pathRoomId: number;
   queryRoomId?: number;
   status?: string;
@@ -13988,6 +14104,90 @@ export type ExpectedDeviceUpdateConnectionsExpectedDeviceDetailResponseRead = {
 export type PatchedUpdateExpectedDeviceRequest = {
   is_disconnect_alert_enabled?: boolean;
 };
+export type ExpenseListSerializersExpensePagination = {
+  count: number;
+  page: number;
+  page_size: number;
+  next: string | null;
+  previous: string | null;
+};
+export type ExpenseListSerializersExpensePaginationMeta = {
+  pagination: ExpenseListSerializersExpensePagination;
+};
+export type Expense = {};
+export type Money = {
+  /** Decimal string; never a float. */
+  amount: string;
+  /** ISO 4217 code, uppercase. */
+  currency: string;
+};
+export type ExpenseRead = {
+  id: number;
+  resource_kind: ChoiceRead;
+  resource: LabsNamedReferenceRead;
+  room: LabsNamedReferenceRead | null;
+  name: string;
+  expense_type: ChoiceRead;
+  supplier: string;
+  reference: string;
+  cost: Money;
+  billing_period: ChoiceRead;
+  start_date: string;
+  end_date: string | null;
+  notes: string;
+  created_at: string;
+  updated_at: string;
+};
+export type ExpenseListSerializersExpensePaginatedResponse = {
+  meta: ExpenseListSerializersExpensePaginationMeta;
+  data: Expense[];
+};
+export type ExpenseListSerializersExpensePaginatedResponseRead = {
+  meta: ExpenseListSerializersExpensePaginationMeta;
+  data: ExpenseRead[];
+};
+export type ExpenseSerializersExpenseDetailResponse = {
+  data: Expense;
+};
+export type ExpenseSerializersExpenseDetailResponseRead = {
+  data: ExpenseRead;
+};
+export type ResourceTypeEnum =
+  "room" | "station" | "bench" | "equipment" | "license";
+export type ExpenseTypeEnum =
+  | "rent"
+  | "utilities"
+  | "maintenance"
+  | "calibration"
+  | "repair"
+  | "service_contract"
+  | "license_fee"
+  | "insurance"
+  | "service"
+  | "other";
+export type BillingPeriodEnum = "one_time" | "monthly" | "quarterly" | "annual";
+export type ExpenseCreate = {
+  /** Target resource kind (room, station, bench, equipment, or license).
+    
+    * `room` - Room
+    * `station` - Station
+    * `bench` - Bench
+    * `equipment` - Equipment
+    * `license` - License */
+  resource_kind: ResourceTypeEnum;
+  /** Primary key of the target resource. */
+  resource_id: number;
+  name: string;
+  expense_type: ExpenseTypeEnum;
+  supplier?: string;
+  reference?: string;
+  /** What the expense costs (FMT-2, FMT-7). */
+  cost: Money;
+  billing_period?: BillingPeriodEnum;
+  start_date: string;
+  end_date?: string | null;
+  notes?: string;
+};
 export type ExpensePaymentListSerializersExpensePaymentPagination = {
   count: number;
   page: number;
@@ -13999,12 +14199,6 @@ export type ExpensePaymentListSerializersExpensePaymentPaginationMeta = {
   pagination: ExpensePaymentListSerializersExpensePaymentPagination;
 };
 export type ExpensePayment = {};
-export type Money = {
-  /** Decimal string; never a float. */
-  amount: string;
-  /** ISO 4217 code, uppercase. */
-  currency: string;
-};
 export type ExpensePaymentRead = {
   id: number;
   transaction_type: ChoiceRead;
@@ -14108,7 +14302,9 @@ export type FinancialReportItemRead = {
   reference: string;
   start_date: string;
   end_date: string | null;
-  room: LabsNamedReferenceRead;
+  resource_kind: ChoiceRead;
+  resource: LabsNamedReferenceRead;
+  room: LabsNamedReferenceRead | null;
 };
 export type FinancialReportResponse = {
   currency: string;
@@ -15638,7 +15834,8 @@ export type PurchaseItemResourceSerializersPurchaseItemResourceDetailResponseRea
 export type PurchaseItemResourceCreate = {
   resource_id: number;
 };
-export type ResourceKindEnum = "bench" | "equipment" | "license" | "station";
+export type PurchaseItemResourceCreateResourceKindEnum =
+  "bench" | "equipment" | "license" | "station";
 export type PurchaseItemResourceCreateWrite = {
   /** Stable resource kind (bench, equipment, license, or station).
     
@@ -15646,7 +15843,7 @@ export type PurchaseItemResourceCreateWrite = {
     * `equipment` - equipment
     * `license` - license
     * `station` - station */
-  resource_kind: ResourceKindEnum;
+  resource_kind: PurchaseItemResourceCreateResourceKindEnum;
   resource_id: number;
   acquisition_price: Money;
 };
@@ -16354,24 +16551,6 @@ export type RoomExpenseListSerializersExpensePagination = {
 export type RoomExpenseListSerializersExpensePaginationMeta = {
   pagination: RoomExpenseListSerializersExpensePagination;
 };
-export type Expense = {};
-export type ExpenseRead = {
-  id: number;
-  room: {
-    [key: string]: number | string;
-  };
-  name: string;
-  expense_type: ChoiceRead;
-  supplier: string;
-  reference: string;
-  cost: Money;
-  billing_period: ChoiceRead;
-  start_date: string;
-  end_date: string | null;
-  notes: string;
-  created_at: string;
-  updated_at: string;
-};
 export type RoomExpenseListSerializersExpensePaginatedResponse = {
   meta: RoomExpenseListSerializersExpensePaginationMeta;
   data: Expense[];
@@ -16386,18 +16565,6 @@ export type RoomExpenseSerializersExpenseDetailResponse = {
 export type RoomExpenseSerializersExpenseDetailResponseRead = {
   data: ExpenseRead;
 };
-export type ExpenseTypeEnum =
-  | "rent"
-  | "utilities"
-  | "maintenance"
-  | "calibration"
-  | "repair"
-  | "service_contract"
-  | "license_fee"
-  | "insurance"
-  | "service"
-  | "other";
-export type BillingPeriodEnum = "one_time" | "monthly" | "quarterly" | "annual";
 export type ExpenseWrite = {
   name: string;
   expense_type: ExpenseTypeEnum;
@@ -18345,8 +18512,6 @@ export type TicketResourceLink = {
   unlink_reason?: string;
 };
 export type LinkedResource = {};
-export type ResourceTypeEnum =
-  "room" | "station" | "bench" | "equipment" | "license";
 export type LinkedResourceRead = {
   id: string;
   name: string;
@@ -19303,6 +19468,8 @@ export const {
   useLabsExpectedDevicesCreateMutation,
   useLabsExpectedDevicesPartialUpdateByExpectedDeviceIdMutation,
   useLabsExpectedDevicesDestroyByExpectedDeviceIdMutation,
+  useLabsExpensesRetrieveQuery,
+  useLabsExpensesCreateMutation,
   useLabsExpensesPaymentsRetrieveByExpenseIdQuery,
   useLabsExpensesPaymentsCreateByExpenseIdMutation,
   useLabsExpensesReportRetrieveQuery,
