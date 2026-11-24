@@ -987,16 +987,41 @@
 }
 
 .createForm :global(.ant-form-item) {
-  margin-bottom: 16px;
+  min-width: 0;
+  margin-bottom: 14px;
 }
 
-.createOptions {
-  margin-bottom: 16px;
+.createFormRow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 16px;
 }
 
-.createOptions :global(.ant-form-item:last-child),
+@media (max-width: 575px) {
+  .createFormRow {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.createForm > :global(.ant-form-item:last-child),
 .transitionForm :global(.ant-form-item:last-child) {
   margin-bottom: 0;
+}
+
+.createForm .createAttachments :global(.ant-upload-btn) {
+  padding: 10px 12px;
+}
+
+.createAttachmentPrompt {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--lm-text-secondary);
+}
+
+.createAttachmentPrompt > span {
+  color: var(--lm-primary);
+  font-size: 18px;
 }
 
 .workflowChevron {

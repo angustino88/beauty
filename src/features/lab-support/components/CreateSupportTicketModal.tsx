@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Col, Collapse, DatePicker, Form, Input, Modal, Row, Select, Upload } from 'antd';
+import { DatePicker, Form, Input, Modal, Select, Upload } from 'antd';
 import type { UploadFile } from 'antd';
 import { InlineAlert, notify } from '@/shared/notifications';
 import { InboxOutlined } from '@ant-design/icons';
@@ -147,69 +147,25 @@ export function CreateSupportTicketModal({
           <Input placeholder="Brief summary of the issue or request" maxLength={200} showCount />
         </Form.Item>
 
-        <Row gutter={16}>
-          <Col xs={24} sm={12}>
-            <Form.Item label="Request type" name="ticket_type" initialValue="incident">
-              <Select options={TICKET_TYPE_OPTIONS.map(({ value, label }) => ({ value, label }))} />
-            </Form.Item>
-          </Col>
-          <Col xs={24} sm={12}>
-            <Form.Item
-              label="Category"
-              name="category_id"
-              rules={[{ required: true, message: 'Select a category' }]}
-            >
-              <Select
-                placeholder="Select category"
-                loading={isCategoriesFetching}
-                disabled={isCategoriesFetching || categoryOptions.length === 0}
-                notFoundContent={isCategoriesFetching ? 'Loading categories…' : 'No categories available'}
-                options={categoryOptions}
-                showSearch={{ optionFilterProp: 'label' }}
-              />
-            </Form.Item>
-          </Col>
-        </Row>
-
-        <Row gutter={16}>
-          <Col xs={24} sm={12}>
-            <Form.Item
-              label="Priority"
-              name="priority_id"
-              tooltip="Support can adjust the priority during triage."
-              getValueFromEvent={(value) => value ?? null}
-            >
-              <Select
-                placeholder="Use default priority"
-                loading={isPrioritiesFetching}
-                allowClear
-                disabled={isPrioritiesFetching || priorityOptions.length === 0}
-                options={priorityOptions}
-                showSearch={{ optionFilterProp: 'searchLabel' }}
-              />
-            </Form.Item>
-          </Col>
-          <Col xs={24} sm={12}>
-            <Form.Item
-              label="Target date"
-              name="due_date"
-              getValueProps={(value) => ({ value: value ? dayjs(value) : null })}
-              getValueFromEvent={(value) => value?.format('YYYY-MM-DD') ?? null}
-            >
-              <DatePicker style={{ width: '100%' }} minDate={dayjs()} placeholder="Select a date" />
-            </Form.Item>
-          </Col>
-        </Row>
-
-        {canManage && (
-          <Form.Item label="Assignee" name="assignee_id" extra="Leave blank to keep the ticket unassigned.">
-            <SupportPeopleSelect<number>
-              assigneesOnly
-              allowClear
-              suggestIds={currentUserId ? [currentUserId] : []}
+        <div className={styles.createFormRow}>
+          <Form.Item label="Request type" name="ticket_type" initialValue="incident">
+            <Select options={TICKET_TYPE_OPTIONS.map(({ value, label }) => ({ value, label }))} />
+          </Form.Item>
+          <Form.Item
+            label="Category"
+            name="category_id"
+            rules={[{ required: true, message: 'Select a category' }]}
+          >
+            <Select
+              placeholder="Select category"
+              loading={isCategoriesFetching}
+              disabled={isCategoriesFetching || categoryOptions.length === 0}
+              notFoundContent={isCategoriesFetching ? 'Loading categories…' : 'No categories available'}
+              options={categoryOptions}
+              showSearch={{ optionFilterProp: 'label' }}
             />
           </Form.Item>
-        )}
+        </div>
 
         <Form.Item
           label="Description"
@@ -220,43 +176,82 @@ export function CreateSupportTicketModal({
           ]}
         >
           <Input.TextArea
-            rows={4}
+            rows={3}
             maxLength={10000}
             placeholder={getTicketDescriptionPlaceholder(requestType)}
           />
         </Form.Item>
 
+        <div className={styles.createFormRow}>
+          <Form.Item
+            label="Priority"
+            name="priority_id"
+            tooltip="Support can adjust the priority during triage."
+            getValueFromEvent={(value) => value ?? null}
+          >
+            <Select
+              placeholder="Use default priority"
+              loading={isPrioritiesFetching}
+              allowClear
+              disabled={isPrioritiesFetching || priorityOptions.length === 0}
+              options={priorityOptions}
+              showSearch={{ optionFilterProp: 'searchLabel' }}
+            />
+          </Form.Item>
+          <Form.Item
+            label="Target date"
+            name="due_date"
+            getValueProps={(value) => ({ value: value ? dayjs(value) : null })}
+            getValueFromEvent={(value) => value?.format('YYYY-MM-DD') ?? null}
+          >
+            <DatePicker style={{ width: '100%' }} minDate={dayjs()} placeholder="Select a date" />
+          </Form.Item>
+        </div>
+
         {canManage && (
-          <Collapse
-            size="small"
-            className={styles.createOptions}
-            items={[{
-              key: 'options',
-              label: 'Watchers and labels',
-              children: (
-                <>
-                  <Form.Item label="Watchers" name="watcher_ids" extra="Watchers can view the ticket and receive updates.">
-                    <SupportPeopleSelect<number[]> mode="multiple" allowClear maxTagCount="responsive" />
-                  </Form.Item>
-                  <Form.Item label="Labels" name="labels">
-                    <Select mode="tags" tokenSeparators={[',']} placeholder="e.g. microscope, calibration" />
-                  </Form.Item>
-                </>
-              ),
-            }]}
-          />
+          <>
+            <div className={styles.createFormRow}>
+              <Form.Item label="Assignee" name="assignee_id">
+                <SupportPeopleSelect<number>
+                  assigneesOnly
+                  allowClear
+                  placeholder="Unassigned"
+                  suggestIds={currentUserId ? [currentUserId] : []}
+                />
+              </Form.Item>
+              <Form.Item
+                label="Watchers"
+                name="watcher_ids"
+                tooltip="Watchers can view the ticket and receive updates."
+              >
+                <SupportPeopleSelect<number[]>
+                  mode="multiple"
+                  allowClear
+                  maxTagCount="responsive"
+                  placeholder="Add watchers"
+                />
+              </Form.Item>
+            </div>
+
+            <Form.Item label="Labels" name="labels">
+              <Select mode="tags" tokenSeparators={[',']} placeholder="Add labels, e.g. microscope" />
+            </Form.Item>
+          </>
         )}
 
         <Form.Item label="Attachments" extra={SUPPORT_ATTACHMENT_HINT}>
           <Upload.Dragger
+            className={styles.createAttachments}
             multiple
             accept={SUPPORT_ATTACHMENT_ACCEPT}
             fileList={files}
             beforeUpload={() => false}
             onChange={({ fileList }) => setFiles(fileList)}
           >
-            <p className="ant-upload-drag-icon"><InboxOutlined /></p>
-            <p className="ant-upload-text">Click or drag screenshots, photos or documents here</p>
+            <span className={styles.createAttachmentPrompt}>
+              <InboxOutlined aria-hidden="true" />
+              Choose files or drag them here
+            </span>
           </Upload.Dragger>
         </Form.Item>
       </Form>

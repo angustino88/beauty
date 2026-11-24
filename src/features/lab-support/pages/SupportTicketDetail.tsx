@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom';
 import dayjs from 'dayjs';
 import {
@@ -38,9 +38,11 @@ import {
   SendOutlined,
   TagOutlined,
 } from '@ant-design/icons';
+import { useAppDispatch } from '@/app/store';
 import { useAuthState } from '@/features/auth/hooks/useAuthState';
 import { useCan } from '@/features/auth/hooks/useCan';
 import {
+  generatedApi,
   useSupportCannedResponsesRetrieveQuery,
   useSupportCategoriesOptionsRetrieveQuery,
   useSupportPrioritiesOptionsRetrieveQuery,
@@ -57,6 +59,7 @@ import {
   useUsersRetrieveQuery,
   type PatchedTicketUpdateRequest,
   type TicketActivityRead,
+  type TicketDetailRead,
   type TicketTypeEnum,
   type UrgencyEnum,
   type VisibilityEnum,
@@ -85,6 +88,11 @@ import {
 } from '../components/TicketBadges';
 import styles from '../components/SupportTickets.module.css';
 import {
+  createTicketWriteQueue,
+  isTicketVersionConflict,
+  type RunTicketWrite,
+} from '../ticketWriteQueue';
+import {
   IMPACT_URGENCY_OPTIONS,
   TICKET_TYPE_OPTIONS,
   formatTicketActivityLines,
@@ -97,23 +105,20 @@ const formatDate = (value?: string | null) =>
 
 const errorMessage = (error: unknown) => apiErrorMessage(error);
 
-function isConflict(error: unknown): boolean {
-  return (
-    typeof error === 'object' &&
-    error !== null &&
-    'status' in error &&
-    error.status === 409
-  );
-}
-
 function activityLabel(activity: TicketActivityRead) {
   return activity.event_type.label;
 }
 
 export default function SupportTicketDetail() {
+  const { key } = useParams<{ key: string }>();
+  if (!key) return <InlineAlert variant="error" title="Missing ticket key" />;
+  return <TicketDetail key={key} ticketKey={key} />;
+}
+
+function TicketDetail({ ticketKey: key }: { ticketKey: string }) {
   const { state } = useLocation();
   const queueSearch = typeof state?.queueSearch === 'string' ? state.queueSearch : '';
-  const { key } = useParams<{ key: string }>();
+  const dispatch = useAppDispatch();
   const { id: currentUserId } = useAuthState();
   const can = useCan();
   const canManage = can('support.handle') || can('support.administer');
@@ -147,27 +152,29 @@ export default function SupportTicketDetail() {
   const [isEditingExtRef, setIsEditingExtRef] = useState(false);
   const [extRefDraft, setExtRefDraft] = useState('');
 
-  const [savingField, setSavingField] = useState<string | null>(null);
+  const [enqueueWrite] = useState(() => createTicketWriteQueue<TicketDetailRead>());
+  const pendingFields = useRef(new Set<string>());
+  const [savingFields, setSavingFields] = useState<ReadonlySet<string>>(() => new Set());
+  const isSaving = (field: string) => savingFields.has(field);
 
-  const ticketArg = { key: key ?? '' };
-  const skip = !key;
+  const ticketArg = { key };
 
   const {
-    data: detail,
+    currentData: detail,
     isLoading,
     isError,
     refetch: refetchDetail,
-  } = useSupportTicketsRetrieveByKeyQuery(ticketArg, { skip });
+  } = useSupportTicketsRetrieveByKeyQuery(ticketArg);
   const {
     data: comments,
     refetch: refetchComments,
     isError: commentsError,
-  } = useSupportTicketsCommentsRetrieveByKeyQuery(ticketArg, { skip });
+  } = useSupportTicketsCommentsRetrieveByKeyQuery(ticketArg);
   const {
     data: activity,
     refetch: refetchActivity,
     isError: activityError,
-  } = useSupportTicketsActivityRetrieveByKeyQuery(ticketArg, { skip });
+  } = useSupportTicketsActivityRetrieveByKeyQuery(ticketArg);
 
   const ticket = detail?.data;
   const isRequester = Boolean(
@@ -179,31 +186,30 @@ export default function SupportTicketDetail() {
     {
       includeIds: ticket?.category?.id ? [ticket.category.id] : undefined,
     },
-    { skip: !canManage || skip },
+    { skip: !canManage },
   );
   const { data: priorities } = useSupportPrioritiesOptionsRetrieveQuery(
     {
       includeIds: ticket?.priority?.id ? [ticket.priority.id] : undefined,
     },
-    { skip: !canManage || skip },
+    { skip: !canManage },
   );
   const { data: teams } = useSupportTeamsOptionsRetrieveQuery(
     {
       includeIds: ticket?.team?.id ? [ticket.team.id] : undefined,
     },
-    { skip: !canManage || skip },
+    { skip: !canManage },
   );
   const { data: users } = useUsersRetrieveQuery(
     {},
-    { skip: !canManage || skip },
+    { skip: !canManage },
   );
   const { data: cannedResponses } = useSupportCannedResponsesRetrieveQuery(
     undefined,
-    { skip: !canManage || skip },
+    { skip: !canManage },
   );
 
-  const [updateTicket, { isLoading: updatingTicket }] =
-    useSupportTicketsPartialUpdateByKeyMutation();
+  const [updateTicket] = useSupportTicketsPartialUpdateByKeyMutation();
   const [postComment, { isLoading: posting }] =
     useSupportTicketsCommentsCreateByKeyMutation();
   const [updateComment, { isLoading: updatingComment }] =
@@ -212,8 +218,7 @@ export default function SupportTicketDetail() {
     useSupportTicketsCommentsDestroyByKeyCommentIdMutation();
   const [uploadAttachment, { isLoading: uploadingReplyFiles }] =
     useUploadSupportAttachmentMutation();
-  const [assign, { isLoading: assigning }] =
-    useSupportTicketsActionsAssignCreateByKeyMutation();
+  const [assign] = useSupportTicketsActionsAssignCreateByKeyMutation();
   const [addWatcher, { isLoading: addingWatcher }] =
     useSupportTicketsWatchersCreateByKeyMutation();
   const [removeWatcher, { isLoading: removingWatcher }] =
@@ -223,52 +228,78 @@ export default function SupportTicketDetail() {
     await Promise.all([refetchDetail(), refetchComments(), refetchActivity()]);
   };
 
-  // --- Direct / Instant Field Update Handler ---
-  const handleFieldPatch = async (
-    fieldName: string,
-    patch: Omit<PatchedTicketUpdateRequest, 'version'>,
-    successMessage?: string,
-  ) => {
-    if (!key || !ticket || ticket.version === undefined) return false;
-    setSavingField(fieldName);
+  const runTicketWrite: RunTicketWrite = async (field, write) => {
+    if (!ticket || ticket.version === undefined) throw new Error('Refresh the ticket before saving.');
+    if (pendingFields.current.has(field)) throw new Error('This field is already being saved.');
+    pendingFields.current.add(field);
+    setSavingFields(new Set(pendingFields.current));
+
     try {
-      await updateTicket({
-        key,
-        patchedTicketUpdateRequest: {
-          ...patch,
-          version: ticket.version,
-        },
-      }).unwrap();
-      await Promise.all([refetchDetail(), refetchActivity()]);
-      if (successMessage) {
-        notify.success(successMessage);
-      }
-      return true;
-    } catch (error) {
-      if (isConflict(error)) await refetchDetail();
-      notify.error(`Unable to update ${fieldName}`, {
-        description: errorMessage(error),
+      await enqueueWrite(ticket, async (current, version) => {
+        try {
+          const updated = await write(current, version);
+          dispatch(generatedApi.util.updateQueryData('supportTicketsRetrieveByKey', ticketArg, (draft) => {
+            if ((updated.version ?? -1) >= (draft.data.version ?? -1)) draft.data = updated;
+          }));
+          return updated;
+        } catch (error) {
+          if (isTicketVersionConflict(error)) await refetchDetail();
+          throw error;
+        }
       });
-      return false;
     } finally {
-      setSavingField(null);
+      pendingFields.current.delete(field);
+      setSavingFields(new Set(pendingFields.current));
+      if (!pendingFields.current.size) {
+        void refetchDetail();
+        void refetchActivity();
+      }
     }
   };
 
-  // --- Direct / Instant Assignment Handler ---
-  const handleDirectAssign = async (targetAssigneeId: number | null) => {
-    if (!key || !ticket) return;
-    if ((ticket.assignee?.id ?? null) === targetAssigneeId) return;
-    setSavingField('assignee');
+  const reportWriteError = (title: string, error: unknown) => {
+    if (isTicketVersionConflict(error)) {
+      notify.warning('Ticket changed while you were editing', {
+        description: 'Review the latest values and apply your change again.',
+      });
+    } else {
+      notify.error(title, { description: errorMessage(error) });
+    }
+  };
+
+  const handleFieldPatch = async (
+    fieldName: string,
+    patch: Omit<PatchedTicketUpdateRequest, 'version'>,
+    successMessage: string,
+  ) => {
+    if (pendingFields.current.has(fieldName)) return false;
     try {
-      await assign({
-        key,
-        ticketAssignRequest: {
-          assignee_id: targetAssigneeId,
-          version: ticket.version,
-        },
-      }).unwrap();
-      await Promise.all([refetchDetail(), refetchActivity()]);
+      await runTicketWrite(fieldName, async (_current, version) => {
+        const response = await updateTicket({
+          key,
+          patchedTicketUpdateRequest: { ...patch, version },
+        }).unwrap();
+        return response.data;
+      });
+      notify.success(successMessage);
+      return true;
+    } catch (error) {
+      reportWriteError(`Unable to update ${fieldName.replaceAll('_', ' ')}`, error);
+      return false;
+    }
+  };
+
+  const handleDirectAssign = async (targetAssigneeId: number | null) => {
+    if (pendingFields.current.has('assignee')) return;
+    try {
+      await runTicketWrite('assignee', async (current, version) => {
+        if ((current.assignee?.id ?? null) === targetAssigneeId) return current;
+        const response = await assign({
+          key,
+          ticketAssignRequest: { assignee_id: targetAssigneeId, version },
+        }).unwrap();
+        return response.data;
+      });
       notify.success(
         targetAssigneeId === null
           ? 'Ticket unassigned'
@@ -277,12 +308,7 @@ export default function SupportTicketDetail() {
             : 'Ticket assignee updated',
       );
     } catch (error) {
-      if (isConflict(error)) await refetchDetail();
-      notify.error('Unable to update assignment', {
-        description: errorMessage(error),
-      });
-    } finally {
-      setSavingField(null);
+      reportWriteError('Unable to update assignment', error);
     }
   };
 
@@ -467,7 +493,6 @@ export default function SupportTicketDetail() {
     return map;
   }, [users, ticket, comments]);
 
-  if (!key) return <InlineAlert variant="error" title="Missing ticket key" />;
   if (isLoading) {
     return (
       <div style={{ display: 'grid', placeItems: 'center', minHeight: 320 }}>
@@ -550,7 +575,7 @@ export default function SupportTicketDetail() {
             <TicketSlaBadge sla={ticket.sla} status={ticket.status} />
           </div>
 
-          <TicketWorkflow key={ticket.key} ticket={ticket} onUpdated={refresh} />
+          <TicketWorkflow ticket={ticket} runTicketWrite={runTicketWrite} isSaving={isSaving('status')} />
         </div>
 
         {/* Ticket Subject with Inline Edit */}
@@ -559,6 +584,7 @@ export default function SupportTicketDetail() {
             <div className={styles.titleEditBox}>
               <Input
                 aria-label="Edit ticket subject"
+                disabled={isSaving('subject')}
                 value={subjectDraft}
                 maxLength={200}
                 onChange={(e) => setSubjectDraft(e.target.value)}
@@ -578,7 +604,7 @@ export default function SupportTicketDetail() {
                 type="primary"
                 size="small"
                 icon={<CheckOutlined />}
-                loading={updatingTicket && savingField === 'subject'}
+                loading={isSaving('subject')}
                 disabled={!subjectDraft.trim()}
                 onClick={() => {
                   void handleFieldPatch(
@@ -595,6 +621,7 @@ export default function SupportTicketDetail() {
               <Button
                 size="small"
                 icon={<CloseOutlined />}
+                disabled={isSaving('subject')}
                 onClick={() => setIsEditingSubject(false)}
               >
                 Cancel
@@ -709,6 +736,7 @@ export default function SupportTicketDetail() {
                 >
                   <Input.TextArea
                     aria-label="Edit ticket description"
+                    disabled={isSaving('description')}
                     rows={6}
                     maxLength={10000}
                     showCount
@@ -719,9 +747,7 @@ export default function SupportTicketDetail() {
                     <Button
                       type="primary"
                       size="small"
-                      loading={
-                        updatingTicket && savingField === 'description'
-                      }
+                      loading={isSaving('description')}
                       disabled={!descriptionDraft.trim()}
                       onClick={() => {
                         void handleFieldPatch(
@@ -737,6 +763,7 @@ export default function SupportTicketDetail() {
                     </Button>
                     <Button
                       size="small"
+                      disabled={isSaving('description')}
                       onClick={() => setIsEditingDescription(false)}
                     >
                       Cancel
@@ -760,6 +787,7 @@ export default function SupportTicketDetail() {
                       mode="tags"
                       size="small"
                       aria-label="Edit ticket labels"
+                      disabled={isSaving('labels')}
                       style={{ minWidth: 240 }}
                       tokenSeparators={[',']}
                       value={labelsDraft}
@@ -769,7 +797,7 @@ export default function SupportTicketDetail() {
                     <Button
                       type="primary"
                       size="small"
-                      loading={updatingTicket && savingField === 'labels'}
+                      loading={isSaving('labels')}
                       onClick={() => {
                         void handleFieldPatch(
                           'labels',
@@ -788,6 +816,7 @@ export default function SupportTicketDetail() {
                     </Button>
                     <Button
                       size="small"
+                      disabled={isSaving('labels')}
                       onClick={() => setIsEditingLabels(false)}
                     >
                       Cancel
@@ -1218,7 +1247,7 @@ export default function SupportTicketDetail() {
           <div className={styles.panelCard}>
             <header className={styles.panelHeader}>
               <h2 className={styles.panelTitle}>Ticket properties</h2>
-              {(updatingTicket || assigning) && (
+              {savingFields.size > 0 && (
                 <Spin size="small" />
               )}
             </header>
@@ -1251,7 +1280,7 @@ export default function SupportTicketDetail() {
                           <button
                             type="button"
                             className={styles.quickActionBtn}
-                            disabled={assigning}
+                            disabled={isSaving('assignee')}
                             onClick={() =>
                               void handleDirectAssign(currentUserId)
                             }
@@ -1263,7 +1292,7 @@ export default function SupportTicketDetail() {
                         <button
                           type="button"
                           className={styles.quickActionBtn}
-                          disabled={assigning}
+                          disabled={isSaving('assignee')}
                           onClick={() => void handleDirectAssign(null)}
                         >
                           Unassign
@@ -1283,7 +1312,7 @@ export default function SupportTicketDetail() {
                       label: userLabel(ticket.assignee) || ticket.assignee.username,
                     }] : []}
                     placeholder="Unassigned"
-                    disabled={assigning || ticket.version === undefined}
+                    disabled={isSaving('assignee') || ticket.version === undefined}
                     onChange={(value) => void handleDirectAssign(value)}
                     style={{ width: '100%' }}
                   />
@@ -1316,8 +1345,8 @@ export default function SupportTicketDetail() {
                     optionFilterProp="label"
                     notFoundContent="No support teams configured"
                     value={ticket.team?.id ?? undefined}
-                    loading={updatingTicket && savingField === 'team'}
-                    disabled={ticket.version === undefined}
+                    loading={isSaving('team')}
+                    disabled={ticket.version === undefined || isSaving('team')}
                     onChange={(val) =>
                       void handleFieldPatch(
                         'team',
@@ -1422,8 +1451,8 @@ export default function SupportTicketDetail() {
                   <Select<number>
                     aria-label="Ticket priority"
                     value={ticket.priority?.id}
-                    loading={updatingTicket && savingField === 'priority'}
-                    disabled={ticket.version === undefined}
+                    loading={isSaving('priority')}
+                    disabled={ticket.version === undefined || isSaving('priority')}
                     onChange={(nextPriorityId) =>
                       void handleFieldPatch(
                         'priority',
@@ -1460,8 +1489,8 @@ export default function SupportTicketDetail() {
                     showSearch
                     optionFilterProp="label"
                     value={ticket.category?.id}
-                    loading={updatingTicket && savingField === 'category'}
-                    disabled={ticket.version === undefined}
+                    loading={isSaving('category')}
+                    disabled={ticket.version === undefined || isSaving('category')}
                     onChange={(nextCategoryId) =>
                       void handleFieldPatch(
                         'category',
@@ -1494,8 +1523,8 @@ export default function SupportTicketDetail() {
                       (ticket.ticket_type?.value as TicketTypeEnum) ??
                       'incident'
                     }
-                    loading={updatingTicket && savingField === 'ticket_type'}
-                    disabled={ticket.version === undefined}
+                    loading={isSaving('ticket_type')}
+                    disabled={ticket.version === undefined || isSaving('ticket_type')}
                     onChange={(nextType) =>
                       void handleFieldPatch(
                         'ticket_type',
@@ -1530,8 +1559,8 @@ export default function SupportTicketDetail() {
                           ? (ticket.impact as UrgencyEnum)
                           : undefined
                       }
-                      loading={updatingTicket && savingField === 'impact'}
-                      disabled={ticket.version === undefined}
+                      loading={isSaving('impact')}
+                      disabled={ticket.version === undefined || isSaving('impact')}
                       onChange={(val) =>
                         void handleFieldPatch(
                           'impact',
@@ -1563,8 +1592,8 @@ export default function SupportTicketDetail() {
                           ? (ticket.urgency as UrgencyEnum)
                           : undefined
                       }
-                      loading={updatingTicket && savingField === 'urgency'}
-                      disabled={ticket.version === undefined}
+                      loading={isSaving('urgency')}
+                      disabled={ticket.version === undefined || isSaving('urgency')}
                       onChange={(val) =>
                         void handleFieldPatch(
                           'urgency',
@@ -1593,10 +1622,7 @@ export default function SupportTicketDetail() {
                     aria-label="Target due date"
                     style={{ width: '100%' }}
                     value={ticket.due_date ? dayjs(ticket.due_date) : null}
-                    disabled={
-                      ticket.version === undefined ||
-                      (updatingTicket && savingField === 'due_date')
-                    }
+                    disabled={ticket.version === undefined || isSaving('due_date')}
                     onChange={(dateVal) =>
                       void handleFieldPatch(
                         'due_date',
@@ -1677,6 +1703,7 @@ export default function SupportTicketDetail() {
                     <Input
                       size="small"
                       aria-label="External reference"
+                      disabled={isSaving('external_reference')}
                       placeholder="Vendor RMA / case ID"
                       value={extRefDraft}
                       onChange={(e) => setExtRefDraft(e.target.value)}
@@ -1684,9 +1711,7 @@ export default function SupportTicketDetail() {
                     <Button
                       size="small"
                       type="primary"
-                      loading={
-                        updatingTicket && savingField === 'external_reference'
-                      }
+                      loading={isSaving('external_reference')}
                       onClick={() => {
                         void handleFieldPatch(
                           'external_reference',
@@ -1701,6 +1726,7 @@ export default function SupportTicketDetail() {
                     </Button>
                     <Button
                       size="small"
+                      disabled={isSaving('external_reference')}
                       onClick={() => setIsEditingExtRef(false)}
                     >
                       Cancel

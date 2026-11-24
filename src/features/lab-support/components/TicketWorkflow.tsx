@@ -10,25 +10,28 @@ import {
 } from '@/shared/api/generated/api';
 import { apiErrorMessage } from '../attachments';
 import { getResolutionOptions, getWorkflowAction } from '../ticketPresentation';
+import { isTicketVersionConflict, type RunTicketWrite } from '../ticketWriteQueue';
 import { TicketStatusBadge } from './TicketBadges';
 import styles from './SupportTickets.module.css';
 
 interface TransitionDraft {
   target: AvailableTicketTransitionRead;
-  version: number;
+  fromStatusId: number;
+  ticketType: string;
   note: string;
   outcome?: ResolutionCodeEnum;
   summary: string;
   rootCause: string;
 }
 
-export function TicketWorkflow({ ticket, onUpdated }: {
+export function TicketWorkflow({ ticket, runTicketWrite, isSaving }: {
   ticket: TicketDetailRead;
-  onUpdated: () => Promise<unknown>;
+  runTicketWrite: RunTicketWrite;
+  isSaving: boolean;
 }) {
   const [draft, setDraft] = useState<TransitionDraft | null>(null);
   const [error, setError] = useState('');
-  const [transition, { isLoading }] = useSupportTicketsActionsTransitionCreateByKeyMutation();
+  const [transition] = useSupportTicketsActionsTransitionCreateByKeyMutation();
   const currentState = ticket.status_system_state?.value;
   const ticketType = ticket.ticket_type?.value ?? 'service_request';
   const isTechnical = ticketType === 'incident' || ticketType === 'problem';
@@ -38,7 +41,7 @@ export function TicketWorkflow({ ticket, onUpdated }: {
   const begin = (target: AvailableTicketTransitionRead) => {
     if (ticket.version === undefined) return;
     setError('');
-    setDraft({ target, version: ticket.version, note: '', summary: '', rootCause: '' });
+    setDraft({ target, fromStatusId: ticket.status.id, ticketType, note: '', summary: '', rootCause: '' });
   };
 
   const updateDraft = (update: Partial<TransitionDraft>) => {
@@ -46,36 +49,39 @@ export function TicketWorkflow({ ticket, onUpdated }: {
   };
 
   const save = async () => {
-    if (!draft || isLoading) return;
-    if (draft.version !== ticket.version) {
-      setDraft(null);
-      notify.warning('Ticket changed. Review its current status and try again.');
-      return;
-    }
+    if (!draft || isSaving) return;
     setError('');
     try {
-      await transition({
-        key: ticket.key,
-        ticketTransitionRequest: {
-          to_status_id: draft.target.status.id,
-          version: draft.version,
-          reason: draft.note.trim() || undefined,
-          resolution_code: draft.target.is_resolution_required ? draft.outcome : undefined,
-          resolution_summary: draft.target.is_resolution_required ? draft.summary.trim() : undefined,
-          root_cause: isTechnical && draft.target.is_resolution_required ? draft.rootCause.trim() || undefined : undefined,
-        },
-      }).unwrap();
+      await runTicketWrite('status', async (current, version) => {
+        const target = current.available_transitions?.find(({ id }) => id === draft.target.id);
+        if (
+          current.status.id !== draft.fromStatusId ||
+          current.ticket_type.value !== draft.ticketType ||
+          !target ||
+          target.is_reason_required !== draft.target.is_reason_required ||
+          target.is_resolution_required !== draft.target.is_resolution_required
+        ) {
+          throw new Error('The ticket workflow changed. Cancel and choose the status again.');
+        }
+        const response = await transition({
+          key: current.key,
+          ticketTransitionRequest: {
+            to_status_id: target.status.id,
+            version,
+            reason: draft.note.trim() || undefined,
+            resolution_code: target.is_resolution_required ? draft.outcome : undefined,
+            resolution_summary: target.is_resolution_required ? draft.summary.trim() : undefined,
+            root_cause: isTechnical && target.is_resolution_required ? draft.rootCause.trim() || undefined : undefined,
+          },
+        }).unwrap();
+        return response.data;
+      });
       setDraft(null);
-      await onUpdated();
       notify.success(`Status updated to ${draft.target.status.name}`);
     } catch (failure) {
-      if (typeof failure === 'object' && failure && 'status' in failure && failure.status === 409) {
-        await onUpdated();
-        setDraft(null);
-        notify.warning('Ticket changed. Review its current status and try again.');
-      } else {
-        setError(apiErrorMessage(failure, 'Please review the status change and try again.'));
-      }
+      setError(isTicketVersionConflict(failure)
+        ? 'The ticket changed while you were editing. Review the current ticket before trying again.'
+        : apiErrorMessage(failure, 'Please review the status change and try again.'));
     }
   };
 
@@ -96,7 +102,7 @@ export function TicketWorkflow({ ticket, onUpdated }: {
             })),
           }}
         >
-          <Button type="primary" icon={<SwapOutlined />} disabled={ticket.version === undefined}>
+          <Button type="primary" icon={<SwapOutlined />} disabled={ticket.version === undefined || isSaving}>
             Change status <DownOutlined className={styles.workflowChevron} />
           </Button>
         </Dropdown>
@@ -106,11 +112,11 @@ export function TicketWorkflow({ ticket, onUpdated }: {
         title={actionLabel}
         open={draft !== null}
         onCancel={() => setDraft(null)}
-        confirmLoading={isLoading}
-        closable={!isLoading}
-        keyboard={!isLoading}
-        mask={{ closable: !isLoading }}
-        cancelButtonProps={{ disabled: isLoading }}
+        confirmLoading={isSaving}
+        closable={!isSaving}
+        keyboard={!isSaving}
+        mask={{ closable: !isSaving }}
+        cancelButtonProps={{ disabled: isSaving }}
         okText={actionLabel}
         okButtonProps={{
           danger: draft?.target.is_final,
@@ -134,7 +140,7 @@ export function TicketWorkflow({ ticket, onUpdated }: {
               <p className={styles.workflowHint}>Support staff who start work on an unassigned ticket become its assignee.</p>
             )}
             {error && <InlineAlert variant="error" title="Could not change status" description={error} />}
-            <Form layout="vertical" className={styles.transitionForm}>
+            <Form layout="vertical" className={styles.transitionForm} disabled={isSaving}>
               {draft.target.is_resolution_required && (
                 <>
                   <Form.Item label="Outcome" required>
