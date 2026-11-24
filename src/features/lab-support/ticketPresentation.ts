@@ -391,6 +391,13 @@ export function formatTicketActivityLines(
   const lines: string[] = [];
   const formatName = (name: string) => (resolveUserName ? resolveUserName(name) : name);
 
+  if (typeof payload.duration === 'string') {
+    lines.push(`Time spent: ${payload.duration}`);
+    if (typeof payload.description === 'string' && payload.description) {
+      lines.push(payload.description);
+    }
+  }
+
   if (typeof payload.from_status === 'string' && typeof payload.to_status === 'string') {
     lines.push(`${payload.from_status} → ${payload.to_status}`);
   }

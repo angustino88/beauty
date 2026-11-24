@@ -5438,6 +5438,64 @@ const injectedRtkApi = api.injectEndpoints({
         method: "DELETE",
       }),
     }),
+    supportTicketsWorkLogsRetrieveByKey: build.query<
+      SupportTicketsWorkLogsRetrieveByKeyApiResponse,
+      SupportTicketsWorkLogsRetrieveByKeyApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/support/tickets/${queryArg.key}/work-logs`,
+        params: {
+          page: queryArg.page,
+          page_size: queryArg.pageSize,
+        },
+      }),
+    }),
+    supportTicketsWorkLogsCreateByKey: build.mutation<
+      SupportTicketsWorkLogsCreateByKeyApiResponse,
+      SupportTicketsWorkLogsCreateByKeyApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/support/tickets/${queryArg.key}/work-logs`,
+        method: "POST",
+        body: queryArg.workLogRequest,
+        headers: {
+          "Idempotency-Key": queryArg["Idempotency-Key"],
+        },
+      }),
+    }),
+    supportTicketsWorkLogsRetrieveByKeyWorkLogId: build.query<
+      SupportTicketsWorkLogsRetrieveByKeyWorkLogIdApiResponse,
+      SupportTicketsWorkLogsRetrieveByKeyWorkLogIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/support/tickets/${queryArg.key}/work-logs/${queryArg.workLogId}`,
+      }),
+    }),
+    supportTicketsWorkLogsPartialUpdateByKeyWorkLogId: build.mutation<
+      SupportTicketsWorkLogsPartialUpdateByKeyWorkLogIdApiResponse,
+      SupportTicketsWorkLogsPartialUpdateByKeyWorkLogIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/support/tickets/${queryArg.key}/work-logs/${queryArg.workLogId}`,
+        method: "PATCH",
+        body: queryArg.patchedWorkLogRequest,
+        headers: {
+          "If-Match": queryArg["If-Match"],
+        },
+      }),
+    }),
+    supportTicketsWorkLogsDestroyByKeyWorkLogId: build.mutation<
+      SupportTicketsWorkLogsDestroyByKeyWorkLogIdApiResponse,
+      SupportTicketsWorkLogsDestroyByKeyWorkLogIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/support/tickets/${queryArg.key}/work-logs/${queryArg.workLogId}`,
+        method: "DELETE",
+        headers: {
+          "If-Match": queryArg["If-Match"],
+        },
+      }),
+    }),
     supportTicketsStatsRetrieve: build.query<
       SupportTicketsStatsRetrieveApiResponse,
       SupportTicketsStatsRetrieveApiArg
@@ -9238,6 +9296,43 @@ export type SupportTicketsWatchersCreateByKeyApiArg = {
 export type SupportTicketsWatchersDestroyByKeyApiResponse = unknown;
 export type SupportTicketsWatchersDestroyByKeyApiArg = {
   key: string;
+};
+export type SupportTicketsWorkLogsRetrieveByKeyApiResponse =
+  /** status 200  */ TicketWorkLogListWorkLogsTicketWorkLogPaginatedResponseRead;
+export type SupportTicketsWorkLogsRetrieveByKeyApiArg = {
+  key: string;
+  page?: number;
+  pageSize?: number;
+};
+export type SupportTicketsWorkLogsCreateByKeyApiResponse =
+  /** status 201  */ TicketWorkLogCreateWorkLogsTicketWorkLogDetailResponseRead;
+export type SupportTicketsWorkLogsCreateByKeyApiArg = {
+  /** UUID replay key valid for 24 hours. */
+  "Idempotency-Key": string;
+  key: string;
+  workLogRequest: WorkLogRequest;
+};
+export type SupportTicketsWorkLogsRetrieveByKeyWorkLogIdApiResponse =
+  /** status 200  */ TicketWorkLogDetailWorkLogsTicketWorkLogDetailResponseRead;
+export type SupportTicketsWorkLogsRetrieveByKeyWorkLogIdApiArg = {
+  key: string;
+  workLogId: number;
+};
+export type SupportTicketsWorkLogsPartialUpdateByKeyWorkLogIdApiResponse =
+  /** status 200  */ TicketWorkLogUpdateWorkLogsTicketWorkLogDetailResponseRead;
+export type SupportTicketsWorkLogsPartialUpdateByKeyWorkLogIdApiArg = {
+  /** Current work log ETag. */
+  "If-Match": string;
+  key: string;
+  workLogId: number;
+  patchedWorkLogRequest: PatchedWorkLogRequest;
+};
+export type SupportTicketsWorkLogsDestroyByKeyWorkLogIdApiResponse = unknown;
+export type SupportTicketsWorkLogsDestroyByKeyWorkLogIdApiArg = {
+  /** Current work log ETag. */
+  "If-Match": string;
+  key: string;
+  workLogId: number;
 };
 export type SupportTicketsStatsRetrieveApiResponse =
   /** status 200  */ SupportQueueStatsSerializersQueueStatsDetailResponseRead;
@@ -18557,6 +18652,68 @@ export type WatcherRequest = {
   /** Defaults to the caller. */
   user_id?: number | null;
 };
+export type TicketWorkLogListWorkLogsTicketWorkLogPagination = {
+  count: number;
+  page: number;
+  page_size: number;
+  next: string | null;
+  previous: string | null;
+};
+export type TicketWorkLogListWorkLogsTicketWorkLogPaginationMeta = {
+  pagination: TicketWorkLogListWorkLogsTicketWorkLogPagination;
+};
+export type TicketWorkLog = {
+  /** Effort spent in whole minutes (1 to 14,400). */
+  time_spent_minutes: number;
+};
+export type TicketWorkLogRead = {
+  id: number;
+  author: UserReferenceRead;
+  /** Effort spent in whole minutes (1 to 14,400). */
+  time_spent_minutes: number;
+  started_at: string;
+  description: string;
+  created_at: string;
+  updated_at: string;
+  can_manage: boolean;
+  etag: string;
+};
+export type TicketWorkLogListWorkLogsTicketWorkLogPaginatedResponse = {
+  meta: TicketWorkLogListWorkLogsTicketWorkLogPaginationMeta;
+  data: TicketWorkLog[];
+};
+export type TicketWorkLogListWorkLogsTicketWorkLogPaginatedResponseRead = {
+  meta: TicketWorkLogListWorkLogsTicketWorkLogPaginationMeta;
+  data: TicketWorkLogRead[];
+};
+export type TicketWorkLogCreateWorkLogsTicketWorkLogDetailResponse = {
+  data: TicketWorkLog;
+};
+export type TicketWorkLogCreateWorkLogsTicketWorkLogDetailResponseRead = {
+  data: TicketWorkLogRead;
+};
+export type WorkLogRequest = {
+  time_spent_minutes: number;
+  started_at?: string;
+  description?: string;
+};
+export type TicketWorkLogDetailWorkLogsTicketWorkLogDetailResponse = {
+  data: TicketWorkLog;
+};
+export type TicketWorkLogDetailWorkLogsTicketWorkLogDetailResponseRead = {
+  data: TicketWorkLogRead;
+};
+export type TicketWorkLogUpdateWorkLogsTicketWorkLogDetailResponse = {
+  data: TicketWorkLog;
+};
+export type TicketWorkLogUpdateWorkLogsTicketWorkLogDetailResponseRead = {
+  data: TicketWorkLogRead;
+};
+export type PatchedWorkLogRequest = {
+  time_spent_minutes?: number;
+  started_at?: string;
+  description?: string;
+};
 export type QueueStatsPriorityItem = {
   /** Rank of the priority for ordering. */
   rank: number;
@@ -19402,6 +19559,11 @@ export const {
   useSupportTicketsResourcesDestroyByKeyMutation,
   useSupportTicketsWatchersCreateByKeyMutation,
   useSupportTicketsWatchersDestroyByKeyMutation,
+  useSupportTicketsWorkLogsRetrieveByKeyQuery,
+  useSupportTicketsWorkLogsCreateByKeyMutation,
+  useSupportTicketsWorkLogsRetrieveByKeyWorkLogIdQuery,
+  useSupportTicketsWorkLogsPartialUpdateByKeyWorkLogIdMutation,
+  useSupportTicketsWorkLogsDestroyByKeyWorkLogIdMutation,
   useSupportTicketsStatsRetrieveQuery,
   useUserGroupsRetrieveQuery,
   useUserGroupsUsersRetrieveByGroupIdQuery,

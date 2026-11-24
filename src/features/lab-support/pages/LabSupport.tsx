@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import type { TablePaginationConfig } from 'antd/es/table';
-import { Button, Card, Col, Row, Segmented, Select, Table, Typography } from 'antd';
+import { Button, Card, Col, Grid, Row, Segmented, Select, Table, Typography } from 'antd';
 import {
   AlertOutlined,
   ClearOutlined,
@@ -18,8 +18,7 @@ import { TooltipButton } from '@/components/layout/TooltipButton';
 import { useAuthState } from '@/features/auth/hooks/useAuthState';
 import { usePermission } from '@/features/auth/hooks/useCan';
 import { useSupportTicketsStatsRetrieveQuery } from '@/shared/api/generated/api';
-import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
-import { getApiErrorMessage, notify } from '@/shared/notifications';
+import { getApiErrorMessage, InlineAlert, notify } from '@/shared/notifications';
 import tableStyles from '@/components/tables/AppTable.module.css';
 import {
   fetchSupportTicketsForExport,
@@ -35,23 +34,50 @@ import { exportLabSupportExcel } from '../utils/export';
 
 type OwnershipScope = 'all' | 'mine' | 'unassigned' | 'requested_by_me';
 
+const lifecycleOptions = [
+  { label: 'All tickets', value: 'all' },
+  { label: 'Open', value: 'open' },
+  { label: 'In Progress', value: 'active' },
+  { label: 'Waiting', value: 'waiting' },
+  { label: 'Resolved & Closed', value: 'done' },
+];
+
+function positiveInteger(value: string | null) {
+  const parsed = Number(value);
+  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : undefined;
+}
+
 export default function SupportTickets() {
   const navigate = useNavigate();
+  const compact = !Grid.useBreakpoint().md;
   const { id: currentUserId } = useAuthState();
   const canManage = usePermission('support.handle');
 
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const [searchInput, setSearchInput] = useState('');
+  const [params, setParams] = useSearchParams();
+  const { search: queueSearch } = useLocation();
   const [exportLoading, setExportLoading] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const page = positiveInteger(params.get('page')) ?? 1;
+  const size = Number(params.get('page_size'));
+  const pageSize = [5, 10, 25, 50].includes(size) ? size : 10;
+  const searchInput = params.get('q') ?? '';
+  const state = params.get('state');
+  const systemStateFilter = state && ['open', 'active', 'waiting', 'done'].includes(state) ? state : undefined;
+  const priorityIdFilter = positiveInteger(params.get('priority'));
+  const categoryIdFilter = positiveInteger(params.get('category'));
+  const owner = params.get('owner');
+  const ownershipScope: OwnershipScope =
+    owner === 'unassigned' || owner === 'mine' || owner === 'requested_by_me' ? owner : 'all';
 
-  const [systemStateFilter, setSystemStateFilter] = useState<string>();
-  const [priorityIdFilter, setPriorityIdFilter] = useState<number>();
-  const [categoryIdFilter, setCategoryIdFilter] = useState<number>();
-  const [ownershipScope, setOwnershipScope] = useState<OwnershipScope>('all');
-
-  const debouncedSearch = useDebouncedValue(searchInput, 400);
+  function updateQueue(changes: Record<string, string | number | undefined>) {
+    const next = new URLSearchParams(params);
+    next.delete('page');
+    for (const [key, value] of Object.entries(changes)) {
+      if (value === undefined || value === '') next.delete(key);
+      else next.set(key, String(value));
+    }
+    setParams(next, { replace: true, preventScrollReset: true });
+  }
 
   const { data: categoriesData } = useGetSupportCategoriesQuery({});
   const { data: prioritiesData } = useGetSupportPrioritiesQuery({});
@@ -64,7 +90,7 @@ export default function SupportTickets() {
     const params: SupportTicketQueryParams = {
       page,
       page_size: pageSize,
-      search: debouncedSearch || undefined,
+      search: searchInput || undefined,
       system_state: systemStateFilter,
       priority_id: priorityIdFilter,
       category_id: categoryIdFilter,
@@ -80,7 +106,7 @@ export default function SupportTickets() {
   }, [
     page,
     pageSize,
-    debouncedSearch,
+    searchInput,
     systemStateFilter,
     priorityIdFilter,
     categoryIdFilter,
@@ -88,12 +114,12 @@ export default function SupportTickets() {
     currentUserId,
   ]);
 
-  const { data, isFetching, refetch } = useGetSupportTicketsQuery(queryParams);
+  const { data, isError, isFetching, refetch } = useGetSupportTicketsQuery(queryParams);
 
   const rows = data?.tickets ?? [];
   const total = data?.total ?? data?.count ?? 0;
   const stats = statsData?.data;
-  const columns = useMemo(() => buildSupportTicketColumns(), []);
+  const columns = useMemo(() => buildSupportTicketColumns(queueSearch, compact), [queueSearch, compact]);
 
   const hasActiveFilters = Boolean(
     searchInput ||
@@ -104,12 +130,7 @@ export default function SupportTickets() {
   );
 
   const clearFilters = () => {
-    setSearchInput('');
-    setSystemStateFilter(undefined);
-    setPriorityIdFilter(undefined);
-    setCategoryIdFilter(undefined);
-    setOwnershipScope('all');
-    setPage(1);
+    updateQueue({ q: undefined, state: undefined, priority: undefined, category: undefined, owner: undefined });
   };
 
   const handleRefresh = () => {
@@ -120,17 +141,10 @@ export default function SupportTickets() {
   const handleTableChange = (pagination: TablePaginationConfig) => {
     const nextPage = pagination.current ?? 1;
     const nextPageSize = pagination.pageSize ?? 10;
-    if (nextPageSize !== pageSize) {
-      setPage(1);
-      setPageSize(nextPageSize);
-      return;
-    }
-    setPage(nextPage);
-  };
-
-  const handleSearch = (value: string) => {
-    setSearchInput(value);
-    setPage(1);
+    updateQueue({
+      page: nextPageSize === pageSize && nextPage > 1 ? nextPage : undefined,
+      page_size: nextPageSize === 10 ? undefined : nextPageSize,
+    });
   };
 
   const handleExport = async () => {
@@ -176,90 +190,48 @@ export default function SupportTickets() {
     [categoriesData],
   );
 
-  const slaAttentionCount = stats
-    ? (stats.sla?.overdue_resolution ?? 0) + (stats.sla?.response_breached ?? 0)
-    : 0;
-
   return (
     <div className={tableStyles.registerPage}>
       <PageHeader title="Support tickets" />
 
       {canManage && stats && (
         <div className={styles.queueStatsGrid} role="region" aria-label="Support queue metrics">
-          <button
-            type="button"
-            className={`${styles.statCard} ${
-              systemStateFilter === 'open' && ownershipScope === 'all' ? styles.statCardActive : ''
-            }`}
-            onClick={() => {
-              setSystemStateFilter((prev) => (prev === 'open' ? undefined : 'open'));
-              setOwnershipScope('all');
-              setPage(1);
-            }}
-          >
+          <div className={styles.statCard}>
             <div className={styles.statCopy}>
-              <span className={styles.statLabel}>Active Queue</span>
+              <span className={styles.statLabel}>Unresolved tickets</span>
               <span className={styles.statValue}>{stats.open_total}</span>
-              <span className={styles.statSubtext}>
-                {stats.created} created · {stats.resolved} resolved ({stats.window_days}d)
-              </span>
+              <span className={styles.statSubtext}>{stats.created} created · {stats.resolved} resolved in {stats.window_days} days</span>
             </div>
-            <span className={`${styles.statIconBox} ${styles.toneInfo}`} aria-hidden="true">
-              <InboxOutlined />
-            </span>
-          </button>
-
-          <button
-            type="button"
-            className={`${styles.statCard} ${
-              ownershipScope === 'unassigned' ? styles.statCardActive : ''
-            }`}
-            onClick={() => {
-              setOwnershipScope((prev) => (prev === 'unassigned' ? 'all' : 'unassigned'));
-              setPage(1);
-            }}
-          >
+            <span className={`${styles.statIconBox} ${styles.toneInfo}`} aria-hidden="true"><InboxOutlined /></span>
+          </div>
+          <div className={styles.statCard}>
             <div className={styles.statCopy}>
               <span className={styles.statLabel}>Unassigned</span>
               <span className={styles.statValue}>{stats.unassigned}</span>
-              <span className={styles.statSubtext}>Click to filter tickets needing an owner</span>
+              <span className={styles.statSubtext}>Unresolved tickets without an owner</span>
             </div>
-            <span className={`${styles.statIconBox} ${styles.toneWarning}`} aria-hidden="true">
-              <UserSwitchOutlined />
-            </span>
-          </button>
-
-          <button
-            type="button"
-            className={`${styles.statCard} ${
-              ownershipScope === 'mine' ? styles.statCardActive : ''
-            }`}
-            onClick={() => {
-              setOwnershipScope((prev) => (prev === 'mine' ? 'all' : 'mine'));
-              setPage(1);
-            }}
-          >
+            <span className={`${styles.statIconBox} ${styles.toneWarning}`} aria-hidden="true"><UserSwitchOutlined /></span>
+          </div>
+          <div className={styles.statCard}>
             <div className={styles.statCopy}>
-              <span className={styles.statLabel}>Assigned to Me</span>
+              <span className={styles.statLabel}>Assigned to me</span>
               <span className={styles.statValue}>{stats.mine_open}</span>
-              <span className={styles.statSubtext}>Click to focus on your active workload</span>
+              <span className={styles.statSubtext}>My unresolved tickets</span>
             </div>
-            <span className={`${styles.statIconBox} ${styles.toneSuccess}`} aria-hidden="true">
-              <TeamOutlined />
-            </span>
-          </button>
+            <span className={`${styles.statIconBox} ${styles.toneInfo}`} aria-hidden="true"><TeamOutlined /></span>
+          </div>
 
-          <div className={styles.statCard} style={{ cursor: 'default' }}>
+          <div className={styles.statCard}>
             <div className={styles.statCopy}>
-              <span className={styles.statLabel}>SLA Attention</span>
-              <span className={styles.statValue}>{slaAttentionCount}</span>
+              <span className={styles.statLabel}>Resolution overdue</span>
+              <span className={styles.statValue}>{stats.sla?.overdue_resolution ?? 0}</span>
               <span className={styles.statSubtext}>
                 {stats.sla?.paused ?? 0} paused · {stats.sla?.resolution_breached ?? 0} resolution breached
               </span>
             </div>
             <span
               className={`${styles.statIconBox} ${
-                slaAttentionCount > 0 ? styles.toneDanger : styles.toneNeutral
+                (stats.sla?.overdue_resolution ?? 0) > 0 ? styles.toneDanger : styles.toneNeutral
               }`}
               aria-hidden="true"
             >
@@ -275,25 +247,26 @@ export default function SupportTickets() {
             <Typography.Title level={4} style={{ margin: 0 }}>
               Your support queue
             </Typography.Title>
-            <Typography.Text type="secondary">
-              Track requests, triage priorities, and manage ticket ownership in one workspace.
+            <Typography.Text type="secondary" role="status">
+              {isError ? 'Queue unavailable' : isFetching ? 'Loading tickets…' : `${total} ${total === 1 ? 'ticket' : 'tickets'}${hasActiveFilters ? ' matching filters' : ''}`}
             </Typography.Text>
           </div>
-          <Segmented
-            aria-label="Filter tickets by lifecycle state"
-            value={systemStateFilter ?? 'all'}
-            onChange={(value) => {
-              setSystemStateFilter(value === 'all' ? undefined : String(value));
-              setPage(1);
-            }}
-            options={[
-              { label: 'All tickets', value: 'all' },
-              { label: 'Open', value: 'open' },
-              { label: 'In Progress', value: 'active' },
-              { label: 'Waiting', value: 'waiting' },
-              { label: 'Resolved & Closed', value: 'done' },
-            ]}
-          />
+          {compact ? (
+            <Select
+              aria-label="Filter tickets by lifecycle state"
+              value={systemStateFilter ?? 'all'}
+              options={lifecycleOptions}
+              onChange={(value) => updateQueue({ state: value === 'all' ? undefined : value })}
+              style={{ width: '100%' }}
+            />
+          ) : (
+            <Segmented
+              aria-label="Filter tickets by lifecycle state"
+              value={systemStateFilter ?? 'all'}
+              onChange={(value) => updateQueue({ state: value === 'all' ? undefined : String(value) })}
+              options={lifecycleOptions}
+            />
+          )}
         </div>
 
         <Row className={tableStyles.toolbar}>
@@ -302,15 +275,14 @@ export default function SupportTickets() {
               <FullTextSearch
                 className={tableStyles.search}
                 value={searchInput}
-                onSearch={handleSearch}
+                onSearch={(value) => updateQueue({ q: value.trim() })}
                 placeholder="Search tickets by key, subject, description…"
               />
               <Select<OwnershipScope>
                 aria-label="Filter by ownership"
                 value={ownershipScope}
                 onChange={(val) => {
-                  setOwnershipScope(val);
-                  setPage(1);
+                  updateQueue({ owner: val === 'all' ? undefined : val });
                 }}
                 style={{ width: 165 }}
                 options={[
@@ -330,8 +302,7 @@ export default function SupportTickets() {
                 allowClear
                 value={priorityIdFilter}
                 onChange={(val) => {
-                  setPriorityIdFilter(val);
-                  setPage(1);
+                  updateQueue({ priority: val });
                 }}
                 style={{ width: 145 }}
                 options={priorityOptions}
@@ -342,8 +313,7 @@ export default function SupportTickets() {
                 allowClear
                 value={categoryIdFilter}
                 onChange={(val) => {
-                  setCategoryIdFilter(val);
-                  setPage(1);
+                  updateQueue({ category: val });
                 }}
                 style={{ width: 160 }}
                 options={categoryOptions}
@@ -381,18 +351,18 @@ export default function SupportTickets() {
               Export
             </TooltipButton>
             <TooltipButton
-              responsive
               tooltip="Open a support ticket"
               type="primary"
               icon={<PlusOutlined />}
               onClick={() => setIsCreateModalOpen(true)}
             >
-              New Ticket
+              New ticket
             </TooltipButton>
           </Col>
         </Row>
 
-        <Table<SupportTicket>
+        {isError && <InlineAlert variant="error" title="Unable to load the support queue" onRetry={() => void refetch()} />}
+        {(!isError || rows.length > 0) && <Table<SupportTicket>
           className={tableStyles.table}
           columns={columns}
           tableLayout="auto"
@@ -411,7 +381,7 @@ export default function SupportTickets() {
               const target = event.target as HTMLElement | null;
               if (target?.closest('a, button, input, .ant-select')) return;
               if (record.key) {
-                navigate(`/support-tickets/${encodeURIComponent(record.key)}`);
+                navigate(`/support-tickets/${encodeURIComponent(record.key)}`, { state: { queueSearch } });
               }
             },
           })}
@@ -420,14 +390,14 @@ export default function SupportTickets() {
             total,
             pageSizeOptions: [5, 10, 25, 50],
             pageSize,
-            showQuickJumper: true,
-            showSizeChanger: true,
+            showQuickJumper: !compact,
+            showSizeChanger: !compact,
             defaultPageSize: 10,
             current: page,
             showTotal: (count, range) => `${range[0]}–${range[1]} of ${count} tickets`,
           }}
-          scroll={{ x: 1200 }}
-        />
+          scroll={compact ? undefined : { x: 1200 }}
+        />}
       </Card>
 
       <CreateSupportTicketModal
