@@ -19,6 +19,7 @@ interface BuildColumnsArgs {
   filters: Record<string, Key[] | null>;
   filterOptions: MappingFilterOptions;
   canEdit: boolean;
+  pinColumns: boolean;
   onPlace: (row: ResourceMappingRow) => void;
   onAssignEquipment: (row: ResourceMappingRow) => void;
   onPrintLabels: (row: ResourceMappingRow) => void;
@@ -48,6 +49,7 @@ export const buildMappingColumns = ({
   filters,
   filterOptions,
   canEdit,
+  pinColumns,
   onPlace,
   onAssignEquipment,
   onPrintLabels,
@@ -56,7 +58,7 @@ export const buildMappingColumns = ({
     title: "Bench",
     key: "bench",
     width: 230,
-    fixed: "left",
+    fixed: pinColumns ? "left" : undefined,
     ...serverFilter("bench", choices(filterOptions.benches), filters),
     render: (_v, row) => renderBenchTag(row),
   },
@@ -97,7 +99,7 @@ export const buildMappingColumns = ({
     title: "",
     key: "actions",
     width: canEdit ? 132 : 56,
-    fixed: "right",
+    fixed: pinColumns ? "right" : undefined,
     align: "center",
     render: (_v, row) => (
       <Space size={4}>

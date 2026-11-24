@@ -120,6 +120,7 @@ const BookingCalendar = () => {
     <Card className={styles.calendarCard}>
       <PageHeader
         title="Booking Calendar"
+        wrapControls
         controls={
           <div className={styles.headerControls}>
             <span className={styles.filterLabel}>Benches</span>

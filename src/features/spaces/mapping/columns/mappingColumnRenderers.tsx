@@ -3,6 +3,7 @@ import { CheckCircleFilled, ExclamationCircleFilled, WarningFilled } from "@ant-
 import { Popover, Tag, Tooltip } from "antd";
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
+import { ResourceBadge } from "@/components/display/ResourceBadge";
 import type {
   MappingEquipmentItem,
   MappingLicenseItem,
@@ -215,10 +216,11 @@ export const renderLicenses = (licenses: MappingLicenseItem[]) => {
     <span className={styles.categoryChips}>
       {shown.map((license) => (
         <Tooltip key={`${license.id}-${license.equipment_id}`} title={`${license.name} (${license.sku})`}>
-          <Link to={`${ENTITY_PATHS.license}?q=${encodeURIComponent(license.sku || license.name)}`}>
-            <Tag icon={<span className={styles.chipIcon}><LicenseIcon /></span>} className={styles.licenseTag}>
+          <Link className={styles.licenseLink} to={`${ENTITY_PATHS.license}?q=${encodeURIComponent(license.sku || license.name)}`}>
+            <ResourceBadge kind="license" className={styles.licenseTag}>
+              <span className={styles.chipIcon} aria-hidden="true"><LicenseIcon /></span>
               {license.sku || license.name}
-            </Tag>
+            </ResourceBadge>
           </Link>
         </Tooltip>
       ))}

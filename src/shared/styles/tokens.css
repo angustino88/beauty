@@ -86,9 +86,9 @@
   --lm-badge-sample-fg: #365c26;
   --lm-badge-sample-bg: #edf6e7;
   --lm-badge-sample-border: #c7dfb9;
-  --lm-badge-license-fg: #5a329c;
-  --lm-badge-license-bg: #f3edfd;
-  --lm-badge-license-border: #dbcbf6;
+  --lm-badge-license-fg: #7e3253;
+  --lm-badge-license-bg: #fbeef4;
+  --lm-badge-license-border: #e7c5d4;
 
   --lm-shadow-sm: 0 1px 2px rgba(26, 23, 35, 0.05);
   --lm-shadow-md: 0 4px 14px rgba(26, 23, 35, 0.08);
@@ -145,7 +145,7 @@
   --lm-cat-laboratory: #0f9960;
   --lm-cat-mechanical: #5b7089;
   --lm-cat-other: #7f7a8f;
-  --lm-cat-license: #5a2fc0;
+  --lm-cat-license: var(--lm-badge-license-fg);
 }
 
 html[data-theme='dark'] {
@@ -207,9 +207,9 @@ html[data-theme='dark'] {
   --lm-badge-sample-fg: #b2df8d;
   --lm-badge-sample-bg: #212f20;
   --lm-badge-sample-border: #4c663c;
-  --lm-badge-license-fg: #d7c6ff;
-  --lm-badge-license-bg: #2b2243;
-  --lm-badge-license-border: #615087;
+  --lm-badge-license-fg: #f2b7d0;
+  --lm-badge-license-bg: #382432;
+  --lm-badge-license-border: #75445a;
 
   --lm-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
   --lm-shadow-md: 0 4px 14px rgba(0, 0, 0, 0.45);
@@ -253,7 +253,6 @@ html[data-theme='dark'] {
   --lm-cat-laboratory: #3ecf8e;
   --lm-cat-mechanical: #93a7bf;
   --lm-cat-other: #9c9eaa;
-  --lm-cat-license: #c9baff;
 }
 
 /* Season packs: only these five tokens change with the season. */

@@ -274,10 +274,22 @@
   font-size: 12px;
 }
 
-.licenseTag {
-  margin-inline-end: 0;
+.licenseLink .licenseTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   font-family: var(--lm-font-mono);
-  font-size: 11.5px;
+}
+
+.licenseLink:hover .licenseTag {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.licenseLink:focus-visible {
+  outline: 2px solid var(--lm-focus);
+  outline-offset: 2px;
+  border-radius: 6px;
 }
 
 .popoverList {
@@ -291,7 +303,7 @@
 
 /* ─── Table ─── */
 .mappingTable :global(.ant-table-container) {
-  border: 1px solid var(--lm-border-strong);
+  border: 1px solid var(--lm-border);
   border-radius: 6px;
   background: var(--lm-surface);
 }

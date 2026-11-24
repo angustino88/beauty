@@ -1,5 +1,5 @@
 import { useState, type Key } from "react";
-import { Button, Card, Dropdown, Empty, Segmented, Table } from "antd";
+import { Button, Card, Dropdown, Empty, Grid, Segmented, Table } from "antd";
 import { InlineAlert } from "@/shared/notifications";
 import type { FilterValue } from "antd/es/table/interface";
 import {
@@ -44,6 +44,7 @@ const printLabels = (row: ResourceMappingRow) => {
 
 export default function MappingPage() {
   const canEdit = usePermission("lab_operations.manage");
+  const { lg } = Grid.useBreakpoint();
 
   const [viewMode, setViewMode] = useState<MappingViewMode>("table");
   const [placementTarget, setPlacementTarget] = useState<ResourceMappingRow | null>(null);
@@ -74,6 +75,7 @@ export default function MappingPage() {
     filters: table.filters,
     filterOptions: table.filterOptions,
     canEdit,
+    pinColumns: Boolean(lg),
     onPlace: setPlacementTarget,
     onAssignEquipment: setAssignmentTarget,
     onPrintLabels: printLabels,

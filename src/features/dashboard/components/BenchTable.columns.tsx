@@ -36,6 +36,7 @@ export interface BuildColumnsParams {
   filterHandlers: Record<string, (visible: boolean) => void>;
   handleFavoriteClick: (benchId: number, isFavorite: boolean, e: MouseEvent) => void;
   openModal: (id: number) => void;
+  pinActions: boolean;
   navigate: NavigateFunction;
   styles: { favoriteActiveBtn: string };
 }
@@ -47,6 +48,8 @@ export function buildColumns({
   licenseFilters,
   filterHandlers,
   handleFavoriteClick,
+  openModal,
+  pinActions,
   navigate,
   styles,
 }: BuildColumnsParams): ColumnsType<DashboardBench> {
@@ -60,24 +63,22 @@ export function buildColumns({
 
   return [
     {
-      title: 'Bench Group',
-      dataIndex: 'bench_group',
-      key: 'bench_group',
+      title: 'Bench Name',
+      dataIndex: 'name',
+      key: 'name',
       align: 'left' as const,
-      minWidth: 140,
-      render: (g: DashboardBench['bench_group']) => g?.name || EMPTY,
-      filters: benchGroupFilters,
-      filterSearch: true,
-      filterMultiple: true,
-      filteredValue: columnFilters.lab_group_ids.length ? columnFilters.lab_group_ids : null,
-      filterOnClose: false,
-      filterDropdownProps: { onOpenChange: filterHandlers['bench_group'] },
+      minWidth: 126,
+      render: (_: unknown, record: DashboardBench) => (
+        <button type="button" className="benchName" onClick={() => openModal(record.id)}>
+          {benchLabel(record)}
+        </button>
+      ),
     },
     {
       title: 'Status',
       key: 'status',
       align: 'left' as const,
-      minWidth: 178,
+      minWidth: 170,
       filters: STATUS_FILTER_OPTIONS,
       filterSearch: true,
       filterMultiple: true,
@@ -103,12 +104,20 @@ export function buildColumns({
       },
     },
     {
-      title: 'Bench Name',
-      dataIndex: 'name',
-      key: 'name',
+      title: 'Bench Group',
+      dataIndex: 'bench_group',
+      key: 'bench_group',
       align: 'left' as const,
-      minWidth: 120,
-      render: (_: unknown, record: DashboardBench) => record.name || record.lab_name || EMPTY,
+      minWidth: 136,
+      render: (g: DashboardBench['bench_group']) => g?.name ? (
+        <span className="benchGroup" title={g.name}>{g.name}</span>
+      ) : EMPTY,
+      filters: benchGroupFilters,
+      filterSearch: true,
+      filterMultiple: true,
+      filteredValue: columnFilters.lab_group_ids.length ? columnFilters.lab_group_ids : null,
+      filterOnClose: false,
+      filterDropdownProps: { onOpenChange: filterHandlers['bench_group'] },
     },
     {
       title: 'Computer Name',
@@ -117,30 +126,6 @@ export function buildColumns({
       minWidth: 150,
       render: (_: unknown, record: DashboardBench) =>
         record.computing?.name || record.computer?.computer_name || EMPTY,
-    },
-    {
-      title: 'Computer IP',
-      key: 'comp_ip',
-      align: 'left' as const,
-      minWidth: 130,
-      render: (_: unknown, record: DashboardBench) =>
-        record.computing?.ip_address || record.computer?.computer_ip || EMPTY,
-    },
-    {
-      title: 'Remote User',
-      key: 'remote_user',
-      align: 'center' as const,
-      width: 150,
-      render: (_: unknown, record: DashboardBench) => {
-        const username = record.computing?.remote_user ?? record.remote_user?.username;
-        const displayName =
-          record.computing?.remote_user_display_name ??
-          record.remote_user?.displayname ??
-          username;
-        return username ? (
-          <AvatarRenderer username={username} displayname={displayName} />
-        ) : EMPTY;
-      },
     },
     {
       title: 'Sample',
@@ -191,6 +176,30 @@ export function buildColumns({
       filterDropdownProps: { onOpenChange: filterHandlers['licenses'] },
     },
     {
+      title: 'Computer IP',
+      key: 'comp_ip',
+      align: 'left' as const,
+      minWidth: 130,
+      render: (_: unknown, record: DashboardBench) =>
+        record.computing?.ip_address || record.computer?.computer_ip || EMPTY,
+    },
+    {
+      title: 'Remote User',
+      key: 'remote_user',
+      align: 'center' as const,
+      minWidth: 118,
+      render: (_: unknown, record: DashboardBench) => {
+        const username = record.computing?.remote_user ?? record.remote_user?.username;
+        const displayName =
+          record.computing?.remote_user_display_name ??
+          record.remote_user?.displayname ??
+          username;
+        return username ? (
+          <AvatarRenderer username={username} displayname={displayName} />
+        ) : EMPTY;
+      },
+    },
+    {
       title: 'RDP',
       key: 'rdpFile',
       align: 'center' as const,
@@ -221,9 +230,9 @@ export function buildColumns({
     {
       title: 'Actions',
       key: 'action',
-      fixed: 'right' as const,
+      fixed: pinActions ? 'right' : undefined,
       align: 'center' as const,
-      minWidth: 130,
+      minWidth: 116,
       render: (_: unknown, bench: DashboardBench) => (
         <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
           <TooltipButton

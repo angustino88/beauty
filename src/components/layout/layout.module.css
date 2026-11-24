@@ -4,21 +4,23 @@
   grid-template-areas:
     "header header"
     "sidebar content";
-  grid-template-columns: 248px 1fr;
+  grid-template-columns: 248px minmax(0, 1fr);
   grid-template-rows: 56px 1fr;
   height: 100vh;
+  height: 100dvh;
   box-sizing: border-box;
 }
 
 .layoutCollapsed {
   background: var(--lm-surface-subtle);
   display: grid;
-  grid-template-columns: 80px 1fr !important;
+  grid-template-columns: 80px minmax(0, 1fr);
   grid-template-areas:
     "header header"
     "sidebar content";
   grid-template-rows: 56px 1fr;
   height: 100vh;
+  height: 100dvh;
   box-sizing: border-box;
 }
 
@@ -244,12 +246,12 @@
 .modernSidebar .navigationEmpty { color: var(--lm-text-tertiary); }
 .modernSidebar :global(.ant-menu-dark .ant-menu-item),
 .modernSidebar :global(.ant-menu-dark .ant-menu-submenu-title) { color: var(--lm-text-secondary) !important; font-weight: 400; }
-.modernSidebar :global(.ant-menu-dark .ant-menu-submenu-selected > .ant-menu-submenu-title) { color: var(--lm-primary) !important; background: var(--lm-primary-bg) !important; }
+.modernSidebar :global(.ant-menu-dark .ant-menu-submenu-selected > .ant-menu-submenu-title) { color: var(--lm-primary-fg) !important; background: var(--lm-primary-bg) !important; }
 .modernSidebar :global(.ant-menu-dark .ant-menu-item:hover),
 .modernSidebar :global(.ant-menu-dark .ant-menu-submenu-title:hover) { color: var(--lm-text) !important; background: var(--lm-surface-subtle) !important; transform: none; }
 .modernSidebar :global(.ant-menu-dark .ant-menu-item-selected),
 .modernSidebar :global(.ant-menu-dark .ant-menu-sub .ant-menu-item-selected) {
-  color: var(--lm-primary) !important;
+  color: var(--lm-primary-fg) !important;
   background: var(--lm-primary-bg) !important;
   box-shadow: inset 3px 0 var(--lm-primary), inset 0 0 0 1px var(--lm-primary-border) !important;
   font-weight: 600;
@@ -356,6 +358,28 @@
 
 /* Responsive */
 @media only screen and (max-width: 700px) {
+  .layout,
+  .layoutCollapsed {
+    position: relative;
+    grid-template-columns: 64px minmax(0, 1fr);
+  }
+
+  .layout > .sidebar {
+    position: absolute;
+    grid-area: auto;
+    inset-block: 56px 0;
+    inset-inline-start: 0;
+    width: min(248px, calc(100% - 28px)) !important;
+    height: auto;
+    z-index: 12;
+    box-shadow: var(--lm-shadow-lg);
+  }
+
+  .content {
+    margin: 12px;
+    min-height: 0;
+  }
+
   .header {
     min-height: 50px;
   }
@@ -406,6 +430,27 @@
 
 .menu > :global(.ant-menu) {
   background: transparent !important;
+}
+
+.menu > :global(.ant-menu-inline-collapsed) {
+  width: 100%;
+}
+
+.navigationPopup :global(.ant-menu.ant-menu-dark) {
+  color: var(--lm-text);
+  background: var(--lm-surface-raised);
+  border: 1px solid var(--lm-border);
+  box-shadow: var(--lm-shadow-md);
+}
+
+.navigationPopup :global(.ant-menu-dark .ant-menu-item) { color: var(--lm-text-secondary); }
+.navigationPopup :global(.ant-menu-dark .ant-menu-item:hover) {
+  color: var(--lm-text);
+  background: var(--lm-surface-muted);
+}
+.navigationPopup :global(.ant-menu-dark .ant-menu-item-selected) {
+  color: var(--lm-primary-fg);
+  background: var(--lm-primary-bg);
 }
 
 .menu::-webkit-scrollbar {
@@ -844,7 +889,7 @@
 
 .sidebar.modernSidebar :global(.ant-menu-dark .ant-menu-item-selected),
 .sidebar.modernSidebar :global(.ant-menu-dark .ant-menu-sub .ant-menu-item-selected) {
-  color: var(--lm-primary) !important;
+  color: var(--lm-primary-fg) !important;
   background: var(--lm-primary-bg) !important;
   box-shadow: inset 3px 0 var(--lm-primary), inset 0 0 0 1px var(--lm-primary-border) !important;
   font-weight: 600;
