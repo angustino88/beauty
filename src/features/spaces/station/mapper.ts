@@ -1,5 +1,6 @@
 import type { IStation, IStationListResponse, IStationPayload } from "./types";
-import { normalizeSpaceStatus } from "../shared/spaceStatus.ts";
+import { STATION_DETAILS, readDetails } from "../shared/resourceForm.ts";
+import { namedReference } from '../../../shared/utils/resourceReferences.ts';
 import {
   mapAvailability,
   mapChoice,
@@ -30,13 +31,18 @@ const asString = (v: unknown, fallback = ""): string =>
 const asNullableString = (v: unknown): string | null =>
   v != null && v !== "" ? String(v) : null;
 
+const readChoiceValue = (v: unknown): string | null => {
+  if (typeof v === "string") return v || null;
+  if (isRecord(v) && typeof v.value === "string") return v.value || null;
+  return null;
+};
+
 export function mapStationApiItem(raw: unknown): IStation {
   const st = isRecord(raw) ? raw : {};
   const room = isRecord(st.room) ? st.room : null;
   const dept = isRecord(st.department) ? st.department : null;
   const grp = isRecord(st.group) ? st.group : null;
   const owner = isRecord(st.owner) ? st.owner : null;
-  const currentStatus = isRecord(st.current_status) ? st.current_status : null;
 
   const rawBenches = Array.isArray(st.benches)
     ? st.benches
@@ -45,6 +51,7 @@ export function mapStationApiItem(raw: unknown): IStation {
       : [];
 
   return {
+    ...readDetails(STATION_DETAILS, st),
     id: asNumber(st.id),
     uid: asNullableString(st.uid) ?? undefined,
     sku: asString(st.sku),
@@ -60,7 +67,8 @@ export function mapStationApiItem(raw: unknown): IStation {
     room_id: asNullableNumber(st.room_id || room?.id),
     slot_id: isRecord(st.slot) ? asNumber(st.slot.id) : asNullableNumber(st.slot_id),
     slot_code: isRecord(st.slot) ? asNullableString(st.slot.name) : asNullableString(st.slot_code),
-    power_reserved_w: asNullableString(st.power_reserved_w),
+    power_reserved_w: asNullableNumber(st.power_reserved_w),
+    station_type: namedReference(st.type),
     width_mm: asNullableNumber(st.width_mm || st.width),
     depth_mm: asNullableNumber(st.depth_mm || st.depth),
     height_mm: asNullableNumber(st.height_mm || st.height),
@@ -75,15 +83,6 @@ export function mapStationApiItem(raw: unknown): IStation {
     condition: mapChoice<Condition>(st.condition, 'operational', 'Operational'),
     availability: mapAvailability(st.availability),
     activity_status: mapChoice<ActivityStatus>(st.activity_status, 'idle', 'Idle'),
-    status: normalizeSpaceStatus(st.status) || normalizeSpaceStatus(currentStatus?.status_type) || normalizeSpaceStatus(currentStatus?.status) || null,
-    current_status: currentStatus
-      ? {
-          id: asNumber(currentStatus.id),
-          status_type: asNullableString(currentStatus.status_type) ?? undefined,
-          status_data: isRecord(currentStatus.status_data) ? currentStatus.status_data : undefined,
-          created: asString(currentStatus.created, new Date().toISOString()),
-        }
-      : null,
     label: asString(st.label),
     remark: asNullableString(st.remark),
     bench_count: asNullableNumber(st.active_bench_count ?? st.bench_count) ?? rawBenches.length,
@@ -91,6 +90,11 @@ export function mapStationApiItem(raw: unknown): IStation {
     bench_capacity: asNullableNumber(st.bench_capacity),
     allocated_power_w: asNullableNumber(st.allocated_power_w),
     available_power_w: asNullableNumber(st.available_power_w),
+    available_slot_count: asNullableNumber(st.available_slot_count),
+    slot_count: asNullableNumber(st.slot_count),
+    slots_url: asNullableString(st.slots_url),
+    created_at: asNullableString(st.created_at),
+    updated_at: asNullableString(st.updated_at),
     temperature: asNullableNumber(st.temperature),
     humidity: asNullableNumber(st.humidity),
     power_usage: asNullableNumber(st.power_usage),
@@ -104,7 +108,7 @@ export function mapStationApiItem(raw: unknown): IStation {
             id: asNumber(slot.id),
             slot_code: asString(slot.slot_code),
             label: asNullableString(slot.label),
-            service_status: asNullableString(slot.service_status) ?? undefined,
+            service_status: readChoiceValue(slot.service_status) ?? undefined,
             occupied: Boolean(slot.is_occupied),
           };
         })
@@ -154,11 +158,18 @@ export function mapStationWritePayload(payload: IStationPayload): Record<string,
     power_capacity_w: payload.power_capacity_w,
     network_port_capacity: payload.network_port_capacity,
     bench_capacity: payload.bench_capacity,
-    department: payload.department,
-    group: payload.group,
-    owner: payload.owner,
+    department_id: payload.department_id !== undefined ? payload.department_id : payload.department,
+    group_id: payload.group_id !== undefined ? payload.group_id : payload.group,
+    owner_id: payload.owner_id !== undefined ? payload.owner_id : payload.owner ?? payload.primary_owner,
+    type_id: payload.type_id,
+    position: payload.position,
+    orientation_degrees: payload.orientation_degrees,
+    max_concurrent_users: payload.max_concurrent_users,
+    usable_surface_mm2: payload.usable_surface_mm2,
+    cooling_capacity_w: payload.cooling_capacity_w,
+    utilities: payload.utilities,
+    safety_classification: payload.safety_classification,
     label: payload.label,
     remark: payload.remark,
-    current_status: payload.current_status,
   };
 }

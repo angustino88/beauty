@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mapLicenseWritePayload } from './mapper.ts';
+import { mapLicenseRead, mapLicenseWritePayload } from './mapper.ts';
 
 test('license write body uses the API field names', () => {
   const body = mapLicenseWritePayload({
@@ -74,4 +74,20 @@ test('the serial number is sent trimmed and separately from the write-only key',
   assert.equal(body.identifier, 'KEY-1');
   assert.equal(mapLicenseWritePayload({ serial_number: '' }).serial_number, '');
   assert.equal('serial_number' in mapLicenseWritePayload({ name: 'x' }), false);
+});
+
+
+test('license ownership and seats round trip and optional ownership can be cleared', () => {
+  const department = { id: 3, name: 'Labs' };
+  const group = { id: 4, name: 'Measurement' };
+  const license = mapLicenseRead({ department, group, seats: 5 });
+  assert.deepEqual(license.department, department);
+  assert.deepEqual(license.group, group);
+  assert.equal(license.license_seats, 5);
+  assert.deepEqual(mapLicenseWritePayload({ department_id: 3, group_id: 4, license_seats: 5 }), {
+    department_id: 3, group_id: 4, seats: 5,
+  });
+  assert.deepEqual(mapLicenseWritePayload({ department_id: null, group_id: null }), {
+    department_id: null, group_id: null,
+  });
 });

@@ -52,11 +52,10 @@ export function buildColumns({
 }: BuildColumnsParams): ColumnsType<DashboardBench> {
   const { columnFilters, summaryStatus } = state;
 
-  const rawGroups = filterOptions?.bench_groups ?? filterOptions?.lab_groups;
-  const groupsList = Array.isArray(rawGroups) ? rawGroups : [];
+  const groupsList = Array.isArray(filterOptions?.bench_groups) ? filterOptions.bench_groups : [];
   const benchGroupFilters = groupsList.map((g) => ({
     value: g.id,
-    text: g.name ?? (g as { lab_group_name?: string }).lab_group_name ?? `Group ${g.id}`,
+    text: g.name ?? `Group ${g.id}`,
   }));
 
   return [

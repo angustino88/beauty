@@ -69,6 +69,7 @@ export interface DashboardBench {
   sku: string;
   name: string;
   lifecycle_status: string;
+  condition: string;
   bench_group: BenchGroup | null;
   bench_type: { id: number; name: string } | null;
   location: {
@@ -124,19 +125,13 @@ export interface DashboardBench {
   remote_user?: RemoteUser | null;
 }
 
-/** Legacy alias for DashboardBench */
-export type LabDashboardItem = DashboardBench;
-
 // ─── Filter Options ───────────────────────────────────────────────────────────
 
 export interface BenchFilterOptions {
   bench_groups: BenchGroup[];
-  lab_groups?: BenchGroup[];
   locations: string[];
   statuses: string[];
 }
-
-export type LabFilterOptions = BenchFilterOptions;
 
 // ─── Column Filters ───────────────────────────────────────────────────────────
 
@@ -168,7 +163,6 @@ export interface DashboardPageParams {
   page_size: number;
   search?: string;
   status?: string[];
-  lab_group?: number[];
   bench_group?: number[];
   sample_ids?: number[];
   license_ids?: number[];
@@ -187,6 +181,7 @@ export interface DashboardOperationalSummary {
   active_bookings_count: number;
   favorited_benches_count: number;
   lifecycle_distribution: Record<string, number>;
+  condition_distribution: Record<string, number>;
   activity_distribution: Record<string, number>;
   utilization_rate: number;
   // Compatibility fields
@@ -276,6 +271,7 @@ export interface DashboardBenchDetail {
   sku: string;
   name: string;
   lifecycle_status: string;
+  condition: string;
   bench_group: BenchGroup | null;
   bench_type: { id: number; name: string } | null;
   location: {

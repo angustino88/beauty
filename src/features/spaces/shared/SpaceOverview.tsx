@@ -2,8 +2,8 @@ import { InlineAlert } from '@/shared/notifications';
 import { Link } from 'react-router-dom';
 import { baseApi } from '@/shared/lib/api';
 import EquipmentInventoryOverview from '@/features/lab-equipment/shared/components/cards/EquipmentInventoryOverview';
-import { normalizeSpaceStatus, spaceStatusLabel, spaceStatusTone } from './spaceStatus';
-import { spaceOverviewStatuses } from './spaceOverviewStatuses';
+import { normalizeStatusKey, toneForStatus } from '@/shared/status/statusTone';
+import { lifecycleSummaryCards } from './spaceOverviewStatuses';
 
 type SpaceKind = 'room' | 'station' | 'bench';
 type StatusCount = { status: { value: string; label: string }; resource_count: number };
@@ -41,39 +41,8 @@ const nouns: Record<SpaceKind, string> = { room: 'rooms', station: 'stations', b
 export default function SpaceOverview({ kind }: { kind: SpaceKind }) {
   const { data, isLoading, isError, refetch } = useGetSpaceStatusSummaryQuery(kind);
 
-  const getStatusLabel = (val: unknown) => {
-    const norm = normalizeSpaceStatus(val);
-    if ((kind === 'room' || kind === 'station') && norm === 'available') {
-      return 'Operational';
-    }
-    return spaceStatusLabel(val);
-  };
-
-  // A booked room or station is still operational, so its count belongs to "Operational" instead of vanishing
-  // from the tiles (which would leave the tiles adding up to less than the total).
-  const statuses = (() => {
-    const source = data?.statuses ?? [];
-    if (kind !== 'room' && kind !== 'station') return source;
-    const reserved = source
-      .filter(({ status }) => normalizeSpaceStatus(status.value) === 'reserved')
-      .reduce((sum, { resource_count }) => sum + resource_count, 0);
-    return source
-      .filter(({ status }) => normalizeSpaceStatus(status.value) !== 'reserved')
-      .map((entry) => normalizeSpaceStatus(entry.status.value) === 'available'
-        ? { ...entry, resource_count: entry.resource_count + reserved }
-        : entry);
-  })();
-
-  const filteredStatuses = statuses.map(({ status, resource_count }) => ({
-    status: {
-      value: normalizeSpaceStatus(status.value),
-      label:
-        (kind === 'room' || kind === 'station') && normalizeSpaceStatus(status.value) === 'available'
-          ? 'Operational'
-          : status.label,
-    },
-    count: resource_count,
-  }));
+  const counts = data?.statuses ?? [];
+  const statuses = counts.map(({ status, resource_count }) => ({ status, count: resource_count }));
 
   return (
     <>
@@ -86,18 +55,16 @@ export default function SpaceOverview({ kind }: { kind: SpaceKind }) {
       )}
       <EquipmentInventoryOverview
         total={data?.total_count}
-        statuses={filteredStatuses}
+        statuses={statuses}
         unknownCount={data?.unknown_status_count}
         loading={isLoading}
         resourceLabel={nouns[kind]}
-        scopeLabel="Across all spaces, not just this page"
-        featuredStatuses={spaceOverviewStatuses(statuses, kind)}
-        showAllOtherStatuses={kind === 'bench'}
-        showOtherStatuses={kind === 'bench'}
+        scopeLabel="Lifecycle across all spaces"
+        featuredStatuses={lifecycleSummaryCards(counts)}
+        showAvailabilityInsights={false}
         fillWidth
-        statusTone={spaceStatusTone}
-        normalizeStatus={normalizeSpaceStatus}
-        statusLabel={getStatusLabel}
+        statusTone={toneForStatus}
+        normalizeStatus={normalizeStatusKey}
         footer={<Link to="/spaces/mapping">Explore placement →</Link>}
       />
     </>

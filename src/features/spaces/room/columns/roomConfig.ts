@@ -1,7 +1,8 @@
+import { editableDetails, ROOM_DETAILS } from "../../shared/resourceForm";
+import { ownershipFormValues } from '../../../../shared/utils/resourceReferences.ts';
 import type { IRoom } from "../types";
+import type { RoomLocationOptions } from "../hooks/useRoomLocationOptions";
 import type { FieldConfig } from "@/features/lab-equipment/shared";
-
-export type SelectOption = { label: string; value: number };
 
 // Room field configuration: table cell readers, the select sources and the create/edit form.
 // ─── Field config ─────────────────────────────────────────────────────────────
@@ -10,10 +11,6 @@ export interface RoomFieldConfig {
   label: string;
   type?: FieldConfig["type"];
   required?: boolean;
-  /** Raw-data field for the label text — dropdown fields only */
-  labelField?: string;
-  /** Raw-data field for the id value — dropdown fields only */
-  valueField?: string;
   /** Reads the display string from a room record */
   reader?: (r: IRoom) => string;
 }
@@ -24,32 +21,24 @@ export const ROOM_FIELD_CONFIG: RoomFieldConfig[] = [
     key: "primary_owner",
     label: "Owner",
     type: "select",
-    labelField: "username",
-    valueField: "id",
     reader: (r) => r.primary_owner?.username ?? "",
   },
   {
     key: "city",
     label: "City",
     type: "select",
-    labelField: "name",
-    valueField: "id",
     reader: (r) => r.location_info?.city?.name ?? "",
   },
   {
     key: "building",
     label: "Building",
     type: "select",
-    labelField: "name",
-    valueField: "id",
     reader: (r) => r.location_info?.building?.name ?? "",
   },
   {
     key: "country",
     label: "Country",
     type: "select",
-    labelField: "name",
-    valueField: "id",
     reader: (r) => {
       const c = r.location_info?.country;
       if (!c) return String(r.country ?? "");
@@ -61,16 +50,6 @@ export const ROOM_FIELD_CONFIG: RoomFieldConfig[] = [
   { key: "cols", label: "Columns", reader: (r) => String(r.cols ?? "") },
   { key: "remark", label: "Remark", reader: (r) => r.remark ?? "" },
 ];
-
-/** Dropdown-capable entries — used by useRoomTable to build optionsMap + filtersMap */
-export interface RoomOptionSource extends RoomFieldConfig {
-  labelField: string;
-  valueField: string;
-}
-export const ROOM_OPTIONS_CONFIG: RoomOptionSource[] = ROOM_FIELD_CONFIG.filter(
-  (c): c is RoomOptionSource =>
-    c.labelField !== undefined && c.valueField !== undefined,
-);
 
 // ─── Specs popover ────────────────────────────────────────────────────────────
 export interface RoomSpecField {
@@ -92,36 +71,36 @@ export const ROOM_SPECS_FIELDS: RoomSpecField[] = [
  * (stations are placed from the station, not the room). The SKU is shown read-only when editing: it identifies
  * the room and cannot change after creation.
  */
-export const buildRoomFormFields = (optionsMap: Record<string, SelectOption[]>): FieldConfig[] => [
-  { name: "sku", label: "SKU", type: "text", required: true, maxLength: 255, disabledInEdit: true, section: "Identification" },
-  { name: "name", label: "Name", type: "text", required: true, maxLength: 255, section: "Identification" },
-  { name: "label", label: "Short label", type: "text", essential: true, placeholder: "e.g. A101", section: "Identification" },
-  { name: "primary_owner", apiField: "owner_id", label: "Owner", type: "select", essential: true, options: optionsMap.primary_owner, section: "Identification" },
-  { name: "rows", apiField: "layout_rows", label: "Grid rows", type: "number", required: true, section: "Layout" },
-  { name: "cols", apiField: "layout_columns", label: "Grid columns", type: "number", required: true, section: "Layout" },
+export const buildRoomFormFields = (location: RoomLocationOptions): FieldConfig[] => [
+  { name: "sku", span: 7, label: "SKU", type: "text", required: true, maxLength: 255, disabledInEdit: true, section: "Identification" },
+  { name: "name", span: 10, label: "Name", type: "text", required: true, maxLength: 255, section: "Identification" },
+  { name: "label", span: 7, label: "Short label", type: "text", essential: true, placeholder: "e.g. A101", section: "Identification" },
+  { name: "rows", span: 8, apiField: "layout_rows", label: "Grid rows", type: "number", required: true, section: "Layout" },
+  { name: "cols", span: 8, apiField: "layout_columns", label: "Grid columns", type: "number", required: true, section: "Layout" },
   {
-    name: "setup_capacity", label: "Setup capacity", type: "number", disabled: true,
-    help: "Rows × columns: the room slots stations can occupy.", section: "Layout",
+    name: "setup_capacity", span: 8, label: "Setup capacity", type: "number", disabled: true,
+    help: "Calculated from grid rows × columns.", section: "Layout",
   },
-  { name: "length", apiField: "length_m", label: "Length (m)", type: "number", section: "Layout" },
-  { name: "width", apiField: "width_m", label: "Width (m)", type: "number", section: "Layout" },
-  { name: "max_power", apiField: "power_capacity_w", label: "Max power (W)", type: "number", section: "Layout" },
-  { name: "country", apiField: "country_id", label: "Country", type: "select", options: optionsMap.country, section: "Location" },
-  { name: "city", apiField: "city_id", label: "City", type: "select", options: optionsMap.city, section: "Location" },
-  { name: "building", apiField: "building_id", label: "Building", type: "select", options: optionsMap.building, section: "Location" },
+  { name: "length", span: 8, apiField: "length_m", label: "Length (m)", type: "number", section: "Layout" },
+  { name: "width", span: 8, apiField: "width_m", label: "Width (m)", type: "number", section: "Layout" },
+  { name: "max_power", apiField: "power_capacity_w", label: "Max power (W)", type: "number", section: "Specifications" },
+  { name: "country", apiField: "country_id", label: "Country", type: "select", essential: true, ...location.country, section: "Location" },
+  { name: "city", apiField: "city_id", label: "City", type: "select", dependsOn: ["country"], ...location.city, placeholder: location.city.disabled ? "Select a country first" : "Select City", section: "Location" },
+  { name: "building", apiField: "building_id", label: "Building", type: "select", dependsOn: ["city"], ...location.building, placeholder: location.building.disabled ? "Select a city first" : "Select Building", section: "Location" },
   { name: "floor", label: "Floor", type: "text", placeholder: "e.g. 1 or B1", section: "Location" },
   { name: "location", apiField: "map_url", label: "Map link", type: "text", placeholder: "https://…", section: "Location" },
-  { name: "remark", label: "Remark", type: "textarea", section: "Location" },
+  { name: "remark", label: "Remark", type: "textarea", section: "Notes" },
+  ...editableDetails(ROOM_DETAILS),
   { name: "image", label: "Image", type: "image" },
 ];
 
 /** A room record as form values (ids for the selects). */
 export const toRoomFormValues = (room: IRoom): Record<string, unknown> => ({
-  id: room.id,
+  ...room,
+  ...ownershipFormValues(room),
   sku: room.sku,
   name: room.name,
   label: room.label,
-  primary_owner: room.primary_owner?.id ?? null,
   rows: room.rows,
   cols: room.cols,
   setup_capacity: room.setup_capacity,

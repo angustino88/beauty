@@ -1,5 +1,6 @@
 import type { IBench, IBenchListResponse } from "./types";
-import { normalizeSpaceStatus } from "../shared/spaceStatus.ts";
+import { BENCH_DETAILS, readDetails } from "../shared/resourceForm.ts";
+import { namedReference } from '../../../shared/utils/resourceReferences.ts';
 import {
   mapAvailability,
   mapChoice,
@@ -40,16 +41,16 @@ export function mapBenchApiItem(raw: unknown): IBench {
   const station = isRecord(b.setup_location) ? b.setup_location : isRecord(b.station) ? b.station : null;
   const stationSlot = isRecord(b.station_slot) ? b.station_slot : null;
   const room = isRecord(b.room) ? b.room : null;
-  const currentStatus = isRecord(b.current_status) ? b.current_status : null;
-  const status = isRecord(b.status) ? b.status : null;
 
   return {
+    ...readDetails(BENCH_DETAILS, b),
     id: asNumber(b.id),
     uid: asNullableString(b.uid) ?? undefined,
     sku: asString(b.sku),
     name: asString(b.name || b.lab_name),
     bench_group: group ? { id: asNumber(group.id), name: asString(group.name || group.lab_group_name) } : null,
     bench_type: type ? { id: asNumber(type.id), name: asString(type.name) } : null,
+    group: namedReference(b.group),
     department: dept ? { id: asNumber(dept.id), name: asString(dept.name) } : null,
     primary_owner: toUserRef(owner),
     setup_location_id: station ? asNumber(station.id) : asNullableNumber(b.setup_location_id),
@@ -64,19 +65,12 @@ export function mapBenchApiItem(raw: unknown): IBench {
     condition: mapChoice<Condition>(b.condition, 'operational', 'Operational'),
     availability: mapAvailability(b.availability),
     activity_status: mapChoice<ActivityStatus>(b.activity_status, 'idle', 'Idle'),
-    status: normalizeSpaceStatus(b.status) || normalizeSpaceStatus(currentStatus?.status_type) || normalizeSpaceStatus(currentStatus?.status) || null,
-    status_label: typeof status?.label === 'string' ? status.label : null,
-    current_status: currentStatus
-      ? {
-          id: asNumber(currentStatus.id),
-          status_type: asNullableString(currentStatus.status_type) ?? undefined,
-          status_data: isRecord(currentStatus.status_data) ? currentStatus.status_data : undefined,
-          created: asString(currentStatus.created, new Date().toISOString()),
-        }
-      : null,
     remark: asNullableString(b.remark),
     image: asNullableString(b.image_url ?? b.image),
     location_name: asNullableString(b.location_name || b.location),
+    created_at: asNullableString(b.created_at),
+    updated_at: asNullableString(b.updated_at),
+    equipment_url: asNullableString(b.equipment_url),
   };
 }
 

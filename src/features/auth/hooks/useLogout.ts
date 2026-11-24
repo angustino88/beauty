@@ -4,7 +4,7 @@ import { useAppDispatch } from '@/app/store';
 import { authActions } from '../authSlice';
 import { resetAutoLoginState } from './useLogin';
 import { resetBootstrapAuthState } from '../session/bootstrapAuth';
-import { clearCsrfToken } from '../session/csrf';
+import { clearCsrfToken } from '@/shared/lib/csrf';
 import { meActions } from '../meSlice';
 import { useLogoutMutation } from '../api';
 import { notificationActions } from '@/features/notifications/notificationSlice';

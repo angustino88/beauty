@@ -1,9 +1,9 @@
 import { useGetUsersQuery } from "@/features/lab-equipment/shared";
 import { WorkbookImportButton } from "@/features/data-import";
 import { toResourceOption } from "@/components/inputs/ResourceOption";
-import { useCallback, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { skipToken } from "@reduxjs/toolkit/query";
-import { useLabsRoomsSlotsRetrieveByRoomIdQuery } from "@/shared/api/generated/api";
+import { useLabsRoomsSlotsRetrieveByRoomIdQuery, useLabsStationTypesOptionsRetrieveQuery } from "@/shared/api/generated/api";
 import {
   EquipmentPageLayout,
   EquipmentFormModal,
@@ -13,6 +13,9 @@ import {
   type GuardedDeleteInitialMode,
 } from "@/features/lab-equipment/shared";
 import type { FieldConfig } from "@/features/lab-equipment/shared";
+import { STATION_DETAILS, detailPayload, editableDetails, singleFilterId } from "../../shared/resourceForm";
+import { changedReference, ownershipFormValues, ownershipPayload } from '../../../../shared/utils/resourceReferences.ts';
+import { referenceOptions, useOwnershipFields } from "@/features/lab-equipment/shared/hooks/useOwnershipFields";
 import type { IStation, IStationPayload } from "../types";
 import SpaceOverview from "../../shared/SpaceOverview";
 import { useGetStationHistoryQuery, useGetStationDropdownQuery, useGetStationFiltersQuery } from "../api";
@@ -28,6 +31,7 @@ export default function StationPage() {
 
   const table = useStationTable();
   const form = useStationForm();
+  const filteredParentId = singleFilterId(table.filters.room);
 
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editingStation, setEditingStation] = useState<IStation | null>(null);
@@ -35,6 +39,8 @@ export default function StationPage() {
   const [historyId, setHistoryId] = useState<number | null>(null);
   const [historyPage, setHistoryPage] = useState(1);
   const [historyPageSize, setHistoryPageSize] = useState(10);
+
+  const ownership = useOwnershipFields(createModalOpen || editingStation !== null, editingStation);
 
   const { data: historyData, isFetching: historyLoading } = useGetStationHistoryQuery(
     historyId === null ? skipToken : { id: historyId, page: historyPage, pageSize: historyPageSize },
@@ -54,14 +60,14 @@ export default function StationPage() {
     formRoomId == null ? skipToken : { roomId: formRoomId, pageSize: 100, page: 1 },
   );
   const roomSlotsPage2 = useLabsRoomsSlotsRetrieveByRoomIdQuery(
-    formRoomId == null || !roomSlotsPage1.data?.meta.pagination.next ? skipToken : { roomId: formRoomId, pageSize: 100, page: 2 },
+    formRoomId == null || !roomSlotsPage1.currentData?.meta.pagination.next ? skipToken : { roomId: formRoomId, pageSize: 100, page: 2 },
   );
   const roomSlotsPage3 = useLabsRoomsSlotsRetrieveByRoomIdQuery(
-    formRoomId == null || !roomSlotsPage2.data?.meta.pagination.next ? skipToken : { roomId: formRoomId, pageSize: 100, page: 3 },
+    formRoomId == null || !roomSlotsPage2.currentData?.meta.pagination.next ? skipToken : { roomId: formRoomId, pageSize: 100, page: 3 },
   );
   const roomSlots = useMemo(
-    () => [roomSlotsPage1.data, roomSlotsPage2.data, roomSlotsPage3.data].flatMap((page) => page?.data ?? []),
-    [roomSlotsPage1.data, roomSlotsPage2.data, roomSlotsPage3.data],
+    () => [roomSlotsPage1.currentData, roomSlotsPage2.currentData, roomSlotsPage3.currentData].flatMap((page) => page?.data ?? []),
+    [roomSlotsPage1.currentData, roomSlotsPage2.currentData, roomSlotsPage3.currentData],
   );
   const editingRoomId = editingStation ? (editingStation.room?.id ?? editingStation.room_id ?? null) : null;
   const currentSlotId = editingStation && formRoomId === editingRoomId ? (editingStation.slot_id ?? null) : null;
@@ -71,9 +77,10 @@ export default function StationPage() {
     [roomSlots, currentSlotId, currentSlotLabel],
   );
   const roomSlotsHint = getRoomSlotsHint(formRoomId != null, roomSlotsPage1.isSuccess, roomSlots, classifiedSlots);
-  const handleFormValues = useCallback((values: Record<string, unknown>) => {
+  const handleFormValues = (values: Record<string, unknown>) => {
+    ownership.setDepartmentId(values.department_id);
     setFormRoomId(values.room_id == null || values.room_id === '' ? null : Number(values.room_id));
-  }, []);
+  };
 
   const roomFallback = useMemo(() => (dropdownData?.rooms ?? []).map((room) => ({
     text: room.name,
@@ -84,14 +91,22 @@ export default function StationPage() {
   const ownerFallback = useMemo(() => (users ?? []).map((u) => ({ text: u.display_name || u.username || String(u.id), value: String(u.id) })), [users]);
   const ownerFilters = useMemo(() => facetToAntdFilters(getFacetOptions(facets, 'owner', 'owner_id', 'primary_owner'))?.map(({ text, value }) => ({ text, value: String(value) })) ?? ownerFallback, [facets, ownerFallback]);
 
-  const formFields: FieldConfig[] = useMemo(
-    () => [
+  const [stationTypeSearch, setStationTypeSearch] = useState('');
+  const stationTypes = useLabsStationTypesOptionsRetrieveQuery({
+    q: stationTypeSearch.trim() || undefined,
+    includeIds: editingStation?.station_type ? [editingStation.station_type.id] : undefined,
+  }, { skip: !createModalOpen && !editingStation });
+  const formFields: FieldConfig[] = [
       // The SKU identifies the station and cannot change after creation (the API refuses a changed SKU).
       { name: "sku", label: "SKU", type: "text", required: true, disabledInEdit: true },
       { name: "name", label: "Name", type: "text", required: true },
-      { name: "room_id", label: "Target Room", type: "select", options: roomOptions },
+      { name: "type_id", section: "Classification", apiField: "type", label: "Station Type", type: "select", essential: true,
+        options: referenceOptions(stationTypes.currentData?.data, editingStation?.station_type),
+        onSearch: setStationTypeSearch, loading: stationTypes.isFetching },
+      ...ownership.fields,
+      { name: "room_id", section: "Location", essential: true, label: "Room", type: "select", options: roomOptions },
       {
-        name: "slot_id",
+        name: "slot_id", section: "Location",
         label: "Room Slot",
         type: "select",
         dependsOn: ["room_id"],
@@ -101,24 +116,23 @@ export default function StationPage() {
         searchHint: roomSlotsHint,
         help: roomSlotsHint && !roomSlotsPage1.isFetching ? roomSlotsHint : undefined,
       },
-      { name: "height_mm", label: "Height (mm)", type: "number" },
-      { name: "width_mm", label: "Width (mm)", type: "number" },
-      { name: "depth_mm", label: "Depth (mm)", type: "number" },
-      { name: "power_capacity_w", label: "Power Capacity (W)", type: "number" },
-      { name: "max_load_kg", label: "Max Load (kg)", type: "number" },
-      { name: "network_port_capacity", label: "Network Ports", type: "number" },
+      { name: "label", section: "Location", label: "Position Label", type: "text" },
+      { name: "width_mm", span: 8, section: "Specifications", label: "Width (mm)", type: "number" },
+      { name: "depth_mm", span: 8, section: "Specifications", label: "Depth (mm)", type: "number" },
+      { name: "height_mm", span: 8, section: "Specifications", label: "Height (mm)", type: "number" },
+      { name: "power_capacity_w", section: "Specifications", label: "Power Capacity (W)", type: "number" },
+      { name: "max_load_kg", section: "Specifications", label: "Max Load (kg)", type: "number" },
+      { name: "network_port_capacity", section: "Specifications", label: "Network Ports", type: "number" },
       {
-        name: "bench_capacity",
+        name: "bench_capacity", section: "Specifications",
         label: "Bench Capacity",
         type: "number",
-        help: "How many benches the station holds. Saving creates the bench slots S1, S2, … that benches are placed on.",
+        help: "Saving creates the corresponding bench slots.",
       },
-      { name: "label", label: "Position Label", type: "text" },
-      { name: "remark", label: "Remark", type: "textarea" },
-      { name: "image", label: "Image", type: "image" as const },
-    ],
-    [roomOptions, slotOptions, formRoomId, roomSlotsPage1.isFetching, roomSlotsHint],
-  );
+      ...editableDetails(STATION_DETAILS),
+      { name: "remark", section: "Notes", label: "Remark", type: "textarea" },
+      { name: "image", label: "Image", type: "image" },
+  ];
 
   const actionsRenderer = createActionsRenderer<IStation>({
     canManageLabOperations,
@@ -186,9 +200,11 @@ export default function StationPage() {
       />
 
       <EquipmentFormModal
+        professionalForm
         open={createModalOpen}
         mode="create"
         title="New Station"
+        initialValues={{ room_id: filteredParentId }}
         fields={formFields}
         onValuesChange={handleFormValues}
         onSubmit={async (values, imageFile) => {
@@ -204,6 +220,7 @@ export default function StationPage() {
         loading={form.creating}
       />
       <EquipmentFormModal
+        professionalForm
         open={editingStation !== null}
         mode="edit"
         title="Edit Station"
@@ -211,11 +228,16 @@ export default function StationPage() {
         onValuesChange={handleFormValues}
         initialValues={editingStation ? {
           ...editingStation,
+          ...ownershipFormValues(editingStation),
+          type_id: editingStation.station_type?.id,
           room_id: editingStation.room?.id ?? editingStation.room_id,
         } : undefined}
         onSubmit={async (values, imageFile) => {
           if (!editingStation) return;
           const payload: IStationPayload = {
+            ...ownershipPayload(values, editingStation),
+            ...detailPayload(STATION_DETAILS, values, { ...editingStation }),
+            type_id: changedReference(values.type_id, editingStation.station_type?.id),
             name: String(values.name ?? ''),
             room_id: values.room_id == null ? null : Number(values.room_id),
             slot_id: values.room_id == null || values.slot_id == null ? null : Number(values.slot_id),

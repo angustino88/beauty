@@ -19,7 +19,7 @@ const MAX_ALL_BENCHES = 12;
 const MAX_MY_BENCHES = 6;
 
 export const BookingFilter: React.FC<BookingFilterProps> = ({ form, name = 'bench_ids', onFinish }) => {
-  const { username } = useAuthState();
+  const { id: userId } = useAuthState();
   const { data: benchChoices, isFetching, isSuccess } = useGetBookingBenchChoicesQuery({ hasComputing: true });
   const benchOptions = useMemo(() => (benchChoices ?? []).map((bench) => toBenchChoiceOption(bench)), [benchChoices]);
   const benchLabelById = useMemo(
@@ -31,8 +31,8 @@ export const BookingFilter: React.FC<BookingFilterProps> = ({ form, name = 'benc
 
   // "My benches": the benches of my own bookings (same cached query as the booking form's history).
   const { data: myBookings } = useGetBenchBookingsQuery(
-    { view_side: 'my_booking', creator: username, page: 1, page_size: 100 },
-    { skip: !username },
+    { view_side: 'my_booking', creator_id: userId ?? undefined, page: 1, page_size: 100 },
+    { skip: !userId },
   );
   const myBenchIds = useMemo(() => {
     const ids: number[] = [];

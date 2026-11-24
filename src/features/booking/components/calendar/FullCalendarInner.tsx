@@ -138,7 +138,7 @@ const CalendarEventContent = ({ arg, refetchBooking }: CalendarEventContentProps
 
   return (
     <Popover
-      overlayInnerStyle={{ padding: 0 }}
+      styles={{ container: { padding: 0 } }}
       content={(
         <EventDetailModal
           refetchBooking={refetchBooking}

@@ -38,8 +38,6 @@ export interface ResourceState {
   condition: Choice<Condition>;
   availability: Availability;
   activity_status: Choice<ActivityStatus>;
-  /** @deprecated use the fields above (section 9). */
-  status?: Choice<string> | string | null;
 }
 
 export interface LocationState extends ResourceState {

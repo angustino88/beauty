@@ -153,7 +153,7 @@ export const bookingApi = baseApi.injectEndpoints({
     getBenchOptions: build.query<IBenchOption[], void>({
       query: () => ({ url: '/api/labs/benches/options' }),
       transformResponse: (res: unknown): IBenchOption[] => mapBenchOptions(res),
-      providesTags: [{ type: 'LabInfo', id: 'LIST' }],
+      providesTags: [{ type: 'Bench', id: 'LIST' }],
     }),
 
     // GET /api/labs/benches/booking-choices — in-service benches with the computers on each, so people pick a bench
@@ -167,7 +167,7 @@ export const bookingApi = baseApi.injectEndpoints({
         },
       }),
       transformResponse: (res: unknown): IBookingBenchChoice[] => mapBookingBenchChoices(res),
-      providesTags: [{ type: 'LabInfo', id: 'LIST' }],
+      providesTags: [{ type: 'Bench', id: 'LIST' }],
     }),
 
     // GET /api/labs/lab-projects/options — selector options for lab projects

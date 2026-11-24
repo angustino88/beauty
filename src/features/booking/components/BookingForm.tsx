@@ -65,11 +65,11 @@ export const BookingForm: React.FC<BookingFormProps> = ({ form, formProps }) => 
   const { data: bookingHistory } = useGetBenchBookingsQuery(
     {
       view_side: 'my_booking',
-      creator: myUsername,
+      creator_id: myUserId ?? undefined,
       page: 1,
       page_size: 100,
     },
-    { skip: !myUsername },
+    { skip: !myUserId },
   );
 
   const bookingReasonStorageKey = `labmango.booking-reasons.${myUserId ?? myUsername}`;

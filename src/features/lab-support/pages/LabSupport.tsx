@@ -116,7 +116,7 @@ export default function SupportTickets() {
 
   const { data, isError, isFetching, refetch } = useGetSupportTicketsQuery(queryParams);
 
-  const rows = data?.tickets ?? data?.issues ?? [];
+  const rows = data?.tickets ?? [];
   const total = data?.total ?? data?.count ?? 0;
   const stats = statsData?.data;
   const columns = useMemo(() => buildSupportTicketColumns(queueSearch, compact), [queueSearch, compact]);
@@ -155,7 +155,7 @@ export default function SupportTickets() {
         page: 1,
         page_size: Math.min(total || pageSize, 100),
       });
-      const allTickets = [...(fullData.tickets ?? fullData.issues ?? [])];
+      const allTickets = [...fullData.tickets];
       let nextPage = 2;
       while (allTickets.length < fullData.total) {
         const nextData = await fetchSupportTicketsForExport({

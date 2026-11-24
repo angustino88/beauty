@@ -29,8 +29,6 @@ export function useGetSupportTicketsQuery(params: SupportTicketQueryParams) {
   };
 }
 
-export const useGetJiraIssuesQuery = useGetSupportTicketsQuery;
-
 export function useCreateSupportTicketMutation() {
   const [createTicket, mutationState] = useSupportTicketsCreateMutation();
   return [
@@ -123,15 +121,12 @@ function saveBlob(blob: Blob, fileName: string) {
 }
 
 export const supportTicketApi = baseApi;
-export const labSupportApi = supportTicketApi;
 
 function toGeneratedTicketQuery(params: SupportTicketQueryParams): SupportTicketsRetrieveApiArg {
   return {
     q: params.search || params.q,
-    page: params.page ?? (typeof params.startAt === 'number' && params.maxResults
-      ? Math.floor(params.startAt / params.maxResults) + 1
-      : undefined),
-    pageSize: params.page_size ?? params.maxResults,
+    page: params.page,
+    pageSize: params.page_size,
     assigneeId: params.assignee_id,
     categoryId: params.category_id,
     createdAfter: params.created_after,
@@ -177,5 +172,3 @@ export async function fetchSupportTicketsForExport(
     request.unsubscribe();
   }
 }
-
-export const fetchJiraIssuesForExport = fetchSupportTicketsForExport;

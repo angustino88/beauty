@@ -18,12 +18,14 @@ export function equipmentWriteBody(input: Record<string, unknown>, create: false
 export function equipmentWriteBody(input: Record<string, unknown>, create: boolean) {
   const body: Record<string, unknown> = {};
   for (const key of fields) {
-    if (input[key] !== undefined && input[key] !== '') body[key] = input[key];
+    const canClearText = key === 'firmware_version' || key === 'mac_address';
+    if (input[key] !== undefined && (input[key] !== '' || canClearText)) body[key] = input[key];
   }
   if (typeof body.weight_kg === 'number') body.weight_kg = String(body.weight_kg);
   if (create && typeof input.hostname === 'string' && input.hostname.trim()) {
     body.computing = { hostname: input.hostname.trim() };
   }
+  if (!create && input.computing !== undefined) body.computing = input.computing;
   if (create && input.lifecycle_state !== undefined) body.lifecycle_state = input.lifecycle_state;
   if (create && typeof input.sku !== 'string') throw new Error('Equipment SKU is required');
   if (create && typeof input.kind_id !== 'number') throw new Error('Equipment kind is required');
@@ -46,6 +48,5 @@ export function mapEquipmentRead(item: EquipmentItemRead | EquipmentDetailRead):
     technical_user: computing?.technical_user,
     disk_usage: computing?.disk_usage,
     system_info: computing?.system_info,
-    monitored_devices: computing?.monitored_devices,
   } as EquipmentItem;
 }

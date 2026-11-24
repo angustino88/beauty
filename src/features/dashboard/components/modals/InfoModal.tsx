@@ -5,6 +5,7 @@ import {
   GlobalOutlined,
   HddOutlined,
   LaptopOutlined,
+  TagOutlined,
   ThunderboltOutlined,
   UserOutlined,
 } from '@ant-design/icons';
@@ -95,6 +96,9 @@ export default function InfoModal({ data }: InfoModalProps) {
             </div>
           </div>
           <div className={styles.quickFacts}>
+            {data.bench_type?.name && (
+              <div><TagOutlined /><span>Bench type<strong>{data.bench_type.name}</strong></span></div>
+            )}
             <div><LaptopOutlined /><span>Computer<strong>{data.computer?.computer_name || '–'}</strong></span></div>
             <div><GlobalOutlined /><span>IP address<strong>{data.computer?.computer_ip || '–'}</strong></span></div>
             <div><EnvironmentOutlined /><span>Location<strong>{data.location_url ? <a href={data.location_url} target="_blank" rel="noreferrer">{data.location_name || 'Open map'}</a> : data.location_name || '–'}</strong></span></div>

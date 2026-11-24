@@ -9,6 +9,10 @@
 .form :global(.ant-form-item) { margin-bottom: 12px; }
 .form :global(.ant-form-item-label > label) { font-size: 12px; font-weight: 500; color: var(--lm-text-secondary); }
 .form :global(.ant-input), .form :global(.ant-input-number), .form :global(.ant-select), .form :global(.ant-picker) { font-size: 12px; }
+.form :global(input.ant-input),
+.form :global(.ant-input-number),
+.form :global(.ant-select),
+.form :global(.ant-picker) { min-height: 32px; }
 .form :global(.ant-form-item-extra) { font-size: 11px; color: var(--lm-text-tertiary); min-height: 0; margin-top: 4px; }
 .form :global(.equipment-form-details) { margin: 8px 0 20px; border: 1px solid var(--lm-border); background: var(--lm-surface-subtle); }
 .form :global(.ant-collapse-header) { font-size: 12px; font-weight: 600; color: var(--lm-text-secondary); }

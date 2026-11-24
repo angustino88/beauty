@@ -14,7 +14,6 @@ test('resourceBadge prioritizes retired and planned lifecycle status', () => {
     condition: { value: 'operational', label: 'Operational' },
     availability: { value: 'available', blocked_by: null, condition: null, reason: null },
     activity_status: { value: 'active', label: 'Active' },
-    status: null,
   };
   assert.deepEqual(resourceBadge(retired), { text: 'Retired', tone: 'neutral' });
 
@@ -23,7 +22,6 @@ test('resourceBadge prioritizes retired and planned lifecycle status', () => {
     condition: { value: 'operational', label: 'Operational' },
     availability: { value: 'available', blocked_by: null, condition: null, reason: null },
     activity_status: { value: 'idle', label: 'Idle' },
-    status: null,
   };
   assert.deepEqual(resourceBadge(planned), { text: 'Planned', tone: 'info' });
 });
@@ -34,7 +32,6 @@ test('resourceBadge shows non-operational condition over availability and activi
     condition: { value: 'out_of_service', label: 'Out of service' },
     availability: { value: 'unavailable', blocked_by: null, condition: 'out_of_service', reason: 'fault' },
     activity_status: { value: 'idle', label: 'Idle' },
-    status: null,
   };
   assert.deepEqual(resourceBadge(outOfService), { text: 'Out of service', tone: 'danger' });
 
@@ -43,7 +40,6 @@ test('resourceBadge shows non-operational condition over availability and activi
     condition: { value: 'in_maintenance', label: 'In Maintenance' },
     availability: { value: 'unavailable', blocked_by: null, condition: 'in_maintenance', reason: 'maintenance' },
     activity_status: { value: 'idle', label: 'Idle' },
-    status: null,
   };
   assert.deepEqual(resourceBadge(inMaintenance), { text: 'In Maintenance', tone: 'warning' });
 });
@@ -59,7 +55,6 @@ test('resourceBadge shows unavailable blocked_by parent resource when blocked', 
       reason: 'maintenance',
     },
     activity_status: { value: 'idle', label: 'Idle' },
-    status: null,
   };
   assert.deepEqual(resourceBadge(blockedBench), {
     text: 'Unavailable (Room R101)',
@@ -73,7 +68,6 @@ test('resourceBadge keeps booking activity out of the status badge', () => {
     condition: { value: 'operational', label: 'Operational' },
     availability: { value: 'available', blocked_by: null, condition: null, reason: null },
     activity_status: { value: 'active', label: 'Active' },
-    status: null,
   };
   assert.deepEqual(resourceBadge(active), { text: 'Available', tone: 'success' });
 
@@ -82,7 +76,6 @@ test('resourceBadge keeps booking activity out of the status badge', () => {
     condition: { value: 'operational', label: 'Operational' },
     availability: { value: 'available', blocked_by: null, condition: null, reason: null },
     activity_status: { value: 'scheduled', label: 'Scheduled' },
-    status: null,
   };
   assert.deepEqual(resourceBadge(scheduled), { text: 'Available', tone: 'success' });
 
@@ -91,7 +84,6 @@ test('resourceBadge keeps booking activity out of the status badge', () => {
     condition: { value: 'operational', label: 'Operational' },
     availability: { value: 'available', blocked_by: null, condition: null, reason: null },
     activity_status: { value: 'idle', label: 'Idle' },
-    status: null,
   };
   assert.deepEqual(resourceBadge(idle), { text: 'Available', tone: 'success' });
   assert.deepEqual(resourceBadge(idle, 'station'), { text: 'Operational', tone: 'success' });

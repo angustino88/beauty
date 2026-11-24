@@ -213,5 +213,3 @@ export const BenchTable = memo(function BenchTable({
     </Card>
   );
 });
-
-export const LabDeviceTable = BenchTable;

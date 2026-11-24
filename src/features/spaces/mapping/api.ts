@@ -110,7 +110,7 @@ export const mappingApi = baseApi.injectEndpoints({
 
     assignEquipment: build.mutation<void, { equipmentId: number; body: EquipmentAssignmentPayload }>({
       query: ({ equipmentId, body }) => ({
-        url: `/api/labs/equipment/${equipmentId}/assignment`,
+        url: `/api/labs/equipment/${equipmentId}/placement`,
         method: "PUT",
         body,
       }),
@@ -125,7 +125,7 @@ export const mappingApi = baseApi.injectEndpoints({
 
     unassignEquipment: build.mutation<void, { equipmentId: number; benchId?: number }>({
       query: ({ equipmentId }) => ({
-        url: `/api/labs/equipment/${equipmentId}/assignment`,
+        url: `/api/labs/equipment/${equipmentId}/placement`,
         method: "DELETE",
       }),
       invalidatesTags: (_res, _err, { benchId }) => [

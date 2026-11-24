@@ -1,4 +1,6 @@
-import type { IEquipmentStatus, ILabAudit, IPrimaryOwner } from "@/features/lab-equipment/shared";
+import type { RoomCreate } from "@/shared/api/generated/api";
+import type { NamedReference } from '@/shared/utils/resourceReferences';
+import type { ILabAudit, IPrimaryOwner } from "@/features/lab-equipment/shared";
 import type {
   AccessPolicy,
   ActivityStatus,
@@ -50,6 +52,12 @@ export interface IRoom extends LocationState {
   id: number;
   sku: string;
   name: string;
+  department?: NamedReference | null;
+  group?: NamedReference | null;
+  uid?: string;
+  coordinate_unit?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
   location?: string | null;
   country?: string | null;
   location_info?: ILocationInfo | null;
@@ -64,7 +72,7 @@ export interface IRoom extends LocationState {
   size?: string | null;
   temperature: number;
   humidity: number;
-  max_power: number;
+  max_power: number | null;
   power_usage: number;
   label: string;
   primary_owner: IPrimaryOwner | null;
@@ -73,9 +81,6 @@ export interface IRoom extends LocationState {
   condition: Choice<Condition>;
   availability: Availability;
   activity_status: Choice<ActivityStatus>;
-  /** @deprecated use the status fields above */
-  status?: string | null;
-  current_status: IEquipmentStatus | null;
   lab_audit: ILabAudit | null;
   remark?: string;
   image?: string | null;
@@ -87,6 +92,10 @@ export interface IRoomListResponse {
 }
 
 export interface IRoomParams {
+  country_id?: string;
+  city_id?: string;
+  building_id?: string;
+  owner_id?: string;
   page?: number;
   page_size?: number;
   search?: string;
@@ -95,11 +104,11 @@ export interface IRoomParams {
   access_policy?: string;
   condition?: string;
   activity_status?: string;
-  /** @deprecated */
-  status?: string;
 }
 
-export interface IRoomPayload {
+export interface IRoomPayload extends Partial<Omit<RoomCreate, "remark" | "power_capacity_w">> {
+  max_power?: number | null;
+  primary_owner?: number | null;
   sku?: string;
   name?: string;
   location?: string;
@@ -113,13 +122,6 @@ export interface IRoomPayload {
   width?: number | null;
   rows?: number | null;
   cols?: number | null;
-}
-
-export interface IRoomDropdownOptions {
-  countries: ILocationCountry[];
-  cities: ILocationCity[];
-  buildings: ILocationBuilding[];
-  floors?: Array<{ id: number; name: string }>;
 }
 
 export interface IRoomDashboardRack {

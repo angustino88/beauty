@@ -15,7 +15,8 @@ test('mapDashboardBench maps backend bench data correctly with compatibility fie
     id: 42,
     sku: 'BNCH-0042',
     name: 'Bench Alpha',
-    lifecycle_status: 'production',
+    lifecycle_status: { value: 'in_service', label: 'In service' },
+    condition: { value: 'in_maintenance', label: 'In maintenance' },
     bench_group: {
       id: 10,
       name: 'Powertrain Lab',
@@ -63,6 +64,8 @@ test('mapDashboardBench maps backend bench data correctly with compatibility fie
   };
 
   const result = mapDashboardBench(backendBench);
+  assert.equal(result.lifecycle_status, 'in_service');
+  assert.equal(result.condition, 'in_maintenance');
 
   assert.equal(result.id, 42);
   assert.equal(result.name, 'Bench Alpha');
@@ -117,7 +120,8 @@ test('mapDashboardSummaryResponse maps operational summary distributions', () =>
       total_benches: 25,
       active_bookings_count: 12,
       favorited_benches_count: 5,
-      lifecycle_distribution: { production: 20, maintenance: 5 },
+      lifecycle_distribution: { planned: 2, in_service: 23 },
+      condition_distribution: { operational: 20, in_maintenance: 5 },
       activity_distribution: { free: 8, active: 10, inactive: 4, offline: 3 },
       utilization_rate: 68.5,
     },
@@ -125,6 +129,7 @@ test('mapDashboardSummaryResponse maps operational summary distributions', () =>
 
   const result = mapDashboardSummaryResponse(payload);
   assert.equal(result.total_benches, 25);
+  assert.deepEqual(result.condition_distribution, { operational: 20, in_maintenance: 5 });
   assert.equal(result.total, 25);
   assert.equal(result.activity_distribution['active'], 10);
   assert.equal(result.status['active'], 10);
@@ -157,7 +162,8 @@ test('mapBenchDetailResponse extracts equipment by category into lab_equipment',
       id: 10,
       sku: 'BNCH-10',
       name: 'Lab Rig 10',
-      lifecycle_status: 'active',
+      lifecycle_status: { value: 'in_service', label: 'In service' },
+      condition: { value: 'operational', label: 'Operational' },
       bench_group: { id: 1, name: 'Main' },
       equipment_by_category: [
         {
@@ -183,6 +189,8 @@ test('mapBenchDetailResponse extracts equipment by category into lab_equipment',
   const result = mapBenchDetailResponse(detailPayload);
   assert.equal(result.id, 10);
   assert.equal(result.name, 'Lab Rig 10');
+  assert.equal(result.lifecycle_status, 'in_service');
+  assert.equal(result.condition, 'operational');
   assert.equal(result.lab_equipment?.computer?.computer_name, 'Workstation 1');
   assert.equal(result.lab_equipment?.rack?.name, 'Server Rack 42U');
   assert.equal(result.lab_equipment?.samples_list[0].name, 'ECU Prototype');

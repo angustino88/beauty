@@ -7,32 +7,26 @@ import InfoModal from './InfoModal';
 import { useInfoModalStyles } from './InfoModal.styles';
 
 export interface BenchDetailModalProps {
-  modalBenchId?: number | null;
-  modalLabId?: number | null;
+  modalBenchId: number | null;
   closeModal: () => void;
   benchDetail?: DashboardBenchDetail;
-  labDetail?: DashboardBenchDetail;
   isDetailFetching: boolean;
 }
 
 export const BenchDetailModal = memo(function BenchDetailModal({
   modalBenchId,
-  modalLabId,
   closeModal,
   benchDetail,
-  labDetail,
   isDetailFetching,
 }: BenchDetailModalProps) {
   const navigate = useNavigate();
   const { styles } = useInfoModalStyles();
-  const activeId = modalBenchId ?? modalLabId ?? null;
-  const detail = benchDetail ?? labDetail;
 
   return (
     <Modal
       width="min(840px, calc(100vw - 32px))"
-      open={activeId !== null}
-      loading={isDetailFetching && !detail}
+      open={modalBenchId !== null}
+      loading={isDetailFetching && !benchDetail}
       closable={false}
       onCancel={closeModal}
       style={{ top: '8%' }}
@@ -52,10 +46,10 @@ export const BenchDetailModal = memo(function BenchDetailModal({
           key="book"
           type="primary"
           className={styles.bookButton}
-          disabled={!detail}
+          disabled={!benchDetail}
           onClick={() => {
-            if (detail) {
-              navigate(`/booking-calendar?action=create&bench_ids=${detail.id}`);
+            if (benchDetail) {
+              navigate(`/booking-calendar?action=create&bench_ids=${benchDetail.id}`);
             }
           }}
         >
@@ -63,10 +57,9 @@ export const BenchDetailModal = memo(function BenchDetailModal({
         </Button>,
       ]}
     >
-      {detail && <InfoModal data={detail} />}
+      {benchDetail && <InfoModal data={benchDetail} />}
     </Modal>
   );
 });
 
-export const LabDetailModal = BenchDetailModal;
 export default BenchDetailModal;

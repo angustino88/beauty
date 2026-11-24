@@ -140,16 +140,13 @@ export const baseApi = createApi({
   tagTypes: [
     // Auth
     'Me',
-    // Equipment
+    // Equipment & Spaces
     'Equipment',
-    'ResourceMapping', 'Bench', 'Station',
-    'Computer', 'Monitor', 'Accessory', 'NetworkInterface',
-    'PowerSupply', 'DebugHardware', 'License', 'Sample', 'Rack', 'Room',
-    'EquipmentSelectList', 'ChangeLog',
+    'ResourceMapping', 'Bench', 'Station', 'Room', 'License', 'ChangeLog',
     // Computing agents
     'Agent', 'AgentGrant',
-    // Lab management
-    'LabInfo', 'LabEquipment', 'LabDevice', 'DashboardStats',
+    // Dashboard
+    'LabDevice', 'DashboardStats',
     // Booking
     'Booking', 'LabProject',
     // Downtime & Resource Status
@@ -158,8 +155,7 @@ export const baseApi = createApi({
     'Monitoring', 'LicenseCheck',
     // Leaderboard
     'Leaderboard',
-    // Jira support & Support desk
-    'JiraIssue',
+    // Support desk
     'SupportTicket',
     // Analytics
     'Analytics',

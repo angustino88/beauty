@@ -14,6 +14,8 @@ import {
   useEquipmentCrudActions,
   type GuardedForceDeleteResult,
 } from "@/features/lab-equipment/shared";
+import { BENCH_DETAILS, detailPayload } from "../../shared/resourceForm";
+import { ownershipPayload } from '../../../../shared/utils/resourceReferences.ts';
 import type { IBenchPayload } from "../types";
 
 export function useBenchForm() {
@@ -29,7 +31,6 @@ export function useBenchForm() {
     deleteMutation: deleteBench,
     updateImageMutation: updateBenchImage,
     deleteImageMutation: deleteBenchImage,
-    mapStatusBody: (values) => values as unknown as IBenchPayload,
     labels: { entityName: "Bench", entityNameLower: "bench", errorPrefix: "bench" },
   });
 
@@ -65,6 +66,8 @@ export function useBenchForm() {
 
   const createFromValues = async (values: Record<string, unknown>, imageFile?: File | null) => {
     const payload: IBenchPayload = {
+      ...ownershipPayload(values),
+      ...detailPayload(BENCH_DETAILS, values),
       sku: typeof values.sku === "string" ? values.sku : undefined,
       name: typeof values.name === "string" ? values.name : undefined,
       bench_group_id: values.bench_group_id ? Number(values.bench_group_id) : null,

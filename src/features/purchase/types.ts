@@ -40,7 +40,6 @@ export interface IPurchaseItemResource {
   id: number;
   purchase_item_id: number;
   resource_kind?: ResourceKind;
-  resource_type_id?: number;
   resource_id: number;
   resource_name?: string;
   acquisition_price?: string;
@@ -149,8 +148,7 @@ export interface ICreatePurchaseTransactionPayload {
 }
 
 export interface IAllocateResourcePayload {
-  resource_kind?: ResourceKind;
-  resource_type_id?: number;
+  resource_kind: ResourceKind;
   resource_id: number;
   currency: string;
   acquisition_price: string;

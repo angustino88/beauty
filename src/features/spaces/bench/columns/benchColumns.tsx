@@ -5,6 +5,8 @@ import {
   renderOwnerCell,
 } from "@/features/lab-equipment/shared";
 import { pageIcons } from "@/components/layout/pageIcons";
+import { ownershipColumns, specificationColumns } from "@/features/lab-equipment/shared/columns/specificationColumns";
+import { BENCH_DETAILS } from "../../shared/resourceForm";
 import type { IBench } from "../types";
 import { buildStateColumns } from "@/features/spaces/shared/stateColumns";
 import { BenchEquipmentCell } from "./BenchEquipmentCell";
@@ -75,11 +77,11 @@ export const buildBenchColumns = ({
     },
     {
       title: "Bench Group",
-      key: "group",
+      key: "bench_group",
       width: 160,
       filters: groupFilters,
       filterSearch: true,
-      filteredValue: activeFilters.group ?? null,
+      filteredValue: activeFilters.bench_group ?? null,
       render: (_, record) => record.bench_group?.name || "—",
     },
     {
@@ -115,6 +117,8 @@ export const buildBenchColumns = ({
       render: (_, record) =>
         renderOwnerCell(record.primary_owner),
     },
+    ...ownershipColumns<IBench>(),
+    ...specificationColumns<IBench>(BENCH_DETAILS),
     {
       title: "Remark",
       dataIndex: "remark",

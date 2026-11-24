@@ -5,7 +5,7 @@ import { useAppDispatch } from "@/app/store";
 import { getApiErrorMessage } from "@/shared/notifications";
 import { authActions } from "../authSlice";
 import { useAadLoginMutation, requestLoginCsrfToken } from "../api";
-import { setCsrfToken } from "../session/csrf";
+import { setCsrfToken } from "@/shared/lib/csrf";
 import { clearLoginCredentials, createLoginNonce, hasLoginNonceSecret, takeLoginCredentials } from "../session/loginNonce";
 
 const REDIRECT_URI = import.meta.env.VITE_REDIRECT_URI as string;

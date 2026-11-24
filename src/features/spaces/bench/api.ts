@@ -60,7 +60,6 @@ export const benchApi = baseApi.injectEndpoints({
         if (params.lifecycle_status) queryParams.set("lifecycle_status", params.lifecycle_status);
         if (params.condition) queryParams.set("condition", params.condition);
         if (params.activity_status) queryParams.set("activity_status", params.activity_status);
-        if (params.status) queryParams.set("status", params.status);
         if (params.favorite) queryParams.set("favorite", "true");
 
         const qs = queryParams.toString();
@@ -201,8 +200,3 @@ export const {
   useDeleteBenchImageMutation,
   useChangeBenchLifecycleMutation,
 } = benchApi;
-
-/** Legacy aliases for compatibility during migration */
-export const useGetLabInfoListQuery = useGetBenchesQuery;
-export const useGetLabInfoByIdQuery = useGetBenchByIdQuery;
-export const useGetLabGroupsQuery = useGetBenchGroupsQuery;

@@ -9,7 +9,7 @@ import { getApiErrorMessage, notify } from '@/shared/notifications';
 import { useAddFavoriteMutation, useRemoveFavoriteMutation } from '../api';
 
 export interface DashboardFavoritesResult {
-  handleFavoriteClick: (labId: number, isFavorite: boolean, e: MouseEvent) => void;
+  handleFavoriteClick: (benchId: number, isFavorite: boolean, e: MouseEvent) => void;
 }
 
 export function useDashboardFavorites(): DashboardFavoritesResult {
@@ -17,9 +17,9 @@ export function useDashboardFavorites(): DashboardFavoritesResult {
   const [removeFavorite] = useRemoveFavoriteMutation();
 
   const handleFavoriteClick = useCallback(
-    (labId: number, isFavorite: boolean, e: MouseEvent) => {
+    (benchId: number, isFavorite: boolean, e: MouseEvent) => {
       e.stopPropagation();
-      const arg = { labId };
+      const arg = { benchId };
       const mutation = isFavorite ? removeFavorite(arg) : addFavorite(arg);
       mutation.unwrap().catch((err: unknown) => {
         const status = (err as { status?: number })?.status;
