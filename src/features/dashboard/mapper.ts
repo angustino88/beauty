@@ -75,7 +75,8 @@ export function mapDashboardBench(
     id: asNumber(item.id),
     sku: asString(item.sku),
     name,
-    lifecycle_status: asString(item.lifecycle_status),
+    lifecycle_status: asString(asRecord(item.lifecycle_status).value),
+    condition: asString(asRecord(item.condition).value),
     bench_group: benchGroup
       ? {
           id: asNumber(benchGroup.id),
@@ -247,6 +248,9 @@ export function mapDashboardSummaryResponse(
     active_bookings_count: activeBookings,
     favorited_benches_count: favoritedCount,
     lifecycle_distribution: lifecycleDistribution,
+    condition_distribution: Object.fromEntries(
+      Object.entries(asRecord(summary.condition_distribution)).map(([key, value]) => [key, asNumber(value)]),
+    ),
     activity_distribution: activityDistribution,
     utilization_rate: utilizationRate,
     // Compatibility fields
@@ -416,7 +420,8 @@ export function mapBenchDetailResponse(
     id: asNumber(source.id),
     sku: asString(source.sku),
     name,
-    lifecycle_status: asString(source.lifecycle_status),
+    lifecycle_status: asString(asRecord(source.lifecycle_status).value),
+    condition: asString(asRecord(source.condition).value),
     bench_group: group
       ? {
           id: asNumber(group.id),

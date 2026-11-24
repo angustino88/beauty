@@ -69,6 +69,7 @@ export interface DashboardBench {
   sku: string;
   name: string;
   lifecycle_status: string;
+  condition: string;
   bench_group: BenchGroup | null;
   bench_type: { id: number; name: string } | null;
   location: {
@@ -184,6 +185,7 @@ export interface DashboardOperationalSummary {
   active_bookings_count: number;
   favorited_benches_count: number;
   lifecycle_distribution: Record<string, number>;
+  condition_distribution: Record<string, number>;
   activity_distribution: Record<string, number>;
   utilization_rate: number;
   // Compatibility fields
@@ -273,6 +275,7 @@ export interface DashboardBenchDetail {
   sku: string;
   name: string;
   lifecycle_status: string;
+  condition: string;
   bench_group: BenchGroup | null;
   bench_type: { id: number; name: string } | null;
   location: {

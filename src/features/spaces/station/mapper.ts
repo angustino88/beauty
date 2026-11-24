@@ -1,7 +1,6 @@
 import type { IStation, IStationListResponse, IStationPayload } from "./types";
 import { STATION_DETAILS, readDetails } from "../shared/resourceForm.ts";
 import { namedReference } from '../../../shared/utils/resourceReferences.ts';
-import { normalizeSpaceStatus } from "../shared/spaceStatus.ts";
 import {
   mapAvailability,
   mapChoice,
@@ -38,7 +37,6 @@ export function mapStationApiItem(raw: unknown): IStation {
   const dept = isRecord(st.department) ? st.department : null;
   const grp = isRecord(st.group) ? st.group : null;
   const owner = isRecord(st.owner) ? st.owner : null;
-  const currentStatus = isRecord(st.current_status) ? st.current_status : null;
 
   const rawBenches = Array.isArray(st.benches)
     ? st.benches
@@ -79,15 +77,6 @@ export function mapStationApiItem(raw: unknown): IStation {
     condition: mapChoice<Condition>(st.condition, 'operational', 'Operational'),
     availability: mapAvailability(st.availability),
     activity_status: mapChoice<ActivityStatus>(st.activity_status, 'idle', 'Idle'),
-    status: normalizeSpaceStatus(st.status) || normalizeSpaceStatus(currentStatus?.status_type) || normalizeSpaceStatus(currentStatus?.status) || null,
-    current_status: currentStatus
-      ? {
-          id: asNumber(currentStatus.id),
-          status_type: asNullableString(currentStatus.status_type) ?? undefined,
-          status_data: isRecord(currentStatus.status_data) ? currentStatus.status_data : undefined,
-          created: asString(currentStatus.created, new Date().toISOString()),
-        }
-      : null,
     label: asString(st.label),
     remark: asNullableString(st.remark),
     bench_count: asNullableNumber(st.active_bench_count ?? st.bench_count) ?? rawBenches.length,
@@ -176,6 +165,5 @@ export function mapStationWritePayload(payload: IStationPayload): Record<string,
     safety_classification: payload.safety_classification,
     label: payload.label,
     remark: payload.remark,
-    current_status: payload.current_status,
   };
 }

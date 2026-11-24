@@ -1,7 +1,6 @@
 import type { IRoom, IRoomListResponse, IRoomPayload } from './types';
 import { ROOM_DETAILS, detailPayload, readDetails } from "../shared/resourceForm.ts";
 import { namedReference } from '../../../shared/utils/resourceReferences.ts';
-import { normalizeSpaceStatus } from '../shared/spaceStatus.ts';
 import {
   mapAvailability,
   mapChoice,
@@ -78,8 +77,6 @@ export function mapRoomApiItem(raw: unknown): IRoom {
     condition: mapChoice<Condition>(room.condition, 'operational', 'Operational'),
     availability: mapAvailability(room.availability),
     activity_status: mapChoice<ActivityStatus>(room.activity_status, 'idle', 'Idle'),
-    current_status: null,
-    status: normalizeSpaceStatus(room.status) || null,
     lab_audit: null,
     remark: (room.remark as string) ?? null,
     image: (room.image_url ?? room.image ?? null) as string | null,

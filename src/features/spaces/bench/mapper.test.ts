@@ -1,22 +1,14 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { mapBenchApiItem, mapBenchListApiResponse } from './mapper.ts';
-import { readSpaceStatus } from '../shared/spaceStatus.ts';
 
-test('bench list retains the backend lifecycle value and display label', () => {
+test('bench list reads only the canonical state fields', () => {
   const result = mapBenchListApiResponse({
-    data: { results: [{ id: 7, status: { value: 'IN_STORAGE', label: 'In storage' } }] },
+    data: { results: [{ id: 7, lifecycle_status: { value: 'in_service', label: 'In service' } }] },
     meta: { pagination: { count: 1 } },
   });
   assert.equal(result.total_count, 1);
-  assert.equal(readSpaceStatus(result.data[0]), 'in_storage');
-  assert.equal(result.data[0].status_label, 'In storage');
-});
-
-test('bench legacy statuses remain readable without a choice label', () => {
-  const result = mapBenchApiItem({ current_status: { status_type: 'reserved' } });
-  assert.equal(readSpaceStatus(result), 'reserved');
-  assert.equal(result.status_label, null);
+  assert.deepEqual(result.data[0].lifecycle_status, { value: 'in_service', label: 'In service' });
 });
 
 test('bench mapper extracts lifecycle_status, condition, availability, and activity_status', () => {

@@ -73,7 +73,6 @@ export const stationApi = baseApi.injectEndpoints({
         if (params.condition) queryParams.set("condition", params.condition);
         if (params.activity_status) queryParams.set("activity_status", params.activity_status);
         if (params.lifecycle_status) queryParams.set("lifecycle_status", params.lifecycle_status);
-        if (params.status) queryParams.set("status", params.status);
         const qs = queryParams.toString();
         return { url: `${ENDPOINTS.LIST}${qs ? `?${qs}` : ""}` };
       },
@@ -153,21 +152,6 @@ export const stationApi = baseApi.injectEndpoints({
         ...generateItemTag(TAG, stationId),
         ...invalidateList(TAG),
         { type: "Room", id: "SLOTS" },
-      ],
-    }),
-
-    changeStationStatus: build.mutation<
-      void,
-      { stationId: number; body: { status: string; effective_date?: string; reason?: string } }
-    >({
-      query: ({ stationId, body }) => ({
-        url: `/api/labs/stations/${stationId}/actions/change-status`,
-        method: "POST",
-        body,
-      }),
-      invalidatesTags: (_res, _err, { stationId }) => [
-        ...generateItemTag(TAG, stationId),
-        ...invalidateList(TAG),
       ],
     }),
 
@@ -280,7 +264,6 @@ export const {
   useDeleteStationMutation,
   useForceDeleteStationMutation,
   usePlaceStationMutation,
-  useChangeStationStatusMutation,
   useChangeStationLifecycleMutation,
   useUpdateStationImageMutation,
   useDeleteStationImageMutation,

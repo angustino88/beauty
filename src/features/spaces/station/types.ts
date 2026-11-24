@@ -1,6 +1,6 @@
 import type { StationCreate } from "@/shared/api/generated/api";
 import type { NamedReference } from '@/shared/utils/resourceReferences';
-import type { IEquipmentStatus, ILabAudit, IPrimaryOwner } from "@/features/lab-equipment/shared";
+import type { ILabAudit, IPrimaryOwner } from "@/features/lab-equipment/shared";
 import type {
   AccessPolicy,
   ActivityStatus,
@@ -57,9 +57,6 @@ export interface IStation extends LocationState {
   condition: Choice<Condition>;
   availability: Availability;
   activity_status: Choice<ActivityStatus>;
-  /** @deprecated use the status fields above */
-  status?: string | null;
-  current_status?: IEquipmentStatus | null;
   label?: string;
   remark?: string | null;
   bench_count?: number;
@@ -93,8 +90,6 @@ export interface IStationParams {
   access_policy?: string;
   condition?: string;
   activity_status?: string;
-  /** @deprecated */
-  status?: string;
 }
 
 export interface IStationPayload extends Partial<Omit<StationCreate, "remark" | "power_reserved_w">> {
@@ -117,10 +112,6 @@ export interface IStationPayload extends Partial<Omit<StationCreate, "remark" | 
   primary_owner?: number | null;
   label?: string;
   remark?: string | null;
-  current_status?: {
-    status_type: string;
-    status_data: Record<string, unknown>;
-  } | null;
 }
 
 export interface IStationDropdownOptions {

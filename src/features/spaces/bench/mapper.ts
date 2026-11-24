@@ -1,7 +1,6 @@
 import type { IBench, IBenchListResponse } from "./types";
 import { BENCH_DETAILS, readDetails } from "../shared/resourceForm.ts";
 import { namedReference } from '../../../shared/utils/resourceReferences.ts';
-import { normalizeSpaceStatus } from "../shared/spaceStatus.ts";
 import {
   mapAvailability,
   mapChoice,
@@ -42,8 +41,6 @@ export function mapBenchApiItem(raw: unknown): IBench {
   const station = isRecord(b.setup_location) ? b.setup_location : isRecord(b.station) ? b.station : null;
   const stationSlot = isRecord(b.station_slot) ? b.station_slot : null;
   const room = isRecord(b.room) ? b.room : null;
-  const currentStatus = isRecord(b.current_status) ? b.current_status : null;
-  const status = isRecord(b.status) ? b.status : null;
 
   return {
     ...readDetails(BENCH_DETAILS, b),
@@ -68,16 +65,6 @@ export function mapBenchApiItem(raw: unknown): IBench {
     condition: mapChoice<Condition>(b.condition, 'operational', 'Operational'),
     availability: mapAvailability(b.availability),
     activity_status: mapChoice<ActivityStatus>(b.activity_status, 'idle', 'Idle'),
-    status: normalizeSpaceStatus(b.status) || normalizeSpaceStatus(currentStatus?.status_type) || normalizeSpaceStatus(currentStatus?.status) || null,
-    status_label: typeof status?.label === 'string' ? status.label : null,
-    current_status: currentStatus
-      ? {
-          id: asNumber(currentStatus.id),
-          status_type: asNullableString(currentStatus.status_type) ?? undefined,
-          status_data: isRecord(currentStatus.status_data) ? currentStatus.status_data : undefined,
-          created: asString(currentStatus.created, new Date().toISOString()),
-        }
-      : null,
     remark: asNullableString(b.remark),
     image: asNullableString(b.image_url ?? b.image),
     location_name: asNullableString(b.location_name || b.location),

@@ -1,6 +1,6 @@
 import type { RoomCreate } from "@/shared/api/generated/api";
 import type { NamedReference } from '@/shared/utils/resourceReferences';
-import type { IEquipmentStatus, ILabAudit, IPrimaryOwner } from "@/features/lab-equipment/shared";
+import type { ILabAudit, IPrimaryOwner } from "@/features/lab-equipment/shared";
 import type {
   AccessPolicy,
   ActivityStatus,
@@ -81,9 +81,6 @@ export interface IRoom extends LocationState {
   condition: Choice<Condition>;
   availability: Availability;
   activity_status: Choice<ActivityStatus>;
-  /** @deprecated use the status fields above */
-  status?: string | null;
-  current_status: IEquipmentStatus | null;
   lab_audit: ILabAudit | null;
   remark?: string;
   image?: string | null;
@@ -107,8 +104,6 @@ export interface IRoomParams {
   access_policy?: string;
   condition?: string;
   activity_status?: string;
-  /** @deprecated */
-  status?: string;
 }
 
 export interface IRoomPayload extends Partial<Omit<RoomCreate, "remark" | "power_capacity_w">> {

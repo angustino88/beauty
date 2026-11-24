@@ -57,14 +57,12 @@ function makeFallbackRack(
     label: "",
     remark: "",
     primary_owner: null,
-    current_status: null,
     lab_audit: null,
     lifecycle_status: { value: 'in_service', label: 'In service' },
     access_policy: { value: 'open', label: 'Open' },
     condition: { value: 'operational', label: 'Operational' },
     availability: { value: 'available', blocked_by: null, condition: null, reason: null },
     activity_status: { value: 'idle', label: 'Idle' },
-    status: null,
   };
 }
 

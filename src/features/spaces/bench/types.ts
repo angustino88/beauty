@@ -1,6 +1,6 @@
 import type { BenchCreate } from "@/shared/api/generated/api";
 import type { NamedReference } from '@/shared/utils/resourceReferences';
-import type { IEquipmentStatus, ILabAudit, IPrimaryOwner } from "@/features/lab-equipment/shared";
+import type { ILabAudit, IPrimaryOwner } from "@/features/lab-equipment/shared";
 import type {
   ActivityStatus,
   Availability,
@@ -36,10 +36,6 @@ export interface IBench extends ResourceState {
   condition: Choice<Condition>;
   availability: Availability;
   activity_status: Choice<ActivityStatus>;
-  /** @deprecated use lifecycle_status, condition, availability, activity_status */
-  status?: string | null;
-  status_label?: string | null;
-  current_status?: IEquipmentStatus | null;
   remark?: string | null;
   image?: string | null;
   location_name?: string | null;
@@ -63,8 +59,6 @@ export interface IBenchParams {
   lifecycle_status?: string;
   condition?: string;
   activity_status?: string;
-  /** @deprecated */
-  status?: string;
   favorite?: boolean;
 }
 

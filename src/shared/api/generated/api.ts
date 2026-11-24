@@ -798,7 +798,6 @@ const injectedRtkApi = api.injectEndpoints({
           page_size: queryArg.pageSize,
           q: queryArg.q,
           setup_location_id: queryArg.setupLocationId,
-          status: queryArg.status,
           type_id: queryArg.typeId,
         },
       }),
@@ -1231,6 +1230,7 @@ const injectedRtkApi = api.injectEndpoints({
         params: {
           activity_status: queryArg.activityStatus,
           bench_group: queryArg.benchGroup,
+          condition: queryArg.condition,
           has_computing: queryArg.hasComputing,
           is_booked: queryArg.isBooked,
           is_favorite: queryArg.isFavorite,
@@ -4059,7 +4059,6 @@ const injectedRtkApi = api.injectEndpoints({
           page: queryArg.page,
           page_size: queryArg.pageSize,
           q: queryArg.q,
-          status: queryArg.status,
         },
       }),
     }),
@@ -4135,16 +4134,6 @@ const injectedRtkApi = api.injectEndpoints({
         url: `/api/labs/rooms/${queryArg.roomId}/actions/change-lifecycle`,
         method: "POST",
         body: queryArg.roomLifecycleWrite,
-      }),
-    }),
-    labsRoomsActionsChangeStatusCreateByRoomId: build.mutation<
-      LabsRoomsActionsChangeStatusCreateByRoomIdApiResponse,
-      LabsRoomsActionsChangeStatusCreateByRoomIdApiArg
-    >({
-      query: (queryArg) => ({
-        url: `/api/labs/rooms/${queryArg.roomId}/actions/change-status`,
-        method: "POST",
-        body: queryArg.roomStatusWrite,
       }),
     }),
     labsRoomsActionsForceDeleteCreateByRoomId: build.mutation<
@@ -4392,7 +4381,6 @@ const injectedRtkApi = api.injectEndpoints({
           page_size: queryArg.pageSize,
           q: queryArg.q,
           room_id: queryArg.roomId,
-          status: queryArg.status,
           type_id: queryArg.typeId,
         },
       }),
@@ -4471,16 +4459,6 @@ const injectedRtkApi = api.injectEndpoints({
         url: `/api/labs/stations/${queryArg.stationId}/actions/change-lifecycle`,
         method: "POST",
         body: queryArg.stationLifecycleWrite,
-      }),
-    }),
-    labsStationsActionsChangeStatusCreateByStationId: build.mutation<
-      LabsStationsActionsChangeStatusCreateByStationIdApiResponse,
-      LabsStationsActionsChangeStatusCreateByStationIdApiArg
-    >({
-      query: (queryArg) => ({
-        url: `/api/labs/stations/${queryArg.stationId}/actions/change-status`,
-        method: "POST",
-        body: queryArg.stationStatusWrite,
       }),
     }),
     labsStationsActionsForceDeleteCreateByStationId: build.mutation<
@@ -6193,8 +6171,6 @@ export type LabsBenchesRetrieveApiArg = {
   /** Comma-separated values; OR within this filter. */
   setupLocationId?: string;
   /** Comma-separated values; OR within this filter. */
-  status?: string;
-  /** Comma-separated values; OR within this filter. */
   typeId?: string;
 };
 export type LabsBenchesCreateApiResponse =
@@ -6334,7 +6310,10 @@ export type LabsBenchesOptionsRetrieveApiArg = {
   favorite?: boolean;
   /** Comma-separated positive integers (at most 50) of retired rows to include. */
   includeIds?: number[];
-  lifecycleStatus?: string;
+  /** * `planned` - Planned
+   * `in_service` - In service
+   * `retired` - Retired */
+  lifecycleStatus?: "planned" | "in_service" | "retired";
   /** Search text (1 to 100 characters). */
   q?: string;
   setupLocationId?: number;
@@ -6470,6 +6449,10 @@ export type LabsDashboardRetrieveApiArg = {
   activityStatus?: "offline" | "free" | "active" | "inactive" | "maintaining";
   /** Filter benches by bench group identifier. */
   benchGroup?: number;
+  /** * `operational` - Operational
+   * `in_maintenance` - In maintenance
+   * `out_of_service` - Out of service */
+  condition?: "operational" | "in_maintenance" | "out_of_service";
   /** Filter by whether the bench has active computing equipment assigned. */
   hasComputing?: boolean | null;
   /** Filter by whether the bench has an ongoing active booking. */
@@ -6478,13 +6461,12 @@ export type LabsDashboardRetrieveApiArg = {
   isFavorite?: boolean | null;
   /** Filter by whether the bench has a physical location or station mapping. */
   isMapped?: boolean | null;
-  /** Filter by lifecycle status (planned, in_service, out_of_service, retired).
+  /** Filter by bench lifecycle status.
     
     * `planned` - Planned
     * `in_service` - In service
-    * `out_of_service` - Out of service
     * `retired` - Retired */
-  lifecycleStatus?: "planned" | "in_service" | "out_of_service" | "retired";
+  lifecycleStatus?: "planned" | "in_service" | "retired";
   /** Filter by physical station or room identifier. */
   location?: number;
   page?: number;
@@ -8380,8 +8362,6 @@ export type LabsRoomsRetrieveApiArg = {
   page?: number;
   pageSize?: number;
   q?: string;
-  /** Comma-separated values; OR within this filter. */
-  status?: string;
 };
 export type LabsRoomsCreateApiResponse =
   /** status 201  */ RoomCreateSerializersRoomDetailResponseRead;
@@ -8428,12 +8408,6 @@ export type LabsRoomsActionsChangeLifecycleCreateByRoomIdApiResponse =
 export type LabsRoomsActionsChangeLifecycleCreateByRoomIdApiArg = {
   roomId: number;
   roomLifecycleWrite: RoomLifecycleWrite;
-};
-export type LabsRoomsActionsChangeStatusCreateByRoomIdApiResponse =
-  /** status 200  */ RoomStatusChangeSerializersRoomDetailResponseRead;
-export type LabsRoomsActionsChangeStatusCreateByRoomIdApiArg = {
-  roomId: number;
-  roomStatusWrite: RoomStatusWrite;
 };
 export type LabsRoomsActionsForceDeleteCreateByRoomIdApiResponse =
   /** status 200  */ RoomForceDeletedSerializersRoomForceDeleteResultDetailResponseRead;
@@ -8592,8 +8566,6 @@ export type LabsStationsRetrieveApiArg = {
   /** Comma-separated values; OR within this filter. */
   roomId?: string;
   /** Comma-separated values; OR within this filter. */
-  status?: string;
-  /** Comma-separated values; OR within this filter. */
   typeId?: string;
 };
 export type LabsStationsCreateApiResponse =
@@ -8641,12 +8613,6 @@ export type LabsStationsActionsChangeLifecycleCreateByStationIdApiResponse =
 export type LabsStationsActionsChangeLifecycleCreateByStationIdApiArg = {
   stationId: number;
   stationLifecycleWrite: StationLifecycleWrite;
-};
-export type LabsStationsActionsChangeStatusCreateByStationIdApiResponse =
-  /** status 200  */ StationStatusChangeSerializersStationDetailResponseRead;
-export type LabsStationsActionsChangeStatusCreateByStationIdApiArg = {
-  stationId: number;
-  stationStatusWrite: StationStatusWrite;
 };
 export type LabsStationsActionsForceDeleteCreateByStationIdApiResponse =
   /** status 200  */ StationForceDeletedSerializersStationForceDeleteResultDetailResponseRead;
@@ -10611,8 +10577,6 @@ export type BenchReferenceDataRead = {
   groups: BenchGroupRead[];
   stations: BenchStationReferenceRead[];
   lifecycle_statuses: LabsChoiceReferenceRead[];
-  /** Deprecated four-value status. */
-  statuses: LabsChoiceReferenceRead[];
 };
 export type BenchReferenceListSerializersBenchReferenceDataPaginatedResponse = {
   meta: BenchReferenceListSerializersBenchReferenceDataPaginationMeta;
@@ -10733,8 +10697,6 @@ export type BenchRead = {
   station_slot: LabsNamedReferenceRead | null;
   /** Room of the station the bench is set up on; null when the bench is unplaced or the station has no room. */
   room: LabsBenchRoomReferenceRead | null;
-  /** Deprecated: use lifecycle_status, condition, availability and activity_status. */
-  status: LabsChoiceReferenceRead | null;
   lifecycle_status: LabsChoiceReferenceRead;
   condition: LabsChoiceReferenceRead;
   availability: LabsAvailabilityRead;
@@ -10807,8 +10769,6 @@ export type BenchResourceDetailRead = {
   station_slot: LabsNamedReferenceRead | null;
   /** Room of the station the bench is set up on; null when the bench is unplaced or the station has no room. */
   room: LabsBenchRoomReferenceRead | null;
-  /** Deprecated: use lifecycle_status, condition, availability and activity_status. */
-  status: LabsChoiceReferenceRead | null;
   lifecycle_status: LabsChoiceReferenceRead;
   condition: LabsChoiceReferenceRead;
   availability: LabsAvailabilityRead;
@@ -11561,7 +11521,6 @@ export type DashboardBench = {
   id: number;
   sku: string;
   name: string;
-  lifecycle_status: string;
   bench_group: DashboardBenchGroup | null;
   bench_type: DashboardBenchType | null;
   location: DashboardLocation | null;
@@ -11578,7 +11537,8 @@ export type DashboardBenchRead = {
   id: number;
   sku: string;
   name: string;
-  lifecycle_status: string;
+  lifecycle_status: LabsChoiceReferenceRead;
+  condition: LabsChoiceReferenceRead;
   bench_group: DashboardBenchGroup | null;
   bench_type: DashboardBenchType | null;
   location: DashboardLocationRead | null;
@@ -11659,7 +11619,6 @@ export type DashboardBenchDetail = {
   id: number;
   sku: string;
   name: string;
-  lifecycle_status: string;
   bench_group: DashboardBenchGroup | null;
   bench_type: DashboardBenchType | null;
   location: DashboardLocation | null;
@@ -11681,7 +11640,8 @@ export type DashboardBenchDetailRead = {
   id: number;
   sku: string;
   name: string;
-  lifecycle_status: string;
+  lifecycle_status: LabsChoiceReferenceRead;
+  condition: LabsChoiceReferenceRead;
   bench_group: DashboardBenchGroup | null;
   bench_type: DashboardBenchType | null;
   location: DashboardLocationRead | null;
@@ -11716,6 +11676,10 @@ export type DashboardOperationalSummary = {
   favorited_benches_count: number;
   /** Breakdown of bench counts by lifecycle status. */
   lifecycle_distribution: {
+    [key: string]: number;
+  };
+  /** Breakdown of bench counts by condition. */
+  condition_distribution: {
     [key: string]: number;
   };
   /** Breakdown of computing equipment counts by operational activity status. */
@@ -16288,8 +16252,6 @@ export type RoomRead = {
   coordinate_unit: string;
   floor_plan_revision: string;
   floor_plan_url: string;
-  /** Deprecated: computed from lifecycle_status, condition, access_policy and activity_status. */
-  status: LabsChoiceReferenceRead | null;
   lifecycle_status: LabsChoiceReferenceRead;
   access_policy: LabsChoiceReferenceRead;
   condition: LabsChoiceReferenceRead;
@@ -16433,26 +16395,6 @@ export type AccessPolicyEnum = "open" | "restricted";
 export type RoomLifecycleWrite = {
   lifecycle_status?: LifecycleStatusEnum;
   access_policy?: AccessPolicyEnum;
-  metadata?: {
-    [key: string]: any;
-  };
-};
-export type RoomStatusChangeSerializersRoomDetailResponse = {
-  data: Room;
-};
-export type RoomStatusChangeSerializersRoomDetailResponseRead = {
-  data: RoomRead;
-};
-export type RoomStatusEnum =
-  | "available"
-  | "reserved"
-  | "issue"
-  | "restricted"
-  | "closed"
-  | "maintenance"
-  | "retired";
-export type RoomStatusWrite = {
-  status: RoomStatusEnum;
   metadata?: {
     [key: string]: any;
   };
@@ -16790,8 +16732,6 @@ export type StationRead = {
   cooling_capacity_w: number | null;
   network_port_capacity: number | null;
   utilities: any;
-  /** Deprecated: computed from lifecycle_status, condition, access_policy and activity_status. */
-  status: LabsChoiceReferenceRead | null;
   lifecycle_status: LabsChoiceReferenceRead;
   access_policy: LabsChoiceReferenceRead;
   condition: LabsChoiceReferenceRead;
@@ -16940,18 +16880,6 @@ export type StationLifecycleChangeSerializersStationDetailResponseRead = {
 export type StationLifecycleWrite = {
   lifecycle_status?: LifecycleStatusEnum;
   access_policy?: AccessPolicyEnum;
-  metadata?: {
-    [key: string]: any;
-  };
-};
-export type StationStatusChangeSerializersStationDetailResponse = {
-  data: Station;
-};
-export type StationStatusChangeSerializersStationDetailResponseRead = {
-  data: StationRead;
-};
-export type StationStatusWrite = {
-  status: RoomStatusEnum;
   metadata?: {
     [key: string]: any;
   };
@@ -17159,8 +17087,6 @@ export type StationReferenceDataRead = {
   types: StationTypeRead[];
   bench_types: LabsNamedReferenceRead[];
   rooms: LabsStationRoomReferenceRead[];
-  /** Deprecated seven-value status. */
-  statuses: LabsChoiceReferenceRead[];
   lifecycle_statuses: LabsChoiceReferenceRead[];
   access_policies: LabsChoiceReferenceRead[];
   /** Slot service_status values. */
@@ -19558,7 +19484,6 @@ export const {
   useLabsRoomsPartialUpdateByRoomIdMutation,
   useLabsRoomsDestroyByRoomIdMutation,
   useLabsRoomsActionsChangeLifecycleCreateByRoomIdMutation,
-  useLabsRoomsActionsChangeStatusCreateByRoomIdMutation,
   useLabsRoomsActionsForceDeleteCreateByRoomIdMutation,
   useLabsRoomsActionsGenerateSlotsCreateByRoomIdMutation,
   useLabsRoomsExpensesRetrieveByRoomIdQuery,
@@ -19588,7 +19513,6 @@ export const {
   useLabsStationsPartialUpdateByStationIdMutation,
   useLabsStationsDestroyByStationIdMutation,
   useLabsStationsActionsChangeLifecycleCreateByStationIdMutation,
-  useLabsStationsActionsChangeStatusCreateByStationIdMutation,
   useLabsStationsActionsForceDeleteCreateByStationIdMutation,
   useLabsStationsActionsPlaceCreateByStationIdMutation,
   useLabsStationsActionsPlacePartialUpdateByStationIdMutation,
