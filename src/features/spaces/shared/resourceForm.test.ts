@@ -3,7 +3,7 @@ import test from 'node:test';
 import { mapBenchApiItem } from '../bench/mapper.ts';
 import { mapRoomApiItem, mapRoomWritePayload, roomDetailsPayload } from '../room/mapper.ts';
 import { mapStationApiItem, mapStationWritePayload } from '../station/mapper.ts';
-import { BENCH_DETAILS, STATION_DETAILS, detailPayload, editableDetails } from './resourceForm.ts';
+import { BENCH_DETAILS, STATION_DETAILS, detailPayload, editableDetails, singleFilterId } from './resourceForm.ts';
 import { changedReference, ownershipPayload } from '../../../shared/utils/resourceReferences.ts';
 
 test('a bench type is loaded from the API and can be set or cleared without resending an unchanged type', () => {
@@ -59,4 +59,11 @@ test('station edit keeps existing coordinates and maps type, capacity and owners
   assert.deepEqual(JSON.parse(JSON.stringify(payload)), {
     department_id: 1, group_id: 2, owner_id: 3, type_id: 6, orientation_degrees: 90,
   });
+});
+
+test('prefills placement only for a single valid location filter', () => {
+  assert.equal(singleFilterId(['12']), 12);
+  for (const selection of [null, [], [2, 3], ['invalid'], [0]]) {
+    assert.equal(singleFilterId(selection), undefined);
+  }
 });

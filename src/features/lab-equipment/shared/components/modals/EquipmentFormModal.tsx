@@ -90,6 +90,11 @@ export interface EquipmentFormModalProps {
     professionalForm?: boolean;
 }
 
+const SECTION_ORDER = [
+    'Identification', 'Classification', 'Ownership', 'Location', 'Layout',
+    'Specifications', 'License terms', 'Lifecycle', 'Notes',
+];
+
 type SelectLikeValue = string | number;
 type UnknownRecord   = Record<string, unknown>;
 
@@ -248,6 +253,7 @@ export default function EquipmentFormModal({
     const [imageFile,     setImageFile]     = useState<File | null>(null);
     const [imagePreview,  setImagePreview]  = useState<string | null>(null);
     const [imageRemoved,  setImageRemoved]  = useState(false);
+    const dirty = useRef(false);
     const hadImageRef = useRef(false);
     const [submitting,    setSubmitting]    = useState(false);
     const [detailsOpen,   setDetailsOpen]   = useState(false);
@@ -273,6 +279,7 @@ export default function EquipmentFormModal({
         initialized.current = { mode, recordId };
         if (open) {
             form.resetFields();
+            dirty.current = false;
             setImageFile(null);
             setImageRemoved(false);
             hadImageRef.current = mode === 'edit' && Boolean((initialValues as { image?: unknown } | undefined)?.image);
@@ -301,7 +308,7 @@ export default function EquipmentFormModal({
                 setImagePreview((record.image as string) || null);
             } else {
                 setImagePreview(null);
-                valuesChangeRef.current?.({});
+                valuesChangeRef.current?.({ ...initialValues });
             }
         }
     }, [open, mode, initialValues, form, professionalForm]);
@@ -386,6 +393,7 @@ export default function EquipmentFormModal({
     };
 
     const handleFormValuesChange = (changedValues: Record<string, unknown>, allValues: Record<string, unknown>) => {
+        dirty.current = true;
         const changed = new Set(Object.keys(changedValues));
         let shouldNotifyParent = changed.has('kind_id')
             || changed.has('type_id')
@@ -446,12 +454,14 @@ export default function EquipmentFormModal({
     const essentialFields = regularFields.filter((field) => field.required || field.essential);
     const detailFields = regularFields.filter((field) => !field.required && !field.essential);
     const hasImage      = fields.some((f) => f.type === 'image');
-    const primarySections = professionalForm
-        ? [...new Set(regularFields.filter((field) => field.required || field.essential).map((field) => field.section ?? 'Identification'))]
-        : [];
-    const additionalSections = professionalForm
-        ? [...new Set(regularFields.filter((field) => !primarySections.includes(field.section ?? 'Identification')).map((field) => field.section ?? 'Identification'))]
-        : [];
+    const sections = [...new Set(regularFields.map((field) => field.section ?? 'Identification'))];
+    const orderedSections = [
+        ...SECTION_ORDER.filter((section) => sections.includes(section)),
+        ...sections.filter((section) => !SECTION_ORDER.includes(section)),
+    ];
+    const essentialSections = new Set(essentialFields.map((field) => field.section ?? 'Identification'));
+    const primarySections = orderedSections.filter((section) => essentialSections.has(section));
+    const additionalSections = orderedSections.filter((section) => !essentialSections.has(section));
     return (
         <FormDialog
             className={professionalForm ? styles.modal : undefined}
@@ -460,7 +470,7 @@ export default function EquipmentFormModal({
             open={open}
             onSubmit={handleOk}
             onCancel={() => {
-                if (form.isFieldsTouched()) {
+                if (dirty.current || imageFile || imageRemoved) {
                     confirmAction({
                         title: 'Discard unsaved changes?',
                         description: 'Closing this form will discard all unsaved entries.',
@@ -479,6 +489,7 @@ export default function EquipmentFormModal({
         >
             <Form
                 form={form}
+                initialValues={mode === 'create' ? initialValues : undefined}
                 layout="vertical"
                 className={professionalForm ? styles.form : undefined}
                 onValuesChange={handleFormValuesChange}
@@ -500,7 +511,7 @@ export default function EquipmentFormModal({
                         activeKey={detailsOpen ? ['details'] : []}
                         onChange={(keys) => setDetailsOpen(keys.includes('details'))}
                     >
-                        <Collapse.Panel key="details" header={professionalForm ? 'Lifecycle, licenses & additional details' : 'Additional details'} forceRender>
+                        <Collapse.Panel key="details" header="Additional details" forceRender>
                             {professionalForm ? additionalSections.map((section) => (
                                 <FormSection key={section} section={section} fields={regularFields}
                                     form={form} mode={mode} professionalForm={professionalForm} />

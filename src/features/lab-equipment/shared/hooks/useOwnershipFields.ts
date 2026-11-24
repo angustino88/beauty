@@ -50,7 +50,7 @@ export function useOwnershipFields(open: boolean, editing: (Ownership & {
       loading: groups.isFetching, onSearch: setGroupSearch,
     },
   ];
-  if (includeOwner) fields.push({ name: 'owner_id', apiField: 'owner', label: 'Owner', type: 'select', essential: true, options: ownerOptions });
+  if (includeOwner) fields.push({ name: 'owner_id', apiField: 'owner', section: 'Ownership', label: 'Owner', type: 'select', essential: true, options: ownerOptions });
 
   return {
     fields,

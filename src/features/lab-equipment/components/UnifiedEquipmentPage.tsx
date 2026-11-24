@@ -123,7 +123,7 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
   const groupIncludeIds = formMode === 'edit' && editingItem?.group?.id != null && Number(editingItem.department?.id) === departmentId
     ? [editingItem.group.id]
     : undefined;
-  const { data: groupOptions } = useLabsGroupsOptionsRetrieveQuery({ departmentId, q: groupSearch || undefined, includeIds: groupIncludeIds }, { skip: !formOpen || !departmentId });
+  const { currentData: groupOptions } = useLabsGroupsOptionsRetrieveQuery({ departmentId, q: groupSearch || undefined, includeIds: groupIncludeIds }, { skip: !formOpen || !departmentId });
   const placementIncludeIds = placementItem?.placement && placementItem.placement.target_type.value === placementTarget
     ? [placementTarget === 'bench' ? placementItem.placement.bench?.id
       : placementTarget === 'station' ? placementItem.placement.station?.id
@@ -1015,7 +1015,7 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
         mode={formMode}
         title={formMode === 'create' ? `New ${config.singular}` : `Edit ${config.singular}`}
         fields={formFields}
-        initialValues={formInitialValues}
+        initialValues={formMode === 'create' ? { lifecycle_state: 'in_service' } : formInitialValues}
         onSubmit={handleFormSubmit}
         onValuesChange={setFormValues}
         onCancel={() => {

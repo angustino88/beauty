@@ -15,7 +15,7 @@ import {
 } from "@/features/lab-equipment/shared";
 import type { IRoom, IRoomPayload } from "../types";
 import SpaceOverview from "../../shared/SpaceOverview";
-import { roomLocationIds } from "../roomFilters";
+import { roomLocationIds, selectedRoomLocation } from "../roomFilters";
 import { useRoomLocationOptions } from "../hooks/useRoomLocationOptions";
 import { useRoomTable } from "../hooks/useRoomTable";
 import { useRoomForm } from "../hooks/useRoomForm";
@@ -138,6 +138,7 @@ export default function RoomPage() {
         open={createOpen}
         mode="create"
         title="New Room"
+        initialValues={selectedRoomLocation(table.filters)}
         professionalForm
         fields={formFields}
         onValuesChange={handleFormValues}

@@ -13,7 +13,7 @@ import {
   type GuardedDeleteInitialMode,
 } from "@/features/lab-equipment/shared";
 import type { FieldConfig } from "@/features/lab-equipment/shared";
-import { BENCH_DETAILS, detailPayload, editableDetails } from "../../shared/resourceForm";
+import { BENCH_DETAILS, detailPayload, editableDetails, singleFilterId } from "../../shared/resourceForm";
 import { changedReference, ownershipFormValues, ownershipPayload } from '../../../../shared/utils/resourceReferences.ts';
 import { referenceOptions, useOwnershipFields } from "@/features/lab-equipment/shared/hooks/useOwnershipFields";
 import type { IBench, IBenchPayload } from "../types";
@@ -33,6 +33,7 @@ export default function BenchPage() {
 
   const table = useBenchTable();
   const form = useBenchForm();
+  const filteredParentId = singleFilterId(table.filters.location);
 
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editingBench, setEditingBench] = useState<IBench | null>(null);
@@ -48,7 +49,9 @@ export default function BenchPage() {
   const { data: benchGroups } = useGetBenchGroupsQuery();
   const { data: facets } = useGetBenchFiltersQuery();
 
-  const { data: stationOptionsData } = useLabsStationsOptionsRetrieveQuery({});
+  const { data: stationOptionsData } = useLabsStationsOptionsRetrieveQuery({
+    includeIds: filteredParentId ? [filteredParentId] : undefined,
+  });
   const stationOptions = useMemo(
     () => (stationOptionsData?.data ?? []).map((station) => toResourceOption(station)),
     [stationOptionsData],
@@ -100,14 +103,14 @@ export default function BenchPage() {
       // The SKU identifies the bench and cannot change after creation (the API refuses a changed SKU).
       { name: "sku", label: "SKU", type: "text", required: true, disabledInEdit: true },
       { name: "name", label: "Name", type: "text", required: true },
-      { name: "type_id", apiField: "type", label: "Bench Type", type: "select", essential: true,
+      { name: "type_id", section: "Classification", apiField: "type", label: "Bench Type", type: "select", essential: true,
         options: referenceOptions(formBenchTypes.currentData?.data, editingBench?.bench_type),
         onSearch: setBenchTypeSearch, loading: formBenchTypes.isFetching },
-      { name: "bench_group_id", apiField: "bench_group", label: "Bench Group", type: "select", options: groupOptions },
+      { name: "bench_group_id", section: "Classification", apiField: "bench_group", label: "Bench Group", type: "select", options: groupOptions },
       ...ownership.fields,
-      { name: "setup_location_id", label: "Station", type: "select", options: stationOptions },
+      { name: "setup_location_id", section: "Location", essential: true, label: "Station", type: "select", options: stationOptions },
       {
-        name: "station_slot_id",
+        name: "station_slot_id", section: "Location",
         apiField: "station_slot",
         label: "Station Slot",
         type: "select",
@@ -118,7 +121,7 @@ export default function BenchPage() {
         searchHint: slotsHint,
         help: slotsHint && !slotsLoading ? slotsHint : undefined,
       },
-      { name: "remark", label: "Remark", type: "textarea" },
+      { name: "remark", section: "Notes", label: "Remark", type: "textarea" },
       ...editableDetails(BENCH_DETAILS),
       { name: "image", label: "Image", type: "image" },
   ];
@@ -203,9 +206,11 @@ export default function BenchPage() {
       />
 
       <EquipmentFormModal
+        professionalForm
         open={createModalOpen}
         mode="create"
         title="New Bench"
+        initialValues={{ setup_location_id: filteredParentId }}
         fields={formFields}
         onValuesChange={handleFormValues}
         onSubmit={async (values, imageFile) => {
@@ -221,6 +226,7 @@ export default function BenchPage() {
         loading={form.creating}
       />
       <EquipmentFormModal
+        professionalForm
         open={editingBench !== null}
         mode="edit"
         title="Edit Bench"

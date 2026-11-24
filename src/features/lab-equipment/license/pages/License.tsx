@@ -70,24 +70,21 @@ function LicenseInventory() {
     () => [
       { name: 'sku', label: 'SKU', type: 'text', required: true, disabledInEdit: true },
       { name: 'name', label: 'Name', type: 'text', required: true },
-      { name: 'license_product', label: 'Product', type: 'select', required: true, options: table.productOptions },
-      { name: 'license_vendor', label: 'Vendor', type: 'select', required: true, options: table.vendorOptions },
-      { name: 'maximum_version', label: 'Maximum Version', type: 'text' },
-      { name: 'serial_number', label: 'Serial Number', type: 'text', help: "The vendor's license serial or ID, for example the Vector license ID. Lab computers match the licenses they find by it." },
-      { name: 'license_ID', label: 'License Key (write-only)', type: 'text', help: 'Write-only: stored securely and never shown again. Leave empty to keep the current key; type a new one to replace it.' },
-      { name: 'license_category', label: 'License Category', type: 'select', required: true, options: table.categoryOptions },
-      { name: 'license_type', label: 'License Type', type: 'select', required: true, options: table.typeOptions },
+      { name: 'license_vendor', section: 'Classification', label: 'Vendor', type: 'select', required: true, options: table.vendorOptions },
+      { name: 'license_product', section: 'Classification', label: 'Product', type: 'select', required: true, options: table.productOptions },
+      { name: 'license_category', section: 'Classification', label: 'License Category', type: 'select', required: true, options: table.categoryOptions },
+      { name: 'license_type', section: 'Classification', label: 'License Type', type: 'select', required: true, options: table.typeOptions },
       {
-        name: 'license_restriction',
+        name: 'license_restriction', section: 'License terms',
         label: 'License Restriction',
         type: 'select',
         options: table.restrictionOptions,
       },
-      { name: 'license_seats', label: 'Seats', type: 'number' },
-      { name: 'expiry_date', label: 'Expiry Date', type: 'date' },
-      { name: 'primary_owner', label: 'Owner', type: 'select', options: table.ownerOptions },
+      { name: 'license_seats', section: 'License terms', essential: true, label: 'Seats', type: 'number' },
+      { name: 'expiry_date', section: 'License terms', label: 'Expiry Date', type: 'date' },
+      { name: 'primary_owner', section: 'Ownership', essential: true, label: 'Owner', type: 'select', options: table.ownerOptions },
       {
-        name: 'assigned_equipment_ids',
+        name: 'assigned_equipment_ids', section: 'License terms',
         label: 'License Carrier',
         type: 'multi-select',
         options: equipmentSearch.options,
@@ -100,7 +97,10 @@ function LicenseInventory() {
         searchHint: equipmentSearch.emptyText,
         help: 'Optional. A license can be assigned to as many equipment items as it has seats.',
       },
-      { name: 'remark', label: 'Remark', type: 'textarea' },
+      { name: 'maximum_version', section: 'License terms', label: 'Maximum Version', type: 'text' },
+      { name: 'serial_number', section: 'License terms', label: 'Serial Number', type: 'text', help: "The vendor's license serial or ID, for example the Vector license ID. Lab computers match the licenses they find by it." },
+      { name: 'license_ID', section: 'License terms', label: 'License Key (write-only)', type: 'text', help: 'Write-only: stored securely and never shown again. Leave empty to keep the current key; type a new one to replace it.' },
+      { name: 'remark', section: 'Notes', label: 'Remark', type: 'textarea' },
       { name: 'image', label: 'Image', type: 'image' },
     ],
     [
@@ -308,7 +308,9 @@ function LicenseInventory() {
         open={modalOpen}
         mode="create"
         title="New License"
-        fields={[...formFields, ...ownership.fields]}
+        professionalForm
+        initialValues={{ license_seats: 1 }}
+        fields={[...ownership.fields, ...formFields]}
         onValuesChange={(values) => ownership.setDepartmentId(values.department_id)}
         onSubmit={handleCreateSubmit}
         onCancel={() => setModalOpen(false)}

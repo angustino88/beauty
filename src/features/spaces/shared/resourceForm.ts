@@ -5,6 +5,11 @@ import { nullableNumber } from '../../../shared/utils/resourceReferences.ts';
 
 type DetailField<T> = FieldConfig & { name: Extract<keyof T, string>; decimal?: boolean; emptyNumber?: number; readOnly?: boolean };
 
+export function singleFilterId(values: readonly unknown[] | null | undefined): number | undefined {
+  const id = values?.length === 1 ? nullableNumber(values[0]) : null;
+  return id != null && Number.isSafeInteger(id) && id > 0 ? id : undefined;
+}
+
 export const BENCH_DETAILS = [
   { name: 'description', label: 'Description', type: 'textarea' },
   { name: 'documentation_url', label: 'Documentation URL', type: 'text', maxLength: 500 },
@@ -38,7 +43,7 @@ export const STATION_DETAILS = [
 ] satisfies DetailField<StationCreate>[];
 
 export function editableDetails(fields: DetailField<Record<string, unknown>>[]): FieldConfig[] {
-  return fields.filter((field) => !field.readOnly);
+  return fields.filter((field) => !field.readOnly).map((field) => ({ section: 'Specifications', ...field }));
 }
 
 export function readDetails(fields: DetailField<Record<string, unknown>>[], record: Record<string, unknown>) {

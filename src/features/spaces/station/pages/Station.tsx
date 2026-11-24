@@ -13,7 +13,7 @@ import {
   type GuardedDeleteInitialMode,
 } from "@/features/lab-equipment/shared";
 import type { FieldConfig } from "@/features/lab-equipment/shared";
-import { STATION_DETAILS, detailPayload, editableDetails } from "../../shared/resourceForm";
+import { STATION_DETAILS, detailPayload, editableDetails, singleFilterId } from "../../shared/resourceForm";
 import { changedReference, ownershipFormValues, ownershipPayload } from '../../../../shared/utils/resourceReferences.ts';
 import { referenceOptions, useOwnershipFields } from "@/features/lab-equipment/shared/hooks/useOwnershipFields";
 import type { IStation, IStationPayload } from "../types";
@@ -31,6 +31,7 @@ export default function StationPage() {
 
   const table = useStationTable();
   const form = useStationForm();
+  const filteredParentId = singleFilterId(table.filters.room);
 
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editingStation, setEditingStation] = useState<IStation | null>(null);
@@ -99,13 +100,13 @@ export default function StationPage() {
       // The SKU identifies the station and cannot change after creation (the API refuses a changed SKU).
       { name: "sku", label: "SKU", type: "text", required: true, disabledInEdit: true },
       { name: "name", label: "Name", type: "text", required: true },
-      { name: "type_id", apiField: "type", label: "Station Type", type: "select", essential: true,
+      { name: "type_id", section: "Classification", apiField: "type", label: "Station Type", type: "select", essential: true,
         options: referenceOptions(stationTypes.currentData?.data, editingStation?.station_type),
         onSearch: setStationTypeSearch, loading: stationTypes.isFetching },
       ...ownership.fields,
-      { name: "room_id", label: "Target Room", type: "select", options: roomOptions },
+      { name: "room_id", section: "Location", essential: true, label: "Room", type: "select", options: roomOptions },
       {
-        name: "slot_id",
+        name: "slot_id", section: "Location",
         label: "Room Slot",
         type: "select",
         dependsOn: ["room_id"],
@@ -115,20 +116,20 @@ export default function StationPage() {
         searchHint: roomSlotsHint,
         help: roomSlotsHint && !roomSlotsPage1.isFetching ? roomSlotsHint : undefined,
       },
-      { name: "height_mm", label: "Height (mm)", type: "number" },
-      { name: "width_mm", label: "Width (mm)", type: "number" },
-      { name: "depth_mm", label: "Depth (mm)", type: "number" },
-      { name: "power_capacity_w", label: "Power Capacity (W)", type: "number" },
-      { name: "max_load_kg", label: "Max Load (kg)", type: "number" },
-      { name: "network_port_capacity", label: "Network Ports", type: "number" },
+      { name: "height_mm", section: "Specifications", label: "Height (mm)", type: "number" },
+      { name: "width_mm", section: "Specifications", label: "Width (mm)", type: "number" },
+      { name: "depth_mm", section: "Specifications", label: "Depth (mm)", type: "number" },
+      { name: "power_capacity_w", section: "Specifications", label: "Power Capacity (W)", type: "number" },
+      { name: "max_load_kg", section: "Specifications", label: "Max Load (kg)", type: "number" },
+      { name: "network_port_capacity", section: "Specifications", label: "Network Ports", type: "number" },
       {
-        name: "bench_capacity",
+        name: "bench_capacity", section: "Specifications",
         label: "Bench Capacity",
         type: "number",
         help: "How many benches the station holds. Saving creates the bench slots S1, S2, … that benches are placed on.",
       },
-      { name: "label", label: "Position Label", type: "text" },
-      { name: "remark", label: "Remark", type: "textarea" },
+      { name: "label", section: "Location", label: "Position Label", type: "text" },
+      { name: "remark", section: "Notes", label: "Remark", type: "textarea" },
       ...editableDetails(STATION_DETAILS),
       { name: "image", label: "Image", type: "image" },
   ];
@@ -199,9 +200,11 @@ export default function StationPage() {
       />
 
       <EquipmentFormModal
+        professionalForm
         open={createModalOpen}
         mode="create"
         title="New Station"
+        initialValues={{ room_id: filteredParentId }}
         fields={formFields}
         onValuesChange={handleFormValues}
         onSubmit={async (values, imageFile) => {
@@ -217,6 +220,7 @@ export default function StationPage() {
         loading={form.creating}
       />
       <EquipmentFormModal
+        professionalForm
         open={editingStation !== null}
         mode="edit"
         title="Edit Station"
