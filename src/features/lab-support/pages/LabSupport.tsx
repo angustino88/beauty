@@ -5,6 +5,7 @@ import { Button, Card, Col, Grid, Row, Segmented, Select, Table, Typography } fr
 import {
   AlertOutlined,
   ClearOutlined,
+  ClockCircleOutlined,
   ExportOutlined,
   InboxOutlined,
   PlusOutlined,
@@ -16,7 +17,7 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { FullTextSearch } from '@/components/inputs/FullTextSearch';
 import { TooltipButton } from '@/components/layout/TooltipButton';
 import { useAuthState } from '@/features/auth/hooks/useAuthState';
-import { usePermission } from '@/features/auth/hooks/useCan';
+import { useCan } from '@/features/auth/hooks/useCan';
 import { useSupportTicketsStatsRetrieveQuery } from '@/shared/api/generated/api';
 import { getApiErrorMessage, InlineAlert, notify } from '@/shared/notifications';
 import tableStyles from '@/components/tables/AppTable.module.css';
@@ -51,7 +52,8 @@ export default function SupportTickets() {
   const navigate = useNavigate();
   const compact = !Grid.useBreakpoint().md;
   const { id: currentUserId } = useAuthState();
-  const canManage = usePermission('support.handle');
+  const can = useCan();
+  const canManage = can('support.handle') || can('support.administer');
 
   const [params, setParams] = useSearchParams();
   const { search: queueSearch } = useLocation();
@@ -192,7 +194,10 @@ export default function SupportTickets() {
 
   return (
     <div className={tableStyles.registerPage}>
-      <PageHeader title="Support tickets" />
+      <PageHeader
+        title="Support tickets"
+        controls={<Button icon={<ClockCircleOutlined />} onClick={() => navigate('/support-tickets/work-logs')}>Work logs</Button>}
+      />
 
       {canManage && stats && (
         <div className={styles.queueStatsGrid} role="region" aria-label="Support queue metrics">
@@ -403,9 +408,10 @@ export default function SupportTickets() {
       <CreateSupportTicketModal
         open={isCreateModalOpen}
         onCancel={() => setIsCreateModalOpen(false)}
-        onSuccess={() => {
+        onSuccess={(key) => {
           setIsCreateModalOpen(false);
           handleRefresh();
+          navigate(`/support-tickets/${encodeURIComponent(key)}`, { state: { queueSearch } });
         }}
       />
     </div>

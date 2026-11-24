@@ -59,6 +59,9 @@ const LabMonitoring = lazy(
 const SupportTickets = lazy(
   () => import("@/features/lab-support/pages/SupportTickets"),
 );
+const SupportWorkLogs = lazy(
+  () => import("@/features/lab-support/pages/SupportWorkLogs"),
+);
 const SupportTicketDetail = lazy(
   () => import("@/features/lab-support/pages/SupportTicketDetail"),
 );
@@ -330,6 +333,7 @@ export default function AppRoutes() {
 
         {/* Support Tickets + Leaderboard */}
         <Route path="/support-tickets" element={<SupportTickets />} />
+        <Route path="/support-tickets/work-logs" element={<SupportWorkLogs />} />
         <Route path="/support-tickets/:key" element={<SupportTicketDetail />} />
         <Route path="/leaderboard" element={<Leaderboard />} />
       </Route>

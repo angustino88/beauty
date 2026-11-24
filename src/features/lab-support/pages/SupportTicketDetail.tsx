@@ -1,13 +1,11 @@
-import { useMemo, useState } from 'react';
-import { Link, useLocation, useParams } from 'react-router-dom';
+import { useMemo, useRef, useState } from 'react';
+import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom';
 import dayjs from 'dayjs';
 import {
   Button,
   DatePicker,
   Empty,
-  Form,
   Input,
-  Modal,
   Popconfirm,
   Segmented,
   Select,
@@ -25,6 +23,7 @@ import {
   CheckCircleOutlined,
   CheckOutlined,
   CloseOutlined,
+  ClockCircleOutlined,
   CommentOutlined,
   CopyOutlined,
   DeleteOutlined,
@@ -39,16 +38,16 @@ import {
   SendOutlined,
   TagOutlined,
 } from '@ant-design/icons';
+import { useAppDispatch } from '@/app/store';
 import { useAuthState } from '@/features/auth/hooks/useAuthState';
-import { usePermission } from '@/features/auth/hooks/useCan';
+import { useCan } from '@/features/auth/hooks/useCan';
 import {
+  generatedApi,
   useSupportCannedResponsesRetrieveQuery,
   useSupportCategoriesOptionsRetrieveQuery,
   useSupportPrioritiesOptionsRetrieveQuery,
-  useSupportStatusesOptionsRetrieveQuery,
   useSupportTeamsOptionsRetrieveQuery,
   useSupportTicketsActionsAssignCreateByKeyMutation,
-  useSupportTicketsActionsTransitionCreateByKeyMutation,
   useSupportTicketsActivityRetrieveByKeyQuery,
   useSupportTicketsCommentsCreateByKeyMutation,
   useSupportTicketsCommentsDestroyByKeyCommentIdMutation,
@@ -59,8 +58,8 @@ import {
   useSupportTicketsWatchersCreateByKeyMutation,
   useUsersRetrieveQuery,
   type PatchedTicketUpdateRequest,
-  type ResolutionCodeEnum,
   type TicketActivityRead,
+  type TicketDetailRead,
   type TicketTypeEnum,
   type UrgencyEnum,
   type VisibilityEnum,
@@ -76,8 +75,10 @@ import {
   apiErrorMessage,
   toSupportAttachments,
 } from '../attachments';
-import { TicketWorkLogs } from '../components/TicketWorkLogs';
 import { TicketAttachments } from '../components/TicketAttachments';
+import { SupportPeopleSelect } from '../components/SupportPeopleSelect';
+import { TicketWorkflow } from '../components/TicketWorkflow';
+import { TicketWorkLogs } from '../components/TicketWorkLogs';
 import {
   TicketPriorityBadge,
   TicketSlaBadge,
@@ -87,12 +88,16 @@ import {
 } from '../components/TicketBadges';
 import styles from '../components/SupportTickets.module.css';
 import {
+  createTicketWriteQueue,
+  isTicketVersionConflict,
+  type RunTicketWrite,
+} from '../ticketWriteQueue';
+import {
   IMPACT_URGENCY_OPTIONS,
-  RESOLUTION_CODE_OPTIONS,
   TICKET_TYPE_OPTIONS,
   formatTicketActivityLines,
   getTicketStatusMeta,
-  getTransitionRequirements,
+  getResolutionLabel,
 } from '../ticketPresentation';
 
 const formatDate = (value?: string | null) =>
@@ -100,35 +105,33 @@ const formatDate = (value?: string | null) =>
 
 const errorMessage = (error: unknown) => apiErrorMessage(error);
 
-function isConflict(error: unknown): boolean {
-  return (
-    typeof error === 'object' &&
-    error !== null &&
-    'status' in error &&
-    error.status === 409
-  );
-}
-
 function activityLabel(activity: TicketActivityRead) {
   return activity.event_type.label;
 }
 
-const UNASSIGN = 0;
-
-interface PendingTransitionState {
-  statusId: number;
-  statusName: string;
-  requiresResolution: boolean;
-  requiresReason: boolean;
-  isReopen: boolean;
+export default function SupportTicketDetail() {
+  const { key } = useParams<{ key: string }>();
+  if (!key) return <InlineAlert variant="error" title="Missing ticket key" />;
+  return <TicketDetail key={key} ticketKey={key} />;
 }
 
-export default function SupportTicketDetail() {
+function TicketDetail({ ticketKey: key }: { ticketKey: string }) {
   const { state } = useLocation();
   const queueSearch = typeof state?.queueSearch === 'string' ? state.queueSearch : '';
-  const { key } = useParams<{ key: string }>();
+  const dispatch = useAppDispatch();
   const { id: currentUserId } = useAuthState();
-  const canManage = usePermission('support.handle');
+  const can = useCan();
+  const canManage = can('support.handle') || can('support.administer');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requestedTab = searchParams.get('tab');
+  const activeTab = requestedTab && ['attachments', 'activity', 'work-logs'].includes(requestedTab)
+    ? requestedTab
+    : 'conversation';
+  const setActiveTab = (tab: string) => setSearchParams((params) => {
+    if (tab === 'conversation') params.delete('tab');
+    else params.set('tab', tab);
+    return params;
+  }, { replace: true });
 
   // Conversation composer state
   const [comment, setComment] = useState('');
@@ -149,36 +152,29 @@ export default function SupportTicketDetail() {
   const [isEditingExtRef, setIsEditingExtRef] = useState(false);
   const [extRefDraft, setExtRefDraft] = useState('');
 
-  // Status Transition Modal state (only opened when reason or resolution summary is required, or on manual note)
-  const [pendingTransition, setPendingTransition] =
-    useState<PendingTransitionState | null>(null);
-  const [transitionReason, setTransitionReason] = useState('');
-  const [resolutionCode, setResolutionCode] = useState<ResolutionCodeEnum>('fixed');
-  const [resolutionSummary, setResolutionSummary] = useState('');
-  const [rootCause, setRootCause] = useState('');
+  const [enqueueWrite] = useState(() => createTicketWriteQueue<TicketDetailRead>());
+  const pendingFields = useRef(new Set<string>());
+  const [savingFields, setSavingFields] = useState<ReadonlySet<string>>(() => new Set());
+  const isSaving = (field: string) => savingFields.has(field);
 
-  const [activeTab, setActiveTab] = useState<string>('conversation');
-  const [savingField, setSavingField] = useState<string | null>(null);
-
-  const ticketArg = { key: key ?? '' };
-  const skip = !key;
+  const ticketArg = { key };
 
   const {
-    data: detail,
+    currentData: detail,
     isLoading,
     isError,
     refetch: refetchDetail,
-  } = useSupportTicketsRetrieveByKeyQuery(ticketArg, { skip });
+  } = useSupportTicketsRetrieveByKeyQuery(ticketArg);
   const {
     data: comments,
     refetch: refetchComments,
     isError: commentsError,
-  } = useSupportTicketsCommentsRetrieveByKeyQuery(ticketArg, { skip });
+  } = useSupportTicketsCommentsRetrieveByKeyQuery(ticketArg);
   const {
     data: activity,
     refetch: refetchActivity,
     isError: activityError,
-  } = useSupportTicketsActivityRetrieveByKeyQuery(ticketArg, { skip });
+  } = useSupportTicketsActivityRetrieveByKeyQuery(ticketArg);
 
   const ticket = detail?.data;
   const isRequester = Boolean(
@@ -186,41 +182,34 @@ export default function SupportTicketDetail() {
   );
   const canEditCoreFields = canManage || isRequester;
 
-  const { data: statuses } = useSupportStatusesOptionsRetrieveQuery(
-    {
-      includeIds: ticket?.status?.id ? [ticket.status.id] : undefined,
-    },
-    { skip: (!canManage && !isRequester) || skip },
-  );
   const { data: categories } = useSupportCategoriesOptionsRetrieveQuery(
     {
       includeIds: ticket?.category?.id ? [ticket.category.id] : undefined,
     },
-    { skip: !canManage || skip },
+    { skip: !canManage },
   );
   const { data: priorities } = useSupportPrioritiesOptionsRetrieveQuery(
     {
       includeIds: ticket?.priority?.id ? [ticket.priority.id] : undefined,
     },
-    { skip: !canManage || skip },
+    { skip: !canManage },
   );
   const { data: teams } = useSupportTeamsOptionsRetrieveQuery(
     {
       includeIds: ticket?.team?.id ? [ticket.team.id] : undefined,
     },
-    { skip: !canManage || skip },
+    { skip: !canManage },
   );
   const { data: users } = useUsersRetrieveQuery(
     {},
-    { skip: !canManage || skip },
+    { skip: !canManage },
   );
   const { data: cannedResponses } = useSupportCannedResponsesRetrieveQuery(
     undefined,
-    { skip: !canManage || skip },
+    { skip: !canManage },
   );
 
-  const [updateTicket, { isLoading: updatingTicket }] =
-    useSupportTicketsPartialUpdateByKeyMutation();
+  const [updateTicket] = useSupportTicketsPartialUpdateByKeyMutation();
   const [postComment, { isLoading: posting }] =
     useSupportTicketsCommentsCreateByKeyMutation();
   const [updateComment, { isLoading: updatingComment }] =
@@ -229,10 +218,7 @@ export default function SupportTicketDetail() {
     useSupportTicketsCommentsDestroyByKeyCommentIdMutation();
   const [uploadAttachment, { isLoading: uploadingReplyFiles }] =
     useUploadSupportAttachmentMutation();
-  const [assign, { isLoading: assigning }] =
-    useSupportTicketsActionsAssignCreateByKeyMutation();
-  const [transition, { isLoading: transitioning }] =
-    useSupportTicketsActionsTransitionCreateByKeyMutation();
+  const [assign] = useSupportTicketsActionsAssignCreateByKeyMutation();
   const [addWatcher, { isLoading: addingWatcher }] =
     useSupportTicketsWatchersCreateByKeyMutation();
   const [removeWatcher, { isLoading: removingWatcher }] =
@@ -242,52 +228,78 @@ export default function SupportTicketDetail() {
     await Promise.all([refetchDetail(), refetchComments(), refetchActivity()]);
   };
 
-  // --- Direct / Instant Field Update Handler ---
-  const handleFieldPatch = async (
-    fieldName: string,
-    patch: Omit<PatchedTicketUpdateRequest, 'version'>,
-    successMessage?: string,
-  ) => {
-    if (!key || !ticket || ticket.version === undefined) return false;
-    setSavingField(fieldName);
+  const runTicketWrite: RunTicketWrite = async (field, write) => {
+    if (!ticket || ticket.version === undefined) throw new Error('Refresh the ticket before saving.');
+    if (pendingFields.current.has(field)) throw new Error('This field is already being saved.');
+    pendingFields.current.add(field);
+    setSavingFields(new Set(pendingFields.current));
+
     try {
-      await updateTicket({
-        key,
-        patchedTicketUpdateRequest: {
-          ...patch,
-          version: ticket.version,
-        },
-      }).unwrap();
-      await Promise.all([refetchDetail(), refetchActivity()]);
-      if (successMessage) {
-        notify.success(successMessage);
-      }
-      return true;
-    } catch (error) {
-      if (isConflict(error)) await refetchDetail();
-      notify.error(`Unable to update ${fieldName}`, {
-        description: errorMessage(error),
+      await enqueueWrite(ticket, async (current, version) => {
+        try {
+          const updated = await write(current, version);
+          dispatch(generatedApi.util.updateQueryData('supportTicketsRetrieveByKey', ticketArg, (draft) => {
+            if ((updated.version ?? -1) >= (draft.data.version ?? -1)) draft.data = updated;
+          }));
+          return updated;
+        } catch (error) {
+          if (isTicketVersionConflict(error)) await refetchDetail();
+          throw error;
+        }
       });
-      return false;
     } finally {
-      setSavingField(null);
+      pendingFields.current.delete(field);
+      setSavingFields(new Set(pendingFields.current));
+      if (!pendingFields.current.size) {
+        void refetchDetail();
+        void refetchActivity();
+      }
     }
   };
 
-  // --- Direct / Instant Assignment Handler ---
-  const handleDirectAssign = async (targetAssigneeId: number | null) => {
-    if (!key || !ticket) return;
-    if ((ticket.assignee?.id ?? null) === targetAssigneeId) return;
-    setSavingField('assignee');
+  const reportWriteError = (title: string, error: unknown) => {
+    if (isTicketVersionConflict(error)) {
+      notify.warning('Ticket changed while you were editing', {
+        description: 'Review the latest values and apply your change again.',
+      });
+    } else {
+      notify.error(title, { description: errorMessage(error) });
+    }
+  };
+
+  const handleFieldPatch = async (
+    fieldName: string,
+    patch: Omit<PatchedTicketUpdateRequest, 'version'>,
+    successMessage: string,
+  ) => {
+    if (pendingFields.current.has(fieldName)) return false;
     try {
-      await assign({
-        key,
-        ticketAssignRequest: {
-          assignee_id: targetAssigneeId,
-          version: ticket.version,
-        },
-      }).unwrap();
-      await Promise.all([refetchDetail(), refetchActivity()]);
+      await runTicketWrite(fieldName, async (_current, version) => {
+        const response = await updateTicket({
+          key,
+          patchedTicketUpdateRequest: { ...patch, version },
+        }).unwrap();
+        return response.data;
+      });
+      notify.success(successMessage);
+      return true;
+    } catch (error) {
+      reportWriteError(`Unable to update ${fieldName.replaceAll('_', ' ')}`, error);
+      return false;
+    }
+  };
+
+  const handleDirectAssign = async (targetAssigneeId: number | null) => {
+    if (pendingFields.current.has('assignee')) return;
+    try {
+      await runTicketWrite('assignee', async (current, version) => {
+        if ((current.assignee?.id ?? null) === targetAssigneeId) return current;
+        const response = await assign({
+          key,
+          ticketAssignRequest: { assignee_id: targetAssigneeId, version },
+        }).unwrap();
+        return response.data;
+      });
       notify.success(
         targetAssigneeId === null
           ? 'Ticket unassigned'
@@ -296,100 +308,8 @@ export default function SupportTicketDetail() {
             : 'Ticket assignee updated',
       );
     } catch (error) {
-      if (isConflict(error)) await refetchDetail();
-      notify.error('Unable to update assignment', {
-        description: errorMessage(error),
-      });
-    } finally {
-      setSavingField(null);
+      reportWriteError('Unable to update assignment', error);
     }
-  };
-
-  // --- Smart Status Transition Handler ---
-  const executeTransition = async (params: {
-    toStatusId: number;
-    toStatusName: string;
-    reason?: string;
-    resolutionSummary?: string;
-    resolutionCode?: ResolutionCodeEnum;
-    rootCause?: string;
-  }) => {
-    if (!key || !ticket || ticket.version === undefined) return;
-    setSavingField('status');
-    try {
-      await transition({
-        key,
-        ticketTransitionRequest: {
-          to_status_id: params.toStatusId,
-          version: ticket.version,
-          reason: params.reason?.trim() || undefined,
-          resolution_summary: params.resolutionSummary?.trim() || undefined,
-          resolution_code: params.resolutionCode || undefined,
-          root_cause: params.rootCause?.trim() || undefined,
-        },
-      }).unwrap();
-      setPendingTransition(null);
-      setTransitionReason('');
-      setResolutionSummary('');
-      setRootCause('');
-      await refresh();
-      notify.success(`Status updated to ${params.toStatusName}`);
-    } catch (error) {
-      if (isConflict(error)) await refetchDetail();
-      // If server demands a reason or resolution summary for a custom admin-configured transition, open the modal automatically
-      const msg = errorMessage(error);
-      if (
-        !pendingTransition &&
-        (msg.toLowerCase().includes('reason') ||
-          msg.toLowerCase().includes('resolution'))
-      ) {
-        const needsRes = msg.toLowerCase().includes('resolution');
-        setPendingTransition({
-          statusId: params.toStatusId,
-          statusName: params.toStatusName,
-          requiresResolution: needsRes,
-          requiresReason: !needsRes,
-          isReopen: false,
-        });
-        return;
-      }
-      notify.error('Unable to update ticket status', {
-        description: msg,
-      });
-    } finally {
-      setSavingField(null);
-    }
-  };
-
-  const initiateStatusTransition = (targetStatusId: number) => {
-    if (!ticket || targetStatusId === ticket.status?.id) return;
-    const targetOption = (statuses?.data ?? []).find(
-      (s) => s.id === targetStatusId,
-    );
-    const targetName = targetOption?.name ?? 'New Status';
-    const reqs = getTransitionRequirements(targetName, ticket.status?.name);
-
-    if (reqs.requiresResolution || reqs.requiresReason) {
-      setTransitionReason('');
-      setResolutionSummary(ticket.resolution_summary || '');
-      setRootCause(ticket.root_cause || '');
-      setResolutionCode(
-        (ticket.resolution_code as ResolutionCodeEnum) || 'fixed',
-      );
-      setPendingTransition({
-        statusId: targetStatusId,
-        statusName: targetName,
-        requiresResolution: reqs.requiresResolution,
-        requiresReason: reqs.requiresReason,
-        isReopen: reqs.isReopen,
-      });
-      return;
-    }
-
-    void executeTransition({
-      toStatusId: targetStatusId,
-      toStatusName: targetName,
-    });
   };
 
   // --- Watchers Management Handlers ---
@@ -526,93 +446,6 @@ export default function SupportTicketDetail() {
   };
 
   // Build available status transition buttons for the header bar
-  const workflowTransitions = useMemo(() => {
-    if (!ticket || !statuses?.data) return [];
-    const currentMeta = getTicketStatusMeta(ticket.status);
-    const otherStatuses = statuses.data.filter(
-      (s) => s.id !== ticket.status?.id,
-    );
-
-    if (!canManage) {
-      // Requesters can only reopen a resolved ticket
-      if (currentMeta.variant === 'resolved') {
-        return otherStatuses
-          .filter((s) => getTicketStatusMeta(s.name).variant === 'open')
-          .map((s) => ({
-            ...s,
-            reqs: getTransitionRequirements(s.name, ticket.status?.name),
-          }));
-      }
-      return [];
-    }
-
-    // Filter out invalid transitions from DEFAULT_TRANSITIONS
-    return otherStatuses
-      .filter((s) => {
-        const targetVariant = getTicketStatusMeta(s.name).variant;
-        if (currentMeta.variant === 'closed') return false;
-        if (
-          currentMeta.variant === 'resolved' &&
-          targetVariant !== 'open' &&
-          targetVariant !== 'closed'
-        ) {
-          return false;
-        }
-        if (
-          currentMeta.variant === 'in_progress' &&
-          targetVariant === 'open'
-        ) {
-          return false;
-        }
-        if (currentMeta.variant === 'waiting' && targetVariant === 'open') {
-          return false;
-        }
-        return true;
-      })
-      .map((s) => ({
-        ...s,
-        reqs: getTransitionRequirements(s.name, ticket.status?.name),
-      }));
-  }, [ticket, statuses, canManage]);
-
-  const assigneeOptions = useMemo(() => {
-    if (!ticket) return [];
-    const list: { value: number; label: string }[] = [
-      { value: UNASSIGN, label: 'Unassigned' },
-    ];
-    const seen = new Set<number>();
-    if (ticket.assignee?.id) {
-      seen.add(ticket.assignee.id);
-      list.push({
-        value: ticket.assignee.id,
-        label: userLabel(ticket.assignee) || ticket.assignee.username,
-      });
-    }
-    for (const user of users?.data ?? []) {
-      if (!seen.has(user.id)) {
-        seen.add(user.id);
-        list.push({
-          value: user.id,
-          label: user.display_name || user.username,
-        });
-      }
-    }
-    return list;
-  }, [ticket, users]);
-
-  const watcherCandidateOptions = useMemo(() => {
-    if (!ticket) return [];
-    const existingIds = new Set(
-      (ticket.watchers ?? []).map((w) => w.user.id),
-    );
-    return (users?.data ?? [])
-      .filter((u) => !existingIds.has(u.id))
-      .map((u) => ({
-        value: u.id,
-        label: u.display_name || u.username,
-      }));
-  }, [ticket, users]);
-
   const userDirectoryByUsername = useMemo(() => {
     const map = new Map<
       string,
@@ -660,7 +493,6 @@ export default function SupportTicketDetail() {
     return map;
   }, [users, ticket, comments]);
 
-  if (!key) return <InlineAlert variant="error" title="Missing ticket key" />;
   if (isLoading) {
     return (
       <div style={{ display: 'grid', placeItems: 'center', minHeight: 320 }}>
@@ -681,7 +513,9 @@ export default function SupportTicketDetail() {
   const attachmentsList = toSupportAttachments(ticket.attachments);
   const commentsList = comments?.data ?? [];
   const activityList = activity?.data ?? [];
-  const currentStatusMeta = getTicketStatusMeta(ticket.status);
+  const currentState = ticket.status_system_state?.value;
+  const currentStatusMeta = getTicketStatusMeta(ticket.status, currentState, ticket.is_status_final);
+  const watcherIds = (ticket.watchers ?? []).map((watcher) => watcher.user.id);
 
   return (
     <div className={styles.workspacePage}>
@@ -733,7 +567,7 @@ export default function SupportTicketDetail() {
         <div className={styles.headerBadgesRow}>
           <div className={styles.badgeGroup}>
             <span className={styles.ticketKeyPill}>{ticket.key}</span>
-            <TicketStatusBadge status={ticket.status} />
+            <TicketStatusBadge status={ticket.status} systemState={currentState} isFinal={ticket.is_status_final} />
             {ticket.priority && (
               <TicketPriorityBadge priority={ticket.priority} />
             )}
@@ -741,28 +575,7 @@ export default function SupportTicketDetail() {
             <TicketSlaBadge sla={ticket.sla} status={ticket.status} />
           </div>
 
-          {/* 1-Click Quick Status Transition Buttons */}
-          {workflowTransitions.length > 0 && (
-            <div className={styles.workflowActions}>
-              {workflowTransitions.map((item) => (
-                <Button
-                  key={item.id}
-                  size="small"
-                  type={
-                    item.reqs.buttonVariant === 'primary' ||
-                    item.reqs.buttonVariant === 'resolve'
-                      ? 'primary'
-                      : 'default'
-                  }
-                  loading={transitioning && savingField === 'status'}
-                  disabled={ticket.version === undefined}
-                  onClick={() => initiateStatusTransition(item.id)}
-                >
-                  {item.reqs.actionLabel}
-                </Button>
-              ))}
-            </div>
-          )}
+          <TicketWorkflow ticket={ticket} runTicketWrite={runTicketWrite} isSaving={isSaving('status')} />
         </div>
 
         {/* Ticket Subject with Inline Edit */}
@@ -771,6 +584,7 @@ export default function SupportTicketDetail() {
             <div className={styles.titleEditBox}>
               <Input
                 aria-label="Edit ticket subject"
+                disabled={isSaving('subject')}
                 value={subjectDraft}
                 maxLength={200}
                 onChange={(e) => setSubjectDraft(e.target.value)}
@@ -790,7 +604,7 @@ export default function SupportTicketDetail() {
                 type="primary"
                 size="small"
                 icon={<CheckOutlined />}
-                loading={updatingTicket && savingField === 'subject'}
+                loading={isSaving('subject')}
                 disabled={!subjectDraft.trim()}
                 onClick={() => {
                   void handleFieldPatch(
@@ -807,6 +621,7 @@ export default function SupportTicketDetail() {
               <Button
                 size="small"
                 icon={<CloseOutlined />}
+                disabled={isSaving('subject')}
                 onClick={() => setIsEditingSubject(false)}
               >
                 Cancel
@@ -842,12 +657,6 @@ export default function SupportTicketDetail() {
             </span>
             <span>·</span>
             <span>Opened {formatDate(ticket.created_at)}</span>
-            {ticket.source?.label && (
-              <>
-                <span>·</span>
-                <span>Via {ticket.source.label}</span>
-              </>
-            )}
             {ticket.reopen_count ? (
               <>
                 <span>·</span>
@@ -866,7 +675,7 @@ export default function SupportTicketDetail() {
         {/* Left Main Column */}
         <div className={styles.mainColumn}>
           {/* Resolution Banner (shown when ticket has resolution summary or code) */}
-          {(ticket.resolution_summary || ticket.resolution_code) && (
+          {currentStatusMeta.isTerminal && (ticket.resolution_summary || ticket.resolution_code) && (
             <section
               className={styles.resolutionBanner}
               aria-label="Ticket resolution"
@@ -875,10 +684,7 @@ export default function SupportTicketDetail() {
                 <span className={styles.resolutionTitle}>
                   <CheckCircleOutlined />
                   <span>
-                    Resolution
-                    {ticket.resolution_code
-                      ? ` · ${ticket.resolution_code.replaceAll('_', ' ')}`
-                      : ''}
+                    {ticket.resolution_code ? getResolutionLabel(ticket.resolution_code) : 'Ticket outcome'}
                   </span>
                 </span>
                 {ticket.resolved_at && (
@@ -930,6 +736,7 @@ export default function SupportTicketDetail() {
                 >
                   <Input.TextArea
                     aria-label="Edit ticket description"
+                    disabled={isSaving('description')}
                     rows={6}
                     maxLength={10000}
                     showCount
@@ -940,9 +747,7 @@ export default function SupportTicketDetail() {
                     <Button
                       type="primary"
                       size="small"
-                      loading={
-                        updatingTicket && savingField === 'description'
-                      }
+                      loading={isSaving('description')}
                       disabled={!descriptionDraft.trim()}
                       onClick={() => {
                         void handleFieldPatch(
@@ -958,6 +763,7 @@ export default function SupportTicketDetail() {
                     </Button>
                     <Button
                       size="small"
+                      disabled={isSaving('description')}
                       onClick={() => setIsEditingDescription(false)}
                     >
                       Cancel
@@ -981,6 +787,7 @@ export default function SupportTicketDetail() {
                       mode="tags"
                       size="small"
                       aria-label="Edit ticket labels"
+                      disabled={isSaving('labels')}
                       style={{ minWidth: 240 }}
                       tokenSeparators={[',']}
                       value={labelsDraft}
@@ -990,7 +797,7 @@ export default function SupportTicketDetail() {
                     <Button
                       type="primary"
                       size="small"
-                      loading={updatingTicket && savingField === 'labels'}
+                      loading={isSaving('labels')}
                       onClick={() => {
                         void handleFieldPatch(
                           'labels',
@@ -1009,6 +816,7 @@ export default function SupportTicketDetail() {
                     </Button>
                     <Button
                       size="small"
+                      disabled={isSaving('labels')}
                       onClick={() => setIsEditingLabels(false)}
                     >
                       Cancel
@@ -1350,8 +1158,8 @@ export default function SupportTicketDetail() {
                   },
                   {
                     key: 'work-logs',
-                    label: 'Work logs',
-                    children: <TicketWorkLogs key={key} ticketKey={key} onChanged={refresh} />,
+                    label: <Space size={6}><ClockCircleOutlined /><span>Work logs</span></Space>,
+                    children: <TicketWorkLogs key={ticket.key} ticketKey={ticket.key} onUpdated={refetchActivity} />,
                   },
                   {
                     key: 'activity',
@@ -1439,7 +1247,7 @@ export default function SupportTicketDetail() {
           <div className={styles.panelCard}>
             <header className={styles.panelHeader}>
               <h2 className={styles.panelTitle}>Ticket properties</h2>
-              {(updatingTicket || assigning || transitioning) && (
+              {savingFields.size > 0 && (
                 <Spin size="small" />
               )}
             </header>
@@ -1461,39 +1269,6 @@ export default function SupportTicketDetail() {
                 Workflow & Ownership
               </h3>
 
-              {/* Status Field */}
-              <div className={styles.fieldRow}>
-                <div className={styles.fieldLabelRow}>
-                  <span className={styles.fieldLabel}>Status</span>
-                </div>
-                {canManage && (statuses?.data?.length ?? 0) > 0 ? (
-                  <Select<number>
-                    aria-label="Ticket status"
-                    value={ticket.status?.id}
-                    loading={transitioning && savingField === 'status'}
-                    disabled={ticket.version === undefined}
-                    onChange={(nextStatusId) =>
-                      initiateStatusTransition(nextStatusId)
-                    }
-                    style={{ width: '100%' }}
-                    options={(statuses?.data ?? []).map((st) => ({
-                      value: st.id,
-                      label: (
-                        <TicketStatusBadge
-                          status={st.name}
-                          compact
-                          showTooltip={false}
-                        />
-                      ),
-                    }))}
-                  />
-                ) : (
-                  <div>
-                    <TicketStatusBadge status={ticket.status} />
-                  </div>
-                )}
-              </div>
-
               {/* Assignee Field */}
               <div className={styles.fieldRow}>
                 <div className={styles.fieldLabelRow}>
@@ -1505,7 +1280,7 @@ export default function SupportTicketDetail() {
                           <button
                             type="button"
                             className={styles.quickActionBtn}
-                            disabled={assigning}
+                            disabled={isSaving('assignee')}
                             onClick={() =>
                               void handleDirectAssign(currentUserId)
                             }
@@ -1517,7 +1292,7 @@ export default function SupportTicketDetail() {
                         <button
                           type="button"
                           className={styles.quickActionBtn}
-                          disabled={assigning}
+                          disabled={isSaving('assignee')}
                           onClick={() => void handleDirectAssign(null)}
                         >
                           Unassign
@@ -1527,18 +1302,19 @@ export default function SupportTicketDetail() {
                   )}
                 </div>
                 {canManage ? (
-                  <Select<number>
+                  <SupportPeopleSelect<number | null>
                     aria-label="Assign ticket"
-                    showSearch
-                    optionFilterProp="label"
-                    value={ticket.assignee?.id ?? UNASSIGN}
-                    loading={assigning && savingField === 'assignee'}
-                    disabled={ticket.version === undefined}
-                    onChange={(val) =>
-                      void handleDirectAssign(val === UNASSIGN ? null : val)
-                    }
+                    value={ticket.assignee?.id ?? null}
+                    assigneesOnly
+                    suggestIds={currentUserId ? [currentUserId] : []}
+                    includePeople={ticket.assignee ? [{
+                      value: ticket.assignee.id,
+                      label: userLabel(ticket.assignee) || ticket.assignee.username,
+                    }] : []}
+                    placeholder="Unassigned"
+                    disabled={isSaving('assignee') || ticket.version === undefined}
+                    onChange={(value) => void handleDirectAssign(value)}
                     style={{ width: '100%' }}
-                    options={assigneeOptions}
                   />
                 ) : (
                   <div>
@@ -1569,8 +1345,8 @@ export default function SupportTicketDetail() {
                     optionFilterProp="label"
                     notFoundContent="No support teams configured"
                     value={ticket.team?.id ?? undefined}
-                    loading={updatingTicket && savingField === 'team'}
-                    disabled={ticket.version === undefined}
+                    loading={isSaving('team')}
+                    disabled={ticket.version === undefined || isSaving('team')}
                     onChange={(val) =>
                       void handleFieldPatch(
                         'team',
@@ -1647,19 +1423,16 @@ export default function SupportTicketDetail() {
                 )}
 
                 {canManage && (
-                  <Select<number>
+                  <SupportPeopleSelect<number | null>
                     aria-label="Add watcher"
-                    placeholder="+ Add watcher…"
-                    showSearch
-                    optionFilterProp="label"
+                    placeholder="Add watcher"
                     value={null}
-                    loading={addingWatcher}
-                    notFoundContent="No available users to add"
+                    disabled={addingWatcher}
+                    excludeIds={watcherIds}
                     onChange={(userId) => {
                       if (userId) void handleAddWatcher(userId);
                     }}
                     style={{ width: '100%', marginTop: 4 }}
-                    options={watcherCandidateOptions}
                   />
                 )}
               </div>
@@ -1678,8 +1451,8 @@ export default function SupportTicketDetail() {
                   <Select<number>
                     aria-label="Ticket priority"
                     value={ticket.priority?.id}
-                    loading={updatingTicket && savingField === 'priority'}
-                    disabled={ticket.version === undefined}
+                    loading={isSaving('priority')}
+                    disabled={ticket.version === undefined || isSaving('priority')}
                     onChange={(nextPriorityId) =>
                       void handleFieldPatch(
                         'priority',
@@ -1716,8 +1489,8 @@ export default function SupportTicketDetail() {
                     showSearch
                     optionFilterProp="label"
                     value={ticket.category?.id}
-                    loading={updatingTicket && savingField === 'category'}
-                    disabled={ticket.version === undefined}
+                    loading={isSaving('category')}
+                    disabled={ticket.version === undefined || isSaving('category')}
                     onChange={(nextCategoryId) =>
                       void handleFieldPatch(
                         'category',
@@ -1750,8 +1523,8 @@ export default function SupportTicketDetail() {
                       (ticket.ticket_type?.value as TicketTypeEnum) ??
                       'incident'
                     }
-                    loading={updatingTicket && savingField === 'ticket_type'}
-                    disabled={ticket.version === undefined}
+                    loading={isSaving('ticket_type')}
+                    disabled={ticket.version === undefined || isSaving('ticket_type')}
                     onChange={(nextType) =>
                       void handleFieldPatch(
                         'ticket_type',
@@ -1786,8 +1559,8 @@ export default function SupportTicketDetail() {
                           ? (ticket.impact as UrgencyEnum)
                           : undefined
                       }
-                      loading={updatingTicket && savingField === 'impact'}
-                      disabled={ticket.version === undefined}
+                      loading={isSaving('impact')}
+                      disabled={ticket.version === undefined || isSaving('impact')}
                       onChange={(val) =>
                         void handleFieldPatch(
                           'impact',
@@ -1819,8 +1592,8 @@ export default function SupportTicketDetail() {
                           ? (ticket.urgency as UrgencyEnum)
                           : undefined
                       }
-                      loading={updatingTicket && savingField === 'urgency'}
-                      disabled={ticket.version === undefined}
+                      loading={isSaving('urgency')}
+                      disabled={ticket.version === undefined || isSaving('urgency')}
                       onChange={(val) =>
                         void handleFieldPatch(
                           'urgency',
@@ -1849,10 +1622,7 @@ export default function SupportTicketDetail() {
                     aria-label="Target due date"
                     style={{ width: '100%' }}
                     value={ticket.due_date ? dayjs(ticket.due_date) : null}
-                    disabled={
-                      ticket.version === undefined ||
-                      (updatingTicket && savingField === 'due_date')
-                    }
+                    disabled={ticket.version === undefined || isSaving('due_date')}
                     onChange={(dateVal) =>
                       void handleFieldPatch(
                         'due_date',
@@ -1933,6 +1703,7 @@ export default function SupportTicketDetail() {
                     <Input
                       size="small"
                       aria-label="External reference"
+                      disabled={isSaving('external_reference')}
                       placeholder="Vendor RMA / case ID"
                       value={extRefDraft}
                       onChange={(e) => setExtRefDraft(e.target.value)}
@@ -1940,9 +1711,7 @@ export default function SupportTicketDetail() {
                     <Button
                       size="small"
                       type="primary"
-                      loading={
-                        updatingTicket && savingField === 'external_reference'
-                      }
+                      loading={isSaving('external_reference')}
                       onClick={() => {
                         void handleFieldPatch(
                           'external_reference',
@@ -1957,6 +1726,7 @@ export default function SupportTicketDetail() {
                     </Button>
                     <Button
                       size="small"
+                      disabled={isSaving('external_reference')}
                       onClick={() => setIsEditingExtRef(false)}
                     >
                       Cancel
@@ -1991,108 +1761,6 @@ export default function SupportTicketDetail() {
         </aside>
       </div>
 
-      {/* Focused Status Transition Modal (shown only when Resolution Summary or Reason is required) */}
-      <Modal
-        title={
-          pendingTransition
-            ? `Transition to ${pendingTransition.statusName}`
-            : 'Update ticket status'
-        }
-        open={pendingTransition !== null}
-        onCancel={() => setPendingTransition(null)}
-        confirmLoading={transitioning}
-        okText={
-          pendingTransition?.requiresResolution
-            ? 'Resolve ticket'
-            : pendingTransition?.isReopen
-              ? 'Reopen ticket'
-              : `Move to ${pendingTransition?.statusName ?? 'status'}`
-        }
-        okButtonProps={{
-          disabled:
-            (pendingTransition?.requiresResolution &&
-              !resolutionSummary.trim()) ||
-            (pendingTransition?.requiresReason && !transitionReason.trim()),
-        }}
-        onOk={() => {
-          if (!pendingTransition) return;
-          void executeTransition({
-            toStatusId: pendingTransition.statusId,
-            toStatusName: pendingTransition.statusName,
-            reason: transitionReason,
-            resolutionSummary: pendingTransition.requiresResolution
-              ? resolutionSummary
-              : undefined,
-            resolutionCode: pendingTransition.requiresResolution
-              ? resolutionCode
-              : undefined,
-            rootCause: pendingTransition.requiresResolution
-              ? rootCause
-              : undefined,
-          });
-        }}
-        destroyOnHidden
-      >
-        {pendingTransition && (
-          <Form layout="vertical" style={{ marginTop: 12 }}>
-            {pendingTransition.requiresResolution && (
-              <>
-                <Form.Item label="Resolution code" required>
-                  <Select<ResolutionCodeEnum>
-                    aria-label="Resolution code"
-                    value={resolutionCode}
-                    onChange={setResolutionCode}
-                    options={[...RESOLUTION_CODE_OPTIONS]}
-                  />
-                </Form.Item>
-                <Form.Item
-                  label="Resolution summary"
-                  required
-                  extra="Describe how the issue or request was resolved. Visible on the ticket record."
-                >
-                  <Input.TextArea
-                    aria-label="Resolution summary"
-                    rows={4}
-                    value={resolutionSummary}
-                    onChange={(e) => setResolutionSummary(e.target.value)}
-                    placeholder="What was done to resolve this ticket?"
-                  />
-                </Form.Item>
-                <Form.Item label="Root cause (optional)">
-                  <Input.TextArea
-                    aria-label="Root cause"
-                    rows={2}
-                    value={rootCause}
-                    onChange={(e) => setRootCause(e.target.value)}
-                    placeholder="Underlying cause for recurring or technical incidents (optional)"
-                  />
-                </Form.Item>
-              </>
-            )}
-
-            <Form.Item
-              label={
-                pendingTransition.requiresReason
-                  ? 'Reason (required)'
-                  : 'Transition note (optional)'
-              }
-              required={pendingTransition.requiresReason}
-            >
-              <Input.TextArea
-                aria-label="Transition reason"
-                rows={3}
-                value={transitionReason}
-                onChange={(e) => setTransitionReason(e.target.value)}
-                placeholder={
-                  pendingTransition.isReopen
-                    ? 'Why does this ticket need to be reopened?'
-                    : 'Provide context for this status change…'
-                }
-              />
-            </Form.Item>
-          </Form>
-        )}
-      </Modal>
     </div>
   );
 }
