@@ -8,8 +8,8 @@ import type { MappingFilterOptions, MappingOptionItem, MappingState, ResourceMap
 import { MAPPING_STATE_LABELS } from "../utils/mappingExportConfig";
 import {
   renderBenchTag,
-  renderEquipmentCategories,
-  renderLicenses,
+  MappingAssetSummary,
+  type MappingAssetKind,
   renderMappingStatus,
   renderRoomTag,
   renderStationTag,
@@ -20,6 +20,7 @@ interface BuildColumnsArgs {
   filterOptions: MappingFilterOptions;
   canEdit: boolean;
   pinColumns: boolean;
+  onViewAssets: (row: ResourceMappingRow, kind: MappingAssetKind) => void;
   onPlace: (row: ResourceMappingRow) => void;
   onAssignEquipment: (row: ResourceMappingRow) => void;
   onPrintLabels: (row: ResourceMappingRow) => void;
@@ -50,6 +51,7 @@ export const buildMappingColumns = ({
   filterOptions,
   canEdit,
   pinColumns,
+  onViewAssets,
   onPlace,
   onAssignEquipment,
   onPrintLabels,
@@ -57,7 +59,7 @@ export const buildMappingColumns = ({
   {
     title: "Bench",
     key: "bench",
-    width: 230,
+    width: 180,
     fixed: pinColumns ? "left" : undefined,
     ...serverFilter("bench", choices(filterOptions.benches), filters),
     render: (_v, row) => renderBenchTag(row),
@@ -65,35 +67,36 @@ export const buildMappingColumns = ({
   {
     title: "Mapping",
     key: "state",
-    width: 170,
+    width: 155,
     ...serverFilter("state", STATE_FILTERS, filters),
     render: (_v, row) => renderMappingStatus(row),
   },
   {
     title: "Station",
     key: "station",
-    width: 220,
+    width: 190,
     ...serverFilter("station", choices(filterOptions.stations), filters),
     render: (_v, row) => renderStationTag(row),
   },
   {
     title: "Room",
     key: "room",
-    width: 220,
+    width: 190,
     ...serverFilter("room", choices(filterOptions.rooms), filters),
     render: (_v, row) => renderRoomTag(row),
   },
   {
     title: "Equipment",
     key: "category",
+    width: 140,
     ...serverFilter("category", choices(filterOptions.categories), filters),
-    render: (_v, row) => renderEquipmentCategories(row.equipment),
+    render: (_v, row) => <MappingAssetSummary row={row} kind="equipment" onOpen={() => onViewAssets(row, "equipment")} />,
   },
   {
     title: "Licenses",
     key: "licenses",
-    width: 200,
-    render: (_v, row) => renderLicenses(row.licenses),
+    width: 140,
+    render: (_v, row) => <MappingAssetSummary row={row} kind="licenses" onOpen={() => onViewAssets(row, "licenses")} />,
   },
   {
     title: "",
