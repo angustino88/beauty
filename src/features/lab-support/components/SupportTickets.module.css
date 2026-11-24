@@ -1008,22 +1008,6 @@
   margin-bottom: 0;
 }
 
-.createForm .createAttachments :global(.ant-upload-btn) {
-  padding: 10px 12px;
-}
-
-.createAttachmentPrompt {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--lm-text-secondary);
-}
-
-.createAttachmentPrompt > span {
-  color: var(--lm-primary);
-  font-size: 18px;
-}
-
 .workflowChevron {
   font-size: 10px;
 }

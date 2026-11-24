@@ -241,17 +241,14 @@ export function CreateSupportTicketModal({
 
         <Form.Item label="Attachments" extra={SUPPORT_ATTACHMENT_HINT}>
           <Upload.Dragger
-            className={styles.createAttachments}
             multiple
             accept={SUPPORT_ATTACHMENT_ACCEPT}
             fileList={files}
             beforeUpload={() => false}
             onChange={({ fileList }) => setFiles(fileList)}
           >
-            <span className={styles.createAttachmentPrompt}>
-              <InboxOutlined aria-hidden="true" />
-              Choose files or drag them here
-            </span>
+            <p className="ant-upload-drag-icon"><InboxOutlined /></p>
+            <p className="ant-upload-text">Click or drag screenshots, photos or documents here</p>
           </Upload.Dragger>
         </Form.Item>
       </Form>
