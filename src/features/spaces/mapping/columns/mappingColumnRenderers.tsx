@@ -169,7 +169,6 @@ export const MappingAssetSummary = ({ row, kind, onOpen }: {
     <button
       type="button"
       className={styles.assetSummary}
-      data-kind={kind}
       aria-haspopup="dialog"
       aria-label={`View ${label} on ${row.bench.sku || row.bench.name}`}
       onClick={onOpen}

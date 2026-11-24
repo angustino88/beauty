@@ -256,12 +256,6 @@
   cursor: pointer;
 }
 
-.assetSummary[data-kind='licenses'] {
-  color: var(--lm-badge-license-fg);
-  background: var(--lm-badge-license-bg);
-  border-color: var(--lm-badge-license-border);
-}
-
 .assetSummary:hover {
   border-color: currentColor;
 }

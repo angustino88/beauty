@@ -16,8 +16,7 @@ theme; antd's theme in `src/App.tsx` mirrors the same values.
    and meters.
 4. **Entity types have text labels or icons.** `ResourceBadge` gives equipment
    categories a blue tint and booking dependencies a cyan tint. Sample labels
-   are green and License labels are rose in both themes. The Mapping table and
-   diagram use the same license palette.
+   are green and License labels are rose in both themes. The Mapping table uses neutral count buttons for equipment and licenses.
 5. **Charts** use `--lm-chart-1..8` (violet first) via `useChartTheme()`; status
    charts use the status tones so a colour means the same thing everywhere.
 
