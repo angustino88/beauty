@@ -63,16 +63,20 @@ export function buildColumns({
 
   return [
     {
-      title: 'Bench Name',
-      dataIndex: 'name',
-      key: 'name',
+      title: 'Bench Group',
+      dataIndex: 'bench_group',
+      key: 'bench_group',
       align: 'left' as const,
-      minWidth: 126,
-      render: (_: unknown, record: DashboardBench) => (
-        <button type="button" className="benchName" onClick={() => openModal(record.id)}>
-          {benchLabel(record)}
-        </button>
-      ),
+      minWidth: 136,
+      render: (g: DashboardBench['bench_group']) => g?.name ? (
+        <span className="benchGroup" title={g.name}>{g.name}</span>
+      ) : EMPTY,
+      filters: benchGroupFilters,
+      filterSearch: true,
+      filterMultiple: true,
+      filteredValue: columnFilters.lab_group_ids.length ? columnFilters.lab_group_ids : null,
+      filterOnClose: false,
+      filterDropdownProps: { onOpenChange: filterHandlers['bench_group'] },
     },
     {
       title: 'Status',
@@ -104,20 +108,16 @@ export function buildColumns({
       },
     },
     {
-      title: 'Bench Group',
-      dataIndex: 'bench_group',
-      key: 'bench_group',
+      title: 'Bench Name',
+      dataIndex: 'name',
+      key: 'name',
       align: 'left' as const,
-      minWidth: 136,
-      render: (g: DashboardBench['bench_group']) => g?.name ? (
-        <span className="benchGroup" title={g.name}>{g.name}</span>
-      ) : EMPTY,
-      filters: benchGroupFilters,
-      filterSearch: true,
-      filterMultiple: true,
-      filteredValue: columnFilters.lab_group_ids.length ? columnFilters.lab_group_ids : null,
-      filterOnClose: false,
-      filterDropdownProps: { onOpenChange: filterHandlers['bench_group'] },
+      minWidth: 126,
+      render: (_: unknown, record: DashboardBench) => (
+        <button type="button" className="benchName" onClick={() => openModal(record.id)}>
+          {benchLabel(record)}
+        </button>
+      ),
     },
     {
       title: 'Computer Name',
@@ -126,6 +126,30 @@ export function buildColumns({
       minWidth: 150,
       render: (_: unknown, record: DashboardBench) =>
         record.computing?.name || record.computer?.computer_name || EMPTY,
+    },
+    {
+      title: 'Computer IP',
+      key: 'comp_ip',
+      align: 'left' as const,
+      minWidth: 130,
+      render: (_: unknown, record: DashboardBench) =>
+        record.computing?.ip_address || record.computer?.computer_ip || EMPTY,
+    },
+    {
+      title: 'Remote User',
+      key: 'remote_user',
+      align: 'center' as const,
+      minWidth: 118,
+      render: (_: unknown, record: DashboardBench) => {
+        const username = record.computing?.remote_user ?? record.remote_user?.username;
+        const displayName =
+          record.computing?.remote_user_display_name ??
+          record.remote_user?.displayname ??
+          username;
+        return username ? (
+          <AvatarRenderer username={username} displayname={displayName} />
+        ) : EMPTY;
+      },
     },
     {
       title: 'Sample',
@@ -174,30 +198,6 @@ export function buildColumns({
       filteredValue: columnFilters.license_filter_values.length ? columnFilters.license_filter_values : null,
       filterOnClose: false,
       filterDropdownProps: { onOpenChange: filterHandlers['licenses'] },
-    },
-    {
-      title: 'Computer IP',
-      key: 'comp_ip',
-      align: 'left' as const,
-      minWidth: 130,
-      render: (_: unknown, record: DashboardBench) =>
-        record.computing?.ip_address || record.computer?.computer_ip || EMPTY,
-    },
-    {
-      title: 'Remote User',
-      key: 'remote_user',
-      align: 'center' as const,
-      minWidth: 118,
-      render: (_: unknown, record: DashboardBench) => {
-        const username = record.computing?.remote_user ?? record.remote_user?.username;
-        const displayName =
-          record.computing?.remote_user_display_name ??
-          record.remote_user?.displayname ??
-          username;
-        return username ? (
-          <AvatarRenderer username={username} displayname={displayName} />
-        ) : EMPTY;
-      },
     },
     {
       title: 'RDP',
