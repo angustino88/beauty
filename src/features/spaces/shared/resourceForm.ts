@@ -38,7 +38,7 @@ export const STATION_DETAILS = [
   { name: 'usable_surface_mm2', label: 'Usable surface (mm²)', type: 'number' },
   { name: 'power_reserved_w', label: 'Reserved power (W)', type: 'number', emptyNumber: 0 },
   { name: 'cooling_capacity_w', label: 'Cooling capacity (W)', type: 'number' },
-  { name: 'safety_classification', label: 'Safety classification', type: 'text', maxLength: 64, span: 24 },
+  { name: 'safety_classification', label: 'Safety classification', type: 'text', maxLength: 64 },
   { name: 'utilities', label: 'Utilities', type: 'json-object' },
 ] satisfies DetailField<StationCreate>[];
 

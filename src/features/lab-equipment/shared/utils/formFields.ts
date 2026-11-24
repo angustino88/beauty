@@ -46,13 +46,13 @@ export function buildEquipmentFormFields({
 
   if (calibratable) {
     fields.push({
-      name: 'is_calibration_required', span: formMode === 'edit' ? 24 : 12, label: 'Calibration Required', type: 'select',
+      name: 'is_calibration_required', label: 'Calibration Required', type: 'select',
       options: [{ label: 'Yes', value: 'yes' }, { label: 'No', value: 'no' }],
     });
   }
   if (formMode === 'create') {
     fields.push({
-      name: 'lifecycle_state', span: calibratable ? 12 : 24, label: 'Initial Lifecycle', type: 'select',
+      name: 'lifecycle_state', label: 'Initial Lifecycle', type: 'select',
       options: [
         { label: 'Planned', value: 'planned' },
         { label: 'In service', value: 'in_service' },
@@ -69,15 +69,13 @@ export function buildEquipmentFormFields({
           value: option.id,
         }))
       : undefined;
-    const span = config.key === 'computing' && extra.name === 'mac_address' && formMode === 'edit' && !monitored
-      ? 24 : extra.span;
-    fields.push({ name: extra.name, label: extra.label, type: extra.type, span, placeholder: extra.placeholder,
+    fields.push({ name: extra.name, label: extra.label, type: extra.type, placeholder: extra.placeholder,
       options: extra.options ?? mappedOptions, disabledInEdit: extra.createOnly });
   }
 
   if (monitored && formMode === 'edit') {
     fields.push({
-      name: 'technical_user_id', span: config.key === 'computing' ? 12 : 24, apiField: 'computing.technical_user', label: 'Technical User', type: 'select',
+      name: 'technical_user_id', apiField: 'computing.technical_user', label: 'Technical User', type: 'select',
       options: refData?.technical_users?.map(({ id, username }) => ({ value: id, label: username })),
     });
   }

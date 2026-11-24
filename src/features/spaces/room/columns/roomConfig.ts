@@ -88,7 +88,7 @@ export const buildRoomFormFields = (location: RoomLocationOptions): FieldConfig[
   { name: "city", apiField: "city_id", label: "City", type: "select", dependsOn: ["country"], ...location.city, placeholder: location.city.disabled ? "Select a country first" : "Select City", section: "Location" },
   { name: "building", apiField: "building_id", label: "Building", type: "select", dependsOn: ["city"], ...location.building, placeholder: location.building.disabled ? "Select a city first" : "Select Building", section: "Location" },
   { name: "floor", label: "Floor", type: "text", placeholder: "e.g. 1 or B1", section: "Location" },
-  { name: "location", span: 24, apiField: "map_url", label: "Map link", type: "text", placeholder: "https://…", section: "Location" },
+  { name: "location", apiField: "map_url", label: "Map link", type: "text", placeholder: "https://…", section: "Location" },
   { name: "remark", label: "Remark", type: "textarea", section: "Notes" },
   ...editableDetails(ROOM_DETAILS),
   { name: "image", label: "Image", type: "image" },

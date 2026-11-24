@@ -100,7 +100,7 @@ export default function StationPage() {
       // The SKU identifies the station and cannot change after creation (the API refuses a changed SKU).
       { name: "sku", label: "SKU", type: "text", required: true, disabledInEdit: true },
       { name: "name", label: "Name", type: "text", required: true },
-      { name: "type_id", span: 24, section: "Classification", apiField: "type", label: "Station Type", type: "select", essential: true,
+      { name: "type_id", section: "Classification", apiField: "type", label: "Station Type", type: "select", essential: true,
         options: referenceOptions(stationTypes.currentData?.data, editingStation?.station_type),
         onSearch: setStationTypeSearch, loading: stationTypes.isFetching },
       ...ownership.fields,

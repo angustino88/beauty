@@ -86,7 +86,7 @@ function LicenseInventory() {
       { name: 'serial_number', section: 'License terms', label: 'Serial Number', type: 'text', help: "The vendor's license serial or ID, for example the Vector license ID. Lab computers match the licenses they find by it." },
       { name: 'license_ID', section: 'License terms', label: 'License Key (write-only)', type: 'text', help: 'Write-only: stored securely and never shown again. Leave empty to keep the current key; type a new one to replace it.' },
       {
-        name: 'assigned_equipment_ids', span: 24, section: 'License terms',
+        name: 'assigned_equipment_ids', section: 'License terms',
         label: 'License Carrier',
         type: 'multi-select',
         options: equipmentSearch.options,
