@@ -1,183 +1,202 @@
 import { useRef, useState } from 'react';
-import { Button, DatePicker, Empty, Form, Input, InputNumber, List, Modal, Pagination, Popconfirm, Space, Spin, Typography } from 'antd';
+import { Button, DatePicker, Form, Input, InputNumber, Modal, Popconfirm, Space } from 'antd';
+import { PlusOutlined } from '@ant-design/icons';
 import dayjs, { type Dayjs } from 'dayjs';
-
+import { Link } from 'react-router-dom';
 import {
   useSupportTicketsWorkLogsCreateByKeyMutation,
   useSupportTicketsWorkLogsDestroyByKeyWorkLogIdMutation,
   useSupportTicketsWorkLogsPartialUpdateByKeyWorkLogIdMutation,
   useSupportTicketsWorkLogsRetrieveByKeyQuery,
+  useSupportWorkLogsSummaryRetrieveQuery,
   type TicketWorkLogRead,
 } from '@/shared/api/generated/api';
 import { InlineAlert, notify } from '@/shared/notifications';
 import { apiErrorMessage } from '../attachments';
+import styles from './SupportTickets.module.css';
+import { WorkLogMetrics, WorkLogTable } from './WorkLogTable';
 
-interface WorkLogValues {
-  time_spent_minutes: number;
-  started_at: Dayjs;
+interface EntryFormValues {
+  minutes: number;
+  startedAt: Dayjs;
   description?: string;
+}
+
+function isStale(error: unknown) {
+  return typeof error === 'object' && error !== null && 'status' in error
+    && (error.status === 412 || error.status === 404);
 }
 
 const PAGE_SIZE = 10;
 
-function isStaleEntry(error: unknown): boolean {
-  return typeof error === 'object' && error !== null && 'status' in error && error.status === 412;
-}
-
-function formatDuration(minutes: number) {
-  const hours = Math.floor(minutes / 60);
-  const remainder = minutes % 60;
-  return [hours && `${hours}h`, remainder && `${remainder}m`].filter(Boolean).join(' ');
-}
-
-export function TicketWorkLogs({ ticketKey, onChanged }: { ticketKey: string; onChanged: () => Promise<void> }) {
+export function TicketWorkLogs({ ticketKey, onUpdated }: {
+  ticketKey: string;
+  onUpdated: () => unknown;
+}) {
   const [page, setPage] = useState(1);
   const [editor, setEditor] = useState<{ entry?: TicketWorkLogRead } | null>(null);
+  const [error, setError] = useState('');
+  const [form] = Form.useForm<EntryFormValues>();
   const replay = useRef<{ body: string; key: string } | null>(null);
-  const [form] = Form.useForm<WorkLogValues>();
-  const { currentData, isFetching, isError, refetch } = useSupportTicketsWorkLogsRetrieveByKeyQuery({
-    key: ticketKey,
-    page,
-    pageSize: PAGE_SIZE,
-  }, { refetchOnMountOrArgChange: true });
-  const [create, { isLoading: creating }] = useSupportTicketsWorkLogsCreateByKeyMutation();
-  const [update, { isLoading: updating }] = useSupportTicketsWorkLogsPartialUpdateByKeyWorkLogIdMutation();
-  const [remove, { isLoading: deleting }] = useSupportTicketsWorkLogsDestroyByKeyWorkLogIdMutation();
-  const entries = currentData?.data ?? [];
-  const count = currentData?.meta.pagination.count ?? 0;
-  const busy = creating || updating || deleting;
+  const list = useSupportTicketsWorkLogsRetrieveByKeyQuery({ key: ticketKey, page, pageSize: PAGE_SIZE });
+  const summary = useSupportWorkLogsSummaryRetrieveQuery({ scope: 'ticket', ticketKey });
+  const [create, createState] = useSupportTicketsWorkLogsCreateByKeyMutation();
+  const [update, updateState] = useSupportTicketsWorkLogsPartialUpdateByKeyWorkLogIdMutation();
+  const [remove, removeState] = useSupportTicketsWorkLogsDestroyByKeyWorkLogIdMutation();
+  const saving = createState.isLoading || updateState.isLoading;
 
-  function openEditor(entry?: TicketWorkLogRead) {
+  const openEditor = (entry?: TicketWorkLogRead) => {
     replay.current = null;
-    form.resetFields();
+    setError('');
     form.setFieldsValue({
-      time_spent_minutes: entry?.time_spent_minutes,
-      started_at: entry?.started_at ? dayjs(entry.started_at) : dayjs(),
+      minutes: entry?.time_spent_minutes,
+      startedAt: entry ? dayjs(entry.started_at) : dayjs(),
       description: entry?.description ?? '',
     });
     setEditor({ entry });
-  }
+  };
 
-  async function refreshAfterWrite(nextPage: number) {
-    if (nextPage === page) await refetch();
-    else setPage(nextPage);
-    await onChanged();
-  }
+  const refresh = async (targetPage = page) => {
+    if (targetPage !== page) setPage(targetPage);
+    await Promise.all([summary.refetch(), targetPage === page ? list.refetch() : undefined, onUpdated()]);
+  };
 
-  async function save(values: WorkLogValues) {
-    if (!editor) return;
-    const request = {
-      time_spent_minutes: values.time_spent_minutes,
-      started_at: values.started_at.toISOString(),
-      description: values.description ?? '',
+  const save = async (values: EntryFormValues) => {
+    if (!editor || saving) return;
+    setError('');
+    const entry = editor.entry;
+    const payload = {
+      time_spent_minutes: values.minutes,
+      started_at: values.startedAt.toISOString(),
+      description: values.description?.trim() ?? '',
     };
     try {
-      if (editor.entry) {
+      if (entry) {
         await update({
           key: ticketKey,
-          workLogId: editor.entry.id,
-          'If-Match': editor.entry.etag,
-          patchedWorkLogRequest: request,
+          workLogId: entry.id,
+          'If-Match': entry.etag,
+          patchedWorkLogRequest: payload,
         }).unwrap();
       } else {
-        const body = JSON.stringify(request);
+        const body = JSON.stringify(payload);
         if (replay.current?.body !== body) replay.current = { body, key: crypto.randomUUID() };
         await create({
           key: ticketKey,
           'Idempotency-Key': replay.current.key,
-          workLogRequest: request,
+          workLogRequest: payload,
         }).unwrap();
       }
-    } catch (error) {
-      if (isStaleEntry(error)) {
-        void refetch();
-        notify.error('Work log changed', { description: 'Close and reopen the editor to review the latest entry.' });
+    } catch (failure) {
+      if (entry && isStale(failure)) {
+        setEditor(null);
+        await refresh(1);
+        notify.warning('This work entry changed. Open the latest entry to edit it.');
       } else {
-        notify.error('Unable to save work log', { description: apiErrorMessage(error) });
+        setError(apiErrorMessage(failure, 'Check the entry and try again.'));
       }
       return;
     }
     setEditor(null);
-    await refreshAfterWrite(page);
-  }
+    await refresh(1);
+    notify.success(entry ? 'Work entry updated' : 'Work logged');
+  };
 
-  async function deleteEntry(entry: TicketWorkLogRead) {
+  const deleteEntry = async (entry: TicketWorkLogRead) => {
     try {
       await remove({ key: ticketKey, workLogId: entry.id, 'If-Match': entry.etag }).unwrap();
-    } catch (error) {
-      if (isStaleEntry(error)) void refetch();
-      notify.error('Unable to delete work log', { description: apiErrorMessage(error) });
-      return;
+      const remainingOnPage = (list.currentData?.data.length ?? 0) - 1;
+      await refresh(page > 1 && remainingOnPage === 0 ? page - 1 : page);
+      notify.success('Work entry deleted');
+    } catch (failure) {
+      if (isStale(failure)) {
+        await refresh(1);
+        notify.warning('This work entry changed. Review the latest entries.');
+      } else {
+        notify.error('Unable to delete work entry', { description: apiErrorMessage(failure) });
+      }
     }
-    await refreshAfterWrite(entries.length === 1 && page > 1 ? page - 1 : page);
-  }
+  };
 
   return (
-    <Space orientation="vertical" size="middle" style={{ width: '100%' }}>
-      <Button type="primary" onClick={() => openEditor()} disabled={busy}>Log work</Button>
-      {isError ? (
-        <InlineAlert variant="error" title="Unable to load work logs" onRetry={() => void refetch()} />
-      ) : !currentData && isFetching ? (
-        <Spin aria-label="Loading work logs" />
+    <div className={styles.ticketWorkLogs}>
+      <div className={styles.workLogSectionHeader}>
+        <h3>Time on this ticket</h3>
+        <Space wrap>
+          <Link to="/support-tickets/work-logs">View work logs report</Link>
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => openEditor()}>Log work</Button>
+        </Space>
+      </div>
+      {summary.isError && (
+        <InlineAlert variant="error" title="Could not load ticket totals" onRetry={() => void summary.refetch()} />
+      )}
+      <WorkLogMetrics summary={summary.currentData?.data} scope="ticket" />
+      {list.isError ? (
+        <InlineAlert variant="error" title="Could not load work entries" onRetry={() => void refresh(1)} />
       ) : (
-        <Spin spinning={isFetching}>
-          <List
-            dataSource={entries}
-            rowKey="id"
-            locale={{ emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="No work logged" /> }}
-            renderItem={(entry) => (
-              <List.Item
-                actions={entry.can_manage ? [
-                  <Button key="edit" type="link" disabled={busy} onClick={() => openEditor(entry)}>Edit</Button>,
-                  <Popconfirm key="delete" title="Delete this work log?" okText="Delete" okButtonProps={{ danger: true }} onConfirm={() => deleteEntry(entry)}>
-                    <Button type="link" danger disabled={busy}>Delete</Button>
-                  </Popconfirm>,
-                ] : undefined}
+        <WorkLogTable
+          rows={list.currentData?.data ?? []}
+          page={page}
+          pageSize={PAGE_SIZE}
+          total={list.currentData?.meta.pagination.count ?? 0}
+          onPageChange={setPage}
+          loading={list.isFetching}
+          emptyLabel="No work logged"
+          renderActions={(entry) => (
+            <Space size={4}>
+              <Button size="small" type="link" onClick={() => openEditor(entry)}>Edit</Button>
+              <Popconfirm
+                title="Delete this work entry?"
+                description="Its time will be removed from the ticket and reports."
+                okText="Delete"
+                okButtonProps={{ danger: true }}
+                onConfirm={() => void deleteEntry(entry)}
               >
-                <List.Item.Meta
-                  title={`${formatDuration(entry.time_spent_minutes)} · ${entry.author.display_name}`}
-                  description={
-                    <>
-                      <div>{new Date(entry.started_at).toLocaleString()}</div>
-                      {entry.description && <Typography.Paragraph style={{ whiteSpace: 'pre-wrap', marginBottom: 0 }}>{entry.description}</Typography.Paragraph>}
-                    </>
-                  }
-                />
-              </List.Item>
-            )}
-          />
-          {count > PAGE_SIZE && (
-            <Pagination current={page} pageSize={PAGE_SIZE} total={count} onChange={setPage} showSizeChanger={false} />
+                <Button type="link" size="small" danger disabled={removeState.isLoading}>Delete</Button>
+              </Popconfirm>
+            </Space>
           )}
-        </Spin>
+        />
       )}
       <Modal
-        title={editor?.entry ? 'Edit work log' : 'Log work'}
-        okText={editor?.entry ? 'Save changes' : 'Log work'}
+        title={editor?.entry ? 'Edit work entry' : 'Log work'}
         open={editor !== null}
+        okText={editor?.entry ? 'Save changes' : 'Log work'}
+        confirmLoading={saving}
+        closable={!saving}
+        keyboard={!saving}
+        mask={{ closable: !saving }}
+        cancelButtonProps={{ disabled: saving }}
         onCancel={() => setEditor(null)}
         onOk={() => form.submit()}
-        confirmLoading={creating || updating}
-        closable={!busy}
-        mask={{ closable: !busy }}
-        cancelButtonProps={{ disabled: busy }}
         forceRender
       >
-        <Form form={form} layout="vertical" onFinish={save} disabled={busy}>
-          <Form.Item name="time_spent_minutes" label="Time spent (minutes)" rules={[
-            { required: true, message: 'Enter the time spent.' },
-            { type: 'integer', min: 1, max: 14400, message: 'Enter a whole number from 1 to 14,400.' },
-          ]}>
-            <InputNumber min={1} max={14400} style={{ width: '100%' }} />
-          </Form.Item>
-          <Form.Item name="started_at" label="Started at" rules={[{ required: true, message: 'Select a start time.' }]}>
-            <DatePicker showTime style={{ width: '100%' }} />
-          </Form.Item>
-          <Form.Item name="description" label="Description (optional)" extra="Everyone who can view this ticket can read this entry.">
-            <Input.TextArea rows={3} maxLength={4000} />
+        {error && <InlineAlert variant="error" title="Could not save work entry" description={error} />}
+        <Form layout="vertical" form={form} onFinish={(values) => void save(values)} className={styles.transitionForm}>
+          <div className={styles.workLogFormFields}>
+            <Form.Item
+              name="minutes"
+              label="Time spent (minutes)"
+              rules={[
+                { required: true, message: 'Enter the time spent.' },
+                { type: 'integer', min: 1, max: 14400, message: 'Enter 1 to 14,400 whole minutes.' },
+              ]}
+            >
+              <InputNumber min={1} max={14400} style={{ width: '100%' }} placeholder="e.g. 45" />
+            </Form.Item>
+            <Form.Item name="startedAt" label="Started at" rules={[{ required: true, message: 'Select a date and time.' }]}>
+              <DatePicker showTime format="DD MMM YYYY, HH:mm" style={{ width: '100%' }} />
+            </Form.Item>
+          </div>
+          <Form.Item
+            name="description"
+            label="Work performed (optional)"
+            extra="People who can view this ticket can see this entry."
+          >
+            <Input.TextArea rows={3} maxLength={4000} placeholder="Summarize the work you did." />
           </Form.Item>
         </Form>
       </Modal>
-    </Space>
+    </div>
   );
 }

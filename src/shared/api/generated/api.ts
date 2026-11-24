@@ -5102,6 +5102,19 @@ const injectedRtkApi = api.injectEndpoints({
         },
       }),
     }),
+    supportPeopleOptionsRetrieve: build.query<
+      SupportPeopleOptionsRetrieveApiResponse,
+      SupportPeopleOptionsRetrieveApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/support/people/options`,
+        params: {
+          include_ids: queryArg.includeIds,
+          is_assignee: queryArg.isAssignee,
+          q: queryArg.q,
+        },
+      }),
+    }),
     supportPrioritiesRetrieve: build.query<
       SupportPrioritiesRetrieveApiResponse,
       SupportPrioritiesRetrieveApiArg
@@ -5536,6 +5549,58 @@ const injectedRtkApi = api.injectEndpoints({
         url: `/api/support/tickets/stats`,
         params: {
           days: queryArg.days,
+        },
+      }),
+    }),
+    supportWorkLogsRetrieve: build.query<
+      SupportWorkLogsRetrieveApiResponse,
+      SupportWorkLogsRetrieveApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/support/work-logs`,
+        params: {
+          author_id: queryArg.authorId,
+          page: queryArg.page,
+          page_size: queryArg.pageSize,
+          scope: queryArg.scope,
+          started_after: queryArg.startedAfter,
+          started_before: queryArg.startedBefore,
+          team_id: queryArg.teamId,
+          ticket_key: queryArg.ticketKey,
+        },
+      }),
+    }),
+    supportWorkLogsContributorsRetrieve: build.query<
+      SupportWorkLogsContributorsRetrieveApiResponse,
+      SupportWorkLogsContributorsRetrieveApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/support/work-logs/contributors`,
+        params: {
+          author_id: queryArg.authorId,
+          page: queryArg.page,
+          page_size: queryArg.pageSize,
+          scope: queryArg.scope,
+          started_after: queryArg.startedAfter,
+          started_before: queryArg.startedBefore,
+          team_id: queryArg.teamId,
+          ticket_key: queryArg.ticketKey,
+        },
+      }),
+    }),
+    supportWorkLogsSummaryRetrieve: build.query<
+      SupportWorkLogsSummaryRetrieveApiResponse,
+      SupportWorkLogsSummaryRetrieveApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/support/work-logs/summary`,
+        params: {
+          author_id: queryArg.authorId,
+          scope: queryArg.scope,
+          started_after: queryArg.startedAfter,
+          started_before: queryArg.startedBefore,
+          team_id: queryArg.teamId,
+          ticket_key: queryArg.ticketKey,
         },
       }),
     }),
@@ -9182,6 +9247,15 @@ export type SupportLabelsOptionsRetrieveApiArg = {
   /** Search text (1 to 100 characters). */
   q?: string;
 };
+export type SupportPeopleOptionsRetrieveApiResponse =
+  /** status 200 Standard selector options list */ CatalogOptionListRead;
+export type SupportPeopleOptionsRetrieveApiArg = {
+  /** Comma-separated positive integers (at most 50) of retired rows to include. */
+  includeIds?: number[];
+  isAssignee?: boolean;
+  /** Search text (1 to 100 characters). */
+  q?: string;
+};
 export type SupportPrioritiesRetrieveApiResponse =
   /** status 200  */ AdminPriorityListSerializersPriorityListResponseRead;
 export type SupportPrioritiesRetrieveApiArg = void;
@@ -9454,6 +9528,55 @@ export type SupportTicketsStatsRetrieveApiResponse =
   /** status 200  */ SupportQueueStatsSerializersQueueStatsDetailResponseRead;
 export type SupportTicketsStatsRetrieveApiArg = {
   days?: number;
+};
+export type SupportWorkLogsRetrieveApiResponse =
+  /** status 200  */ WorkLogReportListWorkLogsWorkLogReportEntryPaginatedResponseRead;
+export type SupportWorkLogsRetrieveApiArg = {
+  authorId?: number;
+  page?: number;
+  pageSize?: number;
+  /** * `mine` - mine
+   * `team` - team
+   * `ticket` - ticket */
+  scope?: "mine" | "team" | "ticket";
+  /** Inclusive lower bound. */
+  startedAfter?: string;
+  /** Exclusive upper bound. */
+  startedBefore?: string;
+  teamId?: number;
+  ticketKey?: string;
+};
+export type SupportWorkLogsContributorsRetrieveApiResponse =
+  /** status 200  */ WorkLogContributorsWorkLogsWorkLogContributorPaginatedResponseRead;
+export type SupportWorkLogsContributorsRetrieveApiArg = {
+  authorId?: number;
+  page?: number;
+  pageSize?: number;
+  /** * `mine` - mine
+   * `team` - team
+   * `ticket` - ticket */
+  scope?: "mine" | "team" | "ticket";
+  /** Inclusive lower bound. */
+  startedAfter?: string;
+  /** Exclusive upper bound. */
+  startedBefore?: string;
+  teamId?: number;
+  ticketKey?: string;
+};
+export type SupportWorkLogsSummaryRetrieveApiResponse =
+  /** status 200  */ WorkLogReportSummaryWorkLogsWorkLogReportSummaryDetailResponseRead;
+export type SupportWorkLogsSummaryRetrieveApiArg = {
+  authorId?: number;
+  /** * `mine` - mine
+   * `team` - team
+   * `ticket` - ticket */
+  scope?: "mine" | "team" | "ticket";
+  /** Inclusive lower bound. */
+  startedAfter?: string;
+  /** Exclusive upper bound. */
+  startedBefore?: string;
+  teamId?: number;
+  ticketKey?: string;
 };
 export type UserGroupsRetrieveApiResponse =
   /** status 200  */ UserGroupListApiUserGroupPaginatedResponseRead;
@@ -18473,7 +18596,13 @@ export type ResolutionCodeEnum =
   | "duplicate"
   | "wont_fix"
   | "user_error"
-  | "vendor";
+  | "vendor"
+  | "fulfilled"
+  | "partially_fulfilled"
+  | "guidance_provided"
+  | "change_implemented"
+  | "declined"
+  | "withdrawn";
 export type TicketDetail = {
   subject: string;
   description: string;
@@ -18505,6 +18634,17 @@ export type Watcher = {};
 export type WatcherRead = {
   user: UserReferenceRead;
   created_at: string;
+};
+export type AvailableTicketTransition = {};
+export type AvailableTicketTransitionRead = {
+  id: number;
+  status: RelationRead;
+  system_state: ChoiceRead;
+  is_final: boolean;
+  is_sla_paused: boolean;
+  is_reason_required: boolean;
+  is_resolution_required: boolean;
+  is_reopen: boolean;
 };
 export type TicketResourceLink = {
   is_active?: boolean;
@@ -18559,6 +18699,9 @@ export type TicketDetailRead = {
     [key: string]: any;
   }[];
   watchers: WatcherRead[];
+  status_system_state: ChoiceRead;
+  is_status_final: boolean;
+  available_transitions: AvailableTicketTransitionRead[];
   is_watching: boolean;
   created_at: string;
   updated_at: string;
@@ -19009,6 +19152,89 @@ export type SupportQueueStatsSerializersQueueStatsDetailResponse = {
 export type SupportQueueStatsSerializersQueueStatsDetailResponseRead = {
   data: QueueStatsRead;
 };
+export type WorkLogReportListWorkLogsWorkLogReportEntryPagination = {
+  count: number;
+  page: number;
+  page_size: number;
+  next: string | null;
+  previous: string | null;
+};
+export type WorkLogReportListWorkLogsWorkLogReportEntryPaginationMeta = {
+  pagination: WorkLogReportListWorkLogsWorkLogReportEntryPagination;
+};
+export type WorkLogReportEntry = {
+  /** Effort spent in whole minutes (1 to 14,400). */
+  time_spent_minutes: number;
+};
+export type WorkLogTicket = {};
+export type WorkLogTicketRead = {
+  id: number;
+  key: string;
+  subject: string;
+};
+export type WorkLogReportEntryRead = {
+  id: number;
+  author: UserReferenceRead;
+  /** Effort spent in whole minutes (1 to 14,400). */
+  time_spent_minutes: number;
+  started_at: string;
+  description: string;
+  created_at: string;
+  updated_at: string;
+  can_manage: boolean;
+  etag: string;
+  ticket: WorkLogTicketRead;
+};
+export type WorkLogReportListWorkLogsWorkLogReportEntryPaginatedResponse = {
+  meta: WorkLogReportListWorkLogsWorkLogReportEntryPaginationMeta;
+  data: WorkLogReportEntry[];
+};
+export type WorkLogReportListWorkLogsWorkLogReportEntryPaginatedResponseRead = {
+  meta: WorkLogReportListWorkLogsWorkLogReportEntryPaginationMeta;
+  data: WorkLogReportEntryRead[];
+};
+export type WorkLogContributorsWorkLogsWorkLogContributorPagination = {
+  count: number;
+  page: number;
+  page_size: number;
+  next: string | null;
+  previous: string | null;
+};
+export type WorkLogContributorsWorkLogsWorkLogContributorPaginationMeta = {
+  pagination: WorkLogContributorsWorkLogsWorkLogContributorPagination;
+};
+export type WorkLogContributor = {};
+export type WorkLogContributorRead = {
+  id: number;
+  name: string;
+  total_minutes: number;
+  entry_count: number;
+  ticket_count: number;
+};
+export type WorkLogContributorsWorkLogsWorkLogContributorPaginatedResponse = {
+  meta: WorkLogContributorsWorkLogsWorkLogContributorPaginationMeta;
+  data: WorkLogContributor[];
+};
+export type WorkLogContributorsWorkLogsWorkLogContributorPaginatedResponseRead =
+  {
+    meta: WorkLogContributorsWorkLogsWorkLogContributorPaginationMeta;
+    data: WorkLogContributorRead[];
+  };
+export type WorkLogReportSummary = {};
+export type WorkLogReportSummaryRead = {
+  total_minutes: number;
+  my_minutes: number;
+  entry_count: number;
+  ticket_count: number;
+  contributor_count: number;
+};
+export type WorkLogReportSummaryWorkLogsWorkLogReportSummaryDetailResponse = {
+  data: WorkLogReportSummary;
+};
+export type WorkLogReportSummaryWorkLogsWorkLogReportSummaryDetailResponseRead =
+  {
+    data: WorkLogReportSummaryRead;
+  };
 export type UserGroupListApiUserGroupPagination = {
   count: number;
   page: number;
@@ -19690,6 +19916,7 @@ export const {
   useSupportLabelsPartialUpdateByLabelIdMutation,
   useSupportLabelsDestroyByLabelIdMutation,
   useSupportLabelsOptionsRetrieveQuery,
+  useSupportPeopleOptionsRetrieveQuery,
   useSupportPrioritiesRetrieveQuery,
   useSupportPrioritiesCreateMutation,
   useSupportPrioritiesPartialUpdateByPriorityIdMutation,
@@ -19732,6 +19959,9 @@ export const {
   useSupportTicketsWorkLogsPartialUpdateByKeyWorkLogIdMutation,
   useSupportTicketsWorkLogsDestroyByKeyWorkLogIdMutation,
   useSupportTicketsStatsRetrieveQuery,
+  useSupportWorkLogsRetrieveQuery,
+  useSupportWorkLogsContributorsRetrieveQuery,
+  useSupportWorkLogsSummaryRetrieveQuery,
   useUserGroupsRetrieveQuery,
   useUserGroupsUsersRetrieveByGroupIdQuery,
   useUsersRetrieveQuery,

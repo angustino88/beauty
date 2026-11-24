@@ -6,7 +6,9 @@ import {
   getTicketSlaMeta,
   getTicketStatusMeta,
   getTicketTypeMeta,
-  getTransitionRequirements,
+  getResolutionLabel,
+  getResolutionOptions,
+  getWorkflowAction,
 } from './ticketPresentation.ts';
 
 test('getTicketStatusMeta assigns distinct semantic tones and variants to ticket lifecycle states', () => {
@@ -68,26 +70,38 @@ test('getTicketTypeMeta normalizes choice objects and string codes', () => {
   assert.equal(request.tone, 'info');
 });
 
-test('getTransitionRequirements detects resolution summary and reason requirements', () => {
-  const toProgress = getTransitionRequirements('In Progress', 'Open');
-  assert.equal(toProgress.requiresResolution, false);
-  assert.equal(toProgress.requiresReason, false);
-  assert.equal(toProgress.actionLabel, 'Start Progress');
+test('workflow actions use configured names and distinguish starting, resuming, and reopening', () => {
+  const target = {
+    id: 1,
+    status: { id: 2, name: 'In Progress' },
+    system_state: { value: 'active', label: 'Active' },
+    is_final: false,
+    is_sla_paused: false,
+    is_reason_required: false,
+    is_resolution_required: false,
+    is_reopen: false,
+  };
+  assert.equal(getWorkflowAction(target, 'open'), 'Start work');
+  assert.equal(getWorkflowAction(target, 'waiting'), 'Resume work');
+  assert.equal(getWorkflowAction({ ...target, is_reopen: true }, 'done'), 'Reopen to In Progress');
+  assert.equal(
+    getWorkflowAction({ ...target, is_reopen: true, status: { id: 1, name: 'Open' } }, 'done'),
+    'Reopen ticket',
+  );
 
-  const toResolved = getTransitionRequirements('Resolved', 'In Progress');
-  assert.equal(toResolved.requiresResolution, true);
-  assert.equal(toResolved.requiresReason, false);
-  assert.equal(toResolved.actionLabel, 'Resolve Ticket');
+  const custom = { ...target, status: { id: 3, name: 'Lab review' } };
+  assert.equal(getWorkflowAction(custom, 'open'), 'Move to Lab review');
+  assert.equal(getTicketStatusMeta(custom.status, 'active', false).variant, 'in_progress');
+  assert.equal(getTicketStatusMeta({ name: 'Archived' }, 'done', true).variant, 'closed');
+});
 
-  const toClosedFromOpen = getTransitionRequirements('Closed', 'Open');
-  assert.equal(toClosedFromOpen.requiresResolution, false);
-  assert.equal(toClosedFromOpen.requiresReason, true);
-  assert.equal(toClosedFromOpen.isClosing, true);
-
-  const reopen = getTransitionRequirements('Open', 'Resolved');
-  assert.equal(reopen.isReopen, true);
-  assert.equal(reopen.requiresReason, true);
-  assert.equal(reopen.actionLabel, 'Reopen Ticket');
+test('resolution outcomes follow the request type and historical outcomes retain a label', () => {
+  assert.ok(getResolutionOptions('service_request').some(({ value }) => value === 'fulfilled'));
+  assert.ok(!getResolutionOptions('service_request').some(({ value }) => value === 'fixed'));
+  assert.equal(getResolutionOptions('question')[0].value, 'guidance_provided');
+  assert.equal(getResolutionOptions('change')[0].value, 'change_implemented');
+  assert.equal(getResolutionOptions('incident')[0].value, 'fixed');
+  assert.equal(getResolutionLabel('user_error'), 'User error / guidance provided');
 });
 
 test('getTicketSlaMeta reports breached, paused and on-track SLA states', () => {
@@ -112,7 +126,7 @@ test('formatTicketActivityLines formats status transitions and field change diff
   });
   assert.deepEqual(statusLines, [
     'Open → Resolved',
-    'Resolution code: fixed',
+    'Outcome: Issue fixed',
     'Resolution: Replaced faulty BNC connector on channel 2.',
   ]);
 

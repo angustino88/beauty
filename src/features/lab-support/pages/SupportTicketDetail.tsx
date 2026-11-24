@@ -1,13 +1,11 @@
 import { useMemo, useState } from 'react';
-import { Link, useLocation, useParams } from 'react-router-dom';
+import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom';
 import dayjs from 'dayjs';
 import {
   Button,
   DatePicker,
   Empty,
-  Form,
   Input,
-  Modal,
   Popconfirm,
   Segmented,
   Select,
@@ -25,6 +23,7 @@ import {
   CheckCircleOutlined,
   CheckOutlined,
   CloseOutlined,
+  ClockCircleOutlined,
   CommentOutlined,
   CopyOutlined,
   DeleteOutlined,
@@ -40,15 +39,13 @@ import {
   TagOutlined,
 } from '@ant-design/icons';
 import { useAuthState } from '@/features/auth/hooks/useAuthState';
-import { usePermission } from '@/features/auth/hooks/useCan';
+import { useCan } from '@/features/auth/hooks/useCan';
 import {
   useSupportCannedResponsesRetrieveQuery,
   useSupportCategoriesOptionsRetrieveQuery,
   useSupportPrioritiesOptionsRetrieveQuery,
-  useSupportStatusesOptionsRetrieveQuery,
   useSupportTeamsOptionsRetrieveQuery,
   useSupportTicketsActionsAssignCreateByKeyMutation,
-  useSupportTicketsActionsTransitionCreateByKeyMutation,
   useSupportTicketsActivityRetrieveByKeyQuery,
   useSupportTicketsCommentsCreateByKeyMutation,
   useSupportTicketsCommentsDestroyByKeyCommentIdMutation,
@@ -59,7 +56,6 @@ import {
   useSupportTicketsWatchersCreateByKeyMutation,
   useUsersRetrieveQuery,
   type PatchedTicketUpdateRequest,
-  type ResolutionCodeEnum,
   type TicketActivityRead,
   type TicketTypeEnum,
   type UrgencyEnum,
@@ -76,8 +72,10 @@ import {
   apiErrorMessage,
   toSupportAttachments,
 } from '../attachments';
-import { TicketWorkLogs } from '../components/TicketWorkLogs';
 import { TicketAttachments } from '../components/TicketAttachments';
+import { SupportPeopleSelect } from '../components/SupportPeopleSelect';
+import { TicketWorkflow } from '../components/TicketWorkflow';
+import { TicketWorkLogs } from '../components/TicketWorkLogs';
 import {
   TicketPriorityBadge,
   TicketSlaBadge,
@@ -88,11 +86,10 @@ import {
 import styles from '../components/SupportTickets.module.css';
 import {
   IMPACT_URGENCY_OPTIONS,
-  RESOLUTION_CODE_OPTIONS,
   TICKET_TYPE_OPTIONS,
   formatTicketActivityLines,
   getTicketStatusMeta,
-  getTransitionRequirements,
+  getResolutionLabel,
 } from '../ticketPresentation';
 
 const formatDate = (value?: string | null) =>
@@ -113,22 +110,23 @@ function activityLabel(activity: TicketActivityRead) {
   return activity.event_type.label;
 }
 
-const UNASSIGN = 0;
-
-interface PendingTransitionState {
-  statusId: number;
-  statusName: string;
-  requiresResolution: boolean;
-  requiresReason: boolean;
-  isReopen: boolean;
-}
-
 export default function SupportTicketDetail() {
   const { state } = useLocation();
   const queueSearch = typeof state?.queueSearch === 'string' ? state.queueSearch : '';
   const { key } = useParams<{ key: string }>();
   const { id: currentUserId } = useAuthState();
-  const canManage = usePermission('support.handle');
+  const can = useCan();
+  const canManage = can('support.handle') || can('support.administer');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requestedTab = searchParams.get('tab');
+  const activeTab = requestedTab && ['attachments', 'activity', 'work-logs'].includes(requestedTab)
+    ? requestedTab
+    : 'conversation';
+  const setActiveTab = (tab: string) => setSearchParams((params) => {
+    if (tab === 'conversation') params.delete('tab');
+    else params.set('tab', tab);
+    return params;
+  }, { replace: true });
 
   // Conversation composer state
   const [comment, setComment] = useState('');
@@ -149,15 +147,6 @@ export default function SupportTicketDetail() {
   const [isEditingExtRef, setIsEditingExtRef] = useState(false);
   const [extRefDraft, setExtRefDraft] = useState('');
 
-  // Status Transition Modal state (only opened when reason or resolution summary is required, or on manual note)
-  const [pendingTransition, setPendingTransition] =
-    useState<PendingTransitionState | null>(null);
-  const [transitionReason, setTransitionReason] = useState('');
-  const [resolutionCode, setResolutionCode] = useState<ResolutionCodeEnum>('fixed');
-  const [resolutionSummary, setResolutionSummary] = useState('');
-  const [rootCause, setRootCause] = useState('');
-
-  const [activeTab, setActiveTab] = useState<string>('conversation');
   const [savingField, setSavingField] = useState<string | null>(null);
 
   const ticketArg = { key: key ?? '' };
@@ -186,12 +175,6 @@ export default function SupportTicketDetail() {
   );
   const canEditCoreFields = canManage || isRequester;
 
-  const { data: statuses } = useSupportStatusesOptionsRetrieveQuery(
-    {
-      includeIds: ticket?.status?.id ? [ticket.status.id] : undefined,
-    },
-    { skip: (!canManage && !isRequester) || skip },
-  );
   const { data: categories } = useSupportCategoriesOptionsRetrieveQuery(
     {
       includeIds: ticket?.category?.id ? [ticket.category.id] : undefined,
@@ -231,8 +214,6 @@ export default function SupportTicketDetail() {
     useUploadSupportAttachmentMutation();
   const [assign, { isLoading: assigning }] =
     useSupportTicketsActionsAssignCreateByKeyMutation();
-  const [transition, { isLoading: transitioning }] =
-    useSupportTicketsActionsTransitionCreateByKeyMutation();
   const [addWatcher, { isLoading: addingWatcher }] =
     useSupportTicketsWatchersCreateByKeyMutation();
   const [removeWatcher, { isLoading: removingWatcher }] =
@@ -303,93 +284,6 @@ export default function SupportTicketDetail() {
     } finally {
       setSavingField(null);
     }
-  };
-
-  // --- Smart Status Transition Handler ---
-  const executeTransition = async (params: {
-    toStatusId: number;
-    toStatusName: string;
-    reason?: string;
-    resolutionSummary?: string;
-    resolutionCode?: ResolutionCodeEnum;
-    rootCause?: string;
-  }) => {
-    if (!key || !ticket || ticket.version === undefined) return;
-    setSavingField('status');
-    try {
-      await transition({
-        key,
-        ticketTransitionRequest: {
-          to_status_id: params.toStatusId,
-          version: ticket.version,
-          reason: params.reason?.trim() || undefined,
-          resolution_summary: params.resolutionSummary?.trim() || undefined,
-          resolution_code: params.resolutionCode || undefined,
-          root_cause: params.rootCause?.trim() || undefined,
-        },
-      }).unwrap();
-      setPendingTransition(null);
-      setTransitionReason('');
-      setResolutionSummary('');
-      setRootCause('');
-      await refresh();
-      notify.success(`Status updated to ${params.toStatusName}`);
-    } catch (error) {
-      if (isConflict(error)) await refetchDetail();
-      // If server demands a reason or resolution summary for a custom admin-configured transition, open the modal automatically
-      const msg = errorMessage(error);
-      if (
-        !pendingTransition &&
-        (msg.toLowerCase().includes('reason') ||
-          msg.toLowerCase().includes('resolution'))
-      ) {
-        const needsRes = msg.toLowerCase().includes('resolution');
-        setPendingTransition({
-          statusId: params.toStatusId,
-          statusName: params.toStatusName,
-          requiresResolution: needsRes,
-          requiresReason: !needsRes,
-          isReopen: false,
-        });
-        return;
-      }
-      notify.error('Unable to update ticket status', {
-        description: msg,
-      });
-    } finally {
-      setSavingField(null);
-    }
-  };
-
-  const initiateStatusTransition = (targetStatusId: number) => {
-    if (!ticket || targetStatusId === ticket.status?.id) return;
-    const targetOption = (statuses?.data ?? []).find(
-      (s) => s.id === targetStatusId,
-    );
-    const targetName = targetOption?.name ?? 'New Status';
-    const reqs = getTransitionRequirements(targetName, ticket.status?.name);
-
-    if (reqs.requiresResolution || reqs.requiresReason) {
-      setTransitionReason('');
-      setResolutionSummary(ticket.resolution_summary || '');
-      setRootCause(ticket.root_cause || '');
-      setResolutionCode(
-        (ticket.resolution_code as ResolutionCodeEnum) || 'fixed',
-      );
-      setPendingTransition({
-        statusId: targetStatusId,
-        statusName: targetName,
-        requiresResolution: reqs.requiresResolution,
-        requiresReason: reqs.requiresReason,
-        isReopen: reqs.isReopen,
-      });
-      return;
-    }
-
-    void executeTransition({
-      toStatusId: targetStatusId,
-      toStatusName: targetName,
-    });
   };
 
   // --- Watchers Management Handlers ---
@@ -526,93 +420,6 @@ export default function SupportTicketDetail() {
   };
 
   // Build available status transition buttons for the header bar
-  const workflowTransitions = useMemo(() => {
-    if (!ticket || !statuses?.data) return [];
-    const currentMeta = getTicketStatusMeta(ticket.status);
-    const otherStatuses = statuses.data.filter(
-      (s) => s.id !== ticket.status?.id,
-    );
-
-    if (!canManage) {
-      // Requesters can only reopen a resolved ticket
-      if (currentMeta.variant === 'resolved') {
-        return otherStatuses
-          .filter((s) => getTicketStatusMeta(s.name).variant === 'open')
-          .map((s) => ({
-            ...s,
-            reqs: getTransitionRequirements(s.name, ticket.status?.name),
-          }));
-      }
-      return [];
-    }
-
-    // Filter out invalid transitions from DEFAULT_TRANSITIONS
-    return otherStatuses
-      .filter((s) => {
-        const targetVariant = getTicketStatusMeta(s.name).variant;
-        if (currentMeta.variant === 'closed') return false;
-        if (
-          currentMeta.variant === 'resolved' &&
-          targetVariant !== 'open' &&
-          targetVariant !== 'closed'
-        ) {
-          return false;
-        }
-        if (
-          currentMeta.variant === 'in_progress' &&
-          targetVariant === 'open'
-        ) {
-          return false;
-        }
-        if (currentMeta.variant === 'waiting' && targetVariant === 'open') {
-          return false;
-        }
-        return true;
-      })
-      .map((s) => ({
-        ...s,
-        reqs: getTransitionRequirements(s.name, ticket.status?.name),
-      }));
-  }, [ticket, statuses, canManage]);
-
-  const assigneeOptions = useMemo(() => {
-    if (!ticket) return [];
-    const list: { value: number; label: string }[] = [
-      { value: UNASSIGN, label: 'Unassigned' },
-    ];
-    const seen = new Set<number>();
-    if (ticket.assignee?.id) {
-      seen.add(ticket.assignee.id);
-      list.push({
-        value: ticket.assignee.id,
-        label: userLabel(ticket.assignee) || ticket.assignee.username,
-      });
-    }
-    for (const user of users?.data ?? []) {
-      if (!seen.has(user.id)) {
-        seen.add(user.id);
-        list.push({
-          value: user.id,
-          label: user.display_name || user.username,
-        });
-      }
-    }
-    return list;
-  }, [ticket, users]);
-
-  const watcherCandidateOptions = useMemo(() => {
-    if (!ticket) return [];
-    const existingIds = new Set(
-      (ticket.watchers ?? []).map((w) => w.user.id),
-    );
-    return (users?.data ?? [])
-      .filter((u) => !existingIds.has(u.id))
-      .map((u) => ({
-        value: u.id,
-        label: u.display_name || u.username,
-      }));
-  }, [ticket, users]);
-
   const userDirectoryByUsername = useMemo(() => {
     const map = new Map<
       string,
@@ -681,7 +488,9 @@ export default function SupportTicketDetail() {
   const attachmentsList = toSupportAttachments(ticket.attachments);
   const commentsList = comments?.data ?? [];
   const activityList = activity?.data ?? [];
-  const currentStatusMeta = getTicketStatusMeta(ticket.status);
+  const currentState = ticket.status_system_state?.value;
+  const currentStatusMeta = getTicketStatusMeta(ticket.status, currentState, ticket.is_status_final);
+  const watcherIds = (ticket.watchers ?? []).map((watcher) => watcher.user.id);
 
   return (
     <div className={styles.workspacePage}>
@@ -733,7 +542,7 @@ export default function SupportTicketDetail() {
         <div className={styles.headerBadgesRow}>
           <div className={styles.badgeGroup}>
             <span className={styles.ticketKeyPill}>{ticket.key}</span>
-            <TicketStatusBadge status={ticket.status} />
+            <TicketStatusBadge status={ticket.status} systemState={currentState} isFinal={ticket.is_status_final} />
             {ticket.priority && (
               <TicketPriorityBadge priority={ticket.priority} />
             )}
@@ -741,28 +550,7 @@ export default function SupportTicketDetail() {
             <TicketSlaBadge sla={ticket.sla} status={ticket.status} />
           </div>
 
-          {/* 1-Click Quick Status Transition Buttons */}
-          {workflowTransitions.length > 0 && (
-            <div className={styles.workflowActions}>
-              {workflowTransitions.map((item) => (
-                <Button
-                  key={item.id}
-                  size="small"
-                  type={
-                    item.reqs.buttonVariant === 'primary' ||
-                    item.reqs.buttonVariant === 'resolve'
-                      ? 'primary'
-                      : 'default'
-                  }
-                  loading={transitioning && savingField === 'status'}
-                  disabled={ticket.version === undefined}
-                  onClick={() => initiateStatusTransition(item.id)}
-                >
-                  {item.reqs.actionLabel}
-                </Button>
-              ))}
-            </div>
-          )}
+          <TicketWorkflow key={ticket.key} ticket={ticket} onUpdated={refresh} />
         </div>
 
         {/* Ticket Subject with Inline Edit */}
@@ -842,12 +630,6 @@ export default function SupportTicketDetail() {
             </span>
             <span>·</span>
             <span>Opened {formatDate(ticket.created_at)}</span>
-            {ticket.source?.label && (
-              <>
-                <span>·</span>
-                <span>Via {ticket.source.label}</span>
-              </>
-            )}
             {ticket.reopen_count ? (
               <>
                 <span>·</span>
@@ -866,7 +648,7 @@ export default function SupportTicketDetail() {
         {/* Left Main Column */}
         <div className={styles.mainColumn}>
           {/* Resolution Banner (shown when ticket has resolution summary or code) */}
-          {(ticket.resolution_summary || ticket.resolution_code) && (
+          {currentStatusMeta.isTerminal && (ticket.resolution_summary || ticket.resolution_code) && (
             <section
               className={styles.resolutionBanner}
               aria-label="Ticket resolution"
@@ -875,10 +657,7 @@ export default function SupportTicketDetail() {
                 <span className={styles.resolutionTitle}>
                   <CheckCircleOutlined />
                   <span>
-                    Resolution
-                    {ticket.resolution_code
-                      ? ` · ${ticket.resolution_code.replaceAll('_', ' ')}`
-                      : ''}
+                    {ticket.resolution_code ? getResolutionLabel(ticket.resolution_code) : 'Ticket outcome'}
                   </span>
                 </span>
                 {ticket.resolved_at && (
@@ -1350,8 +1129,8 @@ export default function SupportTicketDetail() {
                   },
                   {
                     key: 'work-logs',
-                    label: 'Work logs',
-                    children: <TicketWorkLogs key={key} ticketKey={key} onChanged={refresh} />,
+                    label: <Space size={6}><ClockCircleOutlined /><span>Work logs</span></Space>,
+                    children: <TicketWorkLogs key={ticket.key} ticketKey={ticket.key} onUpdated={refetchActivity} />,
                   },
                   {
                     key: 'activity',
@@ -1439,7 +1218,7 @@ export default function SupportTicketDetail() {
           <div className={styles.panelCard}>
             <header className={styles.panelHeader}>
               <h2 className={styles.panelTitle}>Ticket properties</h2>
-              {(updatingTicket || assigning || transitioning) && (
+              {(updatingTicket || assigning) && (
                 <Spin size="small" />
               )}
             </header>
@@ -1460,39 +1239,6 @@ export default function SupportTicketDetail() {
               <h3 className={styles.sidebarSectionTitle}>
                 Workflow & Ownership
               </h3>
-
-              {/* Status Field */}
-              <div className={styles.fieldRow}>
-                <div className={styles.fieldLabelRow}>
-                  <span className={styles.fieldLabel}>Status</span>
-                </div>
-                {canManage && (statuses?.data?.length ?? 0) > 0 ? (
-                  <Select<number>
-                    aria-label="Ticket status"
-                    value={ticket.status?.id}
-                    loading={transitioning && savingField === 'status'}
-                    disabled={ticket.version === undefined}
-                    onChange={(nextStatusId) =>
-                      initiateStatusTransition(nextStatusId)
-                    }
-                    style={{ width: '100%' }}
-                    options={(statuses?.data ?? []).map((st) => ({
-                      value: st.id,
-                      label: (
-                        <TicketStatusBadge
-                          status={st.name}
-                          compact
-                          showTooltip={false}
-                        />
-                      ),
-                    }))}
-                  />
-                ) : (
-                  <div>
-                    <TicketStatusBadge status={ticket.status} />
-                  </div>
-                )}
-              </div>
 
               {/* Assignee Field */}
               <div className={styles.fieldRow}>
@@ -1527,18 +1273,19 @@ export default function SupportTicketDetail() {
                   )}
                 </div>
                 {canManage ? (
-                  <Select<number>
+                  <SupportPeopleSelect<number | null>
                     aria-label="Assign ticket"
-                    showSearch
-                    optionFilterProp="label"
-                    value={ticket.assignee?.id ?? UNASSIGN}
-                    loading={assigning && savingField === 'assignee'}
-                    disabled={ticket.version === undefined}
-                    onChange={(val) =>
-                      void handleDirectAssign(val === UNASSIGN ? null : val)
-                    }
+                    value={ticket.assignee?.id ?? null}
+                    assigneesOnly
+                    suggestIds={currentUserId ? [currentUserId] : []}
+                    includePeople={ticket.assignee ? [{
+                      value: ticket.assignee.id,
+                      label: userLabel(ticket.assignee) || ticket.assignee.username,
+                    }] : []}
+                    placeholder="Unassigned"
+                    disabled={assigning || ticket.version === undefined}
+                    onChange={(value) => void handleDirectAssign(value)}
                     style={{ width: '100%' }}
-                    options={assigneeOptions}
                   />
                 ) : (
                   <div>
@@ -1647,19 +1394,16 @@ export default function SupportTicketDetail() {
                 )}
 
                 {canManage && (
-                  <Select<number>
+                  <SupportPeopleSelect<number | null>
                     aria-label="Add watcher"
-                    placeholder="+ Add watcher…"
-                    showSearch
-                    optionFilterProp="label"
+                    placeholder="Add watcher"
                     value={null}
-                    loading={addingWatcher}
-                    notFoundContent="No available users to add"
+                    disabled={addingWatcher}
+                    excludeIds={watcherIds}
                     onChange={(userId) => {
                       if (userId) void handleAddWatcher(userId);
                     }}
                     style={{ width: '100%', marginTop: 4 }}
-                    options={watcherCandidateOptions}
                   />
                 )}
               </div>
@@ -1991,108 +1735,6 @@ export default function SupportTicketDetail() {
         </aside>
       </div>
 
-      {/* Focused Status Transition Modal (shown only when Resolution Summary or Reason is required) */}
-      <Modal
-        title={
-          pendingTransition
-            ? `Transition to ${pendingTransition.statusName}`
-            : 'Update ticket status'
-        }
-        open={pendingTransition !== null}
-        onCancel={() => setPendingTransition(null)}
-        confirmLoading={transitioning}
-        okText={
-          pendingTransition?.requiresResolution
-            ? 'Resolve ticket'
-            : pendingTransition?.isReopen
-              ? 'Reopen ticket'
-              : `Move to ${pendingTransition?.statusName ?? 'status'}`
-        }
-        okButtonProps={{
-          disabled:
-            (pendingTransition?.requiresResolution &&
-              !resolutionSummary.trim()) ||
-            (pendingTransition?.requiresReason && !transitionReason.trim()),
-        }}
-        onOk={() => {
-          if (!pendingTransition) return;
-          void executeTransition({
-            toStatusId: pendingTransition.statusId,
-            toStatusName: pendingTransition.statusName,
-            reason: transitionReason,
-            resolutionSummary: pendingTransition.requiresResolution
-              ? resolutionSummary
-              : undefined,
-            resolutionCode: pendingTransition.requiresResolution
-              ? resolutionCode
-              : undefined,
-            rootCause: pendingTransition.requiresResolution
-              ? rootCause
-              : undefined,
-          });
-        }}
-        destroyOnHidden
-      >
-        {pendingTransition && (
-          <Form layout="vertical" style={{ marginTop: 12 }}>
-            {pendingTransition.requiresResolution && (
-              <>
-                <Form.Item label="Resolution code" required>
-                  <Select<ResolutionCodeEnum>
-                    aria-label="Resolution code"
-                    value={resolutionCode}
-                    onChange={setResolutionCode}
-                    options={[...RESOLUTION_CODE_OPTIONS]}
-                  />
-                </Form.Item>
-                <Form.Item
-                  label="Resolution summary"
-                  required
-                  extra="Describe how the issue or request was resolved. Visible on the ticket record."
-                >
-                  <Input.TextArea
-                    aria-label="Resolution summary"
-                    rows={4}
-                    value={resolutionSummary}
-                    onChange={(e) => setResolutionSummary(e.target.value)}
-                    placeholder="What was done to resolve this ticket?"
-                  />
-                </Form.Item>
-                <Form.Item label="Root cause (optional)">
-                  <Input.TextArea
-                    aria-label="Root cause"
-                    rows={2}
-                    value={rootCause}
-                    onChange={(e) => setRootCause(e.target.value)}
-                    placeholder="Underlying cause for recurring or technical incidents (optional)"
-                  />
-                </Form.Item>
-              </>
-            )}
-
-            <Form.Item
-              label={
-                pendingTransition.requiresReason
-                  ? 'Reason (required)'
-                  : 'Transition note (optional)'
-              }
-              required={pendingTransition.requiresReason}
-            >
-              <Input.TextArea
-                aria-label="Transition reason"
-                rows={3}
-                value={transitionReason}
-                onChange={(e) => setTransitionReason(e.target.value)}
-                placeholder={
-                  pendingTransition.isReopen
-                    ? 'Why does this ticket need to be reopened?'
-                    : 'Provide context for this status change…'
-                }
-              />
-            </Form.Item>
-          </Form>
-        )}
-      </Modal>
     </div>
   );
 }
