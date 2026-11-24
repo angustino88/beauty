@@ -41,6 +41,28 @@ test('mapExpense maps complete expense payload', () => {
   assert.equal(expense.reference, 'CON-HVAC-2026');
 });
 
+test('mapExpense maps license expense with resource_kind and null room', () => {
+  const expense = mapExpense({
+    id: 22,
+    resource_kind: { value: 'license', label: 'License' },
+    resource: { id: 77, name: 'CANoe Pro' },
+    room: null,
+    name: 'Annual CANoe Renewal',
+    expense_type: { value: 'license_fee', label: 'License fee' },
+    cost: { amount: '4200.00', currency: 'EUR' },
+    billing_period: { value: 'annual', label: 'Annual' },
+    start_date: '2026-01-01',
+    end_date: '2026-12-31',
+  });
+
+  assert.equal(expense.resource_kind, 'license');
+  assert.equal(expense.resource_kind_label, 'License');
+  assert.equal(expense.resource_id, 77);
+  assert.equal(expense.resource_name, 'CANoe Pro');
+  assert.equal(expense.room_id, 0);
+  assert.equal(expense.expense_type, 'license_fee');
+});
+
 test('mapExpense falls back gracefully for empty payload', () => {
   const expense = mapExpense(null, 5);
   assert.equal(expense.id, 0);
