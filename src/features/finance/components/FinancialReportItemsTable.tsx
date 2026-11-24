@@ -132,10 +132,16 @@ export const FinancialReportItemsTable: React.FC<FinancialReportItemsTableProps>
       ),
     },
     {
-      title: 'Room',
-      dataIndex: 'room_name',
-      key: 'room_name',
-      width: 140,
+      title: 'Resource',
+      dataIndex: 'resource_name',
+      key: 'resource_name',
+      width: 185,
+      render: (_: string | undefined, record: IFinancialReportItem) => (
+        <Space size={6}>
+          {record.resource_kind_label && <span className={styles.mutedTag}>{record.resource_kind_label}</span>}
+          <span>{record.resource_name || record.room_name}</span>
+        </Space>
+      ),
     },
     {
       title: 'Category',

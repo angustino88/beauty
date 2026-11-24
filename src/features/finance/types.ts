@@ -53,6 +53,10 @@ export interface IFinancialReportItem {
   reference?: string;
   valid_from: string;
   valid_until?: string | null;
+  resource_kind?: string;
+  resource_kind_label?: string;
+  resource_id?: number;
+  resource_name?: string;
   room_id: number;
   room_name: string;
 }
