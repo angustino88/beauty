@@ -26,7 +26,32 @@ const readUserObject = (value: unknown): SupportUserRef | string | null => {
   return value as SupportUserRef;
 };
 
-export function buildLabSupportColumns(): ColumnsType<SupportTicket> {
+export function buildLabSupportColumns(queueSearch = '', compact = false): ColumnsType<SupportTicket> {
+  if (compact) {
+    return [{
+      title: 'Ticket',
+      key: 'ticket',
+      render: (_, ticket) => (
+        <div className={styles.compactTicket}>
+          <span className={styles.compactKey}>{ticket.key}</span>
+          <Link
+            className={styles.subjectLink}
+            to={`/support-tickets/${encodeURIComponent(ticket.key)}`}
+            state={{ queueSearch }}
+          >
+            {ticket.subject || ticket.summary || 'Untitled ticket'}
+          </Link>
+          <div className={styles.subjectMeta}>
+            <TicketStatusBadge status={ticket.status} />
+            <TicketPriorityBadge priority={ticket.priority} />
+            <TicketSlaBadge sla={ticket.sla} status={ticket.status} />
+          </div>
+          <TicketUserChip user={readUserObject(ticket.assignee)} emptyLabel="Unassigned" />
+        </div>
+      ),
+    }];
+  }
+
   return [
     {
       title: 'Key',
@@ -40,6 +65,7 @@ export function buildLabSupportColumns(): ColumnsType<SupportTicket> {
         return (
           <Link
             className={styles.keyLink}
+            state={{ queueSearch }}
             to={`/support-tickets/${encodeURIComponent(ticketKey)}`}
           >
             {ticketKey}
@@ -64,6 +90,7 @@ export function buildLabSupportColumns(): ColumnsType<SupportTicket> {
             {ticketKey ? (
               <Link
                 className={styles.subjectLink}
+                state={{ queueSearch }}
                 to={`/support-tickets/${encodeURIComponent(ticketKey)}`}
               >
                 {subjectText}

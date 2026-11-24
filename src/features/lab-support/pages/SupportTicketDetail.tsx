@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useLocation, useParams } from 'react-router-dom';
 import dayjs from 'dayjs';
 import {
   Button,
@@ -76,6 +76,7 @@ import {
   apiErrorMessage,
   toSupportAttachments,
 } from '../attachments';
+import { TicketWorkLogs } from '../components/TicketWorkLogs';
 import { TicketAttachments } from '../components/TicketAttachments';
 import {
   TicketPriorityBadge,
@@ -123,6 +124,8 @@ interface PendingTransitionState {
 }
 
 export default function SupportTicketDetail() {
+  const { state } = useLocation();
+  const queueSearch = typeof state?.queueSearch === 'string' ? state.queueSearch : '';
   const { key } = useParams<{ key: string }>();
   const { id: currentUserId } = useAuthState();
   const canManage = usePermission('support.handle');
@@ -685,7 +688,7 @@ export default function SupportTicketDetail() {
       {/* Top Breadcrumb & Utility Bar */}
       <div className={styles.topBar}>
         <nav className={styles.breadcrumb} aria-label="Breadcrumb">
-          <Link to="/support-tickets" className={styles.backLink}>
+          <Link to={{ pathname: '/support-tickets', search: queueSearch }} className={styles.backLink}>
             <ArrowLeftOutlined />
             <span>Support queue</span>
           </Link>
@@ -1344,6 +1347,11 @@ export default function SupportTicketDetail() {
                         onChanged={refetchDetail}
                       />
                     ),
+                  },
+                  {
+                    key: 'work-logs',
+                    label: 'Work logs',
+                    children: <TicketWorkLogs key={key} ticketKey={key} onChanged={refresh} />,
                   },
                   {
                     key: 'activity',

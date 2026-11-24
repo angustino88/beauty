@@ -876,6 +876,16 @@ const injectedRtkApi = api.injectEndpoints({
         method: "DELETE",
       }),
     }),
+    labsBenchesActionsForceDeleteCreateByBenchId: build.mutation<
+      LabsBenchesActionsForceDeleteCreateByBenchIdApiResponse,
+      LabsBenchesActionsForceDeleteCreateByBenchIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/benches/${queryArg.benchId}/actions/force-delete`,
+        method: "POST",
+        body: queryArg.benchForceDelete,
+      }),
+    }),
     labsBenchesActionsPlaceCreateByBenchId: build.mutation<
       LabsBenchesActionsPlaceCreateByBenchIdApiResponse,
       LabsBenchesActionsPlaceCreateByBenchIdApiArg
@@ -1764,6 +1774,16 @@ const injectedRtkApi = api.injectEndpoints({
         url: `/api/labs/equipment/${queryArg.equipmentId}/actions/extend-loan`,
         method: "POST",
         body: queryArg.equipmentExtendLoan,
+      }),
+    }),
+    labsEquipmentActionsForceDeleteCreateByEquipmentId: build.mutation<
+      LabsEquipmentActionsForceDeleteCreateByEquipmentIdApiResponse,
+      LabsEquipmentActionsForceDeleteCreateByEquipmentIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/equipment/${queryArg.equipmentId}/actions/force-delete`,
+        method: "POST",
+        body: queryArg.equipmentForceDelete,
       }),
     }),
     labsEquipmentActionsHandOverCreateByEquipmentId: build.mutation<
@@ -4127,6 +4147,16 @@ const injectedRtkApi = api.injectEndpoints({
         body: queryArg.roomStatusWrite,
       }),
     }),
+    labsRoomsActionsForceDeleteCreateByRoomId: build.mutation<
+      LabsRoomsActionsForceDeleteCreateByRoomIdApiResponse,
+      LabsRoomsActionsForceDeleteCreateByRoomIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/rooms/${queryArg.roomId}/actions/force-delete`,
+        method: "POST",
+        body: queryArg.roomForceDelete,
+      }),
+    }),
     labsRoomsActionsGenerateSlotsCreateByRoomId: build.mutation<
       LabsRoomsActionsGenerateSlotsCreateByRoomIdApiResponse,
       LabsRoomsActionsGenerateSlotsCreateByRoomIdApiArg
@@ -4451,6 +4481,16 @@ const injectedRtkApi = api.injectEndpoints({
         url: `/api/labs/stations/${queryArg.stationId}/actions/change-status`,
         method: "POST",
         body: queryArg.stationStatusWrite,
+      }),
+    }),
+    labsStationsActionsForceDeleteCreateByStationId: build.mutation<
+      LabsStationsActionsForceDeleteCreateByStationIdApiResponse,
+      LabsStationsActionsForceDeleteCreateByStationIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/stations/${queryArg.stationId}/actions/force-delete`,
+        method: "POST",
+        body: queryArg.stationForceDelete,
       }),
     }),
     labsStationsActionsPlaceCreateByStationId: build.mutation<
@@ -4850,6 +4890,14 @@ const injectedRtkApi = api.injectEndpoints({
       LabsWorkbookImportsExportRetrieveApiArg
     >({
       query: () => ({ url: `/api/labs/workbook-imports/export` }),
+    }),
+    labsWorkbookImportsProgressRetrieveByProgressKey: build.query<
+      LabsWorkbookImportsProgressRetrieveByProgressKeyApiResponse,
+      LabsWorkbookImportsProgressRetrieveByProgressKeyApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/workbook-imports/progress/${queryArg.progressKey}`,
+      }),
     }),
     labsWorkbookImportsTemplateRetrieve: build.query<
       LabsWorkbookImportsTemplateRetrieveApiResponse,
@@ -5479,6 +5527,64 @@ const injectedRtkApi = api.injectEndpoints({
       query: (queryArg) => ({
         url: `/api/support/tickets/${queryArg.key}/watchers`,
         method: "DELETE",
+      }),
+    }),
+    supportTicketsWorkLogsRetrieveByKey: build.query<
+      SupportTicketsWorkLogsRetrieveByKeyApiResponse,
+      SupportTicketsWorkLogsRetrieveByKeyApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/support/tickets/${queryArg.key}/work-logs`,
+        params: {
+          page: queryArg.page,
+          page_size: queryArg.pageSize,
+        },
+      }),
+    }),
+    supportTicketsWorkLogsCreateByKey: build.mutation<
+      SupportTicketsWorkLogsCreateByKeyApiResponse,
+      SupportTicketsWorkLogsCreateByKeyApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/support/tickets/${queryArg.key}/work-logs`,
+        method: "POST",
+        body: queryArg.workLogRequest,
+        headers: {
+          "Idempotency-Key": queryArg["Idempotency-Key"],
+        },
+      }),
+    }),
+    supportTicketsWorkLogsRetrieveByKeyWorkLogId: build.query<
+      SupportTicketsWorkLogsRetrieveByKeyWorkLogIdApiResponse,
+      SupportTicketsWorkLogsRetrieveByKeyWorkLogIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/support/tickets/${queryArg.key}/work-logs/${queryArg.workLogId}`,
+      }),
+    }),
+    supportTicketsWorkLogsPartialUpdateByKeyWorkLogId: build.mutation<
+      SupportTicketsWorkLogsPartialUpdateByKeyWorkLogIdApiResponse,
+      SupportTicketsWorkLogsPartialUpdateByKeyWorkLogIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/support/tickets/${queryArg.key}/work-logs/${queryArg.workLogId}`,
+        method: "PATCH",
+        body: queryArg.patchedWorkLogRequest,
+        headers: {
+          "If-Match": queryArg["If-Match"],
+        },
+      }),
+    }),
+    supportTicketsWorkLogsDestroyByKeyWorkLogId: build.mutation<
+      SupportTicketsWorkLogsDestroyByKeyWorkLogIdApiResponse,
+      SupportTicketsWorkLogsDestroyByKeyWorkLogIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/support/tickets/${queryArg.key}/work-logs/${queryArg.workLogId}`,
+        method: "DELETE",
+        headers: {
+          "If-Match": queryArg["If-Match"],
+        },
       }),
     }),
     supportTicketsStatsRetrieve: build.query<
@@ -6190,6 +6296,12 @@ export type LabsBenchesActionsFavoriteDestroyByBenchIdApiResponse = unknown;
 export type LabsBenchesActionsFavoriteDestroyByBenchIdApiArg = {
   benchId: number;
 };
+export type LabsBenchesActionsForceDeleteCreateByBenchIdApiResponse =
+  /** status 200  */ BenchForceDeletedSerializersBenchForceDeleteResultDetailResponseRead;
+export type LabsBenchesActionsForceDeleteCreateByBenchIdApiArg = {
+  benchId: number;
+  benchForceDelete: BenchForceDelete;
+};
 export type LabsBenchesActionsPlaceCreateByBenchIdApiResponse =
   /** status 200  */ BenchPlaceActionSerializersBenchDetailResponseRead;
 export type LabsBenchesActionsPlaceCreateByBenchIdApiArg = {
@@ -6807,6 +6919,12 @@ export type LabsEquipmentActionsExtendLoanCreateByEquipmentIdApiResponse =
 export type LabsEquipmentActionsExtendLoanCreateByEquipmentIdApiArg = {
   equipmentId: number;
   equipmentExtendLoan: EquipmentExtendLoan;
+};
+export type LabsEquipmentActionsForceDeleteCreateByEquipmentIdApiResponse =
+  /** status 200  */ EquipmentForceDeletedSerializersEquipmentForceDeleteResultDetailResponseRead;
+export type LabsEquipmentActionsForceDeleteCreateByEquipmentIdApiArg = {
+  equipmentId: number;
+  equipmentForceDelete: EquipmentForceDelete;
 };
 export type LabsEquipmentActionsHandOverCreateByEquipmentIdApiResponse =
   /** status 200  */ EquipmentLoanOpenedSerializersEquipmentLoanDetailResponseRead;
@@ -8375,6 +8493,12 @@ export type LabsRoomsActionsChangeStatusCreateByRoomIdApiArg = {
   roomId: number;
   roomStatusWrite: RoomStatusWrite;
 };
+export type LabsRoomsActionsForceDeleteCreateByRoomIdApiResponse =
+  /** status 200  */ RoomForceDeletedSerializersRoomForceDeleteResultDetailResponseRead;
+export type LabsRoomsActionsForceDeleteCreateByRoomIdApiArg = {
+  roomId: number;
+  roomForceDelete: RoomForceDelete;
+};
 export type LabsRoomsActionsGenerateSlotsCreateByRoomIdApiResponse =
   /** status 200  */ RoomSlotGenerateSerializersRoomSlotPaginatedResponseRead;
 export type LabsRoomsActionsGenerateSlotsCreateByRoomIdApiArg = {
@@ -8581,6 +8705,12 @@ export type LabsStationsActionsChangeStatusCreateByStationIdApiResponse =
 export type LabsStationsActionsChangeStatusCreateByStationIdApiArg = {
   stationId: number;
   stationStatusWrite: StationStatusWrite;
+};
+export type LabsStationsActionsForceDeleteCreateByStationIdApiResponse =
+  /** status 200  */ StationForceDeletedSerializersStationForceDeleteResultDetailResponseRead;
+export type LabsStationsActionsForceDeleteCreateByStationIdApiArg = {
+  stationId: number;
+  stationForceDelete: StationForceDelete;
 };
 export type LabsStationsActionsPlaceCreateByStationIdApiResponse =
   /** status 200  */ StationPlaceActionSerializersStationDetailResponseRead;
@@ -8831,6 +8961,11 @@ export type LabsWorkbookImportsActionsCheckCreateApiArg = {
 export type LabsWorkbookImportsExportRetrieveApiResponse =
   /** status 200  */ Blob;
 export type LabsWorkbookImportsExportRetrieveApiArg = void;
+export type LabsWorkbookImportsProgressRetrieveByProgressKeyApiResponse =
+  /** status 200  */ WorkbookImportProgressSerializersImportProgressDetailResponseRead;
+export type LabsWorkbookImportsProgressRetrieveByProgressKeyApiArg = {
+  progressKey: string;
+};
 export type LabsWorkbookImportsTemplateRetrieveApiResponse =
   /** status 200  */ Blob;
 export type LabsWorkbookImportsTemplateRetrieveApiArg = void;
@@ -9306,6 +9441,43 @@ export type SupportTicketsWatchersCreateByKeyApiArg = {
 export type SupportTicketsWatchersDestroyByKeyApiResponse = unknown;
 export type SupportTicketsWatchersDestroyByKeyApiArg = {
   key: string;
+};
+export type SupportTicketsWorkLogsRetrieveByKeyApiResponse =
+  /** status 200  */ TicketWorkLogListWorkLogsTicketWorkLogPaginatedResponseRead;
+export type SupportTicketsWorkLogsRetrieveByKeyApiArg = {
+  key: string;
+  page?: number;
+  pageSize?: number;
+};
+export type SupportTicketsWorkLogsCreateByKeyApiResponse =
+  /** status 201  */ TicketWorkLogCreateWorkLogsTicketWorkLogDetailResponseRead;
+export type SupportTicketsWorkLogsCreateByKeyApiArg = {
+  /** UUID replay key valid for 24 hours. */
+  "Idempotency-Key": string;
+  key: string;
+  workLogRequest: WorkLogRequest;
+};
+export type SupportTicketsWorkLogsRetrieveByKeyWorkLogIdApiResponse =
+  /** status 200  */ TicketWorkLogDetailWorkLogsTicketWorkLogDetailResponseRead;
+export type SupportTicketsWorkLogsRetrieveByKeyWorkLogIdApiArg = {
+  key: string;
+  workLogId: number;
+};
+export type SupportTicketsWorkLogsPartialUpdateByKeyWorkLogIdApiResponse =
+  /** status 200  */ TicketWorkLogUpdateWorkLogsTicketWorkLogDetailResponseRead;
+export type SupportTicketsWorkLogsPartialUpdateByKeyWorkLogIdApiArg = {
+  /** Current work log ETag. */
+  "If-Match": string;
+  key: string;
+  workLogId: number;
+  patchedWorkLogRequest: PatchedWorkLogRequest;
+};
+export type SupportTicketsWorkLogsDestroyByKeyWorkLogIdApiResponse = unknown;
+export type SupportTicketsWorkLogsDestroyByKeyWorkLogIdApiArg = {
+  /** Current work log ETag. */
+  "If-Match": string;
+  key: string;
+  workLogId: number;
 };
 export type SupportTicketsStatsRetrieveApiResponse =
   /** status 200  */ SupportQueueStatsSerializersQueueStatsDetailResponseRead;
@@ -10842,6 +11014,29 @@ export type BenchFavoriteSerializersBenchFavoriteDetailResponse = {
 };
 export type BenchFavoriteSerializersBenchFavoriteDetailResponseRead = {
   data: BenchFavoriteRead;
+};
+export type BenchForceDeleteResult = {};
+export type BenchForceDeleteReleased = {};
+export type BenchForceDeleteReleasedRead = {
+  equipment: number;
+  bookings: number;
+};
+export type BenchForceDeleteResultRead = {
+  id: number;
+  released: BenchForceDeleteReleasedRead;
+};
+export type BenchForceDeletedSerializersBenchForceDeleteResultDetailResponse = {
+  data: BenchForceDeleteResult;
+};
+export type BenchForceDeletedSerializersBenchForceDeleteResultDetailResponseRead =
+  {
+    data: BenchForceDeleteResultRead;
+  };
+export type BenchForceDelete = {
+  /** Operator reason for force-deleting this bench, unassigning equipment, and cancelling active bookings. */
+  reason: string;
+  /** Must be true to confirm force deletion. */
+  confirm: boolean;
 };
 export type BenchPlaceActionSerializersBenchDetailResponse = {
   data: Bench;
@@ -12652,6 +12847,32 @@ export type EquipmentLoanExtendedSerializersEquipmentLoanDetailResponseRead = {
 };
 export type EquipmentExtendLoan = {
   due_at: string;
+};
+export type EquipmentForceDeleteResult = {};
+export type EquipmentForceDeleteReleased = {};
+export type EquipmentForceDeleteReleasedRead = {
+  bench_assignments: number;
+  loans: number;
+  license_assignments: number;
+  bookings: number;
+};
+export type EquipmentForceDeleteResultRead = {
+  id: number;
+  released: EquipmentForceDeleteReleasedRead;
+};
+export type EquipmentForceDeletedSerializersEquipmentForceDeleteResultDetailResponse =
+  {
+    data: EquipmentForceDeleteResult;
+  };
+export type EquipmentForceDeletedSerializersEquipmentForceDeleteResultDetailResponseRead =
+  {
+    data: EquipmentForceDeleteResultRead;
+  };
+export type EquipmentForceDelete = {
+  /** Operator reason for force-deleting this equipment and releasing active dependents. */
+  reason: string;
+  /** Must be true to confirm force deletion. */
+  confirm: boolean;
 };
 export type EquipmentLoanOpenedSerializersEquipmentLoanDetailResponse = {
   data: EquipmentLoan;
@@ -16340,6 +16561,29 @@ export type RoomStatusWrite = {
     [key: string]: any;
   };
 };
+export type RoomForceDeleteResult = {};
+export type RoomForceDeleteReleased = {};
+export type RoomForceDeleteReleasedRead = {
+  stations: number;
+  equipment: number;
+};
+export type RoomForceDeleteResultRead = {
+  id: number;
+  released: RoomForceDeleteReleasedRead;
+};
+export type RoomForceDeletedSerializersRoomForceDeleteResultDetailResponse = {
+  data: RoomForceDeleteResult;
+};
+export type RoomForceDeletedSerializersRoomForceDeleteResultDetailResponseRead =
+  {
+    data: RoomForceDeleteResultRead;
+  };
+export type RoomForceDelete = {
+  /** Operator reason for force-deleting this room and detaching its stations. */
+  reason: string;
+  /** Must be true to confirm force deletion. */
+  confirm: boolean;
+};
 export type RoomSlotGenerateSerializersRoomSlotPagination = {
   count: number;
   page: number;
@@ -16817,6 +17061,30 @@ export type StationStatusWrite = {
   metadata?: {
     [key: string]: any;
   };
+};
+export type StationForceDeleteResult = {};
+export type StationForceDeleteReleased = {};
+export type StationForceDeleteReleasedRead = {
+  benches: number;
+  equipment: number;
+};
+export type StationForceDeleteResultRead = {
+  id: number;
+  released: StationForceDeleteReleasedRead;
+};
+export type StationForceDeletedSerializersStationForceDeleteResultDetailResponse =
+  {
+    data: StationForceDeleteResult;
+  };
+export type StationForceDeletedSerializersStationForceDeleteResultDetailResponseRead =
+  {
+    data: StationForceDeleteResultRead;
+  };
+export type StationForceDelete = {
+  /** Operator reason for force-deleting this station and detaching its benches. */
+  reason: string;
+  /** Must be true to confirm force deletion. */
+  confirm: boolean;
 };
 export type StationPlaceActionSerializersStationDetailResponse = {
   data: Station;
@@ -17672,6 +17940,8 @@ export type WorkbookUpload = {
     * `create` - Create new
     * `upsert` - Update existing */
   mode?: WorkbookImportModeEnum;
+  /** Optional client-generated UUID to poll live progress via GET /workbook-imports/progress/{progress_key}. */
+  progress_key?: string | null;
 };
 export type WorkbookImportCheckSerializersImportReportDetailResponse = {
   data: ImportReport;
@@ -17679,6 +17949,55 @@ export type WorkbookImportCheckSerializersImportReportDetailResponse = {
 export type WorkbookImportCheckSerializersImportReportDetailResponseRead = {
   data: ImportReportRead;
 };
+export type ImportProgress = {
+  /** Client-supplied progress key (UUID). */
+  progress_key: string;
+  /** Overall progress percentage (0-100). */
+  percent: number;
+  /** Name of the sheet currently being processed. */
+  current_sheet: string | null;
+  /** Number of rows processed so far. */
+  processed_rows: number;
+  /** Total data rows scheduled for processing. */
+  total_rows: number;
+  /** Number of sheets completed so far. */
+  completed_sheets: number;
+  /** Total sheets with data scheduled for processing. */
+  total_sheets: number;
+  /** Human-readable progress description. */
+  message: string;
+  /** UTC timestamp of the latest progress update. */
+  updated_at: string;
+};
+export type ImportProgressRead = {
+  /** Client-supplied progress key (UUID). */
+  progress_key: string;
+  status: ChoiceRead;
+  phase: ChoiceRead;
+  /** Overall progress percentage (0-100). */
+  percent: number;
+  /** Name of the sheet currently being processed. */
+  current_sheet: string | null;
+  /** Number of rows processed so far. */
+  processed_rows: number;
+  /** Total data rows scheduled for processing. */
+  total_rows: number;
+  /** Number of sheets completed so far. */
+  completed_sheets: number;
+  /** Total sheets with data scheduled for processing. */
+  total_sheets: number;
+  /** Human-readable progress description. */
+  message: string;
+  /** UTC timestamp of the latest progress update. */
+  updated_at: string;
+};
+export type WorkbookImportProgressSerializersImportProgressDetailResponse = {
+  data: ImportProgress;
+};
+export type WorkbookImportProgressSerializersImportProgressDetailResponseRead =
+  {
+    data: ImportProgressRead;
+  };
 export type LoginResponse = {
   username: string;
   access: string;
@@ -18679,6 +18998,68 @@ export type WatcherRequest = {
   /** Defaults to the caller. */
   user_id?: number | null;
 };
+export type TicketWorkLogListWorkLogsTicketWorkLogPagination = {
+  count: number;
+  page: number;
+  page_size: number;
+  next: string | null;
+  previous: string | null;
+};
+export type TicketWorkLogListWorkLogsTicketWorkLogPaginationMeta = {
+  pagination: TicketWorkLogListWorkLogsTicketWorkLogPagination;
+};
+export type TicketWorkLog = {
+  /** Effort spent in whole minutes (1 to 14,400). */
+  time_spent_minutes: number;
+};
+export type TicketWorkLogRead = {
+  id: number;
+  author: UserReferenceRead;
+  /** Effort spent in whole minutes (1 to 14,400). */
+  time_spent_minutes: number;
+  started_at: string;
+  description: string;
+  created_at: string;
+  updated_at: string;
+  can_manage: boolean;
+  etag: string;
+};
+export type TicketWorkLogListWorkLogsTicketWorkLogPaginatedResponse = {
+  meta: TicketWorkLogListWorkLogsTicketWorkLogPaginationMeta;
+  data: TicketWorkLog[];
+};
+export type TicketWorkLogListWorkLogsTicketWorkLogPaginatedResponseRead = {
+  meta: TicketWorkLogListWorkLogsTicketWorkLogPaginationMeta;
+  data: TicketWorkLogRead[];
+};
+export type TicketWorkLogCreateWorkLogsTicketWorkLogDetailResponse = {
+  data: TicketWorkLog;
+};
+export type TicketWorkLogCreateWorkLogsTicketWorkLogDetailResponseRead = {
+  data: TicketWorkLogRead;
+};
+export type WorkLogRequest = {
+  time_spent_minutes: number;
+  started_at?: string;
+  description?: string;
+};
+export type TicketWorkLogDetailWorkLogsTicketWorkLogDetailResponse = {
+  data: TicketWorkLog;
+};
+export type TicketWorkLogDetailWorkLogsTicketWorkLogDetailResponseRead = {
+  data: TicketWorkLogRead;
+};
+export type TicketWorkLogUpdateWorkLogsTicketWorkLogDetailResponse = {
+  data: TicketWorkLog;
+};
+export type TicketWorkLogUpdateWorkLogsTicketWorkLogDetailResponseRead = {
+  data: TicketWorkLogRead;
+};
+export type PatchedWorkLogRequest = {
+  time_spent_minutes?: number;
+  started_at?: string;
+  description?: string;
+};
 export type QueueStatsPriorityItem = {
   /** Rank of the priority for ordering. */
   rank: number;
@@ -19106,6 +19487,7 @@ export const {
   useLabsBenchesActionsChangeLifecycleCreateByBenchIdMutation,
   useLabsBenchesActionsFavoriteCreateByBenchIdMutation,
   useLabsBenchesActionsFavoriteDestroyByBenchIdMutation,
+  useLabsBenchesActionsForceDeleteCreateByBenchIdMutation,
   useLabsBenchesActionsPlaceCreateByBenchIdMutation,
   useLabsBenchesActionsPlacePartialUpdateByBenchIdMutation,
   useLabsBenchesEquipmentRetrieveByBenchIdQuery,
@@ -19183,6 +19565,7 @@ export const {
   useLabsEquipmentActionsChangeConditionCreateByEquipmentIdMutation,
   useLabsEquipmentActionsChangeLifecycleCreateByEquipmentIdMutation,
   useLabsEquipmentActionsExtendLoanCreateByEquipmentIdMutation,
+  useLabsEquipmentActionsForceDeleteCreateByEquipmentIdMutation,
   useLabsEquipmentActionsHandOverCreateByEquipmentIdMutation,
   useLabsEquipmentActionsReturnCreateByEquipmentIdMutation,
   useLabsEquipmentActivityRetrieveByEquipmentIdQuery,
@@ -19392,6 +19775,7 @@ export const {
   useLabsRoomsDestroyByRoomIdMutation,
   useLabsRoomsActionsChangeLifecycleCreateByRoomIdMutation,
   useLabsRoomsActionsChangeStatusCreateByRoomIdMutation,
+  useLabsRoomsActionsForceDeleteCreateByRoomIdMutation,
   useLabsRoomsActionsGenerateSlotsCreateByRoomIdMutation,
   useLabsRoomsExpensesRetrieveByRoomIdQuery,
   useLabsRoomsExpensesCreateByRoomIdMutation,
@@ -19421,6 +19805,7 @@ export const {
   useLabsStationsDestroyByStationIdMutation,
   useLabsStationsActionsChangeLifecycleCreateByStationIdMutation,
   useLabsStationsActionsChangeStatusCreateByStationIdMutation,
+  useLabsStationsActionsForceDeleteCreateByStationIdMutation,
   useLabsStationsActionsPlaceCreateByStationIdMutation,
   useLabsStationsActionsPlacePartialUpdateByStationIdMutation,
   useLabsStationsHistoryRetrieveByStationIdQuery,
@@ -19461,6 +19846,7 @@ export const {
   useLabsWorkbookImportsActionsApplyCreateMutation,
   useLabsWorkbookImportsActionsCheckCreateMutation,
   useLabsWorkbookImportsExportRetrieveQuery,
+  useLabsWorkbookImportsProgressRetrieveByProgressKeyQuery,
   useLabsWorkbookImportsTemplateRetrieveQuery,
   useLoginCreateMutation,
   useLogoutCreateMutation,
@@ -19527,6 +19913,11 @@ export const {
   useSupportTicketsResourcesDestroyByKeyMutation,
   useSupportTicketsWatchersCreateByKeyMutation,
   useSupportTicketsWatchersDestroyByKeyMutation,
+  useSupportTicketsWorkLogsRetrieveByKeyQuery,
+  useSupportTicketsWorkLogsCreateByKeyMutation,
+  useSupportTicketsWorkLogsRetrieveByKeyWorkLogIdQuery,
+  useSupportTicketsWorkLogsPartialUpdateByKeyWorkLogIdMutation,
+  useSupportTicketsWorkLogsDestroyByKeyWorkLogIdMutation,
   useSupportTicketsStatsRetrieveQuery,
   useUserGroupsRetrieveQuery,
   useUserGroupsUsersRetrieveByGroupIdQuery,

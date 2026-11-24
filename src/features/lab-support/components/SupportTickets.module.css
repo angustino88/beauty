@@ -345,20 +345,7 @@
   background: var(--lm-surface);
   border: 1px solid var(--lm-border);
   border-radius: 10px;
-  cursor: pointer;
   text-align: left;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
-}
-
-.statCard:hover {
-  border-color: var(--lm-primary-border);
-  background: var(--lm-surface-subtle);
-}
-
-.statCardActive {
-  border-color: var(--lm-primary);
-  background: color-mix(in srgb, var(--lm-primary-bg) 45%, var(--lm-surface));
-  box-shadow: 0 0 0 1px var(--lm-primary);
 }
 
 .statCopy {
@@ -383,8 +370,8 @@
 }
 
 .statSubtext {
-  color: var(--lm-text-tertiary);
-  font-size: 11px;
+  color: var(--lm-text-secondary);
+  font-size: 12px;
 }
 
 .statIconBox {
@@ -408,7 +395,21 @@
 }
 
 /* --- Table Cell Refinements --- */
+.compactTicket {
+  display: grid;
+  justify-items: start;
+  gap: 6px;
+  padding-block: 6px;
+  overflow-wrap: anywhere;
+}
+
+.compactKey {
+  font: 600 12px var(--lm-font-mono);
+  color: var(--lm-text-secondary);
+}
+
 .keyLink {
+  white-space: nowrap;
   display: inline-flex;
   align-items: center;
   gap: 5px;
