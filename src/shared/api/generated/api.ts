@@ -876,6 +876,16 @@ const injectedRtkApi = api.injectEndpoints({
         method: "DELETE",
       }),
     }),
+    labsBenchesActionsForceDeleteCreateByBenchId: build.mutation<
+      LabsBenchesActionsForceDeleteCreateByBenchIdApiResponse,
+      LabsBenchesActionsForceDeleteCreateByBenchIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/benches/${queryArg.benchId}/actions/force-delete`,
+        method: "POST",
+        body: queryArg.benchForceDelete,
+      }),
+    }),
     labsBenchesActionsPlaceCreateByBenchId: build.mutation<
       LabsBenchesActionsPlaceCreateByBenchIdApiResponse,
       LabsBenchesActionsPlaceCreateByBenchIdApiArg
@@ -1764,6 +1774,16 @@ const injectedRtkApi = api.injectEndpoints({
         url: `/api/labs/equipment/${queryArg.equipmentId}/actions/extend-loan`,
         method: "POST",
         body: queryArg.equipmentExtendLoan,
+      }),
+    }),
+    labsEquipmentActionsForceDeleteCreateByEquipmentId: build.mutation<
+      LabsEquipmentActionsForceDeleteCreateByEquipmentIdApiResponse,
+      LabsEquipmentActionsForceDeleteCreateByEquipmentIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/equipment/${queryArg.equipmentId}/actions/force-delete`,
+        method: "POST",
+        body: queryArg.equipmentForceDelete,
       }),
     }),
     labsEquipmentActionsHandOverCreateByEquipmentId: build.mutation<
@@ -4127,6 +4147,16 @@ const injectedRtkApi = api.injectEndpoints({
         body: queryArg.roomStatusWrite,
       }),
     }),
+    labsRoomsActionsForceDeleteCreateByRoomId: build.mutation<
+      LabsRoomsActionsForceDeleteCreateByRoomIdApiResponse,
+      LabsRoomsActionsForceDeleteCreateByRoomIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/rooms/${queryArg.roomId}/actions/force-delete`,
+        method: "POST",
+        body: queryArg.roomForceDelete,
+      }),
+    }),
     labsRoomsActionsGenerateSlotsCreateByRoomId: build.mutation<
       LabsRoomsActionsGenerateSlotsCreateByRoomIdApiResponse,
       LabsRoomsActionsGenerateSlotsCreateByRoomIdApiArg
@@ -4451,6 +4481,16 @@ const injectedRtkApi = api.injectEndpoints({
         url: `/api/labs/stations/${queryArg.stationId}/actions/change-status`,
         method: "POST",
         body: queryArg.stationStatusWrite,
+      }),
+    }),
+    labsStationsActionsForceDeleteCreateByStationId: build.mutation<
+      LabsStationsActionsForceDeleteCreateByStationIdApiResponse,
+      LabsStationsActionsForceDeleteCreateByStationIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/stations/${queryArg.stationId}/actions/force-delete`,
+        method: "POST",
+        body: queryArg.stationForceDelete,
       }),
     }),
     labsStationsActionsPlaceCreateByStationId: build.mutation<
@@ -4850,6 +4890,14 @@ const injectedRtkApi = api.injectEndpoints({
       LabsWorkbookImportsExportRetrieveApiArg
     >({
       query: () => ({ url: `/api/labs/workbook-imports/export` }),
+    }),
+    labsWorkbookImportsProgressRetrieveByProgressKey: build.query<
+      LabsWorkbookImportsProgressRetrieveByProgressKeyApiResponse,
+      LabsWorkbookImportsProgressRetrieveByProgressKeyApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/workbook-imports/progress/${queryArg.progressKey}`,
+      }),
     }),
     labsWorkbookImportsTemplateRetrieve: build.query<
       LabsWorkbookImportsTemplateRetrieveApiResponse,
@@ -6190,6 +6238,12 @@ export type LabsBenchesActionsFavoriteDestroyByBenchIdApiResponse = unknown;
 export type LabsBenchesActionsFavoriteDestroyByBenchIdApiArg = {
   benchId: number;
 };
+export type LabsBenchesActionsForceDeleteCreateByBenchIdApiResponse =
+  /** status 200  */ BenchForceDeletedSerializersBenchForceDeleteResultDetailResponseRead;
+export type LabsBenchesActionsForceDeleteCreateByBenchIdApiArg = {
+  benchId: number;
+  benchForceDelete: BenchForceDelete;
+};
 export type LabsBenchesActionsPlaceCreateByBenchIdApiResponse =
   /** status 200  */ BenchPlaceActionSerializersBenchDetailResponseRead;
 export type LabsBenchesActionsPlaceCreateByBenchIdApiArg = {
@@ -6807,6 +6861,12 @@ export type LabsEquipmentActionsExtendLoanCreateByEquipmentIdApiResponse =
 export type LabsEquipmentActionsExtendLoanCreateByEquipmentIdApiArg = {
   equipmentId: number;
   equipmentExtendLoan: EquipmentExtendLoan;
+};
+export type LabsEquipmentActionsForceDeleteCreateByEquipmentIdApiResponse =
+  /** status 200  */ EquipmentForceDeletedSerializersEquipmentForceDeleteResultDetailResponseRead;
+export type LabsEquipmentActionsForceDeleteCreateByEquipmentIdApiArg = {
+  equipmentId: number;
+  equipmentForceDelete: EquipmentForceDelete;
 };
 export type LabsEquipmentActionsHandOverCreateByEquipmentIdApiResponse =
   /** status 200  */ EquipmentLoanOpenedSerializersEquipmentLoanDetailResponseRead;
@@ -8375,6 +8435,12 @@ export type LabsRoomsActionsChangeStatusCreateByRoomIdApiArg = {
   roomId: number;
   roomStatusWrite: RoomStatusWrite;
 };
+export type LabsRoomsActionsForceDeleteCreateByRoomIdApiResponse =
+  /** status 200  */ RoomForceDeletedSerializersRoomForceDeleteResultDetailResponseRead;
+export type LabsRoomsActionsForceDeleteCreateByRoomIdApiArg = {
+  roomId: number;
+  roomForceDelete: RoomForceDelete;
+};
 export type LabsRoomsActionsGenerateSlotsCreateByRoomIdApiResponse =
   /** status 200  */ RoomSlotGenerateSerializersRoomSlotPaginatedResponseRead;
 export type LabsRoomsActionsGenerateSlotsCreateByRoomIdApiArg = {
@@ -8581,6 +8647,12 @@ export type LabsStationsActionsChangeStatusCreateByStationIdApiResponse =
 export type LabsStationsActionsChangeStatusCreateByStationIdApiArg = {
   stationId: number;
   stationStatusWrite: StationStatusWrite;
+};
+export type LabsStationsActionsForceDeleteCreateByStationIdApiResponse =
+  /** status 200  */ StationForceDeletedSerializersStationForceDeleteResultDetailResponseRead;
+export type LabsStationsActionsForceDeleteCreateByStationIdApiArg = {
+  stationId: number;
+  stationForceDelete: StationForceDelete;
 };
 export type LabsStationsActionsPlaceCreateByStationIdApiResponse =
   /** status 200  */ StationPlaceActionSerializersStationDetailResponseRead;
@@ -8831,6 +8903,11 @@ export type LabsWorkbookImportsActionsCheckCreateApiArg = {
 export type LabsWorkbookImportsExportRetrieveApiResponse =
   /** status 200  */ Blob;
 export type LabsWorkbookImportsExportRetrieveApiArg = void;
+export type LabsWorkbookImportsProgressRetrieveByProgressKeyApiResponse =
+  /** status 200  */ WorkbookImportProgressSerializersImportProgressDetailResponseRead;
+export type LabsWorkbookImportsProgressRetrieveByProgressKeyApiArg = {
+  progressKey: string;
+};
 export type LabsWorkbookImportsTemplateRetrieveApiResponse =
   /** status 200  */ Blob;
 export type LabsWorkbookImportsTemplateRetrieveApiArg = void;
@@ -10668,8 +10745,6 @@ export type BenchRead = {
   requested_cooling_w: number | null;
   required_utilities: any;
   commissioning_date: string | null;
-  last_inspected_at: string | null;
-  next_inspection_due_at: string | null;
   created_at: string;
   updated_at: string;
   setup_location_path: string;
@@ -10712,8 +10787,6 @@ export type BenchCreate = {
     [key: string]: any;
   };
   commissioning_date?: string | null;
-  last_inspected_at?: string | null;
-  next_inspection_due_at?: string | null;
 };
 export type BenchResourceDetail = {};
 export type BenchResourceDetailRead = {
@@ -10746,8 +10819,6 @@ export type BenchResourceDetailRead = {
   requested_cooling_w: number | null;
   required_utilities: any;
   commissioning_date: string | null;
-  last_inspected_at: string | null;
-  next_inspection_due_at: string | null;
   created_at: string;
   updated_at: string;
   setup_location_path: string;
@@ -10788,8 +10859,6 @@ export type BenchUpdate = {
     [key: string]: any;
   };
   commissioning_date?: string | null;
-  last_inspected_at?: string | null;
-  next_inspection_due_at?: string | null;
 };
 export type BenchUpdateSerializersBenchDetailResponse = {
   data: Bench;
@@ -10818,8 +10887,6 @@ export type PatchedBenchUpdate = {
     [key: string]: any;
   };
   commissioning_date?: string | null;
-  last_inspected_at?: string | null;
-  next_inspection_due_at?: string | null;
 };
 export type BenchLifecycleChangeSerializersBenchDetailResponse = {
   data: Bench;
@@ -10842,6 +10909,29 @@ export type BenchFavoriteSerializersBenchFavoriteDetailResponse = {
 };
 export type BenchFavoriteSerializersBenchFavoriteDetailResponseRead = {
   data: BenchFavoriteRead;
+};
+export type BenchForceDeleteResult = {};
+export type BenchForceDeleteReleased = {};
+export type BenchForceDeleteReleasedRead = {
+  equipment: number;
+  bookings: number;
+};
+export type BenchForceDeleteResultRead = {
+  id: number;
+  released: BenchForceDeleteReleasedRead;
+};
+export type BenchForceDeletedSerializersBenchForceDeleteResultDetailResponse = {
+  data: BenchForceDeleteResult;
+};
+export type BenchForceDeletedSerializersBenchForceDeleteResultDetailResponseRead =
+  {
+    data: BenchForceDeleteResultRead;
+  };
+export type BenchForceDelete = {
+  /** Operator reason for force-deleting this bench, unassigning equipment, and cancelling active bookings. */
+  reason: string;
+  /** Must be true to confirm force deletion. */
+  confirm: boolean;
 };
 export type BenchPlaceActionSerializersBenchDetailResponse = {
   data: Bench;
@@ -12652,6 +12742,32 @@ export type EquipmentLoanExtendedSerializersEquipmentLoanDetailResponseRead = {
 };
 export type EquipmentExtendLoan = {
   due_at: string;
+};
+export type EquipmentForceDeleteResult = {};
+export type EquipmentForceDeleteReleased = {};
+export type EquipmentForceDeleteReleasedRead = {
+  bench_assignments: number;
+  loans: number;
+  license_assignments: number;
+  bookings: number;
+};
+export type EquipmentForceDeleteResultRead = {
+  id: number;
+  released: EquipmentForceDeleteReleasedRead;
+};
+export type EquipmentForceDeletedSerializersEquipmentForceDeleteResultDetailResponse =
+  {
+    data: EquipmentForceDeleteResult;
+  };
+export type EquipmentForceDeletedSerializersEquipmentForceDeleteResultDetailResponseRead =
+  {
+    data: EquipmentForceDeleteResultRead;
+  };
+export type EquipmentForceDelete = {
+  /** Operator reason for force-deleting this equipment and releasing active dependents. */
+  reason: string;
+  /** Must be true to confirm force deletion. */
+  confirm: boolean;
 };
 export type EquipmentLoanOpenedSerializersEquipmentLoanDetailResponse = {
   data: EquipmentLoan;
@@ -16341,6 +16457,29 @@ export type RoomStatusWrite = {
     [key: string]: any;
   };
 };
+export type RoomForceDeleteResult = {};
+export type RoomForceDeleteReleased = {};
+export type RoomForceDeleteReleasedRead = {
+  stations: number;
+  equipment: number;
+};
+export type RoomForceDeleteResultRead = {
+  id: number;
+  released: RoomForceDeleteReleasedRead;
+};
+export type RoomForceDeletedSerializersRoomForceDeleteResultDetailResponse = {
+  data: RoomForceDeleteResult;
+};
+export type RoomForceDeletedSerializersRoomForceDeleteResultDetailResponseRead =
+  {
+    data: RoomForceDeleteResultRead;
+  };
+export type RoomForceDelete = {
+  /** Operator reason for force-deleting this room and detaching its stations. */
+  reason: string;
+  /** Must be true to confirm force deletion. */
+  confirm: boolean;
+};
 export type RoomSlotGenerateSerializersRoomSlotPagination = {
   count: number;
   page: number;
@@ -16359,8 +16498,6 @@ export type RoomSlotRead = {
   col_index: number;
   slot_code: string;
   slot_type: ChoiceRead;
-  /** Deprecated: available, occupied, blocked or retired (occupied is computed). */
-  status: LabsChoiceReferenceRead;
   service_status: LabsChoiceReferenceRead;
   is_occupied: boolean;
   x_mm: number | null;
@@ -16819,6 +16956,30 @@ export type StationStatusWrite = {
     [key: string]: any;
   };
 };
+export type StationForceDeleteResult = {};
+export type StationForceDeleteReleased = {};
+export type StationForceDeleteReleasedRead = {
+  benches: number;
+  equipment: number;
+};
+export type StationForceDeleteResultRead = {
+  id: number;
+  released: StationForceDeleteReleasedRead;
+};
+export type StationForceDeletedSerializersStationForceDeleteResultDetailResponse =
+  {
+    data: StationForceDeleteResult;
+  };
+export type StationForceDeletedSerializersStationForceDeleteResultDetailResponseRead =
+  {
+    data: StationForceDeleteResultRead;
+  };
+export type StationForceDelete = {
+  /** Operator reason for force-deleting this station and detaching its benches. */
+  reason: string;
+  /** Must be true to confirm force deletion. */
+  confirm: boolean;
+};
 export type StationPlaceActionSerializersStationDetailResponse = {
   data: Station;
 };
@@ -16890,10 +17051,6 @@ export type StationSlotRead = {
   position_index: number;
   slot_code: string;
   label: string;
-  /** Deprecated: service_status is in_service. */
-  is_active: boolean;
-  /** Deprecated: available, occupied, out_of_service or retired (occupied is computed). */
-  status: LabsChoiceReferenceRead;
   service_status: LabsChoiceReferenceRead;
   width_mm: number | null;
   depth_mm: number | null;
@@ -16921,31 +17078,11 @@ export type StationSlotCreateSerializersStationSlotDetailResponse = {
 export type StationSlotCreateSerializersStationSlotDetailResponseRead = {
   data: StationSlotRead;
 };
-export type LegacyStationSlotStatusEnum =
-  | "available"
-  | "in_service"
-  | "maintenance"
-  | "occupied"
-  | "out_of_service"
-  | "reserved"
-  | "retired";
 export type StationSlotStatusEnum = "in_service" | "out_of_service" | "retired";
 export type StationSlotCreate = {
   position_index: number;
   slot_code: string;
   label?: string;
-  /** Deprecated: use service_status. */
-  is_active?: boolean;
-  /** Deprecated: use service_status.
-    
-    * `available` - available
-    * `in_service` - in_service
-    * `maintenance` - maintenance
-    * `occupied` - occupied
-    * `out_of_service` - out_of_service
-    * `reserved` - reserved
-    * `retired` - retired */
-  status?: LegacyStationSlotStatusEnum;
   service_status?: StationSlotStatusEnum;
   width_mm?: number | null;
   depth_mm?: number | null;
@@ -16974,18 +17111,6 @@ export type StationSlotUpdate = {
   position_index?: number;
   slot_code?: string;
   label?: string;
-  /** Deprecated: use service_status. */
-  is_active?: boolean;
-  /** Deprecated: use service_status.
-    
-    * `available` - available
-    * `in_service` - in_service
-    * `maintenance` - maintenance
-    * `occupied` - occupied
-    * `out_of_service` - out_of_service
-    * `reserved` - reserved
-    * `retired` - retired */
-  status?: LegacyStationSlotStatusEnum;
   service_status?: StationSlotStatusEnum;
   width_mm?: number | null;
   depth_mm?: number | null;
@@ -17008,18 +17133,6 @@ export type PatchedStationSlotUpdate = {
   position_index?: number;
   slot_code?: string;
   label?: string;
-  /** Deprecated: use service_status. */
-  is_active?: boolean;
-  /** Deprecated: use service_status.
-    
-    * `available` - available
-    * `in_service` - in_service
-    * `maintenance` - maintenance
-    * `occupied` - occupied
-    * `out_of_service` - out_of_service
-    * `reserved` - reserved
-    * `retired` - retired */
-  status?: LegacyStationSlotStatusEnum;
   service_status?: StationSlotStatusEnum;
   width_mm?: number | null;
   depth_mm?: number | null;
@@ -17673,6 +17786,8 @@ export type WorkbookUpload = {
     * `create` - Create new
     * `upsert` - Update existing */
   mode?: WorkbookImportModeEnum;
+  /** Optional client-generated UUID to poll live progress via GET /workbook-imports/progress/{progress_key}. */
+  progress_key?: string | null;
 };
 export type WorkbookImportCheckSerializersImportReportDetailResponse = {
   data: ImportReport;
@@ -17680,6 +17795,55 @@ export type WorkbookImportCheckSerializersImportReportDetailResponse = {
 export type WorkbookImportCheckSerializersImportReportDetailResponseRead = {
   data: ImportReportRead;
 };
+export type ImportProgress = {
+  /** Client-supplied progress key (UUID). */
+  progress_key: string;
+  /** Overall progress percentage (0-100). */
+  percent: number;
+  /** Name of the sheet currently being processed. */
+  current_sheet: string | null;
+  /** Number of rows processed so far. */
+  processed_rows: number;
+  /** Total data rows scheduled for processing. */
+  total_rows: number;
+  /** Number of sheets completed so far. */
+  completed_sheets: number;
+  /** Total sheets with data scheduled for processing. */
+  total_sheets: number;
+  /** Human-readable progress description. */
+  message: string;
+  /** UTC timestamp of the latest progress update. */
+  updated_at: string;
+};
+export type ImportProgressRead = {
+  /** Client-supplied progress key (UUID). */
+  progress_key: string;
+  status: ChoiceRead;
+  phase: ChoiceRead;
+  /** Overall progress percentage (0-100). */
+  percent: number;
+  /** Name of the sheet currently being processed. */
+  current_sheet: string | null;
+  /** Number of rows processed so far. */
+  processed_rows: number;
+  /** Total data rows scheduled for processing. */
+  total_rows: number;
+  /** Number of sheets completed so far. */
+  completed_sheets: number;
+  /** Total sheets with data scheduled for processing. */
+  total_sheets: number;
+  /** Human-readable progress description. */
+  message: string;
+  /** UTC timestamp of the latest progress update. */
+  updated_at: string;
+};
+export type WorkbookImportProgressSerializersImportProgressDetailResponse = {
+  data: ImportProgress;
+};
+export type WorkbookImportProgressSerializersImportProgressDetailResponseRead =
+  {
+    data: ImportProgressRead;
+  };
 export type LoginResponse = {
   username: string;
   access: string;
@@ -19107,6 +19271,7 @@ export const {
   useLabsBenchesActionsChangeLifecycleCreateByBenchIdMutation,
   useLabsBenchesActionsFavoriteCreateByBenchIdMutation,
   useLabsBenchesActionsFavoriteDestroyByBenchIdMutation,
+  useLabsBenchesActionsForceDeleteCreateByBenchIdMutation,
   useLabsBenchesActionsPlaceCreateByBenchIdMutation,
   useLabsBenchesActionsPlacePartialUpdateByBenchIdMutation,
   useLabsBenchesEquipmentRetrieveByBenchIdQuery,
@@ -19184,6 +19349,7 @@ export const {
   useLabsEquipmentActionsChangeConditionCreateByEquipmentIdMutation,
   useLabsEquipmentActionsChangeLifecycleCreateByEquipmentIdMutation,
   useLabsEquipmentActionsExtendLoanCreateByEquipmentIdMutation,
+  useLabsEquipmentActionsForceDeleteCreateByEquipmentIdMutation,
   useLabsEquipmentActionsHandOverCreateByEquipmentIdMutation,
   useLabsEquipmentActionsReturnCreateByEquipmentIdMutation,
   useLabsEquipmentActivityRetrieveByEquipmentIdQuery,
@@ -19393,6 +19559,7 @@ export const {
   useLabsRoomsDestroyByRoomIdMutation,
   useLabsRoomsActionsChangeLifecycleCreateByRoomIdMutation,
   useLabsRoomsActionsChangeStatusCreateByRoomIdMutation,
+  useLabsRoomsActionsForceDeleteCreateByRoomIdMutation,
   useLabsRoomsActionsGenerateSlotsCreateByRoomIdMutation,
   useLabsRoomsExpensesRetrieveByRoomIdQuery,
   useLabsRoomsExpensesCreateByRoomIdMutation,
@@ -19422,6 +19589,7 @@ export const {
   useLabsStationsDestroyByStationIdMutation,
   useLabsStationsActionsChangeLifecycleCreateByStationIdMutation,
   useLabsStationsActionsChangeStatusCreateByStationIdMutation,
+  useLabsStationsActionsForceDeleteCreateByStationIdMutation,
   useLabsStationsActionsPlaceCreateByStationIdMutation,
   useLabsStationsActionsPlacePartialUpdateByStationIdMutation,
   useLabsStationsHistoryRetrieveByStationIdQuery,
@@ -19462,6 +19630,7 @@ export const {
   useLabsWorkbookImportsActionsApplyCreateMutation,
   useLabsWorkbookImportsActionsCheckCreateMutation,
   useLabsWorkbookImportsExportRetrieveQuery,
+  useLabsWorkbookImportsProgressRetrieveByProgressKeyQuery,
   useLabsWorkbookImportsTemplateRetrieveQuery,
   useLoginCreateMutation,
   useLogoutCreateMutation,
