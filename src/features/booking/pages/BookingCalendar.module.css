@@ -1,6 +1,6 @@
 .calendarCard {
-    border: 0;
-    box-shadow: 0 1px 3px rgba(20, 32, 28, 0.06), 0 12px 32px rgba(20, 32, 28, 0.05);
+    border: 1px solid var(--lm-border);
+    border-radius: 12px;
 }
 
 .calendarCard :global(.ant-card-body) {
@@ -46,19 +46,17 @@
     .headerControls {
         flex-wrap: wrap;
         gap: 8px;
+        justify-content: flex-start;
     }
 
     .filterControl {
+        flex-basis: 160px;
         max-width: 100%;
-        min-width: 160px;
+        min-width: 0;
     }
 }
 
 @media screen and (max-width: 576px) {
-    .calendarCard {
-        border-radius: 0;
-    }
-
     .calendarCard :global(.ant-card-body) {
         padding: 8px 10px;
     }

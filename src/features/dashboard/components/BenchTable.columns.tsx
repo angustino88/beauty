@@ -25,7 +25,7 @@ const STATUS_FILTER_OPTIONS = SUMMARY_STATUS_VALUES.map((s) => ({
 }));
 
 /** One look for "nothing here" in every cell. */
-const EMPTY = <span style={{ color: 'var(--lm-text-disabled)' }} aria-label="None">–</span>;
+const EMPTY = <span style={{ color: 'var(--lm-text-tertiary)' }} aria-label="None">–</span>;
 const benchLabel = (bench: DashboardBench) => bench.name || bench.lab_name || bench.sku || `bench #${bench.id}`;
 
 export interface BuildColumnsParams {
@@ -36,6 +36,7 @@ export interface BuildColumnsParams {
   filterHandlers: Record<string, (visible: boolean) => void>;
   handleFavoriteClick: (benchId: number, isFavorite: boolean, e: MouseEvent) => void;
   openModal: (id: number) => void;
+  pinActions: boolean;
   navigate: NavigateFunction;
   styles: { favoriteActiveBtn: string };
 }
@@ -47,6 +48,8 @@ export function buildColumns({
   licenseFilters,
   filterHandlers,
   handleFavoriteClick,
+  openModal,
+  pinActions,
   navigate,
   styles,
 }: BuildColumnsParams): ColumnsType<DashboardBench> {
@@ -64,8 +67,10 @@ export function buildColumns({
       dataIndex: 'bench_group',
       key: 'bench_group',
       align: 'left' as const,
-      minWidth: 140,
-      render: (g: DashboardBench['bench_group']) => g?.name || EMPTY,
+      minWidth: 136,
+      render: (g: DashboardBench['bench_group']) => g?.name ? (
+        <span className="benchGroup" title={g.name}>{g.name}</span>
+      ) : EMPTY,
       filters: benchGroupFilters,
       filterSearch: true,
       filterMultiple: true,
@@ -77,7 +82,7 @@ export function buildColumns({
       title: 'Status',
       key: 'status',
       align: 'left' as const,
-      minWidth: 178,
+      minWidth: 170,
       filters: STATUS_FILTER_OPTIONS,
       filterSearch: true,
       filterMultiple: true,
@@ -107,8 +112,12 @@ export function buildColumns({
       dataIndex: 'name',
       key: 'name',
       align: 'left' as const,
-      minWidth: 120,
-      render: (_: unknown, record: DashboardBench) => record.name || record.lab_name || EMPTY,
+      minWidth: 126,
+      render: (_: unknown, record: DashboardBench) => (
+        <button type="button" className="benchName" onClick={() => openModal(record.id)}>
+          {benchLabel(record)}
+        </button>
+      ),
     },
     {
       title: 'Computer Name',
@@ -130,7 +139,7 @@ export function buildColumns({
       title: 'Remote User',
       key: 'remote_user',
       align: 'center' as const,
-      width: 150,
+      minWidth: 118,
       render: (_: unknown, record: DashboardBench) => {
         const username = record.computing?.remote_user ?? record.remote_user?.username;
         const displayName =
@@ -150,10 +159,11 @@ export function buildColumns({
       render: (_: unknown, record: DashboardBench) => {
         const samples = record.samples ?? record.samples_list ?? [];
         return Array.isArray(samples) && samples.length ? (
-          <div className="sampleTags">
+          <div className="resourceTags">
             <MultipleTagCell
               val={samples as unknown as Record<string, unknown>[]}
               displayKey="name"
+              kind="sample"
             />
           </div>
         ) : EMPTY;
@@ -173,10 +183,11 @@ export function buildColumns({
       render: (_: unknown, record: DashboardBench) => {
         const licenses = record.licenses ?? record.license_list ?? [];
         return Array.isArray(licenses) && licenses.length ? (
-          <div className="licenseTags">
+          <div className="resourceTags">
             <MultipleTagCell
               val={licenses as unknown as Record<string, unknown>[]}
               displayKey="name"
+              kind="license"
             />
           </div>
         ) : EMPTY;
@@ -219,9 +230,9 @@ export function buildColumns({
     {
       title: 'Actions',
       key: 'action',
-      fixed: 'right' as const,
+      fixed: pinActions ? 'right' : undefined,
       align: 'center' as const,
-      minWidth: 130,
+      minWidth: 116,
       render: (_: unknown, bench: DashboardBench) => (
         <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
           <TooltipButton

@@ -17,6 +17,7 @@ import {
 } from "antd";
 import { getApiErrorMessage, notify } from "@/shared/notifications";
 import { DeleteOutlined, PlusOutlined } from "@ant-design/icons";
+import { ResourceBadge } from "@/components/display/ResourceBadge";
 import { usePagedOptions } from "@/shared/hooks/usePagedOptions";
 import {
   useAssignEquipmentMutation,
@@ -168,7 +169,9 @@ export function EquipmentAssignmentModal({
                         ) : (
                           <strong>{item.name || item.sku}</strong>
                         )}
-                        <Tag color="blue">{item.category?.name || "Equipment"}</Tag>
+                        <ResourceBadge kind={categoryKey === "sample" ? "sample" : "category"}>
+                          {item.category?.name || "Equipment"}
+                        </ResourceBadge>
                         {item.role && item.role !== "default" && <Tag color="default">{item.role}</Tag>}
                         {item.position != null && item.position !== 0 && <Tag color="default">Pos: {item.position}</Tag>}
                       </Space>

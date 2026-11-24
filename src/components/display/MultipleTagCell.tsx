@@ -1,12 +1,14 @@
 import { Tag, Tooltip } from 'antd';
+import { ResourceBadge, type ResourceBadgeKind } from './ResourceBadge';
 
 interface MultipleTagCellProps {
   val: Record<string, unknown>[];
   displayKey: string;
   tooltipKey?: string;
+  kind?: ResourceBadgeKind;
 }
 
-export function MultipleTagCell({ val, displayKey, tooltipKey }: MultipleTagCellProps) {
+export function MultipleTagCell({ val, displayKey, tooltipKey, kind }: MultipleTagCellProps) {
   if (!Array.isArray(val) || val.length === 0) return null;
 
   return (
@@ -22,7 +24,7 @@ export function MultipleTagCell({ val, displayKey, tooltipKey }: MultipleTagCell
             placement="right"
             title={tooltipKey ? String(item[tooltipKey] ?? '') : null}
           >
-            <Tag>{displayValue}</Tag>
+            {kind ? <ResourceBadge kind={kind}>{displayValue}</ResourceBadge> : <Tag>{displayValue}</Tag>}
           </Tooltip>
         );
       })}

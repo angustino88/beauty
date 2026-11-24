@@ -1,0 +1,38 @@
+.badge {
+  display: inline-block;
+  max-inline-size: 100%;
+  padding: 2px 8px;
+  color: var(--badge-fg);
+  background: var(--badge-bg);
+  border: 1px solid var(--badge-border);
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
+  overflow-wrap: anywhere;
+  vertical-align: middle;
+}
+
+.category {
+  --badge-fg: var(--lm-info-fg);
+  --badge-bg: var(--lm-info-bg);
+  --badge-border: var(--lm-info-border);
+}
+
+.booking {
+  --badge-fg: var(--lm-reserved-fg);
+  --badge-bg: var(--lm-reserved-bg);
+  --badge-border: var(--lm-reserved-border);
+}
+
+.sample {
+  --badge-fg: var(--lm-badge-sample-fg);
+  --badge-bg: var(--lm-badge-sample-bg);
+  --badge-border: var(--lm-badge-sample-border);
+}
+
+.license {
+  --badge-fg: var(--lm-badge-license-fg);
+  --badge-bg: var(--lm-badge-license-bg);
+  --badge-border: var(--lm-badge-license-border);
+}

@@ -1,7 +1,6 @@
 import { useMsal } from "@azure/msal-react";
 import { Layout } from "antd";
-import { createStyles } from "antd-style";
-import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { Outlet } from "react-router-dom";
 import AppHeader from "./AppHeader";
 import AppSideNav from "./AppSideNav";
@@ -19,20 +18,9 @@ import { FullscreenLoading } from "./FullscreenLoading";
 import { useLabsAnalyticsLabVisitsCreateMutation } from "@/shared/api/generated/api";
 import { baseApi } from "@/shared/lib/api";
 
-const useStyles = createStyles(() => ({
-  content: {
-    margin: "20px",
-    minHeight: 280,
-    minWidth: 0,
-    width: "auto !important",
-    overflowY: "auto",
-  },
-}));
-
 const { Content } = Layout;
 
 export function AppLayout() {
-  const { styles } = useStyles();
   const [collapsed, setCollapsed] = useState(
     () => window.matchMedia('(max-width: 1000px)').matches,
   );
@@ -71,28 +59,13 @@ export function AppLayout() {
     }
   }, [meData, dispatch, instance, accounts]);
 
-  const layoutClass = useMemo(
-    () => (collapsed ? styleCss.layoutCollapsed : styleCss.layout),
-    [collapsed],
-  );
-
-  const contentClass = useMemo(
-    () => `${styles.content} ${styleCss.content}`,
-    [styles],
-  );
-
-  const handleSetCollapsed = useCallback(
-    (value: boolean) => setCollapsed(value),
-    [],
-  );
-
   return (
-    <Layout className={layoutClass}>
+    <Layout className={collapsed ? styleCss.layoutCollapsed : styleCss.layout}>
       <OfflineNotification />
       <div className="header__headliner" />
       <AppHeader />
-      <AppSideNav collapsed={collapsed} setCollapsed={handleSetCollapsed} />
-      <Content className={contentClass}>
+      <AppSideNav collapsed={collapsed} setCollapsed={setCollapsed} />
+      <Content className={styleCss.content}>
         <NotificationBanner />
         <Suspense fallback={<FullscreenLoading />}>
           {" "}

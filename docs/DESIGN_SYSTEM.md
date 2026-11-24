@@ -11,12 +11,12 @@ theme; antd's theme in `src/App.tsx` mirrors the same values.
 2. **One brand accent: violet** (`--lm-primary*`). Use it for primary buttons,
    links, focus rings, selection, the active navigation item and "today".
    Only one filled primary button per toolbar.
-3. **Status colours mean status — nothing else.** `success`, `info`, `reserved`,
-   `warning`, `danger`, `neutral` are only for things that have a state
-   (badges, overview tiles, alerts, meters). Do not use them for headings,
-   labels, icons, entity types, table-column accents or decorative borders.
-4. **Entity types (room, station, bench, equipment, license) are told apart by
-   icon, not colour.**
+3. **Status colours describe states.** Use `success`, `info`, `reserved`,
+   `warning`, `danger`, and `neutral` for status badges, overview tiles, alerts,
+   and meters.
+4. **Entity types have text labels or icons.** `ResourceBadge` gives equipment
+   categories a blue tint and booking dependencies a cyan tint. Sample labels
+   are green and License labels are rose in both themes. The Mapping table uses neutral count buttons for equipment and licenses.
 5. **Charts** use `--lm-chart-1..8` (violet first) via `useChartTheme()`; status
    charts use the status tones so a colour means the same thing everywhere.
 
@@ -38,11 +38,11 @@ The mapping lives in `src/shared/status/statusTone.ts`; render statuses with
 
 | Token            | Light     | Dark      |
 |------------------|-----------|-----------|
-| `--lm-bg`        | `#f6f5f9` | `#121317` |
-| `--lm-surface`   | `#ffffff` | `#1c1d23` |
-| `--lm-border`    | `#e4e1ec` | `#30323a` |
-| `--lm-text`      | `#1a1723` | `#dcdde4` |
-| `--lm-primary`   | `#6d3fd6` | `#7458e0` |
+| `--lm-bg`        | `#f6f5f9` | `#15161b` |
+| `--lm-surface`   | `#ffffff` | `#1d1f26` |
+| `--lm-border`    | `#e4e1ec` | `#373a46` |
+| `--lm-text`      | `#1a1723` | `#e3e4eb` |
+| `--lm-primary`   | `#6d3fd6` | `#7053d2` |
 
 Light surfaces are neutrals tinted slightly towards violet, so the accent sits
 on its own ground. Dark mode is tuned for comfort rather than maximum contrast:

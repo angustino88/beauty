@@ -48,7 +48,8 @@ export function Calendar({ events, onClickEvent, onDateClick, onSelect, refetchB
     // Defer changeView outside React's render cycle — FullCalendar calls flushSync
     // internally which conflicts when called directly inside a useEffect.
     const id = setTimeout(() => {
-      calendarRef.current?.getApi().changeView(calendarView);
+      const api = calendarRef.current?.getApi();
+      if (api && api.view.type !== calendarView) api.changeView(calendarView);
     }, 0);
     return () => clearTimeout(id);
   }, [calendarView]);
@@ -88,6 +89,7 @@ export function Calendar({ events, onClickEvent, onDateClick, onSelect, refetchB
         <Suspense fallback={null}>
           <LazyCalendar
             calendarRef={calendarRef}
+            view={calendarView}
             events={events}
             onDateClick={onDateClick}
             onClickEvent={onClickEvent as ((event: EventInput) => void) | undefined}
