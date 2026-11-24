@@ -121,8 +121,8 @@ export default function BenchPage() {
         searchHint: slotsHint,
         help: slotsHint && !slotsLoading ? slotsHint : undefined,
       },
-      { name: "remark", section: "Notes", label: "Remark", type: "textarea" },
       ...editableDetails(BENCH_DETAILS),
+      { name: "remark", section: "Notes", label: "Remark", type: "textarea" },
       { name: "image", label: "Image", type: "image" },
   ];
 

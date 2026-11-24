@@ -11,35 +11,35 @@ export function singleFilterId(values: readonly unknown[] | null | undefined): n
 }
 
 export const BENCH_DETAILS = [
-  { name: 'description', label: 'Description', type: 'textarea' },
   { name: 'documentation_url', label: 'Documentation URL', type: 'text', maxLength: 500 },
   { name: 'criticality', label: 'Criticality', type: 'text', maxLength: 32 },
   { name: 'requested_power_w', label: 'Requested power (W)', type: 'number' },
   { name: 'requested_load_kg', label: 'Requested load (kg)', type: 'number' },
   { name: 'requested_cooling_w', label: 'Requested cooling (W)', type: 'number' },
-  { name: 'required_utilities', label: 'Required utilities', type: 'json-object' },
   { name: 'commissioning_date', label: 'Commissioning date', type: 'date' },
+  { name: 'required_utilities', label: 'Required utilities', type: 'json-object' },
+  { name: 'description', label: 'Description', type: 'textarea', section: 'Notes' },
 ] satisfies DetailField<BenchCreate>[];
 
 export const ROOM_DETAILS = [
-  { name: 'usable_height_m', label: 'Usable height (m)', type: 'number', decimal: true },
-  { name: 'floor_plan_revision', label: 'Floor plan revision', type: 'text', maxLength: 64 },
-  { name: 'floor_plan_url', label: 'Floor plan URL', type: 'text', maxLength: 500 },
-  { name: 'max_occupancy', label: 'Maximum occupancy', type: 'number' },
+  { name: 'usable_height_m', span: 8, label: 'Usable height (m)', section: 'Layout', type: 'number', decimal: true },
   { name: 'cooling_capacity_w', label: 'Cooling capacity (W)', type: 'number' },
   { name: 'network_port_capacity', label: 'Network ports', type: 'number' },
+  { name: 'max_occupancy', label: 'Maximum occupancy', type: 'number' },
+  { name: 'floor_plan_url', label: 'Floor plan URL', type: 'text', maxLength: 500 },
+  { name: 'floor_plan_revision', label: 'Floor plan revision', type: 'text', maxLength: 64 },
   { name: 'utilities', label: 'Utilities', type: 'json-object' },
 ] satisfies DetailField<RoomCreate>[];
 
 export const STATION_DETAILS = [
   { name: 'position', label: 'Map Coordinates (X, Y, Z)', type: 'json-object', readOnly: true },
-  { name: 'orientation_degrees', label: 'Orientation (degrees)', type: 'number', emptyNumber: 0 },
+  { name: 'orientation_degrees', label: 'Orientation (degrees)', section: 'Location', type: 'number', emptyNumber: 0 },
   { name: 'max_concurrent_users', label: 'Maximum concurrent users', type: 'number' },
   { name: 'usable_surface_mm2', label: 'Usable surface (mm²)', type: 'number' },
   { name: 'power_reserved_w', label: 'Reserved power (W)', type: 'number', emptyNumber: 0 },
   { name: 'cooling_capacity_w', label: 'Cooling capacity (W)', type: 'number' },
+  { name: 'safety_classification', label: 'Safety classification', type: 'text', maxLength: 64, span: 24 },
   { name: 'utilities', label: 'Utilities', type: 'json-object' },
-  { name: 'safety_classification', label: 'Safety classification', type: 'text', maxLength: 64 },
 ] satisfies DetailField<StationCreate>[];
 
 export function editableDetails(fields: DetailField<Record<string, unknown>>[]): FieldConfig[] {

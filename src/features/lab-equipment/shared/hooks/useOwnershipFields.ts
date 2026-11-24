@@ -40,17 +40,17 @@ export function useOwnershipFields(open: boolean, editing: (Ownership & {
 
   const fields: FieldConfig[] = [
     {
-      name: 'department_id', apiField: 'department', label: 'Department', type: 'select', section: 'Ownership',
+      name: 'department_id', span: 8, apiField: 'department', label: 'Department', type: 'select', section: 'Ownership',
       options: departmentOptions,
       loading: departments.isFetching, onSearch: setDepartmentSearch,
     },
     {
-      name: 'group_id', apiField: 'group', label: 'Group', type: 'select', section: 'Ownership',
+      name: 'group_id', span: 8, apiField: 'group', label: 'Group', type: 'select', section: 'Ownership',
       dependsOn: ['department_id'], options: groupOptions,
       loading: groups.isFetching, onSearch: setGroupSearch,
     },
   ];
-  if (includeOwner) fields.push({ name: 'owner_id', apiField: 'owner', section: 'Ownership', label: 'Owner', type: 'select', essential: true, options: ownerOptions });
+  if (includeOwner) fields.push({ name: 'owner_id', span: 8, apiField: 'owner', section: 'Ownership', label: 'Owner', type: 'select', essential: true, options: ownerOptions });
 
   return {
     fields,

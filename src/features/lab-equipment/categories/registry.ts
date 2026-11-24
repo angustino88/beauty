@@ -20,6 +20,7 @@ export interface CategoryExtraField {
   label: string;
   type: 'text' | 'number' | 'textarea' | 'date' | 'select' | 'multi-select';
   createOnly?: boolean;
+  span?: number;
   placeholder?: string;
   options?: Array<{ label: string; value: string | number }>;
   referenceKey?: keyof import('../types/equipment').EquipmentReferenceData;
@@ -72,7 +73,7 @@ export const EQUIPMENT_CATEGORIES: Record<EquipmentCategoryKey, EquipmentCategor
     extraFields: [
       { name: 'size_id', label: 'Screen Size', type: 'select', referenceKey: 'sizes' },
       { name: 'resolution_id', label: 'Resolution', type: 'select', referenceKey: 'resolutions' },
-      { name: 'interfaces_ids', label: 'Interfaces', type: 'multi-select', referenceKey: 'interfaces' },
+      { name: 'interfaces_ids', span: 24, label: 'Interfaces', type: 'multi-select', referenceKey: 'interfaces' },
     ],
     extraColumns: [
       {
@@ -117,7 +118,7 @@ export const EQUIPMENT_CATEGORIES: Record<EquipmentCategoryKey, EquipmentCategor
     extraFields: [
       { name: 'channels', label: 'Output Channels', type: 'number', placeholder: '1' },
       { name: 'power_rating', label: 'Power Rating (W)', type: 'number', placeholder: 'Power rating in watts' },
-      { name: 'interfaces_ids', label: 'Interfaces', type: 'multi-select', referenceKey: 'interfaces' },
+      { name: 'interfaces_ids', span: 24, label: 'Interfaces', type: 'multi-select', referenceKey: 'interfaces' },
     ],
   },
   accessory: {
@@ -136,7 +137,7 @@ export const EQUIPMENT_CATEGORIES: Record<EquipmentCategoryKey, EquipmentCategor
     extraFields: [
       { name: 'customer_id', label: 'Customer', type: 'select', referenceKey: 'customers' },
       { name: 'characteristics_ids', label: 'Characteristics', type: 'multi-select', referenceKey: 'characteristics' },
-      { name: 'interfaces_ids', label: 'Interfaces', type: 'multi-select', referenceKey: 'interfaces' },
+      { name: 'interfaces_ids', span: 24, label: 'Interfaces', type: 'multi-select', referenceKey: 'interfaces' },
     ],
     extraColumns: [
       { title: 'Customer', dataIndex: 'customer', width: 140 },
@@ -151,7 +152,7 @@ export const EQUIPMENT_CATEGORIES: Record<EquipmentCategoryKey, EquipmentCategor
     icon: React.createElement(SkinOutlined),
     extraFields: [
       { name: 'dimensions', label: 'Dimensions (JSON)', type: 'textarea', placeholder: '{"length_mm": 1200, "width_mm": 600, "height_mm": 750}' },
-      { name: 'material_id', label: 'Material', type: 'select', referenceKey: 'materials' },
+      { name: 'material_id', span: 24, label: 'Material', type: 'select', referenceKey: 'materials' },
     ],
     extraColumns: [
       { title: 'Dimensions', dataIndex: 'dimensions', width: 160 },
@@ -164,7 +165,7 @@ export const EQUIPMENT_CATEGORIES: Record<EquipmentCategoryKey, EquipmentCategor
     description: 'Oscilloscopes, multimeters, spectrum analyzers, and signal generators',
     icon: React.createElement(ToolOutlined),
     extraFields: [
-      { name: 'interfaces_ids', label: 'Interfaces', type: 'multi-select', referenceKey: 'interfaces' },
+      { name: 'interfaces_ids', span: 24, label: 'Interfaces', type: 'multi-select', referenceKey: 'interfaces' },
     ],
     extraColumns: [
       { title: 'Calibration Due', dataIndex: 'next_calibration_due_at', width: 170 },
@@ -186,7 +187,7 @@ export const EQUIPMENT_CATEGORIES: Record<EquipmentCategoryKey, EquipmentCategor
     icon: React.createElement(SettingOutlined),
     extraFields: [
       { name: 'dimensions', label: 'Dimensions (JSON)', type: 'textarea', placeholder: '{"length_mm": 100, "width_mm": 50, "height_mm": 25}' },
-      { name: 'material_id', label: 'Material', type: 'select', referenceKey: 'materials' },
+      { name: 'material_id', span: 24, label: 'Material', type: 'select', referenceKey: 'materials' },
     ],
     extraColumns: [
       { title: 'Dimensions', dataIndex: 'dimensions', width: 160, render: (value) => typeof value === 'object' && value !== null ? Object.values(value as Record<string, unknown>).join(' × ') : String(value ?? '—') },
