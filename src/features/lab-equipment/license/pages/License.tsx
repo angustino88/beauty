@@ -248,7 +248,6 @@ function LicenseInventory() {
         professionalTable
         title="License"
         equipmentType="license"
-        isLicense
         itemNoun="license"
         defaultVisibleColumnKeys={LICENSE_DEFAULT_COLUMNS}
         columns={columns}

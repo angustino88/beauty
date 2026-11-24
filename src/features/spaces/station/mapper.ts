@@ -31,6 +31,12 @@ const asString = (v: unknown, fallback = ""): string =>
 const asNullableString = (v: unknown): string | null =>
   v != null && v !== "" ? String(v) : null;
 
+const readChoiceValue = (v: unknown): string | null => {
+  if (typeof v === "string") return v || null;
+  if (isRecord(v) && typeof v.value === "string") return v.value || null;
+  return null;
+};
+
 export function mapStationApiItem(raw: unknown): IStation {
   const st = isRecord(raw) ? raw : {};
   const room = isRecord(st.room) ? st.room : null;
@@ -102,7 +108,7 @@ export function mapStationApiItem(raw: unknown): IStation {
             id: asNumber(slot.id),
             slot_code: asString(slot.slot_code),
             label: asNullableString(slot.label),
-            service_status: asNullableString(slot.service_status) ?? undefined,
+            service_status: readChoiceValue(slot.service_status) ?? undefined,
             occupied: Boolean(slot.is_occupied),
           };
         })

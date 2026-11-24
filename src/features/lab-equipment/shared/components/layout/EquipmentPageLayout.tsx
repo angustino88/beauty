@@ -5,7 +5,6 @@ import type { ColumnsType } from 'antd/es/table';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { TooltipButton } from '@/components/layout/TooltipButton';
 import { FullTextSearch } from '@/components/inputs/FullTextSearch';
-import EquipmentSummary from '../cards/EquipmentSummary';
 import ChangeLogModal from '../modals/ChangeLogModal';
 import EquipmentDetailsModal from '../modals/EquipmentDetailsModal';
 import SpaceStatusHistoryModal, { type SpaceStatusHistoryRecord } from '@/features/spaces/shared/SpaceStatusHistoryModal';
@@ -24,13 +23,8 @@ import { InventorySearch } from './InventorySearch';
 export interface EquipmentPageLayoutProps<T extends { id: number | string }> {
   /** Page title (e.g. "Computer", "Monitor") */
   title: string;
-  /** Equipment type for summary API (e.g. "computer", "monitor") */
+  /** Equipment type for details modal and headings (e.g. "computer", "monitor") */
   equipmentType: string;
-  /** Whether to show license-style summary cards */
-  isLicense?: boolean;
-  /** Override summary data from list-based computation */
-  summaryOverride?: Record<string, number | undefined>;
-  summaryOverrideTotal?: number;
   /** Table columns */
   columns: ColumnsType<T>;
   /** Table data rows */
@@ -80,7 +74,7 @@ export interface EquipmentPageLayoutProps<T extends { id: number | string }> {
   extraControls?: ReactNode;
   /** Search placeholder */
   searchPlaceholder?: string;
-  /** Custom summary to render instead of EquipmentSummary */
+  /** Summary component to render above the inventory table */
   customSummary?: ReactNode;
   /** Lookup labels for reference IDs shown in the details drawer */
   detailValueLabels?: Record<string, Record<string, string>>;
@@ -99,9 +93,6 @@ export interface EquipmentPageLayoutProps<T extends { id: number | string }> {
 export default function EquipmentPageLayout<T extends { id: number | string }>({
   title,
   equipmentType,
-  isLicense = false,
-  summaryOverride,
-  summaryOverrideTotal,
   columns,
   rows,
   totalRecords,
@@ -259,16 +250,11 @@ export default function EquipmentPageLayout<T extends { id: number | string }>({
         </header>
       ) : <PageHeader title={title} />}
 
-      <div className={spaceKind && !customSummary ? professional.spaceSummary : professionalTable ? professional.summary : undefined}>
-      {customSummary ?? (
-        <EquipmentSummary
-          equipmentType={equipmentType}
-          isLicense={isLicense}
-          overrideData={summaryOverride}
-          overrideTotal={summaryOverrideTotal}
-        />
+      {customSummary && (
+        <div className={professionalTable ? professional.summary : undefined}>
+          {customSummary}
+        </div>
       )}
-      </div>
 
       <Surface className={professionalTable ? `${professional.inventory} tw:overflow-hidden` : styles.tableCard}>
         {professionalTable && <div className={professional.inventoryHeading}>

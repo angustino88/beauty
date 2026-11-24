@@ -1,9 +1,3 @@
-export { default as ResourceStatus } from "./components/status/ResourceStatus";
-export {
-  UpdateResourceStatusModal,
-  STATUS_META,
-  RESOURCE_STATUS_OPTIONS,
-} from "./components/status/ResourceStatus";
 export { default as LicenseStatus } from "./components/status/LicenseStatus";
 export {
   UpdateLicenseStatusModal,
@@ -12,13 +6,11 @@ export {
 } from "./components/status/LicenseStatus";
 export {
   useGetUsersQuery,
-  useGetLabNamesListQuery,
   useGetRacksWithLabListQuery,
   useGetRoomsForDropdownQuery,
 } from "./api/dropdownApi";
 export type {
   IUserOption,
-  ILabNameOption,
   IRackListOption,
   IRoomOption,
   ILabEquipmentSkuItem,
@@ -26,7 +18,6 @@ export type {
 } from "./api/dropdownApi";
 export { default as ChangeLogModal } from "./components/modals/ChangeLogModal";
 export { default as FormListModal } from "./components/modals/FormListModal";
-export { default as EquipmentSummary } from "./components/cards/EquipmentSummary";
 export { default as EquipmentPageLayout } from "./components/layout/EquipmentPageLayout";
 export { default as EquipmentFormModal } from "./components/modals/EquipmentFormModal";
 export { default as EquipmentCreateModal } from "./components/modals/EquipmentCreateModal";
@@ -37,7 +28,6 @@ export { useEquipmentCrudActions } from "./hooks/useEquipmentCrudActions";
 export { useInlineEquipmentEdit } from "./hooks/useInlineEquipmentEdit";
 export { useEquipmentTableState } from "./hooks/useEquipmentTableState";
 export { useServerEquipmentFilter } from "./hooks/useServerEquipmentFilter";
-export { useGetEquipmentSummaryQuery } from "./components/cards/EquipmentSummary";
 export type {
   FieldConfig,
   FieldType,
@@ -65,15 +55,8 @@ export {
   readStatusDataFromRecord,
   buildEquipmentInfo,
   sortRowsByIdAsc,
-  summarizeHardwareRows,
-  summarizeComputerRows,
-  summarizeLicenseRows,
-  isSummaryConsistent,
   EQUIPMENT_STATUS_FILTER_OPTIONS,
-  COMPUTER_STATUS_FILTER_OPTIONS,
   LICENSE_STATUS_FILTER_OPTIONS,
-  ROOM_STATUS_FILTER_OPTIONS,
-  RACK_STATUS_FILTER_OPTIONS,
 } from "./utils/parity";
 export {
   renderAuditCell,

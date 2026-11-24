@@ -2,7 +2,6 @@ import type { UsersRetrieveApiResponse } from '@/shared/api/generated/api';
 import type {
   ILabEquipmentSkuItem,
   ILabEquipmentSkuList,
-  ILabNameOption,
   IRoomOption,
 } from './dropdownApi';
 
@@ -15,29 +14,6 @@ const asRecord = (value: unknown): RecordValue =>
 const asNumber = (value: unknown): number =>
   typeof value === 'number' ? value : Number(value);
 const asString = (value: unknown): string => (typeof value === 'string' ? value : '');
-
-export function mapLabNameOptions(response: unknown): ILabNameOption[] {
-  const envelope = asRecord(response);
-  const data = Array.isArray(envelope.data)
-    ? envelope.data
-    : Array.isArray(envelope.results)
-      ? envelope.results
-      : [];
-  return data.flatMap((lab) => {
-    const rawLab = asRecord(lab);
-    const id = asNumber(rawLab.value ?? rawLab.id);
-    const label = asString(rawLab.label ?? rawLab.lab_name ?? rawLab.name);
-    if (!Number.isFinite(id) || !label.trim()) return [];
-
-    return [
-      {
-        id,
-        lab_name: label,
-        sku: asString(rawLab.sku),
-      },
-    ];
-  });
-}
 
 export function mapRoomOptions(response: unknown): IRoomOption[] {
   const envelope = asRecord(response);

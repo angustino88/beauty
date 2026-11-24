@@ -1,4 +1,3 @@
-import { baseApi } from '@/shared/lib/api';
 import { skipToken } from '@reduxjs/toolkit/query';
 import {
   useLabsEquipmentOptionsRetrieveQuery,
@@ -6,7 +5,6 @@ import {
   useUsersRetrieveQuery,
 } from '@/shared/api/generated/api';
 import {
-  mapLabNameOptions,
   mapRoomOptions,
   mapUserOptions,
 } from './mapper';
@@ -15,12 +13,6 @@ interface IUserOption {
   id: number;
   username: string;
   display_name?: string;
-}
-
-interface ILabNameOption {
-  id: number;
-  sku: string;
-  lab_name: string;
 }
 
 export interface IRackListOption {
@@ -43,20 +35,6 @@ export interface ILabEquipmentSkuItem {
 
 export type ILabEquipmentSkuList = Record<string, ILabEquipmentSkuItem[]>;
 
-export const dropdownApi = baseApi.injectEndpoints({
-  endpoints: (build) => ({
-    getLabNamesList: build.query<ILabNameOption[], void>({
-      query: () => ({ url: '/api/labs/benches?page=1&page_size=100' }),
-      transformResponse: (res: unknown) => mapLabNameOptions(res),
-    }),
-  }),
-  overrideExisting: false,
-});
-
-export const {
-  useGetLabNamesListQuery,
-} = dropdownApi;
-
 /** Furniture options filtered by their catalog category; no undocumented rack relationship is inferred. */
 export function useGetRacksWithLabListQuery(categoryId?: number) {
   const result = useLabsEquipmentOptionsRetrieveQuery(categoryId ? { categoryId } : skipToken);
@@ -73,4 +51,4 @@ export function useGetRoomsForDropdownQuery() {
   return { ...result, data: result.data === undefined ? undefined : mapRoomOptions(result.data) };
 }
 
-export type { IUserOption, ILabNameOption };
+export type { IUserOption };

@@ -201,7 +201,6 @@ export const stationApi = baseApi.injectEndpoints({
         slot_code: string;
         label?: string;
         is_occupied: boolean;
-        is_active: boolean;
         service_status?: { value?: string; label?: string } | string | null;
       }>,
       number
@@ -215,7 +214,6 @@ export const stationApi = baseApi.injectEndpoints({
           slot_code: String(s.slot_code ?? ""),
           label: s.label ? String(s.label) : undefined,
           is_occupied: Boolean(s.is_occupied),
-          is_active: s.is_active !== false,
           service_status: (s.service_status as { value?: string; label?: string } | string | null | undefined) ?? null,
         }));
       },
