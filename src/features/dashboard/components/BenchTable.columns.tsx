@@ -25,7 +25,7 @@ const STATUS_FILTER_OPTIONS = SUMMARY_STATUS_VALUES.map((s) => ({
 }));
 
 /** One look for "nothing here" in every cell. */
-const EMPTY = <span style={{ color: 'var(--lm-text-disabled)' }} aria-label="None">–</span>;
+const EMPTY = <span style={{ color: 'var(--lm-text-tertiary)' }} aria-label="None">–</span>;
 const benchLabel = (bench: DashboardBench) => bench.name || bench.lab_name || bench.sku || `bench #${bench.id}`;
 
 export interface BuildColumnsParams {
@@ -150,10 +150,11 @@ export function buildColumns({
       render: (_: unknown, record: DashboardBench) => {
         const samples = record.samples ?? record.samples_list ?? [];
         return Array.isArray(samples) && samples.length ? (
-          <div className="sampleTags">
+          <div className="resourceTags">
             <MultipleTagCell
               val={samples as unknown as Record<string, unknown>[]}
               displayKey="name"
+              kind="sample"
             />
           </div>
         ) : EMPTY;
@@ -173,10 +174,11 @@ export function buildColumns({
       render: (_: unknown, record: DashboardBench) => {
         const licenses = record.licenses ?? record.license_list ?? [];
         return Array.isArray(licenses) && licenses.length ? (
-          <div className="licenseTags">
+          <div className="resourceTags">
             <MultipleTagCell
               val={licenses as unknown as Record<string, unknown>[]}
               displayKey="name"
+              kind="license"
             />
           </div>
         ) : EMPTY;

@@ -46,41 +46,84 @@ export default function App() {
 
   const antdThemeConfig = useMemo<ThemeConfig>(
     () => ({
-    algorithm: isDark ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
-    components: {
-      Badge: { statusSize: 10 },
-      Message: { contentPadding: "10px 16px" },
-      Modal: {
-        borderRadiusLG: 10,
-        titleFontSize: 16,
+      algorithm: isDark ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
+      components: {
+        Badge: { statusSize: 10 },
+        Message: { contentPadding: "10px 16px" },
+        Modal: {
+          borderRadiusLG: 10,
+          titleFontSize: 16,
+        },
+        Alert: {
+          borderRadiusLG: 8,
+          defaultPadding: "10px 14px",
+        },
+        ...(isDark && {
+          Button: {
+            defaultHoverColor: "#c4b7fa",
+            defaultActiveColor: "#d8ceff",
+            dangerColor: "#15161b",
+          },
+          Input: { activeBorderColor: "#b6a4ff" },
+          Pagination: {
+            itemActiveBg: "#231d3d",
+            itemActiveColor: "#c4b7fa",
+            itemActiveColorHover: "#d8ceff",
+          },
+          Table: {
+            headerColor: "#b9bdcc",
+            rowHoverBg: "#23252d",
+          },
+        }),
       },
-      Alert: {
-        borderRadiusLG: 8,
-        defaultPadding: "10px 14px",
+      // Ant Design's palette algorithm takes literal colors. Shared values
+      // mirror the semantic tokens in shared/styles/tokens.css.
+      token: {
+        colorPrimary: isDark ? "#7053d2" : "#6d3fd6",
+        colorInfo: isDark ? "#4a84de" : "#3b82f6",
+        colorSuccess: isDark ? "#2f9e63" : "#1f9d57",
+        colorWarning: isDark ? "#d39a37" : "#c27803",
+        colorError: isDark ? "#e37d87" : "#e0454b",
+        fontFamily: FONT_STACK,
+        colorLink: isDark ? "#c4b7fa" : "#5a2fc0",
+        colorBgLayout: isDark ? "#15161b" : "#f6f5f9",
+        colorBgContainer: isDark ? "#1d1f26" : "#ffffff",
+        colorBgElevated: isDark ? "#252730" : "#ffffff",
+        colorFillAlter: isDark ? "#23252d" : "#faf9fc",
+        colorText: isDark ? "#e3e4eb" : "#1a1723",
+        colorTextSecondary: isDark ? "#b9bdcc" : "#6b6679",
+        colorTextPlaceholder: isDark ? "#a4a8ba" : "#6b6679",
+        colorBorder: isDark ? "#74798c" : "#cdc8d9",
+        colorBorderSecondary: isDark ? "#373a46" : "#e4e1ec",
+        borderRadius: 8,
+        colorTextLightSolid: "#ffffff",
+        ...(isDark && {
+          colorTextTertiary: "#a4a8ba",
+          colorTextQuaternary: "#898da0",
+          colorTextDisabled: "#777b8d",
+          colorPrimaryHover: "#7859d8",
+          colorPrimaryActive: "#6246bf",
+          colorPrimaryText: "#c4b7fa",
+          colorPrimaryTextHover: "#d8ceff",
+          colorPrimaryBg: "#231d3d",
+          colorPrimaryBgHover: "#30254d",
+          colorPrimaryBorder: "#b6a4ff",
+          colorLinkHover: "#d8ceff",
+          colorLinkActive: "#b6a4ff",
+          colorInfoBg: "#172b44",
+          colorInfoBorder: "#39577d",
+          colorInfoText: "#a5cfff",
+          colorWarningBg: "#2a2213",
+          colorWarningBorder: "#6a512a",
+          colorErrorHover: "#ed939b",
+          colorErrorActive: "#d9727d",
+          colorErrorText: "#f1a4aa",
+          colorBgTextHover: "#2b2d36",
+          controlItemBgHover: "#2b2d36",
+          controlOutline: "rgba(182, 164, 255, 0.35)",
+        }),
       },
-    },
-    // antd derives its palettes from literal colours, so these mirror the
-    // --lm-* values in shared/styles/tokens.css. Keep both in sync.
-    token: {
-      colorPrimary: isDark ? "#7458e0" : "#6d3fd6",
-      colorInfo: isDark ? "#4a84de" : "#3b82f6",
-      colorSuccess: isDark ? "#2f9e63" : "#1f9d57",
-      colorWarning: isDark ? "#d39a37" : "#c27803",
-      colorError: isDark ? "#d9575f" : "#e0454b",
-      fontFamily: FONT_STACK,
-      colorLink: isDark ? "#b3a3f5" : "#5a2fc0",
-      colorBgLayout: isDark ? "#121317" : "#f6f5f9",
-      colorBgContainer: isDark ? "#1c1d23" : "#ffffff",
-      colorBgElevated: isDark ? "#24252c" : "#ffffff",
-      colorFillAlter: isDark ? "#212228" : "#faf9fc",
-      colorText: isDark ? "#dcdde4" : "#1a1723",
-      colorTextSecondary: isDark ? "#8f919e" : "#6b6679",
-      colorBorder: isDark ? "#43454f" : "#cdc8d9",
-      colorBorderSecondary: isDark ? "#30323a" : "#e4e1ec",
-      borderRadius: 8,
-      colorTextLightSolid: "#ffffff",
-    },
-  }),
+    }),
     [isDark],
   );
 

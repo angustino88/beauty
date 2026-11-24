@@ -18,6 +18,7 @@
  *   status    <tone>-fg (text on soft bg) · <tone>-solid (dots, bars, icons)
  *             <tone>-bg (soft fill) · <tone>-border
  *             tones: success, info, warning, danger, reserved, neutral
+ *   badges    badge-<kind>-fg/bg/border (sample and license labels)
  *   season    season-fg/bg/border (header chip) · season-1/2 (motif, underline)
  */
 
@@ -82,9 +83,17 @@
   --lm-neutral-bg: #f1eff5;
   --lm-neutral-border: #dedae6;
 
+  --lm-badge-sample-fg: #365c26;
+  --lm-badge-sample-bg: #edf6e7;
+  --lm-badge-sample-border: #c7dfb9;
+  --lm-badge-license-fg: #5a329c;
+  --lm-badge-license-bg: #f3edfd;
+  --lm-badge-license-border: #dbcbf6;
+
   --lm-shadow-sm: 0 1px 2px rgba(26, 23, 35, 0.05);
   --lm-shadow-md: 0 4px 14px rgba(26, 23, 35, 0.08);
   --lm-shadow-lg: 0 16px 40px rgba(26, 23, 35, 0.14);
+  --lm-focus: #6d3fd6;
   --lm-focus-ring: 0 0 0 3px rgba(109, 63, 214, 0.28);
   --lm-overlay: rgba(18, 15, 28, 0.45);
 
@@ -140,34 +149,27 @@
 }
 
 html[data-theme='dark'] {
-  /* Comfort-first dark theme. Not black-on-white inverted: a graphite page
-     (#121317) with softened text (#dcdde4) keeps body text around 12:1
-     instead of 16:1, which stops letters "glowing" (halation) on long
-     sessions. Neutrals are almost grey (only a hint of the brand hue) so
-     the violet accent is the only purple on screen, and each elevation step
-     (page → card → header/hover → popover) is a visible lift, so fewer
-     borders are needed to separate areas. Status colours are a little less
-     saturated than in light mode so badges do not glare. */
-  --lm-bg: #121317;
-  --lm-surface: #1c1d23;
-  --lm-surface-subtle: #212228;
-  --lm-surface-muted: #282930;
-  --lm-surface-raised: #24252c;
-  --lm-surface-inverse: #e6e7ec;
+  /* Layer the graphite surfaces and reserve stronger strokes for controls. */
+  --lm-bg: #15161b;
+  --lm-surface: #1d1f26;
+  --lm-surface-subtle: #23252d;
+  --lm-surface-muted: #2b2d36;
+  --lm-surface-raised: #252730;
+  --lm-surface-inverse: #e3e4eb;
 
-  --lm-text: #dcdde4;
-  --lm-text-secondary: #a9abb7;
-  --lm-text-tertiary: #8f919e;
-  --lm-text-disabled: #5d5f6a;
-  --lm-text-inverse: #121317;
+  --lm-text: #e3e4eb;
+  --lm-text-secondary: #b9bdcc;
+  --lm-text-tertiary: #a4a8ba;
+  --lm-text-disabled: #777b8d;
+  --lm-text-inverse: #15161b;
 
-  --lm-border: #30323a;
-  --lm-border-subtle: #27282f;
-  --lm-border-strong: #43454f;
+  --lm-border: #373a46;
+  --lm-border-subtle: #2d303a;
+  --lm-border-strong: #74798c;
 
-  --lm-primary: #7458e0;
-  --lm-primary-hover: #8369e8;
-  --lm-primary-fg: #b3a3f5;
+  --lm-primary: #7053d2;
+  --lm-primary-hover: #7859d8;
+  --lm-primary-fg: #c4b7fa;
   --lm-primary-bg: #231d3d;
   --lm-primary-border: #3d3370;
   --lm-on-primary: #ffffff;
@@ -177,35 +179,43 @@ html[data-theme='dark'] {
   --lm-success-bg: #14271d;
   --lm-success-border: #22432f;
 
-  --lm-info-fg: #8bb0e6;
+  --lm-info-fg: #a5cfff;
   --lm-info-solid: #4a84de;
-  --lm-info-bg: #16233a;
-  --lm-info-border: #263c5e;
+  --lm-info-bg: #172b44;
+  --lm-info-border: #39577d;
 
   --lm-warning-fg: #e0b661;
   --lm-warning-solid: #d39a37;
   --lm-warning-bg: #2a2213;
-  --lm-warning-border: #4f3f1f;
+  --lm-warning-border: #6a512a;
 
   --lm-danger-fg: #ea8f94;
   --lm-danger-solid: #d9575f;
   --lm-danger-bg: #31191d;
   --lm-danger-border: #57282e;
 
-  --lm-reserved-fg: #67c3d6;
+  --lm-reserved-fg: #9bdded;
   --lm-reserved-solid: #229fbb;
-  --lm-reserved-bg: #12272e;
-  --lm-reserved-border: #1f4552;
+  --lm-reserved-bg: #162e36;
+  --lm-reserved-border: #2f5c68;
 
-  --lm-neutral-fg: #a9abb7;
+  --lm-neutral-fg: #b9bdcc;
   --lm-neutral-solid: #8f919e;
   --lm-neutral-bg: #26272e;
   --lm-neutral-border: #393b45;
 
+  --lm-badge-sample-fg: #b2df8d;
+  --lm-badge-sample-bg: #212f20;
+  --lm-badge-sample-border: #4c663c;
+  --lm-badge-license-fg: #d7c6ff;
+  --lm-badge-license-bg: #2b2243;
+  --lm-badge-license-border: #615087;
+
   --lm-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
   --lm-shadow-md: 0 4px 14px rgba(0, 0, 0, 0.45);
   --lm-shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.6);
-  --lm-focus-ring: 0 0 0 3px rgba(116, 88, 224, 0.45);
+  --lm-focus: #b6a4ff;
+  --lm-focus-ring: 0 0 0 2px var(--lm-surface), 0 0 0 4px var(--lm-focus);
   --lm-overlay: rgba(0, 0, 0, 0.6);
 
   /* Notification surface and elevation tokens */

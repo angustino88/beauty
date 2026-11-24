@@ -20,9 +20,9 @@ export const useBenchTableStyles = createStyles(({ css }) => ({
     .ant-table-thead > tr > th {
       background: var(--lm-surface-subtle) !important;
       border-bottom: 1px solid var(--lm-border) !important;
-      color: var(--lm-text-tertiary) !important;
+      color: var(--lm-text-secondary) !important;
       font-weight: 600 !important;
-      font-size: 12px;
+      font-size: 13px;
       padding: 10px 16px !important;
       line-height: 1.3;
       vertical-align: middle;
@@ -37,6 +37,13 @@ export const useBenchTableStyles = createStyles(({ css }) => ({
       padding: 0 !important;
       margin: 0 !important;
       align-items: center;
+    }
+    .ant-table-thead .ant-table-filter-trigger {
+      color: var(--lm-text-tertiary);
+    }
+    .ant-table-thead .ant-table-filter-trigger.active {
+      color: var(--lm-primary-fg);
+      background: var(--lm-primary-bg);
     }
     .ant-table-thead > tr > th .ant-table-column-title {
       padding: 0 !important;
@@ -54,16 +61,7 @@ export const useBenchTableStyles = createStyles(({ css }) => ({
     .ant-table-tbody > tr.ant-table-row-selected > td {
       background: var(--lm-primary-bg) !important;
     }
-    /* Samples and licenses are attributes, not statuses: quiet neutral tags. */
-    .sampleTags .ant-tag,
-    .licenseTags .ant-tag {
-      margin: 0;
-      color: var(--lm-text-secondary);
-      background: var(--lm-surface-muted);
-      border-color: var(--lm-border);
-      font-weight: 500;
-    }
-    .licenseTags {
+    .resourceTags {
       display: flex;
       flex-wrap: wrap;
       justify-content: center;

@@ -7,6 +7,7 @@ import {
   PlusOutlined,
   SettingOutlined,
 } from "@ant-design/icons";
+import { ResourceBadge } from "@/components/display/ResourceBadge";
 import { useGetBenchMappingQuery } from "@/features/spaces/mapping/api";
 import {
   categoryIcon,
@@ -171,9 +172,11 @@ export function BenchEquipmentCell({
         title={
           <Space size={8}>
             <span>Assigned equipment</span>
-            <Tag color={count > 0 ? "geekblue" : "default"} style={{ marginInlineEnd: 0 }}>
-              {count}
-            </Tag>
+            {count > 0 ? (
+              <ResourceBadge kind="category">{count}</ResourceBadge>
+            ) : (
+              <Tag style={{ marginInlineEnd: 0 }}>{count}</Tag>
+            )}
           </Space>
         }
         content={popoverContent}
@@ -186,9 +189,9 @@ export function BenchEquipmentCell({
             fontSize: 12,
             height: 26,
             paddingInline: 10,
-            color: count > 0 ? "var(--lm-accent, #1d4ed8)" : undefined,
-            borderColor: count > 0 ? "var(--lm-accent-border, #bfdbfe)" : undefined,
-            background: count > 0 ? "var(--lm-accent-soft, #eff6ff)" : undefined,
+            color: count > 0 ? "var(--lm-info-fg)" : undefined,
+            borderColor: count > 0 ? "var(--lm-info-border)" : undefined,
+            background: count > 0 ? "var(--lm-info-bg)" : undefined,
           }}
         >
           <Space size={4}>

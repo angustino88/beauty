@@ -50,7 +50,7 @@
 
 .headerSubtitle {
   color: var(--lm-text-tertiary, #64748b);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 450;
   line-height: 1.4;
 }
@@ -474,7 +474,7 @@
 
 .blockerTitle {
   color: var(--lm-text, #0f172a);
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 650;
 }
 
@@ -513,9 +513,14 @@
 .blockerRowLeft {
   display: flex;
   align-items: center;
-  gap: 8px;
+  flex-wrap: wrap;
+  gap: 4px 8px;
   min-width: 0;
   flex: 1;
+}
+
+.blockerBadge {
+  flex-shrink: 0;
 }
 
 .blockerLink {
@@ -525,7 +530,10 @@
   color: var(--lm-primary-fg, #1d4ed8);
   font-size: 13px;
   font-weight: 550;
+  max-width: 100%;
   text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 2px;
   cursor: pointer;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -533,7 +541,13 @@
 }
 
 .blockerLink:hover {
-  text-decoration: underline;
+  text-decoration-thickness: 2px;
+}
+
+.blockerLink:focus-visible {
+  outline: 2px solid var(--lm-focus);
+  outline-offset: 2px;
+  border-radius: 2px;
 }
 
 .blockerMore {
@@ -574,6 +588,10 @@
 }
 
 @media (max-width: 560px) {
+  .footerRow {
+    flex-wrap: wrap;
+  }
+
   .stepper {
     grid-template-columns: 1fr;
   }

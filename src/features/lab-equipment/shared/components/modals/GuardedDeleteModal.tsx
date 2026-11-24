@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Alert, Button, Checkbox, Input, Modal, Space, Tag, Typography } from 'antd';
+import { Alert, Button, Checkbox, Input, Modal, Space, Typography } from 'antd';
 import { LinkOutlined, SettingOutlined } from '@ant-design/icons';
 import {
   AlertTriangle,
@@ -13,6 +13,7 @@ import {
   ShieldAlert,
   Trash2,
 } from 'lucide-react';
+import { ResourceBadge } from '@/components/display/ResourceBadge';
 import { EQUIPMENT_CATEGORIES } from '../../../categories/registry';
 import type { EquipmentCategoryKey } from '../../../types/equipment';
 import {
@@ -340,7 +341,7 @@ export const GuardedDeleteModal: React.FC<GuardedDeleteModalProps> = ({
             <span className={styles.blockerTitle}>{meta.title}</span>
             <span className={styles.blockerCount}>{group.total}</span>
           </div>
-          <Space size={8}>
+          <Space size={8} wrap>
             {resourceKind === 'bench' && group.key === 'equipment' && onManageEquipment && (
               <Button
                 type="default"
@@ -370,6 +371,7 @@ export const GuardedDeleteModal: React.FC<GuardedDeleteModalProps> = ({
           <div>
             {group.entries.map((entry, idx) => {
               const { path, categoryLabel } = buildEntryLink(group.key, entry);
+              const badgeKind = group.key === 'bookings' ? 'booking' : entry.categoryKey === 'sample' ? 'sample' : 'category';
               return (
                 <div key={`${entry.label}-${idx}`} className={styles.blockerRow}>
                   <div className={styles.blockerRowLeft}>
@@ -387,9 +389,9 @@ export const GuardedDeleteModal: React.FC<GuardedDeleteModalProps> = ({
                     )}
                   </div>
                   {categoryLabel && (
-                    <Tag color="geekblue" style={{ marginInlineEnd: 0, fontSize: 11, flexShrink: 0 }}>
+                    <ResourceBadge className={styles.blockerBadge} kind={badgeKind}>
                       {categoryLabel}
-                    </Tag>
+                    </ResourceBadge>
                   )}
                 </div>
               );
@@ -429,7 +431,7 @@ export const GuardedDeleteModal: React.FC<GuardedDeleteModalProps> = ({
     <Modal
       open={open}
       onCancel={busy ? undefined : onCancel}
-      maskClosable={!busy}
+      mask={{ closable: !busy }}
       closable={!busy}
       destroyOnHidden
       width={isBlocked || isForce ? 580 : 480}
@@ -495,7 +497,7 @@ export const GuardedDeleteModal: React.FC<GuardedDeleteModalProps> = ({
             ) : null}
           </div>
 
-          <Space size={8}>
+          <Space size={8} wrap>
             <Button onClick={onCancel} disabled={busy}>
               {isBlocked ? 'Close' : 'Cancel'}
             </Button>
