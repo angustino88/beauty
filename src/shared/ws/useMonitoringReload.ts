@@ -3,6 +3,7 @@ import { useDispatch } from 'react-redux';
 import { useAppSelector } from '@/app/store';
 import { attemptRefreshAccessToken } from '@/shared/lib/api';
 import { useAuthedWebSocket } from './useAuthedWebSocket';
+import { getWsBaseUrl } from '@/shared/lib/backendTarget';
 
 interface Options {
     labId?:   number | string;
@@ -31,17 +32,13 @@ export function useMonitoringReload({
     const reloadTypesKey = reloadTypes.join('|');
     const reloadTypeSet = useMemo(() => new Set(reloadTypesKey.split('|')), [reloadTypesKey]);
 
-    const wsBase = useMemo(
-        () => (import.meta.env.VITE_API_URL as string).replace(/^http/, 'ws'),
-        [],
-    );
 
     const urlFactory = useCallback((token: string) => {
         const path = labId
             ? `ws/monitoring/${labId}/`
             : 'ws/monitoring/dashboard/';
-        return `${wsBase}/${path}?token=${encodeURIComponent(token)}`;
-    }, [wsBase, labId]);
+        return `${getWsBaseUrl()}/${path}?token=${encodeURIComponent(token)}`;
+    }, [labId]);
 
     const handleMessage = useCallback((msg: { type?: string }) => {
         if (!reloadTypeSet.has(msg.type ?? '')) return;
@@ -65,4 +62,4 @@ export function useMonitoringReload({
         onMessage:      handleMessage,
         onUnauthorized: handleUnauthorized,
     });
-}
+}

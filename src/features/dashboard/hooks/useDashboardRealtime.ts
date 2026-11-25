@@ -1,8 +1,9 @@
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useRef } from 'react';
 import { useDispatch } from 'react-redux';
 import { attemptRefreshAccessToken } from '@/shared/lib/api';
 import { useAuthedWebSocket } from '@/shared/ws/useAuthedWebSocket';
 import { dashboardApi } from '../api';
+import { getWsBaseUrl } from '@/shared/lib/backendTarget';
 
 interface UseDashboardRealtimeParams {
   isAnyFilterOpen: () => boolean;
@@ -16,14 +17,10 @@ export function useDashboardRealtime({ isAnyFilterOpen }: UseDashboardRealtimePa
     dispatch(dashboardApi.util.invalidateTags(['LabDevice', 'DashboardStats']));
   }, [dispatch]);
 
-  const wsBase = useMemo(
-    () => ((import.meta.env.VITE_API_URL as string) || '').replace(/^http/, 'ws'),
-    [],
-  );
 
   const urlFactory = useCallback(
-    (token: string) => `${wsBase}/ws/monitoring/dashboard/?token=${encodeURIComponent(token)}`,
-    [wsBase],
+    (token: string) => `${getWsBaseUrl()}/ws/monitoring/dashboard/?token=${encodeURIComponent(token)}`,
+    [],
   );
 
   const handleMessage = useCallback((msg: { type?: string }) => {
@@ -50,4 +47,4 @@ export function useDashboardRealtime({ isAnyFilterOpen }: UseDashboardRealtimePa
     onMessage: handleMessage,
     onUnauthorized: handleUnauthorized,
   });
-}
+}

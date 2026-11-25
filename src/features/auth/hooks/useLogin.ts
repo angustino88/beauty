@@ -7,6 +7,7 @@ import { authActions } from "../authSlice";
 import { useAadLoginMutation, requestLoginCsrfToken } from "../api";
 import { setCsrfToken } from "@/shared/lib/csrf";
 import { clearLoginCredentials, createLoginNonce, hasLoginNonceSecret, takeLoginCredentials } from "../session/loginNonce";
+import { clearSelectedBackend, isRouterMode, resolveBackendForIdToken, setSelectedBackend } from "@/shared/lib/backendTarget";
 
 const REDIRECT_URI = import.meta.env.VITE_REDIRECT_URI as string;
 
@@ -40,6 +41,11 @@ export function useLogin() {
       dispatch(authActions.setLogging(true));
       dispatch(authActions.setError(null));
       try {
+        // Router mode: ask the Router which department backend owns this user before talking to it.
+        // Every later request (CSRF, aad-login, API, WebSockets) goes to that backend's prefix.
+        if (isRouterMode()) {
+          setSelectedBackend(await resolveBackendForIdToken(idToken));
+        }
         // Fetch a fresh CSRF cookie and token for this backend before POSTing.
         const csrf = await dispatch(requestLoginCsrfToken(undefined, { forceRefetch: true, subscribe: false })).unwrap();
         setCsrfToken(csrf.data.csrf_token);
@@ -53,6 +59,8 @@ export function useLogin() {
         }
         dispatch(authActions.setAccessToken(accessToken));
       } catch (error: unknown) {
+        // Never keep a backend chosen for a sign-in that did not complete.
+        if (isRouterMode()) clearSelectedBackend();
         const message = getApiErrorMessage(
           error,
           "We could not complete sign-in. Please try again or contact your lab administrator.",

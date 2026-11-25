@@ -12,6 +12,7 @@ import {
   type SetupOs,
 } from './agentModel';
 import styles from './ComputingAgent.module.css';
+import { getApiBaseUrl, isRouterMode } from '@/shared/lib/backendTarget';
 
 /** The clear grant, held only in memory for the dialog session that issued it. */
 export interface IssuedGrant {
@@ -52,7 +53,12 @@ export function AgentSetup({ agent, grant, mode, generating, onGenerate }: {
   const [ttl, setTtl] = useState(15);
   const [showStub, setShowStub] = useState(false);
 
-  const serverUrl = agentServerUrl({ override: env('VITE_AGENT_URL'), isDev: import.meta.env.DEV, apiUrl: env('VITE_API_URL') });
+  const serverUrl = agentServerUrl({
+    override: env('VITE_AGENT_URL'),
+    isDev: import.meta.env.DEV,
+    apiUrl: env('VITE_API_URL'),
+    routedUrl: isRouterMode() ? getApiBaseUrl() : undefined,
+  });
   const sections = useMemo(() => setupScript({
     os,
     arch,
@@ -152,7 +158,7 @@ export function AgentSetup({ agent, grant, mode, generating, onGenerate }: {
           <Button type="link" size="small" style={{ padding: 0 }} onClick={() => setShowStub((value) => !value)}>
             {showStub ? 'Hide development stub' : 'Testing without the real agent? Use the development stub'}
           </Button>
-          {showStub && <CodeBlock section={stubScript({ serverUrl: serverUrl ?? env('VITE_API_URL') ?? window.location.origin, agentUid: agent.agent_uid, grant: grant.grant })} secret={grant.grant} />}
+          {showStub && <CodeBlock section={stubScript({ serverUrl: serverUrl ?? (getApiBaseUrl() || window.location.origin), agentUid: agent.agent_uid, grant: grant.grant })} secret={grant.grant} />}
         </div>
       )}
     </div>

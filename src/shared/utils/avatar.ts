@@ -1,3 +1,5 @@
+import { getApiBaseUrl, joinUrl } from '../lib/backendTarget';
+
 export function getBotttsAvatarUrl(username: string): string {
   return `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(username)}`;
 }
@@ -15,8 +17,10 @@ export function normalizeAvatarUrl(url?: string | null): string | null {
 
   // Treat as relative or absolute path returned by backend (e.g., /media/avatars/x.png or media/avatars/x.png)
   try {
-    const base = (import.meta.env && (import.meta.env.VITE_API_URL as string)) || window.location.origin;
-    const resolved = new URL(t, base).toString();
+    // The base can carry a path (router mode: https://router/t/<prefix_key>), so join instead of resolving
+    // "/media/..." against the origin.
+    const base = getApiBaseUrl() || window.location.origin;
+    const resolved = new URL(joinUrl(base, t)).toString();
     if (/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?/i.test(resolved)) return resolved;
     return resolved.replace(/^http:\/\//i, 'https://');
   } catch {

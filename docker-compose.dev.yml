@@ -1,0 +1,31 @@
+# Development: nginx serves the local build (./build) and proxies the API.
+#   npm run build:app                              # with the VITE_* values of .env
+#   ./deploy/gen-dev-cert.sh                       # once: self-signed ssl_certificates/labmango.{crt,key}
+#   docker compose -f docker-compose.dev.yml up -d
+# http://localhost:30002  https://localhost:3002
+
+services:
+  nginx:
+    image: nginx:1.27.3-alpine
+    container_name: labmango_client_dev_nginx
+    restart: unless-stopped
+    ports:
+      - "30002:80"
+      - "3002:443"
+    environment:
+      API_MODE: ${VITE_API_MODE:-direct}
+      BACKEND_UPSTREAM: ${BACKEND_UPSTREAM:-https://host.docker.internal:8443}
+      ROUTER_UPSTREAM: ${ROUTER_UPSTREAM:-http://host.docker.internal:8080}
+      SERVER_NAME: ${SERVER_NAME:-localhost}
+      SSL_CERT_NAME: ${SSL_CERT_NAME:-labmango}
+    volumes:
+      - ./deploy/nginx/dev.conf.template:/etc/nginx/templates/default.conf.template:ro
+      - ./deploy/nginx/api-direct.inc.template:/etc/nginx/templates/api-direct.inc.template:ro
+      - ./deploy/nginx/api-router.inc.template:/etc/nginx/templates/api-router.inc.template:ro
+      - ./deploy/nginx/spa.inc:/etc/nginx/snippets/spa.inc:ro
+      - ./deploy/nginx/proxy.inc:/etc/nginx/snippets/proxy.inc:ro
+      - ./deploy/nginx/security-headers.inc:/etc/nginx/snippets/security-headers.inc:ro
+      - ./build:/usr/share/nginx/html:ro
+      - ${SSL_DIR:-./ssl_certificates}:/etc/nginx/ssl:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

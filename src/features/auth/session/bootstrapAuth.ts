@@ -1,6 +1,7 @@
 import { authActions } from '../authSlice';
 import { sessionFlag } from './sessionFlag';
 import { getRefreshCsrfToken } from '@/shared/lib/refreshCsrf';
+import { getApiBaseUrl, hasBackendTarget, joinUrl } from '@/shared/lib/backendTarget';
 
 export type AuthBootstrapStatus = 'loading' | 'authenticated' | 'unauthenticated';
 
@@ -29,14 +30,15 @@ export async function bootstrapAuth(dispatch: DispatchLike): Promise<AuthBootstr
 
   dispatch(authActions.setBootstrapStatus('loading'));
 
-  if (!sessionFlag.exists()) {
+  // Router mode: without a backend chosen at sign-in there is no session to restore.
+  if (!sessionFlag.exists() || !hasBackendTarget()) {
     dispatch(authActions.logout());
     bootstrapResult = 'unauthenticated';
     return bootstrapResult;
   }
 
   bootstrapPromise = getRefreshCsrfToken()
-    .then((csrfToken) => fetch(`${import.meta.env.VITE_API_URL as string}/api/refresh-token`, {
+    .then((csrfToken) => fetch(joinUrl(getApiBaseUrl(), '/api/refresh-token'), {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
@@ -71,4 +73,4 @@ export async function bootstrapAuth(dispatch: DispatchLike): Promise<AuthBootstr
     });
 
   return bootstrapPromise;
-}
+}

@@ -1,11 +1,12 @@
 import { getCsrfToken, setCsrfToken } from './csrf.ts';
+import { getApiBaseUrl, joinUrl } from './backendTarget.ts';
 
 /** Refresh requests require a CSRF token even after session storage is cleared. */
-export async function getRefreshCsrfToken(apiOrigin: string = import.meta.env.VITE_API_URL as string): Promise<string> {
+export async function getRefreshCsrfToken(apiOrigin: string = getApiBaseUrl()): Promise<string> {
   const existing = getCsrfToken();
   if (existing) return existing;
 
-  const response = await fetch(`${apiOrigin}/api/csrf-token`, {
+  const response = await fetch(joinUrl(apiOrigin, '/api/csrf-token'), {
     credentials: 'include',
   });
   if (!response.ok) throw new Error('Unable to obtain a CSRF token');
@@ -15,4 +16,4 @@ export async function getRefreshCsrfToken(apiOrigin: string = import.meta.env.VI
   if (!token) throw new Error('CSRF response missing token');
   setCsrfToken(token);
   return token;
-}
+}

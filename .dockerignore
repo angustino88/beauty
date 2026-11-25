@@ -1,0 +1,11 @@
+node_modules/
+build/
+dist/
+.git/
+.env
+.env.*
+!.env.example
+ssl_certificates/
+test-results/
+playwright-report/
+coverage/
