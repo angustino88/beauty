@@ -1,0 +1,16 @@
+# VITE_API_MODE=direct: one backend at ${BACKEND_UPSTREAM}. The app calls /api/, /ws/ and /media/ on its own origin.
+
+location /api/ {
+    proxy_pass ${BACKEND_UPSTREAM};
+    include /etc/nginx/snippets/proxy.inc;
+}
+
+location /ws/ {
+    proxy_pass ${BACKEND_UPSTREAM};
+    include /etc/nginx/snippets/proxy.inc;
+}
+
+location /media/ {
+    proxy_pass ${BACKEND_UPSTREAM};
+    include /etc/nginx/snippets/proxy.inc;
+}

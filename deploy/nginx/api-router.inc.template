@@ -1,0 +1,13 @@
+# VITE_API_MODE=router: several backends behind the LabMango Router at ${ROUTER_UPSTREAM}. The app resolves its
+# backend with /routing/resolve/user, then calls /t/<prefix_key>/... on its own origin; the Router's nginx
+# forwards to the backend.
+
+location /routing/ {
+    proxy_pass ${ROUTER_UPSTREAM};
+    include /etc/nginx/snippets/proxy.inc;
+}
+
+location /t/ {
+    proxy_pass ${ROUTER_UPSTREAM};
+    include /etc/nginx/snippets/proxy.inc;
+}

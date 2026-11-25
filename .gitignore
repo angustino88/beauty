@@ -11,7 +11,7 @@ coverage
 test-results
 playwright-report
 # Internal / proprietary assets kept out of the public repo
-nginx/
+/nginx/
 src/fonts/
 public/fonts/
 openapi/
