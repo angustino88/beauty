@@ -63,7 +63,7 @@ The frontend works with one backend directly or with several department backends
 | `router` | several department backends | `VITE_ROUTER_URL/t/<prefix_key>/api/...` |
 
 In router mode the sign-in flow is: Microsoft sign-in (MSAL) → `POST VITE_ROUTER_URL/routing/resolve/user`
-with the ID token → the Router answers the user's backend prefix → `aad-login`, the API, WebSockets and token
+with the ID token → the Router answers `{"data": {"backend_id", "name", "prefix"}}` → `aad-login`, the API, WebSockets and token
 refresh use that prefix. The chosen backend is kept in localStorage (`labmango.routedBackend`) until sign-out.
 Router-side requirements: its `AAD_AUDIENCE` equals `VITE_CLIENT_ID`, and its `CORS_ALLOWED_ORIGINS` contains
 the frontend origin. All backend URLs are built by `src/shared/lib/backendTarget.ts`; do not read

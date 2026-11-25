@@ -15,9 +15,12 @@
 
 export type ApiMode = 'direct' | 'router';
 
-/** One backend the Router returned for the signed-in user. */
+/** The backend the Router resolved for the signed-in user. */
 export interface RoutedBackend {
-  backendName: string;
+  /** The backend's logical id (`BACKEND_ID`). */
+  backendId: string;
+  /** Display name of the backend. */
+  name: string;
   /** Path prefix on the Router, `/t/<prefix_key>`. */
   prefix: string;
 }
@@ -84,7 +87,7 @@ export function getSelectedBackend(): RoutedBackend | null {
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Partial<RoutedBackend>;
     if (!isSafePrefix(parsed.prefix)) return null;
-    return { backendName: String(parsed.backendName ?? ''), prefix: parsed.prefix };
+    return { backendId: String(parsed.backendId ?? ''), name: String(parsed.name ?? ''), prefix: parsed.prefix };
   } catch {
     return null;
   }
@@ -142,32 +145,30 @@ export function getWsBaseUrl(): string {
 
 export class BackendRoutingError extends Error {
   readonly status: number | null;
-  constructor(message: string, status: number | null) {
+  /** Error code of the Router (`not_routed`, `ambiguous_route`, `invalid_token`, ...), when it answered. */
+  readonly code: string | null;
+  constructor(message: string, status: number | null, code: string | null = null) {
     super(message);
     this.name = 'BackendRoutingError';
     this.status = status;
+    this.code = code;
   }
 }
 
 type FetchLike = (input: string, init?: RequestInit) => Promise<Response>;
 
-/**
- * Picks the backend for a Router answer: the previously used one when it is still offered, else the first.
- * (The Router returns one backend unless it runs with ROUTING_CONFLICT_POLICY=all.)
- */
-export function chooseBackend(mappings: unknown, previous: RoutedBackend | null): RoutedBackend | null {
-  if (!Array.isArray(mappings)) return null;
-  const valid: RoutedBackend[] = mappings
-    .filter((m): m is { backend_name?: unknown; prefix: string } => !!m && isSafePrefix((m as { prefix?: unknown }).prefix))
-    .map((m) => ({ backendName: String(m.backend_name ?? ''), prefix: m.prefix }));
-  if (!valid.length) return null;
-  return valid.find((m) => previous && m.prefix === previous.prefix) ?? valid[0];
+/** The `data` of a successful `POST /routing/resolve/user`, or `null` when it is not a usable route. */
+export function parseRoute(data: unknown): RoutedBackend | null {
+  if (!data || typeof data !== 'object') return null;
+  const d = data as { backend_id?: unknown; name?: unknown; prefix?: unknown };
+  if (!isSafePrefix(d.prefix)) return null;
+  return { backendId: String(d.backend_id ?? ''), name: String(d.name ?? ''), prefix: d.prefix };
 }
 
 /** Asks the Router which backend serves the user of `idToken` (the Microsoft ID token from MSAL). */
 export async function resolveBackendForIdToken(
   idToken: string,
-  options: { routerUrl?: string; fetchImpl?: FetchLike; previous?: RoutedBackend | null } = {},
+  options: { routerUrl?: string; fetchImpl?: FetchLike } = {},
 ): Promise<RoutedBackend> {
   const routerUrl = options.routerUrl ?? readConfig().routerUrl;
   const fetchImpl: FetchLike = options.fetchImpl ?? ((input, init) => fetch(input, init));
@@ -184,27 +185,36 @@ export async function resolveBackendForIdToken(
   } catch {
     throw new BackendRoutingError('The LabMango router is unreachable. Check your connection and try again.', null);
   }
-  const body = (await response.json().catch(() => null)) as { detail?: unknown; mappings?: unknown } | null;
-  const detail = typeof body?.detail === 'string' ? body.detail : null;
+  const body = (await response.json().catch(() => null)) as
+    | { data?: unknown; error?: { code?: unknown; message?: unknown } }
+    | null;
   if (response.ok) {
-    const chosen = chooseBackend(body?.mappings, options.previous ?? getSelectedBackend());
-    if (chosen) return chosen;
+    const route = parseRoute(body?.data);
+    if (route) return route;
     throw new BackendRoutingError('The router returned no usable backend.', response.status);
   }
-  if (response.status === 404) {
+  const code = typeof body?.error?.code === 'string' ? body.error.code : null;
+  const message = typeof body?.error?.message === 'string' ? body.error.message : null;
+  if (code === 'not_routed') {
     throw new BackendRoutingError(
       'Your account is not assigned to a lab yet. Please contact your lab administrator.',
-      404,
+      response.status,
+      code,
     );
   }
-  if (response.status === 409) {
+  if (code === 'ambiguous_route') {
     throw new BackendRoutingError(
-      detail ?? 'Your account is assigned to more than one lab. Please contact your lab administrator.',
-      409,
+      'Your account is assigned to more than one lab. Please contact your lab administrator.',
+      response.status,
+      code,
     );
   }
-  if (response.status === 400) {
-    throw new BackendRoutingError(detail ?? 'Microsoft sign-in could not be verified. Please try again.', 400);
+  if (code === 'invalid_token') {
+    throw new BackendRoutingError('Microsoft sign-in could not be verified. Please try again.', response.status, code);
   }
-  throw new BackendRoutingError(detail ?? `The router answered with an error (${response.status}).`, response.status);
+  throw new BackendRoutingError(
+    message ?? `The router answered with an error (${response.status}).`,
+    response.status,
+    code,
+  );
 }

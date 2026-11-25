@@ -14,11 +14,11 @@ const store = new Map<string, string>();
 import {
   apiBaseUrlFor,
   BackendRoutingError,
-  chooseBackend,
   clearSelectedBackend,
   getSelectedBackend,
   isSafePrefix,
   joinUrl,
+  parseRoute,
   readConfig,
   resolveApiMode,
   resolveBackendForIdToken,
@@ -38,7 +38,7 @@ test('mode switch defaults to direct', () => {
 test('base URL follows the mode and the selected backend', () => {
   const direct = { mode: 'direct' as const, apiUrl: 'http://api:8000', routerUrl: '' };
   const router = { mode: 'router' as const, apiUrl: '', routerUrl: 'https://router.example' };
-  const selected = { backendName: 'Lab A', prefix: '/t/abc123' };
+  const selected = { backendId: 'dept_a', name: 'Lab A', prefix: '/t/abc123' };
   assert.equal(apiBaseUrlFor(direct, selected), 'http://api:8000');
   assert.equal(apiBaseUrlFor(router, selected), 'https://router.example/t/abc123');
   assert.equal(apiBaseUrlFor(router, null), 'https://router.example');
@@ -53,18 +53,18 @@ test('only /t/<prefix_key> prefixes are accepted', () => {
   assert.equal(isSafePrefix('/t/a/b'), false);
 });
 
-test('the previous backend is kept when the router still offers it', () => {
-  const mappings = [{ backend_name: 'A', prefix: '/t/a' }, { backend_name: 'B', prefix: '/t/b' }, { prefix: 'bad' }];
-  assert.deepEqual(chooseBackend(mappings, { backendName: 'B', prefix: '/t/b' }), { backendName: 'B', prefix: '/t/b' });
-  assert.deepEqual(chooseBackend(mappings, null), { backendName: 'A', prefix: '/t/a' });
-  assert.equal(chooseBackend([{ prefix: '//evil' }], null), null);
-  assert.equal(chooseBackend('nope', null), null);
+test('router answers are validated', () => {
+  assert.deepEqual(parseRoute({ backend_id: 'dept_a', name: 'Lab A', prefix: '/t/a' }), {
+    backendId: 'dept_a', name: 'Lab A', prefix: '/t/a',
+  });
+  assert.equal(parseRoute({ prefix: '//evil' }), null);
+  assert.equal(parseRoute('nope'), null);
 });
 
 test('selection is persisted and cleared', () => {
   store.clear();
-  setSelectedBackend({ backendName: 'Lab A', prefix: '/t/abc' });
-  assert.deepEqual(getSelectedBackend(), { backendName: 'Lab A', prefix: '/t/abc' });
+  setSelectedBackend({ backendId: 'dept_a', name: 'Lab A', prefix: '/t/abc' });
+  assert.deepEqual(getSelectedBackend(), { backendId: 'dept_a', name: 'Lab A', prefix: '/t/abc' });
   store.set('labmango.routedBackend', JSON.stringify({ prefix: 'https://evil' }));
   assert.equal(getSelectedBackend(), null);
   clearSelectedBackend();
@@ -83,18 +83,18 @@ test('router lookup posts the ID token and maps errors', async () => {
   const seen: { url?: string; init?: RequestInit } = {};
   const ok = await resolveBackendForIdToken('tok', {
     routerUrl: 'https://router/',
-    previous: null,
-    fetchImpl: fakeFetch(200, { mappings: [{ backend_name: 'Lab A', prefix: '/t/abc' }] }, seen),
+    fetchImpl: fakeFetch(200, { data: { backend_id: 'dept_a', name: 'Lab A', prefix: '/t/abc' } }, seen),
   });
-  assert.deepEqual(ok, { backendName: 'Lab A', prefix: '/t/abc' });
+  assert.deepEqual(ok, { backendId: 'dept_a', name: 'Lab A', prefix: '/t/abc' });
   assert.equal(seen.url, 'https://router/routing/resolve/user');
   assert.equal(seen.init?.method, 'POST');
   assert.equal(seen.init?.body, JSON.stringify({ id_token: 'tok' }));
 
-  for (const [status, body] of [[404, { detail: 'x' }], [409, { detail: 'claimed twice' }], [400, {}], [502, {}]] as const) {
+  const error = (code: string) => ({ error: { code, message: 'm', details: [], request_id: 'r' } });
+  for (const [status, code] of [[404, 'not_routed'], [409, 'ambiguous_route'], [400, 'invalid_token'], [502, 'internal_error']] as const) {
     await assert.rejects(
-      resolveBackendForIdToken('tok', { routerUrl: 'https://router', previous: null, fetchImpl: fakeFetch(status, body) }),
-      (e: unknown) => e instanceof BackendRoutingError && e.status === status,
+      resolveBackendForIdToken('tok', { routerUrl: 'https://router', fetchImpl: fakeFetch(status, error(code)) }),
+      (e: unknown) => e instanceof BackendRoutingError && e.status === status && e.code === code,
     );
   }
   await assert.rejects(
