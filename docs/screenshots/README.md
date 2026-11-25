@@ -8,3 +8,7 @@ models. They demonstrate room → station → bench → equipment navigation and
 multimeter, network switch, and control laptop.
 
 The model files and demonstration inventory used for capture are temporary fixtures.
+
+[Temperature heatmap](dcim-heatmap.png), [station detail with camera focus](dcim-station-detail.png) and
+[enhanced rendering](dcim-enhanced-rendering.png) show the data overlays and the redesigned inventory panel.
+Their temperature, humidity and power values are synthetic: the stations API does not report telemetry yet.

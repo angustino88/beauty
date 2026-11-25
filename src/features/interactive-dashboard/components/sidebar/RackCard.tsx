@@ -1,5 +1,8 @@
+import { Thermometer, Zap, LayoutGrid } from "lucide-react";
 import type { RackData } from "../../types";
-import { STATUS_COLORS, TYPE_LABELS } from "../../utils/stationVisual";
+import { STATUS_COLORS, TYPE_COLORS, TYPE_LABELS } from "../../utils/stationVisual";
+
+const STATUS_TEXT = { ok: "Healthy", warning: "Warning", critical: "Critical", unknown: "No data" } as const;
 
 export function RackCard({
   rack,
@@ -10,33 +13,40 @@ export function RackCard({
   selected?: boolean;
   onSelect?: () => void;
 }) {
+  const benches = rack.slots?.reduce((total, slot) => total + slot.benches.length, 0) ?? rack.benchCount;
   return (
     <button
-      className={`dcim-station-card ${selected ? "is-selected" : ""}`}
+      className={`dcim-station-card is-${rack.status} ${selected ? "is-selected" : ""}`}
       onClick={onSelect}
       aria-pressed={selected}
+      style={{ "--status": STATUS_COLORS[rack.status] } as React.CSSProperties}
     >
       <span className="dcim-station-card-heading">
         <strong>{rack.name}</strong>
-        <i style={{ background: STATUS_COLORS[rack.status] }} />
+        <span className={`dcim-status-pill is-${rack.status}`}>
+          <i style={{ background: STATUS_COLORS[rack.status] }} />
+          {STATUS_TEXT[rack.status]}
+        </span>
       </span>
-      <span>
-        {rack.stationType ?? TYPE_LABELS[rack.modelKind]} <b>·</b>{" "}
+      <span className="dcim-station-card-sub">
+        <span className="dcim-type-dot" style={{ background: TYPE_COLORS[rack.modelKind] }} />
+        {rack.stationType ?? TYPE_LABELS[rack.modelKind]}
+        <span className="dcim-sep">·</span>
         {rack.slotCode ?? "Unplaced"}
       </span>
       <span className="dcim-station-metrics">
-        <span>
-          {rack.temperature == null
-            ? "— °C"
-            : `${rack.temperature.toFixed(1)} °C`}
+        <span title="Temperature">
+          <Thermometer size={12} />
+          {rack.temperature == null ? "—" : `${rack.temperature.toFixed(1)} °C`}
         </span>
-        <span>
-          {rack.powerUsage == null
-            ? "— kW"
-            : `${rack.powerUsage.toFixed(1)} kW`}
+        <span title="Power draw">
+          <Zap size={12} />
+          {rack.powerUsage == null ? "—" : `${rack.powerUsage.toFixed(1)} kW`}
         </span>
-        <span>
-          {rack.status === "unknown" ? "No / partial data" : rack.status}
+        <span title="Benches">
+          <LayoutGrid size={12} />
+          {benches ?? "—"}
+          {rack.benchCapacity ? ` / ${rack.benchCapacity}` : ""}
         </span>
       </span>
     </button>

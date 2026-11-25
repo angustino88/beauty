@@ -57,6 +57,10 @@ export interface RackBoxProps {
   onSelect: (id: number) => void;
   pinned: boolean;
   onTogglePin: (id: number) => void;
+  /** Metric shown as a column beside the station, as a 0–1 level; null hides it. */
+  overlayLevel?: number | null;
+  /** Another station is focused: fade this one back. */
+  dimmed?: boolean;
 }
 
 /** Props for the Sidebar panel. */
@@ -65,6 +69,12 @@ export interface SidebarProps {
   selectedId: number | null;
   onSelect: (id: number) => void;
   onClose: () => void;
+  /** Return from a station's details to the list. */
+  onClearSelection?: () => void;
+  /** Fly the camera to a station. */
+  onFocus?: (id: number) => void;
+  pinnedIds?: number[];
+  onTogglePin?: (id: number) => void;
   isEditMode: boolean;
   canEdit?: boolean;
   isDeleteMode: boolean;

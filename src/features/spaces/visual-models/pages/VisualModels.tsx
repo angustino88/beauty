@@ -207,7 +207,7 @@ function UploadModal({
         <Form form={form} name="upload-model" layout="vertical" initialValues={toForm(EMPTY_DETAILS)}>
           <Form.Item
             label="GLB file"
-            extra="Up to 15 MB, with embedded PNG/JPEG textures and uncompressed geometry."
+            extra="Up to 15 MB with embedded textures. Draco/Meshopt geometry and KTX2/WebP textures are supported."
             validateStatus={error ? "error" : undefined}
             help={error || undefined}
           >
