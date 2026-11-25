@@ -51,3 +51,14 @@ test('room mapper maps lifecycle_status, access_policy, condition, availability,
   assert.equal(result.location_info?.city?.id, 2);
   assert.equal(result.floor, '2');
 });
+
+test('room telemetry is unavailable unless supplied and preserves real zero readings', () => {
+  const missing = mapRoomApiItem({ id: 1 });
+  assert.equal(missing.temperature, null);
+  assert.equal(missing.humidity, null);
+  assert.equal(missing.power_usage, null);
+  const measured = mapRoomApiItem({ id: 1, temperature: 23.5, humidity: 40, power_usage: 0 });
+  assert.equal(measured.temperature, 23.5);
+  assert.equal(measured.humidity, 40);
+  assert.equal(measured.power_usage, 0);
+});

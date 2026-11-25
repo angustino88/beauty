@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { computeFloorDimensions } from '../../utils/slotGrid';
 
 interface RoomFloorProps {
@@ -9,7 +9,7 @@ interface RoomFloorProps {
 
 const FLOOR_Y        = -1.4;
 const THICKNESS      = 0.3;
-const WALL_H         = 4;
+const WALL_H         = 0.5;
 const FLOOR_Z_OFFSET = 0.5;
 
 export function RoomFloor({ rows, cols }: RoomFloorProps) {
@@ -27,14 +27,14 @@ export function RoomFloor({ rows, cols }: RoomFloorProps) {
         canvas.height = size;
         const ctx = canvas.getContext('2d')!;
 
-        ctx.fillStyle = '#f0efed';
+        ctx.fillStyle = '#1c2c40';
         ctx.fillRect(0, 0, size, size);
 
-        ctx.strokeStyle = '#d8d5d1';
+        ctx.strokeStyle = '#30445b';
         ctx.lineWidth = size * 0.018;
         ctx.strokeRect(size * 0.012, size * 0.012, size - size * 0.024, size - size * 0.024);
 
-        ctx.fillStyle = 'rgba(255,255,255,0.14)';
+        ctx.fillStyle = 'rgba(255,255,255,0.015)';
         ctx.fillRect(size * 0.06, size * 0.06, size * 0.88, size * 0.88);
 
         const tex = new THREE.CanvasTexture(canvas);
@@ -44,12 +44,14 @@ export function RoomFloor({ rows, cols }: RoomFloorProps) {
         return tex;
     }, [floorWidth, floorDepth]);
 
+    useEffect(() => () => tileTexture.dispose(), [tileTexture]);
+
     return (
         <group position={[0, 0, FLOOR_Z_OFFSET]}>
             {/* Floor slab */}
             <mesh position={[0, SLAB_Y, 0]} receiveShadow>
                 <boxGeometry args={[floorWidth, THICKNESS, floorDepth]} />
-                <meshStandardMaterial map={tileTexture} roughness={0.25} metalness={0.05} />
+                <meshStandardMaterial map={tileTexture} roughness={0.85} metalness={0.05} />
             </mesh>
 
             {/* Baseboards */}
@@ -73,7 +75,7 @@ function Baseboard({ position, size }: {
     return (
         <mesh position={position} receiveShadow castShadow>
             <boxGeometry args={size} />
-            <meshStandardMaterial color="#c1baad" roughness={0.9} />
+            <meshStandardMaterial color="#48647b" roughness={0.9} />
         </mesh>
     );
 }

@@ -8,7 +8,7 @@ import {
   useGetRoomsQuery,
 } from "@/features/spaces/room/api";
 import {
-  useGetStationsQuery as useGetRacksQuery,
+  useGetDashboardStationsQuery,
   usePlaceRackMutation,
 } from "@/features/spaces/station/api";
 import type { IRack } from "@/features/spaces/station/types";
@@ -22,7 +22,6 @@ import { nearestAvailableSlot, toSlotAnchors } from "../utils/slotGrid";
 import type { RackData, SlotAnchor } from "../types";
 
 const ROOM_QUERY = { page: 1, page_size: 100, ordering: "id" } as const;
-const RACK_QUERY = { page: 1, page_size: 100, ordering: "id" } as const;
 const PINNED_KEY = "rackPinnedIds";
 
 function loadPinned(): number[] {
@@ -84,12 +83,9 @@ export function useDashboard() {
   const { roomSlug } = useParams<{ roomSlug?: string }>();
   const { data: roomsData, isLoading: roomsLoading } =
     useGetRoomsQuery(ROOM_QUERY);
-  const { data: racksData, isLoading: racksLoading } =
-    useGetRacksQuery(RACK_QUERY);
   const [placeRack] = usePlaceRackMutation();
 
   const rooms = useMemo(() => roomsData?.data ?? [], [roomsData?.data]);
-  const allRacks = useMemo(() => racksData?.data ?? [], [racksData?.data]);
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [pinnedIds, setPinnedIds] = useState<number[]>(loadPinned);
@@ -115,8 +111,10 @@ export function useDashboard() {
   }, [currentIndex, navigate, roomSlug, rooms]);
 
   const currentRoom = rooms[currentIndex] ?? null;
+  const { currentData: racksData, isFetching: racksLoading } = useGetDashboardStationsQuery(currentRoom?.id ?? skipToken);
+  const allRacks = useMemo(() => racksData?.data ?? [], [racksData?.data]);
   const {
-    data: layoutData,
+    currentData: layoutData,
     isLoading: layoutLoading,
     refetch: refetchLayout,
   } = useGetRoomDashboardLayoutQuery(currentRoom?.id ?? skipToken);

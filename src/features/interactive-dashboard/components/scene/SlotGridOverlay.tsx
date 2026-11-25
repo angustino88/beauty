@@ -75,7 +75,7 @@ export function SlotGridOverlay({
     const textSize     = Math.max(0.07, Math.min(slotW, slotD) * 0.11);
     const subTextSize  = textSize * 0.70;
 
-    if (slots.length === 0) return null;
+    if (slots.length === 0 || !isEditMode) return null;
 
     return (
         <group>

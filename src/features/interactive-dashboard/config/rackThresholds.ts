@@ -19,28 +19,28 @@ export const RACK_THRESHOLDS = {
   },
 } as const;
 
-export type RackStatus = 'ok' | 'warning' | 'critical';
+export type RackStatus = 'ok' | 'warning' | 'critical' | 'unknown';
 
 export function getRackStatus(
-  temperature: number,
-  powerUsage: number,
-  humidity: number,
+  temperature: number | null,
+  powerUsage: number | null,
+  humidity: number | null,
 ): RackStatus {
   const t = RACK_THRESHOLDS.temperature;
   const p = RACK_THRESHOLDS.power;
   const h = RACK_THRESHOLDS.humidity;
 
   if (
-    temperature > t.critical ||
-    powerUsage > p.critical ||
-    humidity > h.critical
+    (temperature != null && temperature > t.critical) ||
+    (powerUsage != null && powerUsage > p.critical) ||
+    (humidity != null && humidity > h.critical)
   ) return 'critical';
 
   if (
-    temperature > t.warning ||
-    powerUsage > p.warning ||
-    humidity > h.warning
+    (temperature != null && temperature > t.warning) ||
+    (powerUsage != null && powerUsage > p.warning) ||
+    (humidity != null && humidity > h.warning)
   ) return 'warning';
 
-  return 'ok';
+  return temperature == null || powerUsage == null || humidity == null ? 'unknown' : 'ok';
 }
