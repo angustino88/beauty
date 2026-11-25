@@ -1,3 +1,4 @@
+import { ImportedModel } from "../../models/ImportedModel";
 import { useVisualModel } from "../../models/useVisualModel";
 import { useEffect, useRef, useState } from "react";
 import { Canvas } from "@react-three/fiber";
@@ -9,13 +10,16 @@ export function BenchInspector({
   bench,
   location,
   onClose,
+  stationTypeId,
 }: {
   bench: Bench;
   location: string;
   onClose: () => void;
+  stationTypeId?: number | null;
 }) {
   const custom = useVisualModel("bench", bench.id);
   const shared = useVisualModel("bench", "*");
+  const stationModel = useVisualModel("station_type", stationTypeId);
   const ref = useRef<HTMLDialogElement>(null);
   const [id, setId] = useState<number>();
   const device = bench.equipment.find((item) => item.id === id);
@@ -24,6 +28,30 @@ export function BenchInspector({
     dialog?.showModal();
     return () => dialog?.close();
   }, []);
+  const fallback = (
+    <>
+      <BenchAssembly
+        bench={bench}
+        width={3}
+        depth={1.7}
+        selected={id}
+        onInspect={setId}
+      />
+      {!custom &&
+        !shared &&
+        [-1.38, 1.38].flatMap((x) =>
+          [-0.74, 0.74].map((z) => (
+            <Part
+              key={x + "," + z}
+              position={[x, -0.48, z]}
+              size={[0.09, 0.96, 0.09]}
+              color="#708596"
+            />
+          )),
+        )}
+    </>
+  );
+
   return (
     <dialog
       ref={ref}
@@ -45,27 +73,30 @@ export function BenchInspector({
           <color attach="background" args={["#101d2c"]} />
           <ambientLight intensity={1.5} />
           <directionalLight position={[3, 6, 4]} intensity={2} />
-          <BenchAssembly
-            bench={bench}
-            width={3}
-            depth={1.7}
-            selected={id}
-            onInspect={setId}
-          />
-          {!custom &&
-            !shared &&
-            [-1.38, 1.38].flatMap((x) =>
-              [-0.74, 0.74].map((z) => (
-                <Part
-                  key={x + "," + z}
-                  position={[x, -0.48, z]}
-                  size={[0.09, 0.96, 0.09]}
-                  color="#708596"
-                />
-              )),
-            )}
+          {stationModel && !custom && !shared ? (
+            <ImportedModel
+              model={stationModel}
+              dimensions={[3, 1.5, 1.7]}
+              fallback={fallback}
+            >
+              {(height, footprint) => (
+                <group position={[0, height + 0.01, 0]}>
+                  <BenchAssembly
+                    bench={bench}
+                    width={footprint[0]}
+                    depth={footprint[1]}
+                    selected={id}
+                    onInspect={setId}
+                  />
+                </group>
+              )}
+            </ImportedModel>
+          ) : (
+            fallback
+          )}
           <OrbitControls
             makeDefault
+            target={[0, stationModel || custom || shared ? 0.65 : 0, 0]}
             minDistance={0.6}
             maxDistance={9}
             maxPolarAngle={Math.PI * 0.5}
