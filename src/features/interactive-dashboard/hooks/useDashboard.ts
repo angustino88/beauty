@@ -158,7 +158,11 @@ export function useDashboard() {
           currentRoom,
         );
       const anchor = slotByCode.get(slot.slot_code);
-      next.push({ ...toRackData(detail, anchor?.position ?? null, slot.slot_code), slots: layoutData.contents && (layoutData.contents[detail.id] ?? []) });
+      next.push({
+        ...toRackData(detail, anchor?.position ?? null, slot.slot_code),
+        slots: layoutData.contents && (layoutData.contents[detail.id] ?? []),
+        visualModelId: layoutData.station_models?.[detail.id] ?? null,
+      });
     }
 
     for (const rack of layoutData.unplaced_racks) {

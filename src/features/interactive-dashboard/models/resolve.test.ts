@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { DEFAULT_FIT, resolveModel } from './resolve.ts';
+import { resolveAsset } from './resolve.ts';
 import type { VisualModelAsset } from './api.ts';
 
 const asset = (patch: Partial<VisualModelAsset> = {}): VisualModelAsset => ({
@@ -19,22 +19,18 @@ const asset = (patch: Partial<VisualModelAsset> = {}): VisualModelAsset => ({
   ...patch,
 });
 
-test('one library asset resolves for several targets with their own fitting', () => {
-  const device = resolveModel(asset(), { ...DEFAULT_FIT, rotation: 15, scale: 0.5, offset_y: 0.2 });
-  const category = resolveModel(asset(), DEFAULT_FIT);
-  assert.equal(device.cacheKey, category.cacheKey);
-  assert.equal(device.rotation, 105);
-  assert.equal(category.rotation, 90);
-  assert.equal(device.surface, 0.6);
-  assert.deepEqual([device.scale, device.offset_y], [0.5, 0.2]);
+test('an asset resolves to its own placement', () => {
+  const model = resolveAsset(asset());
+  assert.deepEqual([model.rotation, model.surface, model.scale], [90, 0.6, 1]);
 });
 
 test('a refetched pre-signed link or metadata edit keeps the first link, so the model is not reloaded', () => {
-  const first = resolveModel(asset(), DEFAULT_FIT);
-  const refetched = resolveModel(asset({ url: 'https://storage.example/visual_models/a.glb?X-Amz-Date=2', version: 3 }), DEFAULT_FIT);
+  const first = resolveAsset(asset());
+  const refetched = resolveAsset(asset({ url: 'https://storage.example/visual_models/a.glb?X-Amz-Date=2', version: 3, rotation: 0 }));
   assert.equal(refetched.url, first.url);
   assert.equal(refetched.cacheKey, first.cacheKey);
-  const other = resolveModel(asset({ id: 8, sha256: 'b'.repeat(64), url: 'https://storage.example/b.glb' }), DEFAULT_FIT);
+  assert.equal(refetched.rotation, 0);
+  const other = resolveAsset(asset({ id: 8, sha256: 'b'.repeat(64), url: 'https://storage.example/b.glb' }));
   assert.notEqual(other.cacheKey, first.cacheKey);
   assert.equal(other.url, 'https://storage.example/b.glb');
 });

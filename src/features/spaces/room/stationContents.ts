@@ -3,7 +3,7 @@ import type { ResourceMappingData, MappingEquipment } from '@/shared/api/generat
 export interface StationPosition {
   id: number;
   label: string;
-  benches: { id: number; name: string; equipment: MappingEquipment[] }[];
+  benches: { id: number; name: string; visual_model_id: number | null; equipment: MappingEquipment[] }[];
 }
 
 export function stationContents(data: Partial<ResourceMappingData>) {
@@ -25,7 +25,7 @@ export function stationContents(data: Partial<ResourceMappingData>) {
     }
     if (!slot) continue;
     const equipment: MappingEquipment[] = [];
-    slot.benches.push({ id: bench.id, name: bench.name || bench.sku, equipment });
+    slot.benches.push({ id: bench.id, name: bench.name || bench.sku, visual_model_id: bench.visual_model_id ?? null, equipment });
     devices.set(bench.id, equipment);
   }
   for (const device of data.equipment) devices.get(device.bench_id ?? -1)?.push(device);

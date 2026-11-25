@@ -121,6 +121,9 @@ function mapDashboardLayout(res: unknown): IRoomDashboardLayout {
       },
       slots,
       contents: stationContents(data),
+      station_models: Object.fromEntries(
+        stations.map((st) => [st.id as number, (st.visual_model_id as number | null | undefined) ?? null]),
+      ),
       unplaced_racks: unplacedStations,
     };
   }

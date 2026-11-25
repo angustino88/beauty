@@ -165,8 +165,8 @@ export function Sidebar({
         <BenchInspector
           key={activeBench.id}
           bench={activeBench}
-          stationTypeId={
-            selected.modelKind === "table" ? selected.stationTypeId : undefined
+          stationModelId={
+            selected.modelKind === "table" ? selected.visualModelId : undefined
           }
           location={[selected.name, slot.label].join(" / ")}
           onClose={() => setBenchId(null)}

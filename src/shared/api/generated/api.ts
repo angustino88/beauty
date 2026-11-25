@@ -11310,6 +11310,8 @@ export type MappingStation = {
   name: string;
   room_id: number | null;
   slot_id: number | null;
+  /** 3D library model shown for this resource, after catalog defaults. */
+  visual_model_id?: number | null;
 };
 export type MappingStationSlot = {
   id: number;
@@ -11325,6 +11327,8 @@ export type MappingBench = {
   name: string;
   setup_location_id: number | null;
   station_slot_id: number | null;
+  /** 3D library model shown for this resource, after catalog defaults. */
+  visual_model_id?: number | null;
 };
 export type MappingEquipmentCategory = {
   id: number;
@@ -11346,6 +11350,8 @@ export type MappingEquipment = {
   product_model?: MappingEquipmentCategory | null;
   bench_id: number | null;
   bench_assignment: MappingEquipmentAssignment | null;
+  /** 3D library model shown for this resource, after catalog defaults. */
+  visual_model_id?: number | null;
 };
 export type MappingLicenseCategory = {
   id: number;

@@ -1,12 +1,14 @@
 import type { FetchBaseQueryError } from "@reduxjs/toolkit/query";
 import { baseApi } from "@/shared/lib/api";
 
-export type ModelScope =
-  | "station_type"
-  | "equipment_category"
-  | "equipment_model"
-  | "equipment"
-  | "bench";
+/** Resources that store a 3D model. Catalog rows hold defaults their items inherit. */
+export type ModelSegment =
+  | "station-types"
+  | "equipment-categories"
+  | "equipment-product-models"
+  | "stations"
+  | "benches"
+  | "equipment";
 
 /** A GLB in the shared library, uploaded once and reused by many resources. */
 export interface VisualModelAsset {
@@ -24,36 +26,29 @@ export interface VisualModelAsset {
   updated_at: string;
 }
 
-/** Maps one catalog type or resource to a library asset, with per-target fitting. */
-export interface VisualModelAssignment {
-  scope: ModelScope;
-  target_key: string;
-  asset_id: number;
-  rotation: number;
-  scale: number;
-  offset_x: number;
-  offset_y: number;
-  offset_z: number;
-  version: number;
-}
-
 export type AssetDetails = Pick<
   VisualModelAsset,
   "name" | "source_url" | "license" | "rotation" | "surface"
 >;
-export type AssignmentFit = Pick<
-  VisualModelAssignment,
-  "asset_id" | "rotation" | "scale" | "offset_x" | "offset_y" | "offset_z"
->;
+
+/** The model a resource stores and the one it shows after inheriting catalog defaults. */
+export interface VisualModelSelection {
+  id: number;
+  name: string;
+  visual_model_id: number | null;
+  effective_visual_model_id: number | null;
+  /** "own", the catalog the shown model comes from, or null when none applies. */
+  origin: "own" | "station_type" | "product_model" | "equipment_category" | null;
+}
 
 export {
   assetCacheKey,
-  DEFAULT_FIT,
-  resolveModel,
+  resolveAsset,
   type VisualModel,
 } from "./resolve.ts";
 
 type Page<T> = { data: T[]; meta: { pagination: { count: number } } };
+
 type PageResult = { data?: unknown; error?: FetchBaseQueryError };
 async function fetchAllPages<T>(
   fetchWithBQ: (arg: {
@@ -78,67 +73,18 @@ async function fetchAllPages<T>(
 
 const ifVersion = (version: number) => ({ "If-Match": `"${version}"` });
 const assetsUrl = "/api/labs/visual-model-assets";
-const assignmentUrl = (scope: ModelScope, key: string) =>
-  `/api/labs/visual-model-assignments/${scope}/${encodeURIComponent(key)}`;
 
 const visualApi = baseApi
   .enhanceEndpoints({
-    addTagTypes: ["VisualModelAsset", "VisualModelAssignment"],
+    addTagTypes: ["VisualModelAsset", "VisualModelSelection"],
   })
   .injectEndpoints({
     endpoints: (build) => ({
-      visualCatalogTargets: build.query<
-        { scope: ModelScope; key: string; label: string }[],
-        void
-      >({
-        async queryFn(_args, _api, _extra, fetchWithBQ) {
-          const sources = [
-            {
-              scope: "station_type" as const,
-              label: "Station type",
-              url: "/api/labs/station-types/options",
-            },
-            {
-              scope: "equipment_category" as const,
-              label: "Category",
-              url: "/api/labs/equipment-categories/options",
-            },
-          ];
-          const responses = await Promise.all(
-            sources.map((source) => fetchWithBQ(source.url)),
-          );
-          const targets: { scope: ModelScope; key: string; label: string }[] =
-            [];
-          for (const [index, response] of responses.entries()) {
-            if (response.error) return { error: response.error };
-            const { data } = response.data as {
-              data: { id: number; name: string }[];
-            };
-            targets.push(
-              ...data.map((item) => ({
-                scope: sources[index].scope,
-                key: String(item.id),
-                label: sources[index].label + " · " + item.name,
-              })),
-            );
-          }
-          return { data: targets };
-        },
-      }),
       visualModelAssets: build.query<VisualModelAsset[], void>({
         async queryFn(_args, _api, _extra, fetchWithBQ) {
           return fetchAllPages<VisualModelAsset>(fetchWithBQ, assetsUrl);
         },
         providesTags: ["VisualModelAsset"],
-      }),
-      visualModelAssignments: build.query<VisualModelAssignment[], void>({
-        async queryFn(_args, _api, _extra, fetchWithBQ) {
-          return fetchAllPages<VisualModelAssignment>(
-            fetchWithBQ,
-            "/api/labs/visual-model-assignments",
-          );
-        },
-        providesTags: ["VisualModelAssignment"],
       }),
       uploadVisualModelAsset: build.mutation<
         { asset: VisualModelAsset; created: boolean },
@@ -175,39 +121,51 @@ const visualApi = baseApi
         }),
         invalidatesTags: ["VisualModelAsset"],
       }),
-      assignVisualModel: build.mutation<
-        VisualModelAssignment,
-        { scope: ModelScope; key: string; fit: AssignmentFit; version: number }
+      visualModelSelection: build.query<
+        VisualModelSelection,
+        { segment: ModelSegment; id: number }
       >({
-        query: ({ scope, key, fit, version }) => ({
-          url: assignmentUrl(scope, key),
-          method: "PUT",
-          headers: version ? ifVersion(version) : { "If-None-Match": "*" },
-          body: fit,
-        }),
-        transformResponse: (response: { data: VisualModelAssignment }) =>
+        query: ({ segment, id }) => `/api/labs/${segment}/${id}/visual-model`,
+        transformResponse: (response: { data: VisualModelSelection }) =>
           response.data,
-        // Usage counts on assets change with assignments.
-        invalidatesTags: ["VisualModelAssignment", "VisualModelAsset"],
+        providesTags: (_result, _error, { segment, id }) => [
+          { type: "VisualModelSelection", id: `${segment}/${id}` },
+        ],
       }),
-      unassignVisualModel: build.mutation<void, VisualModelAssignment>({
-        query: (assignment) => ({
-          url: assignmentUrl(assignment.scope, assignment.target_key),
-          method: "DELETE",
-          headers: ifVersion(assignment.version),
+      visualModelSelections: build.query<VisualModelSelection[], ModelSegment>({
+        async queryFn(segment, _api, _extra, fetchWithBQ) {
+          return fetchAllPages<VisualModelSelection>(
+            fetchWithBQ,
+            `/api/labs/visual-model-selections/${segment}`,
+          );
+        },
+        providesTags: (_result, _error, segment) => [
+          { type: "VisualModelSelection", id: `list:${segment}` },
+        ],
+      }),
+      selectVisualModel: build.mutation<
+        VisualModelSelection,
+        { segment: ModelSegment; id: number; visualModelId: number | null }
+      >({
+        query: ({ segment, id, visualModelId }) => ({
+          url: `/api/labs/${segment}/${id}/visual-model`,
+          method: "PUT",
+          body: { visual_model_id: visualModelId },
         }),
-        invalidatesTags: ["VisualModelAssignment", "VisualModelAsset"],
+        transformResponse: (response: { data: VisualModelSelection }) =>
+          response.data,
+        // Catalog defaults change what items inherit, so every selection and room layout is refreshed.
+        invalidatesTags: ["VisualModelSelection", "VisualModelAsset", "Room"],
       }),
     }),
   });
 
 export const {
-  useVisualCatalogTargetsQuery,
   useVisualModelAssetsQuery,
-  useVisualModelAssignmentsQuery,
   useUploadVisualModelAssetMutation,
   useUpdateVisualModelAssetMutation,
   useDeleteVisualModelAssetMutation,
-  useAssignVisualModelMutation,
-  useUnassignVisualModelMutation,
+  useVisualModelSelectionQuery,
+  useVisualModelSelectionsQuery,
+  useSelectVisualModelMutation,
 } = visualApi;

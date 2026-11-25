@@ -28,6 +28,9 @@ const MyBookings = lazy(() => import("@/features/booking/pages/MyBookings"));
 
 // Spaces: Room, Station, Bench, Mapping
 const Room = lazy(() => import("@/features/spaces/room/pages/Room"));
+const VisualModels = lazy(
+  () => import("@/features/spaces/visual-models/pages/VisualModels"),
+);
 const Station = lazy(() => import("@/features/spaces/station/pages/Station"));
 const Bench = lazy(() => import("@/features/spaces/bench/pages/Bench"));
 const Mapping = lazy(() => import("@/features/spaces/mapping/pages/Mapping"));
@@ -156,6 +159,14 @@ export default function AppRoutes() {
           element={
             <PermissionRoute permission="lab_operations.manage">
               <Bench />
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="/spaces/3d-models"
+          element={
+            <PermissionRoute permission="lab_operations.manage">
+              <VisualModels />
             </PermissionRoute>
           }
         />

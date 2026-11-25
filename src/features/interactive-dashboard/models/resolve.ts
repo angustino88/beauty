@@ -1,6 +1,6 @@
-import type { AssignmentFit, VisualModelAsset } from "./api.ts";
+import type { VisualModelAsset } from "./api.ts";
 
-/** What the renderer needs: an asset combined with one target's fitting. */
+/** What the renderer needs to place one library model. */
 export interface VisualModel {
   /** Identifies the file content; the GLB is loaded and cached once per key. */
   cacheKey: string;
@@ -27,26 +27,16 @@ function stableUrl(asset: VisualModelAsset) {
   return url;
 }
 
-export function resolveModel(
-  asset: VisualModelAsset,
-  fit: Omit<AssignmentFit, "asset_id">,
-): VisualModel {
+/** Placement comes from the asset; the renderer fits it into each resource's box. */
+export function resolveAsset(asset: VisualModelAsset): VisualModel {
   return {
     cacheKey: assetCacheKey(asset),
     url: stableUrl(asset),
-    rotation: asset.rotation + fit.rotation,
-    scale: fit.scale,
+    rotation: asset.rotation,
+    scale: 1,
     surface: asset.surface,
-    offset_x: fit.offset_x,
-    offset_y: fit.offset_y,
-    offset_z: fit.offset_z,
+    offset_x: 0,
+    offset_y: 0,
+    offset_z: 0,
   };
 }
-
-export const DEFAULT_FIT: Omit<AssignmentFit, "asset_id"> = {
-  rotation: 0,
-  scale: 1,
-  offset_x: 0,
-  offset_y: 0,
-  offset_z: 0,
-};

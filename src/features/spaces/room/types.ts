@@ -146,6 +146,8 @@ export interface IRoomDashboardSlot {
 
 export interface IRoomDashboardLayout {
   contents?: Record<number, import('./stationContents').StationPosition[]>;
+  /** 3D library model each station shows (own or its station type's), by station id. */
+  station_models?: Record<number, number | null>;
   room: {
     id: number;
     sku: string | null;

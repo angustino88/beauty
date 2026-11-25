@@ -1,17 +1,12 @@
 import { createContext, useContext } from "react";
-import type { ModelScope, VisualModel } from "./api";
+import type { VisualModel } from "./api";
 
-/** Resolved models keyed by `scope/target_key`. */
-export const LibraryContext = createContext<ReadonlyMap<string, VisualModel>>(
+/** Library models by asset id. The dashboard only displays: resources say which asset they show. */
+export const LibraryContext = createContext<ReadonlyMap<number, VisualModel>>(
   new Map(),
 );
-export const targetId = (scope: ModelScope, key: string | number) =>
-  scope + "/" + key;
 
-export function useVisualModel(
-  scope: ModelScope,
-  key: string | number | null | undefined,
-) {
+export function useVisualModel(assetId: number | null | undefined) {
   const library = useContext(LibraryContext);
-  return key == null ? undefined : library.get(targetId(scope, key));
+  return assetId == null ? undefined : library.get(assetId);
 }

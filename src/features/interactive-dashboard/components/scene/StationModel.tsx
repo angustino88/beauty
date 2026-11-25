@@ -163,7 +163,7 @@ export function StationModel({
   rack: RackData;
   color: string;
 }) {
-  const model = useVisualModel("station_type", rack.stationTypeId);
+  const model = useVisualModel(rack.visualModelId);
   const fallback = <SchematicStationModel rack={rack} color={color} />;
   if (!model) return fallback;
   return (
