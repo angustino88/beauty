@@ -1,3 +1,4 @@
+import { BenchInspector } from '../scene/BenchInspector';
 import { useState } from "react";
 import {
   Search,
@@ -29,6 +30,9 @@ export function Sidebar({
 }: SidebarProps) {
   const [search, setSearch] = useState("");
   const selected = racks.find((rack) => rack.id === selectedId);
+  const [benchId, setBenchId] = useState<number | null>(null);
+  const slot = selected?.slots?.find(item => item.benches.some(bench => bench.id === benchId));
+  const activeBench = slot?.benches.find(bench => bench.id === benchId);
   const filtered = racks.filter((rack) =>
     `${rack.name} ${rack.stationType ?? ""} ${rack.slotCode ?? ""}`
       .toLowerCase()
@@ -120,13 +124,14 @@ export function Sidebar({
           {!selected.slots ? <p>Slot inventory unavailable</p> : !selected.slots.length ? <p>No station slots configured</p> :
             selected.slots.map(slot => <details key={selected.id + ':' + slot.id}>
               <summary>{slot.label} · {slot.benches.map(b => b.name).join(', ') || 'Empty'}</summary>
-              {slot.benches.map(bench => <div key={bench.id}><strong>{bench.name}</strong>
+              {slot.benches.map(bench => <div key={bench.id}><button className="dcim-bench-open" onClick={() => setBenchId(bench.id)}>Inspect {bench.name} in 3D</button>
                 {bench.equipment.length ? <ul>{bench.equipment.map(device => <li key={device.id}>{device.name || device.sku}{device.category && ' · ' + device.category.name}</li>)}</ul> : <p>No equipment assigned</p>}
               </div>)}
             </details>)}
 
         </section>
       )}
+      {activeBench && selected && slot && <BenchInspector key={activeBench.id} bench={activeBench} location={[selected.name, slot.label].join(" / ")} onClose={() => setBenchId(null)} />}
       <label className="dcim-search">
         <Search size={16} />
         <input
