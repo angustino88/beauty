@@ -9,6 +9,7 @@ import {
 import { refLabel } from '@/shared/utils/refLabel';
 import type { StatusTone } from '@/shared/status/statusTone';
 import type { LocationState, ResourceState } from '../resourceStatus';
+import { BENCH_DETAILS, ROOM_DETAILS, STATION_DETAILS } from '../resourceForm';
 import { explainSpaceStatus } from '../spaceStatusExplanation';
 import type { ResourceMappingRow } from '@/features/spaces/mapping/types';
 import type { RoomAssignedStationItem } from '@/features/spaces/mapping/mapper';
@@ -181,6 +182,8 @@ function properties(kind: SpaceKind, record: Record<string, unknown>, benchRow?:
       ['Country', text(record, 'country', 'location_info.country')],
       ['Floor area', length && width ? `${length} × ${width} m` : text(record, 'size')],
       ['Owner', text(record, 'primary_owner')],
+      ['Department', text(record, 'department')],
+      ['Group', text(record, 'group')],
     ] as const;
   }
   if (kind === 'station') {
@@ -190,22 +193,45 @@ function properties(kind: SpaceKind, record: Record<string, unknown>, benchRow?:
     return [
       ['SKU', sku && <Code>{sku}</Code>],
       ['Label', label],
+      ['Station type', text(record, 'station_type', 'type')],
       ['Room', text(record, 'room_name', 'room')],
       ['Slot', roomSlotCodeOf(record)],
       ['Dimensions (H × W × D)', h && w && d ? `${h} × ${w} × ${d} mm` : null],
       ['Owner', text(record, 'primary_owner')],
+      ['Department', text(record, 'department')],
+      ['Group', text(record, 'group')],
     ] as const;
   }
   return [
     ['SKU', sku && <Code>{sku}</Code>],
     ['Station', text(record, 'station_name', 'station')],
     ['Slot', stationSlotCodeOf(record, benchRow)],
-    ['Group', text(record, 'group_name', 'bench_group')],
-    ['Type', text(record, 'type_name', 'bench_type')],
+    ['Bench group', text(record, 'bench_group', 'group_name')],
+    ['Bench type', text(record, 'bench_type', 'type', 'type_name')],
+    ['Group', text(record, 'group')],
     ['Owner', text(record, 'primary_owner', 'owner')],
     ['Department', text(record, 'department')],
     ['Location note', text(record, 'location_name')],
   ] as const;
+}
+
+const SPECIFICATION_FIELDS = {
+  bench: BENCH_DETAILS.filter(({ name }) => !name.startsWith('requested_')),
+  room: ROOM_DETAILS,
+  station: STATION_DETAILS,
+};
+
+function specificationProperties(kind: SpaceKind, record: Record<string, unknown>) {
+  return SPECIFICATION_FIELDS[kind].flatMap(({ name, label, type }) => {
+    const value = record[name];
+    if (value == null || value === '') return [];
+    if (type === 'json-object') {
+      return typeof value === 'object' && Object.keys(value).length
+        ? [[label, JSON.stringify(value)] as const]
+        : [];
+    }
+    return [[label, String(value)] as const];
+  });
 }
 
 function fallbackRoomStations(record: Record<string, unknown>): RoomAssignedStationItem[] {
@@ -425,7 +451,7 @@ export const SpaceDetailSummary: React.FC<SpaceDetailSummaryProps> = ({
         onNavigate={onNavigate}
       />
       {(() => {
-        const items = properties(spaceKind, record, benchRow);
+        const items = [...properties(spaceKind, record, benchRow), ...specificationProperties(spaceKind, record)];
         return items.some(([, value]) => value) ? (
           <DetailSection title="Details" icon={<Info />}><PropertyList items={[...items]} /></DetailSection>
         ) : null;

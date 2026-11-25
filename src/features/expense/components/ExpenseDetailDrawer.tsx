@@ -121,8 +121,11 @@ export const ExpenseDetailDrawer: React.FC<ExpenseDetailDrawerProps> = ({
           <Descriptions.Item label="Expense Name">
             <strong>{expense.name}</strong>
           </Descriptions.Item>
-          <Descriptions.Item label="Room">
-            {expense.room_name || `Room #${expense.room_id}`}
+          <Descriptions.Item label="Resource">
+            <Space size={6}>
+              <Tag>{expense.resource_kind_label}</Tag>
+              <span>{expense.resource_name || `${expense.resource_kind_label} #${expense.resource_id}`}</span>
+            </Space>
           </Descriptions.Item>
           <Descriptions.Item label="Expense Type">
             <Tag color={EXPENSE_TYPE_COLORS[expense.expense_type]}>

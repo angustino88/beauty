@@ -31,13 +31,14 @@ const AppSideNav = ({ collapsed, setCollapsed }: AppSideNavProps) => {
   const active = findNavigationPage(pathname, sections);
   const activeSection = active && active.section.pages.length > 1
     ? active.section.key : undefined;
+  const context = `${pathname}:${sectionKeys}:${collapsed}`;
+  const defaultOpenKeys = !collapsed && activeSection ? [activeSection] : [];
   const [expansion, setExpansion] = useState<{ context: string; keys: string[] }>({
-    context: `${pathname}:${sectionKeys}`, keys: activeSection ? [activeSection] : [],
+    context, keys: defaultOpenKeys,
   });
-  const context = `${pathname}:${sectionKeys}`;
-  // A new route reveals its section; manual accordion choices apply until navigation.
+  // Expanded navigation reveals the section for the current route.
   const openKeys = expansion.context === context
-    ? expansion.keys : activeSection ? [activeSection] : [];
+    ? expansion.keys : defaultOpenKeys;
   const searching = !collapsed && query.trim().length > 0;
 
   useEffect(() => {
@@ -60,6 +61,7 @@ const AppSideNav = ({ collapsed, setCollapsed }: AppSideNavProps) => {
       key: section.pages[0].path, icon: pageIcons[section.pages[0].icon], label: section.pages[0].label,
     } : {
       key: section.key, icon: sectionIcons[section.key], label: section.label,
+      popupClassName: styleCss.navigationPopup,
       children: section.pages.map((page) => ({
         key: page.path,
         icon: pageIcons[page.icon],
@@ -71,6 +73,12 @@ const AppSideNav = ({ collapsed, setCollapsed }: AppSideNavProps) => {
   const onOpenChange: MenuProps['onOpenChange'] = (keys) => {
     const newlyOpened = keys.find((key) => !openKeys.includes(key));
     setExpansion({ context, keys: newlyOpened ? [newlyOpened] : keys.slice(-1) });
+  };
+
+  const navigateToPage = (path: string) => {
+    navigate(path);
+    setQuery('');
+    if (window.matchMedia('(max-width: 700px)').matches) setCollapsed(true);
   };
 
   return (
@@ -100,7 +108,7 @@ const AppSideNav = ({ collapsed, setCollapsed }: AppSideNavProps) => {
                   if (event.key === 'Escape') setQuery('');
                   if (event.key === 'Enter' && query.trim()) {
                     const first = searchNavigationPages(query, sections)[0];
-                    if (first) { navigate(first.page.path); setQuery(''); }
+                    if (first) navigateToPage(first.page.path);
                   }
                 }} />
             </>
@@ -108,10 +116,10 @@ const AppSideNav = ({ collapsed, setCollapsed }: AppSideNavProps) => {
         </div>
 
         <div className={styleCss.menu}>
-          <Menu mode={collapsed ? 'vertical' : 'inline'} theme="dark" inlineCollapsed={collapsed}
+          <Menu mode="inline" theme="dark" inlineCollapsed={collapsed}
             selectedKeys={active ? [active.page.path] : []}
             openKeys={searching ? [] : openKeys} onOpenChange={onOpenChange}
-            onSelect={({ key }) => { navigate(key); setQuery(''); }}
+            onSelect={({ key }) => navigateToPage(key)}
             className={searching ? styleCss.searchMenu : undefined} items={menuItems} />
         </div>
         {searching && menuItems?.length === 0 && (

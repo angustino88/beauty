@@ -7,7 +7,7 @@ import { groupStatusCounts } from '@/shared/utils/statusSummary';
 import { ATTENTION_TONES, toTone, type StatusTone } from '@/shared/status/statusTone';
 import styles from './EquipmentInventoryOverview.module.css';
 
-type FeaturedStatus = { key: string; label: string; description: string; tone: StatusTone | string };
+type FeaturedStatus = { key: string; label: string; description?: string; tone: StatusTone | string };
 
 interface EquipmentInventoryOverviewProps {
   total?: number;
@@ -21,6 +21,7 @@ interface EquipmentInventoryOverviewProps {
   featuredStatuses?: ReadonlyArray<FeaturedStatus>;
   showAllOtherStatuses?: boolean;
   showOtherStatuses?: boolean;
+  showAvailabilityInsights?: boolean;
   fillWidth?: boolean;
   featuredCounts?: Record<string, number | undefined>;
   normalizeStatus?: (status: unknown) => string;
@@ -40,7 +41,7 @@ export default function EquipmentInventoryOverview({
   total, statuses, unknownCount, loading, resourceLabel = 'equipment',
   scopeLabel = 'Current inventory by availability', footer,
   featuredStatuses = EQUIPMENT_OVERVIEW_FEATURED_STATUSES, showAllOtherStatuses = false, showOtherStatuses = true,
-  fillWidth = false, statusTone, featuredCounts,
+  fillWidth = false, statusTone, featuredCounts, showAvailabilityInsights = true,
   normalizeStatus = equipmentStatusValue, statusLabel = equipmentStatusLabel,
 }: EquipmentInventoryOverviewProps) {
   const grouped = statuses ? groupStatusCounts(statuses, normalizeStatus, statusLabel) : undefined;
@@ -49,7 +50,7 @@ export default function EquipmentInventoryOverview({
   const hasCounts = total !== undefined && statuses !== undefined;
   const safeTotal = total ?? 0;
 
-  const featured: Array<Segment & { description: string }> = featuredStatuses.map(({ key, label, description, tone }) => ({
+  const featured: Array<Segment & { description?: string }> = featuredStatuses.map(({ key, label, description, tone }) => ({
     key, label, description, tone: toTone(tone),
     count: featuredCounts?.[key] ?? counts.get(normalizeStatus(key)) ?? 0,
   }));
@@ -83,7 +84,7 @@ export default function EquipmentInventoryOverview({
             <span className={styles.totalLabel}>Total {resourceLabel}</span>
             {loading ? <Skeleton className="tw:my-1 tw:h-9 tw:w-24" /> : <strong>{hasCounts ? safeTotal.toLocaleString() : '—'}</strong>}
           </div>
-          {!loading && hasCounts && safeTotal > 0 && (
+          {showAvailabilityInsights && !loading && hasCounts && safeTotal > 0 && (
             <div className={styles.insights}>
               <span className={`${styles.insight} ${styles.insightReady}`}>
                 <CheckCircle2 aria-hidden="true" />

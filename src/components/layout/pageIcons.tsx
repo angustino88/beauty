@@ -47,6 +47,6 @@ export function equipmentPageIcon(categoryKey: string): React.ReactNode {
   const path = `/lab-equipment/${categoryKey}`;
   const page = navigationSections
     .flatMap((section) => section.pages)
-    .find((item) => item.path === path || item.aliases?.includes(path));
+    .find((item) => item.path === path);
   return pageIcons[page?.icon ?? 'other'] ?? pageIcons.other;
 }

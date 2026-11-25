@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { mapRoomApiItem } from './mapper.ts';
+import { mapRoomApiItem, mapRoomListApiResponse } from './mapper.ts';
 
 test('room mapper maps lifecycle_status, access_policy, condition, availability, activity_status', () => {
   const result = mapRoomApiItem({
@@ -61,4 +61,10 @@ test('room telemetry is unavailable unless supplied and preserves real zero read
   assert.equal(measured.temperature, 23.5);
   assert.equal(measured.humidity, 40);
   assert.equal(measured.power_usage, 0);
+});
+
+test('a filtered page uses the room API pagination total', () => {
+  const result = mapRoomListApiResponse({ data: [{ id: 12 }], meta: { pagination: { count: 22 } } });
+  assert.equal(result.data.length, 1);
+  assert.equal(result.total_count, 22);
 });

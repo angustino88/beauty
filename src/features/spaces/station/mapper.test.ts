@@ -21,8 +21,14 @@ test('station mapper maps lifecycle_status, access_policy, condition, availabili
       {
         id: 1,
         slot_code: 'SLOT-A',
-        service_status: 'in_service',
-        occupied: false,
+        service_status: { value: 'in_service', label: 'In service' },
+        is_occupied: false,
+      },
+      {
+        id: 2,
+        slot_code: 'SLOT-B',
+        service_status: 'out_of_service',
+        is_occupied: true,
       },
     ],
   });
@@ -34,9 +40,11 @@ test('station mapper maps lifecycle_status, access_policy, condition, availabili
   assert.deepEqual(result.condition, { value: 'operational', label: 'Operational' });
   assert.equal(result.availability.value, 'available');
   assert.deepEqual(result.activity_status, { value: 'active', label: 'In use' });
-  assert.equal(result.slots?.length, 1);
+  assert.equal(result.slots?.length, 2);
   assert.equal(result.slots?.[0].service_status, 'in_service');
   assert.equal(result.slots?.[0].occupied, false);
+  assert.equal(result.slots?.[1].service_status, 'out_of_service');
+  assert.equal(result.slots?.[1].occupied, true);
 });
 
 test('station list preserves pagination totals for room inventory loading', async () => {

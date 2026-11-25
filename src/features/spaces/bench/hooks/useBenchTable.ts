@@ -18,7 +18,7 @@ export function useBenchTable() {
       page_size: pageSize,
       search: debouncedSearch || undefined,
       ordering: "id",
-      bench_group_id: filters.group?.length ? filters.group.join(',') : undefined,
+      bench_group_id: filters.bench_group?.length ? filters.bench_group.join(',') : undefined,
       type_id: filters.type?.length ? filters.type.join(',') : undefined,
       setup_location_id: filters.location?.length ? filters.location.join(',') : undefined,
       owner_id: filters.owner?.length ? filters.owner.join(',') : undefined,

@@ -1,3 +1,4 @@
+import { specificationColumns } from '../shared/columns/specificationColumns';
 import { useUrlSearch } from '@/shared/hooks/useUrlSearch';
 import { SpaceLocationRow } from '@/features/spaces/shared/components/SpaceLocation';
 import React, { useState, useMemo, useCallback, type Key } from 'react';
@@ -109,7 +110,10 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
   // Reference data
   const { data: facets } = useGetEquipmentFiltersQuery(config.key);
   const { data: allReferenceData } = useLabsEquipmentReferenceDataRetrieveQuery({});
-  const categoryId = allReferenceData?.data.categories.find((option) => option.key === config.key)?.id;
+  const category = allReferenceData?.data.categories.find((option) => option.key === config.key);
+  const categoryId = category?.id;
+  const calibratable = category?.capabilities.some(({ value }) => value === 'calibratable') ?? false;
+  const monitored = category?.capabilities.some(({ value }) => value === 'monitored') ?? false;
   const { data: categoryDetail } = useLabsEquipmentCategoriesRetrieveByCategoryIdQuery(categoryId ? { categoryId } : skipToken, { skip: !statusModalOpen });
   const { data: categoryReferenceData } = useLabsEquipmentReferenceDataRetrieveQuery(categoryId ? { category: categoryId } : skipToken);
   const refData = categoryReferenceData?.data ?? allReferenceData?.data;
@@ -119,7 +123,7 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
   const groupIncludeIds = formMode === 'edit' && editingItem?.group?.id != null && Number(editingItem.department?.id) === departmentId
     ? [editingItem.group.id]
     : undefined;
-  const { data: groupOptions } = useLabsGroupsOptionsRetrieveQuery({ departmentId, q: groupSearch || undefined, includeIds: groupIncludeIds }, { skip: !formOpen || !departmentId });
+  const { currentData: groupOptions } = useLabsGroupsOptionsRetrieveQuery({ departmentId, q: groupSearch || undefined, includeIds: groupIncludeIds }, { skip: !formOpen || !departmentId });
   const placementIncludeIds = placementItem?.placement && placementItem.placement.target_type.value === placementTarget
     ? [placementTarget === 'bench' ? placementItem.placement.bench?.id
       : placementTarget === 'station' ? placementItem.placement.station?.id
@@ -401,6 +405,32 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
   const handleFormSubmit = useCallback(
     async (values: Record<string, unknown>, imageFile?: File | null) => {
         const payload: Record<string, unknown> = { ...values };
+        const calibration = values.is_calibration_required;
+        payload.is_calibration_required = calibration == null ? undefined : calibration === 'yes';
+        if (editingItem) {
+          delete payload.sku;
+          const relations = {
+            type_id: editingItem.type,
+            manufacturer_id: editingItem.manufacturer,
+            product_model_id: editingItem.product_model,
+            department_id: editingItem.department,
+            group_id: editingItem.group,
+            owner_id: editingItem.owner,
+          };
+          for (const [field, previous] of Object.entries(relations)) {
+            if (previous && values[field] == null) payload[field] = null;
+          }
+          if (editingItem.warranty_end_date) payload.warranty_end_date = values.warranty_end_date ?? null;
+          if (editingItem.replacement_date) payload.replacement_date = values.replacement_date ?? null;
+          if (monitored) {
+            const computing: Record<string, unknown> = {};
+            const technicalUserId = values.technical_user_id ?? null;
+            if (technicalUserId !== (editingItem.technical_user?.id ?? null)) {
+              computing.technical_user_id = technicalUserId;
+            }
+            if (Object.keys(computing).length) payload.computing = computing;
+          }
+        }
 
         if (typeof payload.dimensions === 'string' && payload.dimensions.trim()) {
           try {
@@ -452,7 +482,7 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
         setFormOpen(false);
         setEditingItem(null);
     },
-    [createEquipment, updateEquipment, updateEquipmentImage, deleteEquipmentImage, config, formMode, editingItem],
+    [createEquipment, updateEquipment, updateEquipmentImage, deleteEquipmentImage, config, formMode, editingItem, monitored],
   );
 
   // History modal title
@@ -465,10 +495,10 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
 
   // Form Fields Configuration matching the shared EquipmentFormModal with complete field parity
   const formFields = useMemo<FieldConfig[]>(() => buildEquipmentFormFields({
-    config, formMode, refData, departmentOptions: departmentOptions?.data, groupOptions: groupOptions?.data,
+    config, formMode, refData, calibratable, monitored, departmentOptions: departmentOptions?.data, groupOptions: groupOptions?.data,
     kindFormOptions, typeFormOptions, manufacturerFormOptions, modelFormOptions,
     onDepartmentSearch: setDepartmentSearch, onGroupSearch: setGroupSearch,
-  }), [config, formMode, refData, departmentOptions, groupOptions, kindFormOptions, typeFormOptions, manufacturerFormOptions, modelFormOptions]);
+  }), [config, formMode, refData, calibratable, monitored, departmentOptions, groupOptions, kindFormOptions, typeFormOptions, manufacturerFormOptions, modelFormOptions]);
 
   // Initial values for editing
   const formInitialValues = useMemo(() => equipmentFormInitialValues(editingItem, config), [editingItem, config]);
@@ -649,8 +679,31 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
       },
     );
 
+    cols.push(...specificationColumns<EquipmentItem>([
+      { name: 'firmware_version', label: 'Firmware Version' },
+      { name: 'power_draw_w', label: 'Power Draw (W)', type: 'number' },
+      { name: 'weight_kg', label: 'Weight (kg)', type: 'number' },
+      { name: 'metadata', label: 'Metadata', type: 'json' },
+    ]));
+    if (calibratable) {
+      cols.push(...specificationColumns<EquipmentItem>([{ name: 'is_calibration_required', label: 'Calibration Required' }]));
+    }
+    cols.push({
+      title: 'Lifecycle',
+      key: 'lifecycle_state',
+      width: 145,
+      render: (_, record) => record.lifecycle_state?.label ?? '—',
+    });
+
     if (config.supportsTelemetry) {
       cols.push(
+      {
+        title: 'Technical User',
+        key: 'technical_user',
+        width: 150,
+        render: (_, record) => record.technical_user?.username ?? '—',
+      },
+      ...specificationColumns<EquipmentItem>([{ name: 'mac_address', label: 'MAC Address' }]),
       {
         title: 'Disk Usage',
         dataIndex: 'disk_usage',
@@ -845,7 +898,7 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
     const priorityKeys = ['id', 'sku', 'name', 'image', 'status', 'agent', 'placement', 'owner', 'kind', 'type', 'manufacturer', 'product_model', 'serial_number'];
     const priorityColumns = priorityKeys.flatMap((key) => cols.filter((column) => column.key === key));
     return [...priorityColumns, ...cols.filter((column) => !priorityKeys.includes(String(column.key)))];
-  }, [config, refData, facets, filters, kindFacetQuery, typeFacetQuery, manufacturerFacetQuery, modelFacetQuery, departmentFacetQuery, groupFacetQuery, actionsRenderer, handleOpenStatus, agentsByEquipment, agentsLoading, agentsData, openAgent]);
+  }, [config, refData, facets, filters, kindFacetQuery, typeFacetQuery, manufacturerFacetQuery, modelFacetQuery, departmentFacetQuery, groupFacetQuery, actionsRenderer, handleOpenStatus, agentsByEquipment, agentsLoading, agentsData, openAgent, calibratable]);
 
   return (
     <>
@@ -958,7 +1011,7 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
         mode={formMode}
         title={formMode === 'create' ? `New ${config.singular}` : `Edit ${config.singular}`}
         fields={formFields}
-        initialValues={formInitialValues}
+        initialValues={formMode === 'create' ? { lifecycle_state: 'in_service' } : formInitialValues}
         onSubmit={handleFormSubmit}
         onValuesChange={setFormValues}
         onCancel={() => {

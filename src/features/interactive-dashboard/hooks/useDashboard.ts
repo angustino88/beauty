@@ -9,9 +9,9 @@ import {
 } from "@/features/spaces/room/api";
 import {
   useGetDashboardStationsQuery,
-  usePlaceRackMutation,
+  usePlaceStationMutation,
 } from "@/features/spaces/station/api";
-import type { IRack } from "@/features/spaces/station/types";
+import type { IStation } from "@/features/spaces/station/types";
 import type { IRoom } from "@/features/spaces/room/types";
 import {
   deriveNotifications,
@@ -45,7 +45,7 @@ function makeFallbackRack(
   sku: string | null,
   name: string | null,
   room: IRoom | null,
-): IRack {
+): IStation {
   return {
     id,
     sku: sku ?? `RACK-${id}`,
@@ -56,14 +56,12 @@ function makeFallbackRack(
     label: "",
     remark: "",
     primary_owner: null,
-    current_status: null,
     lab_audit: null,
     lifecycle_status: { value: 'in_service', label: 'In service' },
     access_policy: { value: 'open', label: 'Open' },
     condition: { value: 'operational', label: 'Operational' },
     availability: { value: 'available', blocked_by: null, condition: null, reason: null },
     activity_status: { value: 'idle', label: 'Idle' },
-    status: null,
   };
 }
 
@@ -83,7 +81,7 @@ export function useDashboard() {
   const { roomSlug } = useParams<{ roomSlug?: string }>();
   const { data: roomsData, isLoading: roomsLoading } =
     useGetRoomsQuery(ROOM_QUERY);
-  const [placeRack] = usePlaceRackMutation();
+  const [placeRack] = usePlaceStationMutation();
 
   const rooms = useMemo(() => roomsData?.data ?? [], [roomsData?.data]);
 
@@ -141,7 +139,7 @@ export function useDashboard() {
       return;
     }
 
-    const rackById = new Map<number, IRack>(
+    const rackById = new Map<number, IStation>(
       allRacks.map((rack) => [rack.id, rack]),
     );
     const slotByCode = new Map(

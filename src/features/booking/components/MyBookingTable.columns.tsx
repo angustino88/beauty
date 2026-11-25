@@ -22,11 +22,6 @@ const statusToneMap: Record<string, StatusTone> = {
   completed: 'success',
   cancelled: 'neutral',
   expired: 'danger',
-  // Fallbacks for any legacy records
-  available: 'reserved',
-  'in-progress': 'info',
-  done: 'success',
-  cancel: 'neutral',
 };
 
 const titleMap: Record<string, string> = {
@@ -35,11 +30,6 @@ const titleMap: Record<string, string> = {
   completed: 'Completed',
   cancelled: 'Cancelled',
   expired: 'Expired',
-  // Fallbacks for any legacy records
-  available: 'Reserved',
-  'in-progress': 'In progress',
-  done: 'Completed',
-  cancel: 'Cancelled',
 };
 
 const approvalToneMap: Record<string, StatusTone> = {

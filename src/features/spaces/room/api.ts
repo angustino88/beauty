@@ -15,7 +15,6 @@ import type {
   IRoomDashboardLayout,
   IRoomDashboardRack,
   IRoomDashboardSlot,
-  IRoomDropdownOptions,
   IRoomListResponse,
   IRoomParams,
   IRoomPayload,
@@ -245,36 +244,6 @@ export const roomRtkApi = baseApi.injectEndpoints({
       }),
       providesTags: (_result, _error, { id }) => [{ type: "ChangeLog", id }],
     }),
-    // Reference lists come from the selector endpoints; `/rooms/filters` only describes filters.
-    getRoomDropdown: build.query<IRoomDropdownOptions, void>({
-      async queryFn(_arg, _api, _extra, fetchWithBQ) {
-        const [countries, cities, buildings] = await Promise.all([
-          fetchWithBQ("/api/labs/countries/options"),
-          fetchWithBQ("/api/labs/cities/options"),
-          fetchWithBQ("/api/labs/buildings/options"),
-        ]);
-        const failed = countries.error ?? cities.error ?? buildings.error;
-        if (failed) return { error: failed };
-        const extract = (res: { data?: unknown }) => {
-          const list = (res.data as { data?: unknown })?.data;
-          return Array.isArray(list)
-            ? (list as Array<Record<string, unknown>>).map((item) => ({
-                id: (item.id as number) ?? 0,
-                name: String(item.name || item.sku || item.id),
-              }))
-            : [];
-        };
-        return {
-          data: {
-            countries: extract(countries),
-            cities: extract(cities),
-            buildings: extract(buildings),
-            floors: [],
-          },
-        };
-      },
-      providesTags: invalidateList(TAG),
-    }),
     getRoomFilters: build.query<FilterFacets, void>({
       query: () => ({ url: "/api/labs/rooms/filters" }),
       transformResponse: normalizeFilterFacets,
@@ -318,7 +287,6 @@ export const {
   useDeleteRoomImageMutation,
   useGetRoomByIdQuery,
   useGetRoomHistoryQuery,
-  useGetRoomDropdownQuery,
   useGetRoomFiltersQuery,
   useGetRoomDashboardLayoutQuery,
 } = roomRtkApi;

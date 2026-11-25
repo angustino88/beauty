@@ -109,13 +109,9 @@ export interface EquipmentItem {
   licenses?: Array<{ id: number; sku?: string | null; name?: string | null; license_name?: string | null }> | null;
   information?: string | null;
 
-  // Hardware telemetry & monitoring
+  // Hardware telemetry
   disk_usage?: Array<{ name: string; used: number; total: number }> | null;
-  sys_info?: Array<{ item: string; value: string }> | Record<string, unknown> | null;
-  monitoring?: Array<Record<string, unknown>> | boolean | null;
-  // Canonical Computing API names; legacy category responses may use aliases above.
   system_info?: Array<{ item: string; value: string }> | Record<string, unknown> | null;
-  monitored_devices?: Array<Record<string, unknown>> | boolean | null;
 
   // Category-specific extensions
   ip_address?: string | null;

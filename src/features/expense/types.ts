@@ -12,8 +12,14 @@ export type ExpenseTypeEnum =
 
 export type BillingPeriodEnum = 'one_time' | 'monthly' | 'quarterly' | 'annual';
 
+export type ExpenseResourceKind = 'room' | 'station' | 'bench' | 'equipment' | 'license';
+
 export interface IExpense {
   id: number;
+  resource_kind: ExpenseResourceKind;
+  resource_kind_label: string;
+  resource_id: number;
+  resource_name?: string;
   room_id: number;
   room_name?: string;
   name: string;
@@ -59,7 +65,9 @@ export interface IExpenseListResponse {
 }
 
 export interface IExpenseQueryParams {
-  roomId: number;
+  roomId?: number;
+  resource_kind?: ExpenseResourceKind;
+  resource_id?: number;
   page?: number;
   page_size?: number;
   search?: string;
@@ -68,6 +76,8 @@ export interface IExpenseQueryParams {
 }
 
 export interface ICreateExpensePayload {
+  resource_kind?: ExpenseResourceKind;
+  resource_id?: number;
   name: string;
   expense_type: ExpenseTypeEnum;
   amount: string;

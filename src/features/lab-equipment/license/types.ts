@@ -1,3 +1,4 @@
+import type { NamedReference } from '@/shared/utils/resourceReferences';
 import type { IPrimaryOwner } from '../shared/types/equipment.types';
 
 export interface ILicenseProduct { id: number; product_name: string; }
@@ -44,6 +45,8 @@ export interface ILicense {
   license_seats: number | null;
   assigned_equipment: IAssignedEquipment[];
   primary_owner: IPrimaryOwner | null;
+  department?: NamedReference | null;
+  group?: NamedReference | null;
   status?: string | null;
   current_status?: ICurrentLicenseStatus | null;
   lab_audit?: ILicenseAudit | null;
@@ -74,10 +77,9 @@ export interface ILicenseParams {
 export interface ILicensePayload {
   sku?: string; name?: string; serial_number?: string; log_label?: string; remark?: string;
   expiry_date?: string | null; license_seats?: number | null;
+  department_id?: number | null; group_id?: number | null;
   license_product?: number | null; license_vendor?: number | null;
   license_type?: number | null; license_category?: number | null;
   license_restriction?: number | null; primary_owner?: number | null;
   status?: string | null;
-  current_status?: { status_type: string; status_data: Record<string, unknown> };
-  status_type?: string; status_data?: Record<string, unknown>;
 }

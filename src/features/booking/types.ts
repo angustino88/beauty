@@ -20,7 +20,6 @@ export interface IBenchBookingListParams {
   view_side?: BenchBookingViewSide;
   bench_id?: number[];
   booking_code?: string;
-  creator?: string;
   creator_id?: number;
   project_id?: number;
   q?: string;
@@ -30,9 +29,6 @@ export interface IBenchBookingListParams {
   sorts?: string[];
   starts_at_after?: string;
   starts_at_before?: string;
-  starts_at?: string;
-  ends_at?: string;
-  search?: string;
   page?: number;
   page_size?: number;
   filterParams?: Record<string, string[]>;

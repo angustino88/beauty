@@ -8,14 +8,16 @@ interface PageHeaderProps {
   controls?: ReactNode;
   style?: { title?: CSSProperties; controls?: CSSProperties };
   sticky?: boolean;
+  wrapControls?: boolean;
 }
 
-export function PageHeader({ title, description, controls, style, sticky }: PageHeaderProps) {
+export function PageHeader({ title, description, controls, style, sticky, wrapControls }: PageHeaderProps) {
   return (
     <div
       style={{
         display: 'flex',
         flexDirection: 'row',
+        flexWrap: wrapControls ? 'wrap' : undefined,
         alignItems: 'center',
         justifyContent: 'space-between',
         gap: 12,
@@ -37,7 +39,7 @@ export function PageHeader({ title, description, controls, style, sticky }: Page
         )}
       </div>
       {controls && (
-        <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', ...style?.controls }}>
+        <div style={{ flex: wrapControls ? '1 1 min(480px, 100%)' : 1, minWidth: 0, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', ...style?.controls }}>
           {controls}
         </div>
       )}

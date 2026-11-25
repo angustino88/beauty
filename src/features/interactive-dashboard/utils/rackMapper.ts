@@ -1,4 +1,4 @@
-import type { IRack } from '@/features/spaces/station/types';
+import type { IStation } from '@/features/spaces/station/types';
 import { getRackStatus, type RackStatus } from '../config/rackThresholds.ts';
 import { stationVisual } from './stationVisual.ts';
 import type { RackData, NotificationCounts } from '../types';
@@ -18,7 +18,7 @@ export function metricStatus(
 }
 
 export function toRackData(
-    rack: IRack,
+    rack: IStation,
     position: [number, number, number] | null,
     slotCode: string | null,
 ): RackData {

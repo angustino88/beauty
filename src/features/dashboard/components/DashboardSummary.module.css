@@ -19,12 +19,16 @@
 }
 
 .leadNumber {
-  color: var(--lm-success-fg);
+  color: var(--lm-text);
   font-size: 34px;
   font-weight: 600;
   line-height: 1.1;
   letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
+}
+
+.leadNumber[data-available='true'] {
+  color: var(--lm-success-fg);
 }
 
 .leadText {
@@ -49,7 +53,7 @@
 .bar {
   display: flex;
   gap: 2px;
-  height: 10px;
+  height: 6px;
   overflow: hidden;
   background: var(--lm-surface-muted);
   border-radius: 999px;
@@ -91,17 +95,17 @@
   border-color: var(--lm-border-strong);
 }
 
-.chip:focus-visible {
-  outline: none;
-  box-shadow: var(--lm-focus-ring);
-}
-
 .chipActive,
 .chipActive:hover {
   color: var(--lm-primary-fg);
   background: var(--lm-primary-bg);
   border-color: var(--lm-primary);
   box-shadow: 0 0 0 1px var(--lm-primary);
+}
+
+.chip:focus-visible {
+  outline: 2px solid var(--lm-focus);
+  outline-offset: 2px;
 }
 
 .chipCount {
@@ -128,6 +132,12 @@
 .danger { --tone-solid: var(--lm-danger-solid); }
 .reserved { --tone-solid: var(--lm-reserved-solid); }
 .neutral { --tone-solid: var(--lm-neutral-solid); }
+
+@media (max-width: 575px) {
+  .rail { padding: 12px; }
+  .chips { gap: 6px; }
+  .chip { padding-inline: 8px; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .segment, .chip { transition: none; }

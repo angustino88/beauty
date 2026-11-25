@@ -24,7 +24,7 @@ import styles from './EquipmentFormModal.module.css';
 
 export type FieldType =
     | 'text' | 'number' | 'select' | 'multi-select'
-    | 'date' | 'quarter' | 'textarea' | 'image';
+    | 'date' | 'datetime' | 'quarter' | 'textarea' | 'json' | 'json-object' | 'image';
 
 export interface SelectOptionLeaf {
     label: React.ReactNode;
@@ -89,6 +89,11 @@ export interface EquipmentFormModalProps {
     loading?:        boolean;
     professionalForm?: boolean;
 }
+
+const SECTION_ORDER = [
+    'Identification', 'Classification', 'Ownership', 'Location', 'Layout',
+    'Specifications', 'License terms', 'Lifecycle', 'Notes',
+];
 
 type SelectLikeValue = string | number;
 type UnknownRecord   = Record<string, unknown>;
@@ -160,8 +165,12 @@ function FormFields({ fields, form, mode, professionalForm }: FormFieldsProps) {
                 />;
             case 'date':
                 return <DatePicker style={{ width: '100%' }} disabled={disabled} />;
+            case 'datetime':
+                return <DatePicker showTime style={{ width: '100%' }} disabled={disabled} />;
             case 'quarter':
                 return <DatePicker picker="quarter" style={{ width: '100%' }} disabled={disabled} />;
+            case 'json':
+            case 'json-object':
             case 'textarea':
                 return <Input.TextArea autoSize={{ minRows: professionalForm ? 2 : 4, maxRows: 6 }}
                     placeholder={field.placeholder ?? `Enter ${field.label}`} disabled={disabled} />;
@@ -173,7 +182,7 @@ function FormFields({ fields, form, mode, professionalForm }: FormFieldsProps) {
     return (
         <Row gutter={[12, 8]}>
             {fields.map((field) => (
-                <Col key={field.name} xs={24} sm={field.span ?? (field.type === 'textarea' ? 24 : 12)}>
+                <Col key={field.name} xs={24} sm={field.span ?? (['textarea', 'json', 'json-object'].includes(field.type) ? 24 : 12)}>
                     {field.optionsFn ? (
                         <Form.Item noStyle shouldUpdate={(prev, next) =>
                             field.dependsOn?.some((parent) => prev[parent] !== next[parent]) ?? true
@@ -199,6 +208,18 @@ function FormFields({ fields, form, mode, professionalForm }: FormFieldsProps) {
                         <Form.Item name={field.name} label={field.label} required={field.required} extra={field.help}
                             rules={[
                                 ...buildRequiredFieldRules(field),
+                                ...(field.type === 'json-object' || field.type === 'json' ? [{
+                                    validator: async (_: unknown, value?: string) => {
+                                        if (!value?.trim()) return;
+                                        let parsed: unknown;
+                                        try {
+                                            parsed = JSON.parse(value);
+                                        } catch {
+                                            throw new Error('Enter valid JSON.');
+                                        }
+                                        if (field.type === 'json-object' && !isRecord(parsed)) throw new Error('Enter a JSON object using curly braces.');
+                                    },
+                                }] : []),
                                 ...(field.maxLength ? [{ max: field.maxLength, message: `${field.label} must be at most ${field.maxLength} characters` }] : []),
                             ]}>
                             {renderField(field)}
@@ -232,6 +253,7 @@ export default function EquipmentFormModal({
     const [imageFile,     setImageFile]     = useState<File | null>(null);
     const [imagePreview,  setImagePreview]  = useState<string | null>(null);
     const [imageRemoved,  setImageRemoved]  = useState(false);
+    const dirty = useRef(false);
     const hadImageRef = useRef(false);
     const [submitting,    setSubmitting]    = useState(false);
     const [detailsOpen,   setDetailsOpen]   = useState(false);
@@ -257,6 +279,7 @@ export default function EquipmentFormModal({
         initialized.current = { mode, recordId };
         if (open) {
             form.resetFields();
+            dirty.current = false;
             setImageFile(null);
             setImageRemoved(false);
             hadImageRef.current = mode === 'edit' && Boolean((initialValues as { image?: unknown } | undefined)?.image);
@@ -266,8 +289,10 @@ export default function EquipmentFormModal({
                 const formValues: Record<string, unknown> = {};
                 for (const field of fieldsRef.current) {
                     const raw = record[field.name];
-                    if (field.type === 'date' || field.type === 'quarter') {
+                    if (field.type === 'date' || field.type === 'datetime' || field.type === 'quarter') {
                         formValues[field.name] = raw ? dayjs(raw as string) : null;
+                    } else if (field.type === 'json-object' || field.type === 'json') {
+                        formValues[field.name] = raw == null ? undefined : JSON.stringify(raw, null, 2);
                     } else if (field.type === 'select') {
                         formValues[field.name] = normalizeSelectLikeValue(raw) ?? undefined;
                     } else if (field.type === 'multi-select' && Array.isArray(raw)) {
@@ -283,7 +308,7 @@ export default function EquipmentFormModal({
                 setImagePreview((record.image as string) || null);
             } else {
                 setImagePreview(null);
-                valuesChangeRef.current?.({});
+                valuesChangeRef.current?.({ ...initialValues });
             }
         }
     }, [open, mode, initialValues, form, professionalForm]);
@@ -295,7 +320,12 @@ export default function EquipmentFormModal({
             submittedValues = { ...values };
             setSubmitting(true);
             for (const field of fields) {
-                if ((field.type === 'date' || field.type === 'quarter') && values[field.name]) {
+                if (field.type === 'datetime' && values[field.name]) {
+                    values[field.name] = dayjs(values[field.name]).toISOString();
+                } else if (field.type === 'json-object' || field.type === 'json') {
+                    const value = values[field.name] as string | undefined;
+                    values[field.name] = value?.trim() ? JSON.parse(value) : undefined;
+                } else if ((field.type === 'date' || field.type === 'quarter') && values[field.name]) {
                     values[field.name] = dayjs(values[field.name]).format(
                         field.type === 'quarter' ? 'YYYY-[Q]Q' : 'YYYY-MM-DD',
                     );
@@ -363,6 +393,7 @@ export default function EquipmentFormModal({
     };
 
     const handleFormValuesChange = (changedValues: Record<string, unknown>, allValues: Record<string, unknown>) => {
+        dirty.current = true;
         const changed = new Set(Object.keys(changedValues));
         let shouldNotifyParent = changed.has('kind_id')
             || changed.has('type_id')
@@ -423,12 +454,14 @@ export default function EquipmentFormModal({
     const essentialFields = regularFields.filter((field) => field.required || field.essential);
     const detailFields = regularFields.filter((field) => !field.required && !field.essential);
     const hasImage      = fields.some((f) => f.type === 'image');
-    const primarySections = professionalForm
-        ? [...new Set(regularFields.filter((field) => field.required || field.essential).map((field) => field.section ?? 'Identification'))]
-        : [];
-    const additionalSections = professionalForm
-        ? [...new Set(regularFields.filter((field) => !primarySections.includes(field.section ?? 'Identification')).map((field) => field.section ?? 'Identification'))]
-        : [];
+    const sections = [...new Set(regularFields.map((field) => field.section ?? 'Identification'))];
+    const orderedSections = [
+        ...SECTION_ORDER.filter((section) => sections.includes(section)),
+        ...sections.filter((section) => !SECTION_ORDER.includes(section)),
+    ];
+    const essentialSections = new Set(essentialFields.map((field) => field.section ?? 'Identification'));
+    const primarySections = orderedSections.filter((section) => essentialSections.has(section));
+    const additionalSections = orderedSections.filter((section) => !essentialSections.has(section));
     return (
         <FormDialog
             className={professionalForm ? styles.modal : undefined}
@@ -437,7 +470,7 @@ export default function EquipmentFormModal({
             open={open}
             onSubmit={handleOk}
             onCancel={() => {
-                if (form.isFieldsTouched()) {
+                if (dirty.current || imageFile || imageRemoved) {
                     confirmAction({
                         title: 'Discard unsaved changes?',
                         description: 'Closing this form will discard all unsaved entries.',
@@ -456,6 +489,7 @@ export default function EquipmentFormModal({
         >
             <Form
                 form={form}
+                initialValues={mode === 'create' ? initialValues : undefined}
                 layout="vertical"
                 className={professionalForm ? styles.form : undefined}
                 onValuesChange={handleFormValuesChange}
@@ -477,7 +511,7 @@ export default function EquipmentFormModal({
                         activeKey={detailsOpen ? ['details'] : []}
                         onChange={(keys) => setDetailsOpen(keys.includes('details'))}
                     >
-                        <Collapse.Panel key="details" header={professionalForm ? 'Lifecycle, licenses & additional details' : 'Additional details'} forceRender>
+                        <Collapse.Panel key="details" header="Additional details" forceRender>
                             {professionalForm ? additionalSections.map((section) => (
                                 <FormSection key={section} section={section} fields={regularFields}
                                     form={form} mode={mode} professionalForm={professionalForm} />

@@ -240,6 +240,11 @@
     padding-inline: 10px;
 }
 
+.calendarViewbar :global(.ant-radio-button-wrapper-checked:not(.ant-radio-button-wrapper-disabled)) {
+    color: var(--lm-primary-fg);
+    background: var(--lm-primary-bg);
+}
+
 .calendarSurface {
     overflow: hidden;
     border: 1px solid var(--lm-border);
@@ -300,6 +305,10 @@
 
 .calendarSurface :global(.fc-list-day-cushion) {
     background: var(--lm-surface-muted);
+}
+
+.calendarSurface :global(.fc-list-empty) {
+    min-height: 128px;
 }
 
 .calendarSurface :global(.fc-list-event:hover td) {
@@ -363,6 +372,7 @@
         min-width: 0;
         flex: 1;
         font-size: 16px;
+        white-space: normal;
     }
 
     .calendarViewbar :global(.ant-radio-button-wrapper) {

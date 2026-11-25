@@ -9,9 +9,6 @@ export interface BenchDetailModalResult {
   closeModal: () => void;
   benchDetail: DashboardBenchDetail | undefined;
   isDetailFetching: boolean;
-  // Compatibility fields
-  modalLabId: number | null;
-  labDetail: DashboardBenchDetail | undefined;
 }
 
 export function useBenchDetailModal(): BenchDetailModalResult {
@@ -31,9 +28,5 @@ export function useBenchDetailModal(): BenchDetailModalResult {
     closeModal,
     benchDetail,
     isDetailFetching,
-    modalLabId: modalBenchId,
-    labDetail: benchDetail,
   };
 }
-
-export const useLabDetailModal = useBenchDetailModal;

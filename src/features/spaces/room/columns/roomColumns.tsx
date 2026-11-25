@@ -6,6 +6,8 @@ import {
   renderOwnerCell,
 } from "@/features/lab-equipment/shared";
 import { pageIcons } from "@/components/layout/pageIcons";
+import { ownershipColumns, specificationColumns } from "@/features/lab-equipment/shared/columns/specificationColumns";
+import { ROOM_DETAILS } from "../../shared/resourceForm";
 import type { IRoom } from "../types";
 import { readField } from "./roomConfig";
 import {
@@ -13,26 +15,26 @@ import {
   renderRoomRacksCell,
   renderRoomSpecsCell,
 } from "./roomColumnRenderers";
+import type { RoomLocationOptions } from "../hooks/useRoomLocationOptions";
+import { roomLocationColumnFilter } from "./roomLocationFilter";
+import { equipmentStaticColumnFilter } from "@/features/lab-equipment/shared/facets/EquipmentFacetDropdown";
 import { buildStateColumns } from "@/features/spaces/shared/stateColumns";
 
 // Re-export config & types so existing consumers don't need to change imports
-export type { RoomFieldConfig, RoomOptionSource, RoomSpecField } from "./roomConfig";
+export type { RoomFieldConfig, RoomSpecField } from "./roomConfig";
 export {
   ROOM_FIELD_CONFIG,
-  ROOM_OPTIONS_CONFIG,
   ROOM_SPECS_FIELDS,
   buildRoomFormFields,
   toRoomFormValues,
   readField,
 } from "./roomConfig";
 
-type FilterItem = { text: string; value: string };
 interface BuildColumnsArgs {
   /** Active filter state passed to Ant Design Table filteredValue */
   activeFilters: Record<string, Key[] | null>;
-  /** Column filter dropdown items keyed by ROOM_OPTIONS_CONFIG key */
-  filtersMap: Record<string, FilterItem[]>;
-  /** Backend facet-derived status filter options */
+  locationOptions: RoomLocationOptions;
+  ownerFilters?: Parameters<typeof equipmentStaticColumnFilter>[0];
   actionsRenderer: (_: unknown, record: IRoom) => ReactNode;
 }
 
@@ -41,7 +43,8 @@ const text = (key: string) => (_: unknown, record: IRoom) => readField(key, reco
 /** Read-only room table; rooms are edited in the Edit Room form. */
 export const buildRoomColumns = ({
   activeFilters,
-  filtersMap,
+  locationOptions,
+  ownerFilters,
   actionsRenderer,
 }: BuildColumnsArgs) => [
   { title: "ID", dataIndex: "id", key: "id", width: 70, fixed: "left" as const },
@@ -55,33 +58,24 @@ export const buildRoomColumns = ({
     title: "Country",
     key: "country",
     width: 120,
-    filters: filtersMap.country,
-    filterSearch: true,
+    ...roomLocationColumnFilter("Country", locationOptions.country),
     filteredValue: activeFilters.country ?? null,
-    onFilter: (value: boolean | Key, r: IRoom) =>
-      String(r.country ?? r.location_info?.country?.id ?? readField("country", r)) === String(value),
     render: text("country"),
   },
   {
     title: "City",
     key: "city",
     width: 120,
-    filters: filtersMap.city,
-    filterSearch: true,
+    ...roomLocationColumnFilter("City", locationOptions.city),
     filteredValue: activeFilters.city ?? null,
-    onFilter: (value: boolean | Key, r: IRoom) =>
-      String(r.location_info?.city?.id ?? readField("city", r)) === String(value),
     render: text("city"),
   },
   {
     title: "Building",
     key: "building",
     width: 150,
-    filters: filtersMap.building,
-    filterSearch: true,
+    ...roomLocationColumnFilter("Building", locationOptions.building),
     filteredValue: activeFilters.building ?? null,
-    onFilter: (value: boolean | Key, r: IRoom) =>
-      String(r.location_info?.building?.id ?? readField("building", r)) === String(value),
     render: text("building"),
   },
   { title: "Floor", key: "floor", width: 100, render: text("floor") },
@@ -113,10 +107,8 @@ export const buildRoomColumns = ({
     title: "Owner",
     key: "primary_owner",
     width: 150,
-    filters: filtersMap.primary_owner,
-    filterSearch: true,
+    ...equipmentStaticColumnFilter(ownerFilters),
     filteredValue: activeFilters.primary_owner ?? null,
-    onFilter: (value: boolean | Key, r: IRoom) => readField("primary_owner", r) === String(value),
     render: (_: unknown, record: IRoom) => renderOwnerCell(record.primary_owner),
   },
   {
@@ -126,6 +118,15 @@ export const buildRoomColumns = ({
     align: "center" as const,
     render: (_: unknown, record: IRoom) => <LastAuditCell resourceType="room" resourceId={record.id} />,
   },
+  ...ownershipColumns<IRoom>(),
+  ...specificationColumns<IRoom>([
+    { name: "label", label: "Short Label" },
+    { name: "length", label: "Length (m)", type: "number" },
+    { name: "width", label: "Width (m)", type: "number" },
+    { name: "max_power", label: "Max Power (W)", type: "number" },
+    { name: "location", label: "Map Link" },
+    ...ROOM_DETAILS,
+  ]),
   { title: "Remark", key: "remark", width: 150, render: text("remark") },
   { title: "Actions", key: "actions", fixed: "right" as const, width: 165, align: "center" as const, render: actionsRenderer },
 ];

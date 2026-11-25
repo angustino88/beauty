@@ -4,7 +4,6 @@ import type {
   LabsDeviceConnectionsRetrieveByConnectionIdApiResponse,
   LabsDeviceConnectionsSummaryRetrieveApiResponse,
   LabsEquipmentHardwareIdsCreateByEquipmentIdApiResponse,
-  LabsExpectedDevicesLegacySuggestionsRetrieveApiResponse,
   LabsEquipmentHardwareIdsRetrieveByEquipmentIdApiResponse,
   RegisterHardwareIdRequest,
   LabsExpectedDevicesCreateApiResponse,
@@ -95,14 +94,6 @@ export const devicesApi = baseApi.injectEndpoints({
       query: (expectedDeviceId) => ({ url: `/api/labs/expected-devices/${expectedDeviceId}`, method: 'DELETE' }),
       invalidatesTags: ['Monitoring'],
     }),
-    getLegacyDeviceSuggestions: build.query<
-      LabsExpectedDevicesLegacySuggestionsRetrieveApiResponse['data']['items'],
-      number
-    >({
-      query: (computingId) => ({ url: '/api/labs/expected-devices/legacy-suggestions', params: { computing_id: computingId } }),
-      transformResponse: (response: LabsExpectedDevicesLegacySuggestionsRetrieveApiResponse) => response.data.items,
-      providesTags: ['Monitoring'],
-    }),
     getEquipmentHardwareIds: build.query<
       LabsEquipmentHardwareIdsRetrieveByEquipmentIdApiResponse['data']['items'],
       number
@@ -142,7 +133,6 @@ export const {
   useCreateExpectedDeviceMutation,
   useUpdateExpectedDeviceMutation,
   useDeleteExpectedDeviceMutation,
-  useGetLegacyDeviceSuggestionsQuery,
   useGetEquipmentHardwareIdsQuery,
   useRegisterEquipmentHardwareIdMutation,
   useDeleteEquipmentHardwareIdMutation,

@@ -1,6 +1,6 @@
 // src/features/dashboard/components/BenchTable.tsx
 import React, { memo, useCallback, useMemo, useState } from "react";
-import { Card, Col, Row, Table, theme } from "antd";
+import { Card, Grid, Table } from "antd";
 import {
   ClearOutlined,
   UndoOutlined,
@@ -48,7 +48,7 @@ export const BenchTable = memo(function BenchTable({
   licenseFilters,
 }: BenchTableProps) {
   const { styles } = useBenchTableStyles();
-  const { token } = theme.useToken();
+  const { lg, sm } = Grid.useBreakpoint();
   const navigate = useNavigate();
 
   const { data: filterOptions } = useGetBenchFilterOptionsQuery();
@@ -78,16 +78,9 @@ export const BenchTable = memo(function BenchTable({
     (record: { id: number }) => ({
       onClick: (e: React.MouseEvent) => {
         const target = e.target as HTMLElement;
-        if (
-          target.tagName === "BUTTON" ||
-          target.closest("button") ||
-          target.tagName === "A" ||
-          target.closest("a")
-        )
-          return;
+        if (target.closest("button, a")) return;
         openModal(record.id);
       },
-      style: { cursor: "pointer" } as React.CSSProperties,
     }),
     [openModal],
   );
@@ -111,6 +104,7 @@ export const BenchTable = memo(function BenchTable({
         filterHandlers,
         handleFavoriteClick,
         openModal,
+        pinActions: Boolean(lg),
         navigate,
         styles,
       }),
@@ -122,34 +116,25 @@ export const BenchTable = memo(function BenchTable({
       filterHandlers,
       handleFavoriteClick,
       openModal,
+      lg,
       navigate,
       styles,
     ],
   );
 
   return (
-    <Card
-      className={styles.customTableStyles}
-      style={
-        {
-          ["--focus-ring-color" as string]: token.colorPrimaryBorder,
-        } as React.CSSProperties
-      }
-    >
-      <Row className="toolbar" gutter={[12, 12]} align="middle">
-        <Col flex="1 1 360px" style={{ minWidth: 0 }}>
-          <FullTextSearch
-            value={state.search}
-            onSearch={state.setSearch}
-            placeholder="Search benches, groups, computers or users"
-          />
-        </Col>
-        <Col
-          flex="none"
-          style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}
-        >
+    <Card className={styles.customTableStyles}>
+      <div className="toolbar">
+        <FullTextSearch
+          className="benchSearch"
+          value={state.search}
+          onSearch={state.setSearch}
+          placeholder="Search benches, groups, computers or users"
+        />
+        <div className="toolbarActions" role="group" aria-label="Bench table actions">
           <TooltipButton
             responsive
+            aria-pressed={state.showFavoritesOnly}
             tooltip={
               state.showFavoritesOnly
                 ? "Show all benches"
@@ -185,8 +170,8 @@ export const BenchTable = memo(function BenchTable({
           >
             Refresh
           </TooltipButton>
-        </Col>
-      </Row>
+        </div>
+      </div>
 
       <Table
         loading={isLoading || isManualRefreshing}
@@ -204,7 +189,7 @@ export const BenchTable = memo(function BenchTable({
           current: state.page,
           pageSize: state.pageSize,
           pageSizeOptions: [5, 10, 25, 50],
-          showQuickJumper: true,
+          showQuickJumper: Boolean(sm),
           showSizeChanger: true,
           showTotal: (total, [from, to]) => `${from}–${to} of ${total} ${total === 1 ? "bench" : "benches"}`,
         }}
@@ -213,5 +198,3 @@ export const BenchTable = memo(function BenchTable({
     </Card>
   );
 });
-
-export const LabDeviceTable = BenchTable;

@@ -26,7 +26,32 @@ const readUserObject = (value: unknown): SupportUserRef | string | null => {
   return value as SupportUserRef;
 };
 
-export function buildLabSupportColumns(): ColumnsType<SupportTicket> {
+export function buildLabSupportColumns(queueSearch = '', compact = false): ColumnsType<SupportTicket> {
+  if (compact) {
+    return [{
+      title: 'Ticket',
+      key: 'ticket',
+      render: (_, ticket) => (
+        <div className={styles.compactTicket}>
+          <span className={styles.compactKey}>{ticket.key}</span>
+          <Link
+            className={styles.subjectLink}
+            to={`/support-tickets/${encodeURIComponent(ticket.key)}`}
+            state={{ queueSearch }}
+          >
+            {ticket.subject || 'Untitled ticket'}
+          </Link>
+          <div className={styles.subjectMeta}>
+            <TicketStatusBadge status={ticket.status} />
+            <TicketPriorityBadge priority={ticket.priority} />
+            <TicketSlaBadge sla={ticket.sla} status={ticket.status} />
+          </div>
+          <TicketUserChip user={readUserObject(ticket.assignee)} emptyLabel="Unassigned" />
+        </div>
+      ),
+    }];
+  }
+
   return [
     {
       title: 'Key',
@@ -40,6 +65,7 @@ export function buildLabSupportColumns(): ColumnsType<SupportTicket> {
         return (
           <Link
             className={styles.keyLink}
+            state={{ queueSearch }}
             to={`/support-tickets/${encodeURIComponent(ticketKey)}`}
           >
             {ticketKey}
@@ -54,8 +80,7 @@ export function buildLabSupportColumns(): ColumnsType<SupportTicket> {
       minWidth: 280,
       render: (_, record) => {
         const ticketKey = record.key;
-        const subjectText =
-          record.subject ?? record.summary ?? record.fields?.summary ?? 'Untitled ticket';
+        const subjectText = record.subject || 'Untitled ticket';
         const typeMeta = record.ticket_type ? getTicketTypeMeta(record.ticket_type) : null;
         const labels = record.labels ?? [];
 
@@ -64,6 +89,7 @@ export function buildLabSupportColumns(): ColumnsType<SupportTicket> {
             {ticketKey ? (
               <Link
                 className={styles.subjectLink}
+                state={{ queueSearch }}
                 to={`/support-tickets/${encodeURIComponent(ticketKey)}`}
               >
                 {subjectText}
@@ -74,7 +100,7 @@ export function buildLabSupportColumns(): ColumnsType<SupportTicket> {
             <div className={styles.subjectMeta}>
               {typeMeta && <span>{typeMeta.label}</span>}
               {record.team?.name && <span>· Team: {record.team.name}</span>}
-              <TicketSlaBadge sla={record.sla} status={record.status ?? record.fields?.status} />
+              <TicketSlaBadge sla={record.sla} status={record.status} />
               {labels.slice(0, 3).map((label) => (
                 <span key={label} className={styles.labelPill}>
                   {label}
@@ -94,7 +120,7 @@ export function buildLabSupportColumns(): ColumnsType<SupportTicket> {
       align: 'left',
       width: 155,
       render: (_, record) => {
-        const s = record.status ?? record.fields?.status;
+        const s = record.status;
         const systemState =
           isObject(s) && 'system_state' in s && typeof s.system_state === 'string'
             ? s.system_state
@@ -107,10 +133,7 @@ export function buildLabSupportColumns(): ColumnsType<SupportTicket> {
       key: 'priority',
       align: 'left',
       width: 130,
-      render: (_, record) => {
-        const p = record.priority ?? record.fields?.priority;
-        return <TicketPriorityBadge priority={p} />;
-      },
+      render: (_, record) => <TicketPriorityBadge priority={record.priority} />,
     },
     {
       title: 'Category',
@@ -126,13 +149,11 @@ export function buildLabSupportColumns(): ColumnsType<SupportTicket> {
     },
     {
       title: 'Requester',
-      key: 'reporter',
+      key: 'requester',
       align: 'left',
       width: 165,
       render: (_, record) => {
-        const user = readUserObject(
-          record.requester ?? record.reporter ?? record.fields?.reporter,
-        );
+        const user = readUserObject(record.requester);
         return <TicketUserChip user={user} emptyLabel="–" />;
       },
     },
@@ -142,7 +163,7 @@ export function buildLabSupportColumns(): ColumnsType<SupportTicket> {
       align: 'left',
       width: 165,
       render: (_, record) => {
-        const user = readUserObject(record.assignee ?? record.fields?.assignee);
+        const user = readUserObject(record.assignee);
         return <TicketUserChip user={user} emptyLabel="Unassigned" />;
       },
     },
@@ -152,10 +173,10 @@ export function buildLabSupportColumns(): ColumnsType<SupportTicket> {
       align: 'left',
       width: 135,
       render: (_, record) => {
-        const dueDate = record.due_date ?? record.duedate ?? record.fields?.duedate;
+        const dueDate = record.due_date;
         if (!dueDate || !dayjs(dueDate).isValid()) return '–';
         const parsed = dayjs(dueDate);
-        const statusMeta = getTicketStatusMeta(record.status ?? record.fields?.status);
+        const statusMeta = getTicketStatusMeta(record.status);
         const today = dayjs().startOf('day');
         const isOverdue = !statusMeta.isTerminal && parsed.isBefore(today, 'day');
         const isDueSoon = !statusMeta.isTerminal && !isOverdue && parsed.diff(today, 'day') <= 2;
@@ -189,7 +210,7 @@ export function buildLabSupportColumns(): ColumnsType<SupportTicket> {
       align: 'left',
       width: 140,
       render: (_, record) => {
-        const created = record.created_at ?? record.created ?? record.fields?.created;
+        const created = record.created_at;
         if (!created || !dayjs(created).isValid()) return '–';
         return (
           <Tooltip title={dayjs(created).format(DATETIME_FORMAT)}>

@@ -1,3 +1,4 @@
+import type { AvailableTicketTransitionRead, ResolutionCodeEnum } from '../../shared/api/generated/api.ts';
 import {
   normalizeStatusKey,
   supportTicketPriorityTone,
@@ -41,15 +42,6 @@ export interface TicketSlaMeta {
   detail?: string;
 }
 
-export interface TransitionRequirements {
-  requiresResolution: boolean;
-  requiresReason: boolean;
-  isReopen: boolean;
-  isClosing: boolean;
-  actionLabel: string;
-  buttonVariant: 'primary' | 'default' | 'resolve' | 'reopen';
-}
-
 export const TICKET_TYPE_OPTIONS = [
   { value: 'incident', label: 'Incident', description: 'Something is broken or not working as expected' },
   { value: 'service_request', label: 'Service request', description: 'Access, equipment setup, or routine assistance' },
@@ -64,15 +56,54 @@ export const IMPACT_URGENCY_OPTIONS = [
   { value: '3', label: 'Low (3)' },
 ] as const;
 
-export const RESOLUTION_CODE_OPTIONS = [
-  { value: 'fixed', label: 'Fixed — root issue resolved' },
-  { value: 'workaround', label: 'Workaround — temporary solution provided' },
-  { value: 'cannot_reproduce', label: 'Cannot reproduce' },
-  { value: 'duplicate', label: 'Duplicate of another ticket' },
-  { value: 'wont_fix', label: "Won't fix — out of scope or by design" },
-  { value: 'user_error', label: 'User error / guidance provided' },
-  { value: 'vendor', label: 'Vendor / third-party resolved' },
-] as const;
+const RESOLUTION_LABELS: Record<ResolutionCodeEnum, string> = {
+  fixed: 'Issue fixed',
+  workaround: 'Workaround provided',
+  cannot_reproduce: 'Could not reproduce',
+  duplicate: 'Duplicate ticket',
+  wont_fix: 'No fix planned',
+  user_error: 'User error / guidance provided',
+  vendor: 'Resolved by a third party',
+  fulfilled: 'Request fulfilled',
+  partially_fulfilled: 'Request partially fulfilled',
+  guidance_provided: 'Guidance or information provided',
+  change_implemented: 'Change implemented',
+  declined: 'Request declined',
+  withdrawn: 'Request withdrawn',
+};
+
+const INCIDENT_OUTCOMES: ResolutionCodeEnum[] = ['fixed', 'workaround', 'cannot_reproduce', 'guidance_provided', 'vendor', 'wont_fix', 'duplicate', 'withdrawn'];
+const REQUEST_OUTCOMES: ResolutionCodeEnum[] = ['fulfilled', 'partially_fulfilled', 'guidance_provided', 'declined', 'duplicate', 'withdrawn'];
+const OUTCOMES_BY_TYPE: Record<string, ResolutionCodeEnum[]> = {
+  incident: INCIDENT_OUTCOMES,
+  problem: INCIDENT_OUTCOMES,
+  service_request: REQUEST_OUTCOMES,
+  question: ['guidance_provided', 'fulfilled', 'declined', 'duplicate', 'withdrawn'],
+  change: ['change_implemented', 'partially_fulfilled', 'declined', 'duplicate', 'withdrawn'],
+};
+
+const DESCRIPTION_BY_TYPE: Record<string, string> = {
+  incident: 'What went wrong? Include the affected equipment or location, the impact, and what you already tried.',
+  problem: 'Describe the recurring issue, when it occurs, and any related tickets or findings.',
+  service_request: 'What do you need? Include the resource, who needs it, and any timing or access requirements.',
+  question: 'What would you like to know? Include any relevant equipment, location, or context.',
+  change: 'What should change, why, and which resources or people will be affected?',
+};
+
+export function getResolutionOptions(ticketType: string) {
+  return (OUTCOMES_BY_TYPE[ticketType] ?? REQUEST_OUTCOMES).map((value) => ({
+    value,
+    label: RESOLUTION_LABELS[value],
+  }));
+}
+
+export function getResolutionLabel(value: string) {
+  return RESOLUTION_LABELS[value as ResolutionCodeEnum] ?? value.replaceAll('_', ' ');
+}
+
+export function getTicketDescriptionPlaceholder(ticketType?: string) {
+  return DESCRIPTION_BY_TYPE[ticketType ?? 'incident'] ?? DESCRIPTION_BY_TYPE.service_request;
+}
 
 function extractNameAndState(value: unknown, explicitState?: unknown): { name: string; systemState: string } {
   if (typeof value === 'string') {
@@ -100,14 +131,14 @@ function extractNameAndState(value: unknown, explicitState?: unknown): { name: s
   };
 }
 
-export function getTicketStatusMeta(status: unknown, systemState?: unknown): TicketStatusMeta {
+export function getTicketStatusMeta(status: unknown, systemState?: unknown, isFinal?: boolean): TicketStatusMeta {
   const { name, systemState: resolvedState } = extractNameAndState(status, systemState);
   const key = normalizeStatusKey(name || resolvedState);
   const stateKey = normalizeStatusKey(resolvedState);
   const tone = supportTicketStatusTone(name || resolvedState, resolvedState);
   const label = name || (key ? key.charAt(0).toUpperCase() + key.slice(1).replaceAll('_', ' ') : 'Unknown');
 
-  if (key.includes('close') || key.includes('cancel')) {
+  if (isFinal ?? (key.includes('close') || key.includes('cancel'))) {
     return {
       key: key || 'closed',
       label,
@@ -118,7 +149,7 @@ export function getTicketStatusMeta(status: unknown, systemState?: unknown): Tic
     };
   }
 
-  if (key.includes('resolv') || key.includes('complete') || stateKey === 'done') {
+  if (stateKey === 'done' || (!stateKey && (key.includes('resolv') || key.includes('complete')))) {
     return {
       key: key || 'resolved',
       label,
@@ -129,18 +160,18 @@ export function getTicketStatusMeta(status: unknown, systemState?: unknown): Tic
     };
   }
 
-  if (key.includes('wait') || key.includes('hold') || key.includes('pend') || key.includes('pause') || stateKey === 'waiting') {
+  if (stateKey === 'waiting' || (!stateKey && /wait|hold|pend|pause/.test(key))) {
     return {
       key: key || 'waiting',
       label,
       tone: 'reserved',
       variant: 'waiting',
-      description: 'Awaiting response or external action; SLA clock is paused.',
+      description: 'Awaiting a response or external action.',
       isTerminal: false,
     };
   }
 
-  if (key.includes('progress') || key.includes('investig') || key.includes('triage') || key.includes('active') || stateKey === 'active') {
+  if (stateKey === 'active' || (!stateKey && /progress|investig|triage|active/.test(key))) {
     return {
       key: key || 'in_progress',
       label,
@@ -329,51 +360,23 @@ export function getTicketSlaMeta(sla: unknown, statusMeta?: TicketStatusMeta): T
   return { state: 'none', label: 'No SLA', tone: 'neutral' };
 }
 
-/**
- * Determines whether a status transition requires a resolution summary or a reason based on
- * the Support Desk workflow rules (core/support_desk/features/tickets/defaults.py & transition_ticket.py).
- */
-export function getTransitionRequirements(
-  targetStatusName: string,
-  currentStatusName?: string,
-  targetSystemState?: string,
-): TransitionRequirements {
-  const targetMeta = getTicketStatusMeta(targetStatusName, targetSystemState);
-  const currentMeta = getTicketStatusMeta(currentStatusName);
+export function getWorkflowAction(transition: AvailableTicketTransitionRead, currentState?: string) {
+  const name = transition.status.name;
+  const key = normalizeStatusKey(name);
+  if (transition.is_reopen) return key === 'open' ? 'Reopen ticket' : `Reopen to ${name}`;
 
-  const isReopen = currentMeta.isTerminal && targetMeta.variant === 'open';
-  const requiresResolution = targetMeta.variant === 'resolved';
-  const isClosingFromOpen = currentMeta.variant === 'open' && targetMeta.variant === 'closed';
-  const requiresReason = isReopen || isClosingFromOpen;
-
-  let actionLabel = targetStatusName;
-  let buttonVariant: TransitionRequirements['buttonVariant'] = 'default';
-
-  if (isReopen) {
-    actionLabel = 'Reopen Ticket';
-    buttonVariant = 'reopen';
-  } else if (targetMeta.variant === 'in_progress') {
-    actionLabel = currentMeta.variant === 'waiting' ? 'Resume Progress' : 'Start Progress';
-    buttonVariant = 'primary';
-  } else if (targetMeta.variant === 'waiting') {
-    actionLabel = 'Wait on Customer';
-    buttonVariant = 'default';
-  } else if (targetMeta.variant === 'resolved') {
-    actionLabel = 'Resolve Ticket';
-    buttonVariant = 'resolve';
-  } else if (targetMeta.variant === 'closed') {
-    actionLabel = 'Close Ticket';
-    buttonVariant = 'default';
+  switch (key) {
+    case 'in_progress':
+      return currentState === 'waiting' ? 'Resume work' : 'Start work';
+    case 'waiting_for_customer':
+      return 'Wait for customer';
+    case 'resolved':
+      return 'Resolve ticket';
+    case 'closed':
+      return 'Close ticket';
+    default:
+      return `Move to ${name}`;
   }
-
-  return {
-    requiresResolution,
-    requiresReason,
-    isReopen,
-    isClosing: targetMeta.variant === 'closed',
-    actionLabel,
-    buttonVariant,
-  };
 }
 
 /**
@@ -391,11 +394,18 @@ export function formatTicketActivityLines(
   const lines: string[] = [];
   const formatName = (name: string) => (resolveUserName ? resolveUserName(name) : name);
 
+  if (typeof payload.duration === 'string') {
+    lines.push(`Time spent: ${payload.duration}`);
+    if (typeof payload.description === 'string' && payload.description) {
+      lines.push(payload.description);
+    }
+  }
+
   if (typeof payload.from_status === 'string' && typeof payload.to_status === 'string') {
     lines.push(`${payload.from_status} → ${payload.to_status}`);
   }
   if (typeof payload.resolution_code === 'string' && payload.resolution_code) {
-    lines.push(`Resolution code: ${payload.resolution_code.replaceAll('_', ' ')}`);
+    lines.push(`Outcome: ${getResolutionLabel(payload.resolution_code)}`);
   }
   if (typeof payload.resolution_summary === 'string' && payload.resolution_summary.trim()) {
     lines.push(`Resolution: ${payload.resolution_summary.trim()}`);
@@ -439,4 +449,11 @@ function formatDiffValue(val: unknown): string {
 
 function capitalize(value: string): string {
   return value ? value.charAt(0).toUpperCase() + value.slice(1) : '';
+}
+
+export function formatWorkDuration(minutes: number) {
+  if (minutes < 60) return `${minutes.toLocaleString()}m`;
+  const hours = Math.floor(minutes / 60).toLocaleString();
+  const remainder = minutes % 60;
+  return remainder ? `${hours}h ${remainder}m` : `${hours}h`;
 }

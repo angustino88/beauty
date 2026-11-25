@@ -4,7 +4,8 @@ import { Button, Descriptions, Empty, Modal, Pagination, Spin, Typography } from
 import dayjs from 'dayjs';
 import type { LabsChoiceReferenceRead } from '@/shared/api/generated/api';
 import styles from '@/features/lab-equipment/shared/components/modals/EquipmentStatusHistoryModal.module.css';
-import SpaceStatusBadge from './SpaceStatusBadge';
+import { StatusBadge } from '@/shared/components/StatusBadge';
+import { toneForStatus } from '@/shared/status/statusTone';
 
 export interface SpaceStatusHistoryRecord {
   id: number;
@@ -53,7 +54,7 @@ function StatusTransition({ current }: { current: SpaceStatusHistoryRecord }) {
       <ArrowRightOutlined className={styles.arrow} aria-hidden="true" />
       <div className={styles.statusStep}>
         <span className={styles.stepLabel}>New</span>
-        <SpaceStatusBadge status={current.status} label={current.status.label} />
+        <StatusBadge tone={toneForStatus(current.status.value)} label={current.status.label} />
       </div>
     </div>
   );

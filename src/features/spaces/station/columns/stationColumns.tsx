@@ -5,6 +5,8 @@ import {
   renderOwnerCell,
 } from "@/features/lab-equipment/shared";
 import { pageIcons } from "@/components/layout/pageIcons";
+import { ownershipColumns, specificationColumns } from "@/features/lab-equipment/shared/columns/specificationColumns";
+import { STATION_DETAILS } from "../../shared/resourceForm";
 import type { IStation } from "../types";
 import { SpaceLocationEmpty, SpaceLocationRow, SpaceLocationStack } from "@/features/spaces/shared/components/SpaceLocation";
 import { buildStateColumns } from "@/features/spaces/shared/stateColumns";
@@ -139,6 +141,20 @@ export const buildStationColumns = ({
       render: (_, record) =>
         renderOwnerCell(record.primary_owner),
     },
+    {
+      title: "Station Type",
+      key: "type",
+      width: 145,
+      render: (_, record) => record.station_type?.name ?? "—",
+    },
+    ...ownershipColumns<IStation>(),
+    ...specificationColumns<IStation>([
+      { name: "label", label: "Position Label" },
+      { name: "height_mm", label: "Height (mm)", type: "number" },
+      { name: "width_mm", label: "Width (mm)", type: "number" },
+      { name: "depth_mm", label: "Depth (mm)", type: "number" },
+      ...STATION_DETAILS,
+    ]),
     {
       title: "Remark",
       dataIndex: "remark",

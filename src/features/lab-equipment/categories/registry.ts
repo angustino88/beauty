@@ -56,6 +56,7 @@ export const EQUIPMENT_CATEGORIES: Record<EquipmentCategoryKey, EquipmentCategor
     supportsAgent: true,
     extraFields: [
       { name: 'hostname', label: 'Hostname', type: 'text', placeholder: 'lab-svr-01', createOnly: true },
+      { name: 'mac_address', label: 'MAC Address', type: 'text', placeholder: '00:1A:2B:3C:4D:5E' },
     ],
     extraColumns: [
       { title: 'IP Address', dataIndex: 'ip_address', width: 140 },

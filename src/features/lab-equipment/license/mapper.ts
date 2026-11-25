@@ -7,6 +7,7 @@ import type {
   ILicenseType,
   ILicenseVendor,
 } from './types';
+import { namedReference } from '../../../shared/utils/resourceReferences.ts';
 import { toUserRef } from '../../../shared/utils/userRef.ts';
 
 /** `{value, label}` choice (ENU-1) → its value; plain strings pass through. */
@@ -58,6 +59,8 @@ export function mapLicenseWritePayload(payload: LicenseUiWritePayload): LicenseW
     category_id: payload.license_category,
     restriction_id: payload.license_restriction,
     owner_id: payload.primary_owner,
+    department_id: payload.department_id,
+    group_id: payload.group_id,
     seats: payload.license_seats ?? undefined,
     max_version: maximumVersion == null ? undefined : String(maximumVersion),
     serial_number: typeof payload.serial_number === 'string' ? payload.serial_number.trim() : undefined,
@@ -106,6 +109,8 @@ export function mapLicenseRead(rawItem: unknown): ILicense {
       };
     }),
     primary_owner: toUserRef(owner),
+    department: namedReference(item.department),
+    group: namedReference(item.group),
     status: asString(status?.status_type || choiceOf(item.status)) || null,
     current_status: status
       ? {

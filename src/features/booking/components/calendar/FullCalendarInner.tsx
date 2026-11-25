@@ -138,7 +138,7 @@ const CalendarEventContent = ({ arg, refetchBooking }: CalendarEventContentProps
 
   return (
     <Popover
-      overlayInnerStyle={{ padding: 0 }}
+      styles={{ container: { padding: 0 } }}
       content={(
         <EventDetailModal
           refetchBooking={refetchBooking}
@@ -155,6 +155,7 @@ const CalendarEventContent = ({ arg, refetchBooking }: CalendarEventContentProps
 
 type CustomizedFullCalendarProps = {
   calendarRef: RefObject<FullCalendar | null>;
+  view: string;
   events: EventInput[];
   onClickEvent?: (event: EventInput) => void;
   setTitle: Dispatch<SetStateAction<string | undefined>>;
@@ -169,6 +170,7 @@ type CustomizedFullCalendarProps = {
 
 const CustomizedFullCalendar = ({
   calendarRef,
+  view,
   events,
   onClickEvent,
   setTitle,
@@ -183,8 +185,8 @@ const CustomizedFullCalendar = ({
       eventClassNames={styles.eventlist}
       ref={calendarRef}
       plugins={[interactionPlugin, timeGridPlugin, dayGridPlugin, listPlugin]}
-      height="65vh"
-      initialView="timeGridWeek"
+      height={view.startsWith('list') ? 'auto' : '65vh'}
+      initialView={view}
       slotEventOverlap={false}
       eventMaxStack={3}
       headerToolbar={false}

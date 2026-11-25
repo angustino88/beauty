@@ -204,10 +204,7 @@ export function buildBookingListQuery(params: IBenchBookingListParams): string {
     bench_id,
     sorts,
     orders,
-    creator,
     project_id,
-    starts_at,
-    ends_at,
     starts_at_after,
     starts_at_before,
     ...rest
@@ -216,30 +213,23 @@ export function buildBookingListQuery(params: IBenchBookingListParams): string {
 
   for (const [key, value] of Object.entries(rest)) {
     if (value == null) continue;
-    const resolvedKey = key === 'project' ? 'project_id' : key === 'search' ? 'q' : key;
     if (Array.isArray(value)) {
-      if (value.length > 0) searchParams.append(resolvedKey, value.join(','));
+      if (value.length > 0) searchParams.append(key, value.join(','));
     } else {
-      searchParams.append(resolvedKey, String(value));
+      searchParams.append(key, String(value));
     }
-  }
-
-  if (creator) {
-    searchParams.append('creator', creator);
   }
 
   if (project_id != null && !searchParams.has('project_id')) {
     searchParams.append('project_id', String(project_id));
   }
 
-  const effectiveStartsAtAfter = starts_at_after ?? starts_at;
-  if (effectiveStartsAtAfter) {
-    searchParams.append('starts_at_after', toBookingInstant(effectiveStartsAtAfter));
+  if (starts_at_after) {
+    searchParams.append('starts_at_after', toBookingInstant(starts_at_after));
   }
 
-  const effectiveStartsAtBefore = starts_at_before ?? ends_at;
-  if (effectiveStartsAtBefore) {
-    searchParams.append('starts_at_before', toBookingInstant(effectiveStartsAtBefore));
+  if (starts_at_before) {
+    searchParams.append('starts_at_before', toBookingInstant(starts_at_before));
   }
 
   if (sorts?.length) {
@@ -249,15 +239,11 @@ export function buildBookingListQuery(params: IBenchBookingListParams): string {
   }
   if (filterParams) {
     for (const [key, values] of Object.entries(filterParams)) {
-      if (key === 'creator') continue;
-      let resolvedKey = key === 'project' ? 'project_id' : key;
-      if (resolvedKey === 'starts_at') resolvedKey = 'starts_at_after';
-      if (resolvedKey === 'ends_at') resolvedKey = 'starts_at_before';
       // The API takes one value per filter and rejects repeated params, so only the first is sent.
       if (values?.length) {
         const value = String(values[0]);
-        const isInstantFilter = resolvedKey === 'starts_at_after' || resolvedKey === 'starts_at_before';
-        searchParams.append(resolvedKey, isInstantFilter ? toBookingInstant(value) : value);
+        const isInstantFilter = key === 'starts_at_after' || key === 'starts_at_before';
+        searchParams.append(key, isInstantFilter ? toBookingInstant(value) : value);
       }
     }
   }

@@ -169,15 +169,17 @@ function SlaStateIcon({ state }: { state: TicketSlaMeta['state'] }): ReactNode {
 export function TicketStatusBadge({
   status,
   systemState,
+  isFinal,
   compact = false,
   showTooltip = true,
 }: {
   status: unknown;
   systemState?: unknown;
+  isFinal?: boolean;
   compact?: boolean;
   showTooltip?: boolean;
 }) {
-  const meta = getTicketStatusMeta(status, systemState);
+  const meta = getTicketStatusMeta(status, systemState, isFinal);
   const badge = (
     <span
       className={[

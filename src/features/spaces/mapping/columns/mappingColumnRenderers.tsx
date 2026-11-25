@@ -1,43 +1,39 @@
 /* eslint-disable react-refresh/only-export-components */
-import { CheckCircleFilled, ExclamationCircleFilled, WarningFilled } from "@ant-design/icons";
-import { Popover, Tag, Tooltip } from "antd";
+import { CheckCircleFilled, ExclamationCircleFilled, RightOutlined, WarningFilled } from "@ant-design/icons";
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import type {
-  MappingEquipmentItem,
-  MappingLicenseItem,
   MappingState,
   ResourceMappingRow,
 } from "../types";
 import { MAPPING_STATE_LABELS } from "../utils/mappingExportConfig";
 import {
-  AccessoriesIcon,
-  ComputerIcon,
-  DebugHardwareIcon,
+  AccessoryIcon,
+  ComputingIcon,
+  DebuggingIcon,
+  DisplayIcon,
+  FurnitureIcon,
   LabIcon,
   LicenseIcon,
-  MonitorIcon,
-  NetworkInterfaceIcon,
-  PowerSupplyIcon,
-  RackIcon,
+  NetworkingIcon,
+  PowerIcon,
   SampleIcon,
+  StationIcon,
 } from "@/features/lab-equipment/shared/components/EquipmentIcons";
-import { useCategoryKeyById } from "../hooks/useCategoryKeyById";
-import { resolveCategoryKey } from "../utils/categoryKey";
 import styles from "./MappingTable.module.css";
 
 const CATEGORY_ICONS: Record<string, ReactNode> = {
-  computing: <ComputerIcon />,
-  display: <MonitorIcon />,
-  debugging: <DebugHardwareIcon />,
-  networking: <NetworkInterfaceIcon />,
-  power: <PowerSupplyIcon />,
-  accessory: <AccessoriesIcon />,
+  computing: <ComputingIcon />,
+  display: <DisplayIcon />,
+  debugging: <DebuggingIcon />,
+  networking: <NetworkingIcon />,
+  power: <PowerIcon />,
+  accessory: <AccessoryIcon />,
   sample: <SampleIcon />,
-  furniture: <RackIcon />,
-  instrument: <DebugHardwareIcon />,
+  furniture: <FurnitureIcon />,
+  instrument: <DebuggingIcon />,
   laboratory: <LabIcon />,
-  mechanical: <PowerSupplyIcon />,
+  mechanical: <PowerIcon />,
 };
 
 export const ENTITY_PATHS = {
@@ -47,7 +43,7 @@ export const ENTITY_PATHS = {
   license: "/lab-equipment/license",
 } as const;
 
-export const categoryIcon = (key: string | null) => (key && CATEGORY_ICONS[key]) || <AccessoriesIcon />;
+export const categoryIcon = (key: string | null) => (key && CATEGORY_ICONS[key]) || <AccessoryIcon />;
 /** Equipment page of a category key; categories without a page get no link. */
 export const categoryPath = (key: string | null) => (key ? `/lab-equipment/${key}` : null);
 
@@ -83,7 +79,7 @@ export const MappingAsset = ({
   return (
     <Link
       className={styles.asset}
-      aria-label={`Open ${[primary, secondary].filter(Boolean).join(", ")}`}
+      aria-label={`Open ${[primary, secondary, meta].filter(Boolean).join(", ")}`}
       title={[secondary ? `${secondary} (${primary})` : primary, meta].filter(Boolean).join(" · ")}
       to={`${path}?q=${encodeURIComponent(sku || name || "")}`}
     >
@@ -115,20 +111,18 @@ export const MappingStateTag = ({ state }: { state: MappingState }) => (
 );
 
 export const renderMappingStatus = (row: ResourceMappingRow) => {
-  const { state, equipment_count, license_count, has_station } = row.status;
-  const hint = state === "needs_placement"
-    ? (has_station ? "Station is not in a room" : "No station")
-    : `${equipment_count} unit${equipment_count === 1 ? "" : "s"} · ${license_count} licence${license_count === 1 ? "" : "s"}`;
+  const { state, has_station } = row.status;
+  const hint = state === "needs_placement" ? (has_station ? "Station is not in a room" : "No station") : null;
   return (
     <span className={styles.mappingStatus}>
       <MappingStateTag state={state} />
-      <small>{hint}</small>
+      {hint && <small>{hint}</small>}
     </span>
   );
 };
 
 export const renderBenchTag = (row: ResourceMappingRow) => (
-  <MappingAsset sku={row.bench.sku} name={row.bench.name} path={ENTITY_PATHS.bench} icon={<ComputerIcon />} />
+  <MappingAsset sku={row.bench.sku} name={row.bench.name} path={ENTITY_PATHS.bench} icon={<ComputingIcon />} />
 );
 
 export const renderStationTag = (row: ResourceMappingRow) => {
@@ -139,7 +133,7 @@ export const renderStationTag = (row: ResourceMappingRow) => {
       name={row.station.name}
       meta={row.station_slot ? `Slot ${row.station_slot.slot_code}` : null}
       path={ENTITY_PATHS.station}
-      icon={<RackIcon />}
+      icon={<StationIcon />}
     />
   );
 };
@@ -157,75 +151,31 @@ export const renderRoomTag = (row: ResourceMappingRow) => {
   );
 };
 
-const EquipmentList = ({ equipment, keyById }: { equipment: MappingEquipmentItem[]; keyById: ReadonlyMap<number, string> }) => (
-  <div className={styles.popoverList}>
-    {equipment.map((item) => {
-      const key = resolveCategoryKey(item.category, keyById);
-      return (
-        <MappingAsset
-          key={item.id}
-          sku={item.sku}
-          name={item.name}
-          meta={[item.category.name, item.role && item.role !== "default" ? item.role : null].filter(Boolean).join(" · ")}
-          path={categoryPath(key)}
-          icon={categoryIcon(key)}
-        />
-      );
-    })}
-  </div>
-);
+export type MappingAssetKind = "equipment" | "licenses";
 
-/** Category chips of a bench; grouped by the category's stable key, labelled with its name. */
-const EquipmentCategories = ({ equipment }: { equipment: MappingEquipmentItem[] }) => {
-  const keyById = useCategoryKeyById();
-  if (!equipment.length) return <EmptyMapping label="No equipment" />;
-  const byCategory = new Map<string, { key: string | null; label: string; count: number }>();
-  for (const item of equipment) {
-    const key = resolveCategoryKey(item.category, keyById);
-    const groupId = key ?? `name:${item.category.name || "Other"}`;
-    const entry = byCategory.get(groupId) ?? { key, label: item.category.name || "Other", count: 0 };
-    entry.count += 1;
-    byCategory.set(groupId, entry);
-  }
+export const MappingAssetSummary = ({ row, kind, onOpen }: {
+  row: ResourceMappingRow;
+  kind: MappingAssetKind;
+  onOpen: () => void;
+}) => {
+  const isLicense = kind === "licenses";
+  const count = isLicense ? new Set(row.licenses.map((license) => license.id)).size : row.equipment.length;
+  if (!count) return <EmptyMapping label={isLicense ? "No licenses" : "No equipment"} />;
+
+  const noun = isLicense ? "license" : "unit";
+  const label = `${count} ${noun}${count === 1 ? "" : "s"}`;
+
   return (
-    <Popover content={<EquipmentList equipment={equipment} keyById={keyById} />} title={`${equipment.length} units on this bench`}>
-      <span className={styles.categoryChips} tabIndex={0}>
-        {[...byCategory.entries()].map(([groupId, { key, label, count }]) => (
-          <span key={groupId} className={styles.categoryChip}>
-            <span className={styles.chipIcon} aria-hidden="true">{categoryIcon(key)}</span>
-            {label}
-            <strong>{count}</strong>
-          </span>
-        ))}
-      </span>
-    </Popover>
-  );
-};
-
-export const renderEquipmentCategories = (equipment: MappingEquipmentItem[]) => <EquipmentCategories equipment={equipment} />;
-
-const MAX_LICENSE_TAGS = 2;
-
-export const renderLicenses = (licenses: MappingLicenseItem[]) => {
-  if (!licenses.length) return <EmptyMapping label="—" />;
-  const shown = licenses.slice(0, MAX_LICENSE_TAGS);
-  const hidden = licenses.slice(MAX_LICENSE_TAGS);
-  return (
-    <span className={styles.categoryChips}>
-      {shown.map((license) => (
-        <Tooltip key={`${license.id}-${license.equipment_id}`} title={`${license.name} (${license.sku})`}>
-          <Link to={`${ENTITY_PATHS.license}?q=${encodeURIComponent(license.sku || license.name)}`}>
-            <Tag icon={<span className={styles.chipIcon}><LicenseIcon /></span>} className={styles.licenseTag}>
-              {license.sku || license.name}
-            </Tag>
-          </Link>
-        </Tooltip>
-      ))}
-      {hidden.length > 0 && (
-        <Tooltip title={hidden.map((license) => license.sku || license.name).join(", ")}>
-          <Tag>+{hidden.length}</Tag>
-        </Tooltip>
-      )}
-    </span>
+    <button
+      type="button"
+      className={styles.assetSummary}
+      aria-haspopup="dialog"
+      aria-label={`View ${label} on ${row.bench.sku || row.bench.name}`}
+      onClick={onOpen}
+    >
+      <span className={styles.summaryIcon} aria-hidden="true">{isLicense ? <LicenseIcon /> : <ComputingIcon />}</span>
+      {label}
+      <RightOutlined className={styles.summaryChevron} aria-hidden="true" />
+    </button>
   );
 };

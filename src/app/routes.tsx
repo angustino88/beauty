@@ -59,6 +59,9 @@ const LabMonitoring = lazy(
 const SupportTickets = lazy(
   () => import("@/features/lab-support/pages/SupportTickets"),
 );
+const SupportWorkLogs = lazy(
+  () => import("@/features/lab-support/pages/SupportWorkLogs"),
+);
 const SupportTicketDetail = lazy(
   () => import("@/features/lab-support/pages/SupportTicketDetail"),
 );
@@ -156,15 +159,6 @@ export default function AppRoutes() {
             </PermissionRoute>
           }
         />
-
-        {/* Backward-compatible spaces redirects */}
-        <Route path="/lab-equipment" element={<Navigate to="/spaces/mapping" replace />} />
-        <Route path="/lab-equipment/mapping" element={<Navigate to="/spaces/mapping" replace />} />
-        <Route path="/lab-equipment/room" element={<Navigate to="/spaces/room" replace />} />
-        <Route path="/lab-equipment/rack" element={<Navigate to="/spaces/station" replace />} />
-        <Route path="/lab-equipment/station" element={<Navigate to="/spaces/station" replace />} />
-        <Route path="/lab-equipment/lab-info" element={<Navigate to="/spaces/bench" replace />} />
-        <Route path="/lab-equipment/bench" element={<Navigate to="/spaces/bench" replace />} />
 
         {/* Telemetry (coordinator + admin; approving profiles is admin-only on the server) */}
         <Route path="/telemetry" element={<Navigate to="/telemetry/devices" replace />} />
@@ -293,14 +287,6 @@ export default function AppRoutes() {
           }
         />
 
-        {/* Legacy redirect routes */}
-        <Route path="/lab-equipment/computer" element={<Navigate to="/lab-equipment/computing" replace />} />
-        <Route path="/lab-equipment/monitor" element={<Navigate to="/lab-equipment/display" replace />} />
-        <Route path="/lab-equipment/debug-hardware" element={<Navigate to="/lab-equipment/debugging" replace />} />
-        <Route path="/lab-equipment/network-interface" element={<Navigate to="/lab-equipment/networking" replace />} />
-        <Route path="/lab-equipment/power-supply" element={<Navigate to="/lab-equipment/power" replace />} />
-        <Route path="/lab-equipment/accessories" element={<Navigate to="/lab-equipment/accessory" replace />} />
-
         {/* Analytics + Monitoring */}
         <Route
           path="/lab-analytics"
@@ -328,7 +314,6 @@ export default function AppRoutes() {
             </PermissionRoute>
           }
         />
-        <Route path="/procurement" element={<Navigate to="/purchases" replace />} />
         <Route
           path="/expenses"
           element={
@@ -345,12 +330,11 @@ export default function AppRoutes() {
             </PermissionRoute>
           }
         />
-        <Route path="/finance" element={<Navigate to="/finance-report" replace />} />
 
         {/* Support Tickets + Leaderboard */}
         <Route path="/support-tickets" element={<SupportTickets />} />
+        <Route path="/support-tickets/work-logs" element={<SupportWorkLogs />} />
         <Route path="/support-tickets/:key" element={<SupportTicketDetail />} />
-        <Route path="/lab-support" element={<Navigate to="/support-tickets" replace />} />
         <Route path="/leaderboard" element={<Leaderboard />} />
       </Route>
 

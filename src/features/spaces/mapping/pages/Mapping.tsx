@@ -1,5 +1,5 @@
 import { useState, type Key } from "react";
-import { Button, Card, Dropdown, Empty, Segmented, Table } from "antd";
+import { Button, Card, Dropdown, Empty, Grid, Segmented, Table } from "antd";
 import { InlineAlert } from "@/shared/notifications";
 import type { FilterValue } from "antd/es/table/interface";
 import {
@@ -19,9 +19,10 @@ import type { MappingState, ResourceMappingRow, TableFilters } from "../types";
 import { useMappingTable } from "../hooks/useMappingTable";
 import { useMappingExport } from "../hooks/useMappingExport";
 import { buildMappingColumns } from "../columns/mappingColumns";
-import { MappingStateTag } from "../columns/mappingColumnRenderers";
+import { MappingStateTag, type MappingAssetKind } from "../columns/mappingColumnRenderers";
 import { MappingVisualization } from "../components/MappingVisualization";
 import { BenchPlacementModal } from "../components/modals/BenchPlacementModal";
+import { MappingAssetsModal } from "../components/modals/MappingAssetsModal";
 import { EquipmentAssignmentModal } from "../components/modals/EquipmentAssignmentModal";
 import tableStyles from "@/features/lab-equipment/shared/components/layout/EquipmentTable.module.css";
 import styles from "../columns/MappingTable.module.css";
@@ -44,8 +45,10 @@ const printLabels = (row: ResourceMappingRow) => {
 
 export default function MappingPage() {
   const canEdit = usePermission("lab_operations.manage");
+  const { lg } = Grid.useBreakpoint();
 
   const [viewMode, setViewMode] = useState<MappingViewMode>("table");
+  const [assetTarget, setAssetTarget] = useState<{ row: ResourceMappingRow; kind: MappingAssetKind } | null>(null);
   const [placementTarget, setPlacementTarget] = useState<ResourceMappingRow | null>(null);
   const [assignmentTarget, setAssignmentTarget] = useState<ResourceMappingRow | null>(null);
 
@@ -74,6 +77,8 @@ export default function MappingPage() {
     filters: table.filters,
     filterOptions: table.filterOptions,
     canEdit,
+    pinColumns: Boolean(lg),
+    onViewAssets: (row, kind) => setAssetTarget({ row, kind }),
     onPlace: setPlacementTarget,
     onAssignEquipment: setAssignmentTarget,
     onPrintLabels: printLabels,
@@ -98,10 +103,7 @@ export default function MappingPage() {
 
   return (
     <div className={styles.page}>
-      <PageHeader title="Lab Equipment Mapping" />
-      <p className={styles.pageIntro}>
-        Where every bench is placed and what is on it: room, station, equipment and licenses.
-      </p>
+      <PageHeader title="Lab Equipment Mapping" description="Find benches by placement, equipment, or mapping status." />
 
       <section className={styles.kpis} aria-label="Mapping summary">
         <div className={styles.kpiTotal}>
@@ -199,7 +201,7 @@ export default function MappingPage() {
             dataSource={table.rows}
             sticky={{ offsetHeader: 0 }}
             tableLayout="fixed"
-            scroll={{ x: 1400 }}
+            scroll={{ x: 1200 }}
             onChange={handleTableChange}
             locale={{
               emptyText: (
@@ -215,7 +217,7 @@ export default function MappingPage() {
               pageSize: table.pageSize,
               pageSizeOptions: [10, 25, 50, 100],
               showSizeChanger: true,
-              showQuickJumper: true,
+              showQuickJumper: Boolean(lg),
               showTotal: (total, [from, to]) => `${from}–${to} of ${total} benches`,
             }}
           />
@@ -233,6 +235,12 @@ export default function MappingPage() {
           />
         )}
       </Card>
+
+      <MappingAssetsModal
+        row={liveRow(assetTarget?.row ?? null)}
+        kind={assetTarget?.kind ?? "equipment"}
+        onClose={() => setAssetTarget(null)}
+      />
 
       {canEdit && (
         <>

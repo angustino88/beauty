@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
-/** Read the search term a link put in the URL: `?q=` (the API's name), or the older `?search=`. */
+/** Read the search term a link put in the URL (`?q=`). */
 export function readUrlSearch(params: URLSearchParams): string {
-  return params.get('q') ?? params.get('search') ?? '';
+  return params.get('q') ?? '';
 }
 
 /**

@@ -10,6 +10,8 @@ import { getApiErrorMessage, notify } from '@/shared/notifications';
 import { useLabsRoomsActionsGenerateSlotsCreateByRoomIdMutation } from '@/shared/api/generated/api';
 import { notifyEquipmentCreated, notifyEquipmentError, useEquipmentCrudActions, type GuardedForceDeleteResult } from '@/features/lab-equipment/shared';
 import { parseFormApiError } from '@/features/lab-equipment/shared/utils/formApiError';
+import { roomDetailsPayload } from "../mapper";
+import { ownershipPayload } from '../../../../shared/utils/resourceReferences.ts';
 import type { IRoomPayload } from '../types';
 
 // ── helpers ───────────────────────────────────────────────────────────────────
@@ -57,7 +59,6 @@ export function useRoomForm() {
         updateImageMutation: updateRoomImageMutation,
         deleteImageMutation: deleteRoomImageMutation,
         deleteMutation:      deleteRoom,
-        mapStatusBody:       (values) => values as unknown as IRoomPayload,
         labels: { entityName: 'Room', entityNameLower: 'room', errorPrefix: 'room' },
     });
 
@@ -94,10 +95,10 @@ export function useRoomForm() {
     const createFromValues = async (values: Record<string, unknown>, imageFile?: File | null) => {
         const rows = toNumber(values.rows);
         const cols = toNumber(values.cols);
-        // max_power and primary_owner are read by mapRoomWritePayload (power_capacity_w, owner_id).
-        const payload: IRoomPayload & { max_power?: number | null; primary_owner?: number | null } = {
+        const payload: IRoomPayload = {
+            ...ownershipPayload(values),
+            ...roomDetailsPayload(values),
             max_power:     toNumber(values.max_power) ?? null,
-            primary_owner: toNumber(values.primary_owner) ?? null,
             sku:      typeof values.sku === 'string' ? values.sku : undefined,
             name:     typeof values.name === 'string' ? values.name : undefined,
             location: typeof values.location === 'string' ? values.location : undefined,

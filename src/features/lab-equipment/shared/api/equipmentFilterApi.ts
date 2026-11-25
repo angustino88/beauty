@@ -24,20 +24,6 @@ export type EquipmentFilterResponse<T> = {
  * the table applies those on the loaded page instead.
  */
 const LIST_FILTERS: Record<string, { url: string; params: Record<string, string> }> = {
-  Room: {
-    url: '/api/labs/rooms',
-    params: {
-      country: 'country_id',
-      city: 'city_id',
-      building: 'building_id',
-      primary_owner: 'owner_id',
-      status: 'status',
-      lifecycle_status: 'lifecycle_status',
-      access_policy: 'access_policy',
-      condition: 'condition',
-      activity_status: 'activity_status',
-    },
-  },
   License: {
     url: '/api/labs/licenses',
     params: { primary_owner: 'owner_id', status: 'status' },
@@ -65,11 +51,11 @@ export const equipmentFilterApi = baseApi.injectEndpoints({
           const text = Array.isArray(value) ? value.join(',') : String(value);
           if (text) params[target] = text;
         }
-        return { url: config?.url ?? '/api/labs/rooms', params };
+        return { url: config?.url ?? '/api/labs/licenses', params };
       },
       transformResponse: (res: unknown) => normalizeListResponse<unknown>(res),
       providesTags: (_result, _error, { filter_key }) =>
-        filter_key === 'Room' || filter_key === 'License' || filter_key === 'Sample'
+        filter_key === 'License'
           ? [{ type: filter_key, id: 'LIST' }]
           : [],
     }),

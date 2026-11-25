@@ -31,7 +31,7 @@ export const DashboardSummary = memo(function DashboardSummary({ stats, activeSu
   return (
     <section className={styles.rail} aria-label="Bench status overview">
       <div className={styles.lead}>
-        <span className={styles.leadNumber}>{stats.freeCount}</span>
+        <span className={styles.leadNumber} data-available={stats.freeCount > 0}>{stats.freeCount}</span>
         <span className={styles.leadText}>
           free of <strong>{total}</strong> {total === 1 ? 'bench' : 'benches'}
         </span>
