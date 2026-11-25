@@ -59,20 +59,24 @@ The frontend works with one backend directly or with several department backends
 
 | `VITE_API_MODE` | Use when | Requests go to |
 |---|---|---|
-| `direct` (default) | one backend | `VITE_API_URL/api/...` |
-| `router` | several department backends | `VITE_ROUTER_URL/t/<prefix_key>/api/...` |
+| `direct` (default) | one backend | `/api/...` on the frontend origin, proxied to the backend |
+| `router` | several department backends | `/t/<prefix_key>/api/...` on the frontend origin, proxied to the Router |
 
-In router mode the sign-in flow is: Microsoft sign-in (MSAL) → `POST VITE_ROUTER_URL/routing/resolve/user`
-with the ID token → the Router answers `{"data": {"backend_id", "name", "prefix"}}` → `aad-login`, the API, WebSockets and token
-refresh use that prefix. The chosen backend is kept in localStorage (`labmango.routedBackend`) until sign-out.
-Router-side requirements: its `AAD_AUDIENCE` equals `VITE_CLIENT_ID`, and its `CORS_ALLOWED_ORIGINS` contains
-the frontend origin. All backend URLs are built by `src/shared/lib/backendTarget.ts`; do not read
-`VITE_API_URL` anywhere else.
+In router mode the sign-in flow is: Microsoft sign-in (MSAL) → `POST /routing/resolve/user` with the ID token →
+`{"data": {"backend_id", "name", "prefix"}}` → sign-in, the API, WebSockets and token refresh use that prefix. The
+chosen backend is kept in localStorage (`labmango.routedBackend`) until sign-out. All backend URLs are built by
+`src/shared/lib/backendTarget.ts`; do not read `VITE_API_URL` anywhere else.
+
+### Docker
+
+nginx serves the build and proxies the API on the same origin; `docker-compose.dev.yml` (ports 30002/3002) and
+`docker-compose.prod.yml` (80/443). Details: [docs/deployment.md](docs/deployment.md).
 
 ## Available Scripts
 
 - `npm run dev` — start local development server
-- `npm run build` — production build to `build/`
+- `npm run build` — regenerate the API client, then production build to `build/`
+- `npm run build:app` — production build to `build/` (used by Docker)
 - `npm run preview` — preview built assets
 - `npm run lint` — run ESLint
 - `npm test` — run Node.js TypeScript unit tests

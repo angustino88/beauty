@@ -49,14 +49,22 @@ export function resolveApiMode(raw: unknown): ApiMode {
   return value === 'router' ? 'router' : 'direct';
 }
 
-export function readConfig(env: Env = viteEnv()): BackendTargetConfig {
+/** Origin of the page; used when the frontend is served behind its own nginx that proxies the API. */
+function pageOrigin(): string {
+  return typeof window === 'undefined' ? '' : window.location.origin;
+}
+
+/**
+ * Empty `VITE_API_URL` / `VITE_ROUTER_URL` mean "same origin": the frontend's nginx proxies `/api/`, `/ws/`
+ * (direct mode) or `/routing/`, `/t/` (router mode), so no CORS is involved.
+ */
+export function readConfig(env: Env = viteEnv(), origin: string = pageOrigin()): BackendTargetConfig {
   const str = (name: string): string => (typeof env[name] === 'string' ? (env[name] as string) : '');
   const mode = resolveApiMode(env.VITE_API_MODE);
   return {
     mode,
-    apiUrl: trimSlash(str('VITE_API_URL')),
-    // In router mode the Router URL falls back to VITE_API_URL, so an existing .env only needs VITE_API_MODE.
-    routerUrl: trimSlash(str('VITE_ROUTER_URL') || str('VITE_API_URL')),
+    apiUrl: trimSlash(str('VITE_API_URL') || origin),
+    routerUrl: trimSlash(str('VITE_ROUTER_URL') || origin),
   };
 }
 

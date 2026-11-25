@@ -29,10 +29,14 @@ test('mode switch defaults to direct', () => {
   assert.equal(resolveApiMode(undefined), 'direct');
   assert.equal(resolveApiMode('ROUTER '), 'router');
   assert.equal(resolveApiMode('anything'), 'direct');
-  assert.deepEqual(readConfig({ VITE_API_URL: 'http://api:8000/' }), {
-    mode: 'direct', apiUrl: 'http://api:8000', routerUrl: 'http://api:8000',
+  assert.deepEqual(readConfig({ VITE_API_URL: 'http://api:8000/' }, 'https://app'), {
+    mode: 'direct', apiUrl: 'http://api:8000', routerUrl: 'https://app',
   });
   assert.equal(readConfig({ VITE_API_MODE: 'router', VITE_ROUTER_URL: 'https://router' }).routerUrl, 'https://router');
+  // Empty URLs: same origin (the frontend's nginx proxies the API).
+  assert.deepEqual(readConfig({ VITE_API_MODE: 'router' }, 'https://labmango.example'), {
+    mode: 'router', apiUrl: 'https://labmango.example', routerUrl: 'https://labmango.example',
+  });
 });
 
 test('base URL follows the mode and the selected backend', () => {
