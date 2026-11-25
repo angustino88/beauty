@@ -143,6 +143,7 @@ export interface IRoomDashboardSlot {
 }
 
 export interface IRoomDashboardLayout {
+  contents?: Record<number, import('./stationContents').StationPosition[]>;
   room: {
     id: number;
     sku: string | null;

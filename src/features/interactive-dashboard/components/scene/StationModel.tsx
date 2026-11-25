@@ -36,6 +36,9 @@ export function StationModel({
 }) {
   const [w, h, d] = rack.dimensions;
   const kind = rack.modelKind;
+  const slots = rack.slots ?? [];
+  const columns = Math.max(1, Math.ceil(Math.sqrt(slots.length * w / d)));
+  const rows = Math.max(1, Math.ceil(slots.length / columns));
   return (
     <group position={[0, -1.4, 0]} rotation={[0, rack.rotation, 0]}>
       <Part
@@ -45,6 +48,23 @@ export function StationModel({
       />
       {kind === "table" || kind === "shelf" ? (
         <>
+          {kind === "table" && slots.map((slot, index) => {
+            const width = w / columns, depth = d / rows;
+            const instruments = slot.benches.flatMap(bench => bench.equipment);
+            const across = Math.max(1, Math.ceil(Math.sqrt(instruments.length)));
+            const deep = Math.max(1, Math.ceil(instruments.length / across));
+            return <group key={slot.id} position={[(index % columns + 0.5) * width - w / 2, h + 0.05, (Math.floor(index / columns) + 0.5) * depth - d / 2]}>
+              <Part position={[0, 0, 0]} size={[width * 0.92, 0.025, depth * 0.9]} color={slot.benches.length ? "#366865" : "#978d7e"} />
+              {instruments.map((device, i) => {
+                const dw = width * 0.8 / across, dd = depth * 0.8 / deep;
+                const height = Math.min(0.3, dw * 0.65, dd * 0.75);
+                return <group key={device.id} position={[(i % across + 0.5 - across / 2) * dw, height / 2 + 0.015, (Math.floor(i / across) + 0.5 - deep / 2) * dd]}>
+                  <Part position={[0, 0, 0]} size={[dw * 0.84, height, dd * 0.72]} color="#61778a" />
+                  <Part position={[0, 0, dd * 0.36]} size={[dw * 0.56, height * 0.55, 0.008]} color="#83cbd1" />
+                </group>;
+              })}
+            </group>;
+          })}
           {[-1, 1].flatMap((x) =>
             [-1, 1].map((z) => (
               <Part

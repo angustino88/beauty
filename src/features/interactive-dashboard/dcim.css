@@ -408,3 +408,7 @@
   --lm-warning-fg: #fbbf24;
   --lm-reserved-solid: #9bafff;
 }
+.dcim-inspector { overflow-y: auto; max-height: 60%; }
+.dcim-inspector details { padding: 7px 0; border-top: 1px solid #304359; font-size: 12px; }
+.dcim-inspector summary { cursor: pointer; }
+.dcim-inspector details > div { padding: 8px 12px; }

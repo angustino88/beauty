@@ -13,6 +13,7 @@ export interface RackData {
   manufacturer: string | null;
   model: string | null;
   stationType: string | null;
+  slots?: import('../spaces/room/stationContents').StationPosition[];
   modelKind: 'rack' | 'table' | 'cabinet' | 'shelf' | 'generic';
   dimensions: [number, number, number];
   rotation: number;

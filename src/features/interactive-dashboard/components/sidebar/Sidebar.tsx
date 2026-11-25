@@ -116,6 +116,15 @@ export function Sidebar({
               </dd>
             </div>
           </dl>
+          <h4>Station slots</h4>
+          {!selected.slots ? <p>Slot inventory unavailable</p> : !selected.slots.length ? <p>No station slots configured</p> :
+            selected.slots.map(slot => <details key={selected.id + ':' + slot.id}>
+              <summary>{slot.label} · {slot.benches.map(b => b.name).join(', ') || 'Empty'}</summary>
+              {slot.benches.map(bench => <div key={bench.id}><strong>{bench.name}</strong>
+                {bench.equipment.length ? <ul>{bench.equipment.map(device => <li key={device.id}>{device.name || device.sku}{device.category && ' · ' + device.category.name}</li>)}</ul> : <p>No equipment assigned</p>}
+              </div>)}
+            </details>)}
+
         </section>
       )}
       <label className="dcim-search">

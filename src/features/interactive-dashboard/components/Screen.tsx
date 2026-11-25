@@ -74,8 +74,10 @@ export function Screen() {
     selection?.roomId === currentRoom?.id
       ? (selection?.stationId ?? null)
       : null;
-  const selectStation = (stationId: number) =>
+  const selectStation = (stationId: number) => {
     setSelection({ roomId: currentRoom?.id, stationId });
+    setSidebarOpen(true);
+  };
   const [preset, setPreset] = useState<"isometric" | "top" | "front">(
     "isometric",
   );
