@@ -1,12 +1,17 @@
 import { createContext, useContext } from "react";
 import type { ModelScope, VisualModel } from "./api";
-export const LibraryContext = createContext<VisualModel[]>([]);
+
+/** Resolved models keyed by `scope/target_key`. */
+export const LibraryContext = createContext<ReadonlyMap<string, VisualModel>>(
+  new Map(),
+);
+export const targetId = (scope: ModelScope, key: string | number) =>
+  scope + "/" + key;
+
 export function useVisualModel(
   scope: ModelScope,
   key: string | number | null | undefined,
 ) {
   const library = useContext(LibraryContext);
-  return library.find(
-    (model) => model.scope === scope && model.target_key === String(key),
-  );
+  return key == null ? undefined : library.get(targetId(scope, key));
 }

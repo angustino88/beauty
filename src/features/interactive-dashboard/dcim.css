@@ -518,3 +518,57 @@
     height: 300px;
   }
 }
+.dcim-model-tabs {
+  display: flex;
+  gap: 6px;
+  margin-top: 16px;
+  border-bottom: 1px solid #33506b;
+}
+.dcim-model-dialog .dcim-model-tabs button {
+  border-radius: 6px 6px 0 0;
+  border-bottom: none;
+  background: transparent;
+}
+.dcim-model-dialog .dcim-model-tabs button[aria-selected="true"] {
+  background: #294963;
+}
+.dcim-library {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 20px;
+  margin-top: 15px;
+}
+.dcim-asset-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 560px;
+  overflow: auto;
+}
+.dcim-model-dialog .dcim-asset-list button {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  gap: 2px;
+  text-align: left;
+  background: #1b2e45;
+}
+.dcim-model-dialog .dcim-asset-list button[aria-pressed="true"] {
+  background: #294963;
+  border-color: #64d4d5;
+}
+.dcim-model-empty {
+  margin: 20px 0;
+}
+@media (max-width: 900px) {
+  .dcim-library {
+    grid-template-columns: 1fr;
+  }
+  .dcim-asset-list {
+    max-height: 200px;
+  }
+}

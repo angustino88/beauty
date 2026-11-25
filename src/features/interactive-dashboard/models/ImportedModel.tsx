@@ -85,7 +85,11 @@ export function ImportedModel({
   children?: (surfaceHeight: number, footprint: [number, number]) => ReactNode;
 }) {
   return (
-    <ModelBoundary key={props.model.url} fallback={fallback} onError={onError}>
+    <ModelBoundary
+      key={props.model.cacheKey}
+      fallback={fallback}
+      onError={onError}
+    >
       <Suspense fallback={fallback}>
         <LoadedModel {...props} />
       </Suspense>

@@ -177,13 +177,16 @@ export function StationModel({
           </group>
         }
       >
-        {(height, footprint) => (
-          <StationContents
-            rack={rack}
-            surfaceHeight={height + 0.01}
-            footprint={footprint}
-          />
-        )}
+        {(height, footprint) =>
+          // Like the schematic view, only work tables carry their benches on a surface.
+          rack.modelKind === "table" && (
+            <StationContents
+              rack={rack}
+              surfaceHeight={height + 0.01}
+              footprint={footprint}
+            />
+          )
+        }
       </ImportedModel>
     </group>
   );
