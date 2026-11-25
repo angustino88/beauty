@@ -8,7 +8,7 @@ import { ArrowBtn } from './ArrowBtn';
 import type { TopBarProps } from '../../types';
 
 function VDivider() {
-    return <div style={{ width: '1px', height: '36px', background: theme.divider, margin: '0 14px', flexShrink: 0 }} />;
+    return <div style={{ width: '1px', height: '36px', background: theme.divider, margin: '0 8px', flexShrink: 0 }} />;
 }
 
 export function TopBar({
@@ -25,7 +25,7 @@ export function TopBar({
     }, []);
 
     return (
-        <div style={{
+        <div className="dcim-topbar" style={{
             position: 'relative', top: 0, left: 0, right: 0,
             height: '62px', zIndex: 25, display: 'flex', alignItems: 'center',
             background: theme.bg, borderBottom: `1.5px solid ${theme.border}`,
@@ -62,7 +62,7 @@ export function TopBar({
                     <img src={logoUrl} alt="logo" style={{ height: '32px', width: 'auto', objectFit: 'contain' }} />
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
                         <span style={{ fontFamily: theme.font, fontSize: '11px', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: theme.accent }}>
-                            Monitoring
+                            Infrastructure
                         </span>
                         <span style={{ fontFamily: theme.font, fontSize: '8px', letterSpacing: '0.14em', color: theme.label }}>
                             LAB MANGO
@@ -101,12 +101,13 @@ export function TopBar({
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginRight: '14px' }}>
                     <AlertBadge count={notifications.ok}       dotColor={theme.ok}   label="OK"   />
                     <AlertBadge count={notifications.warning}  dotColor={theme.warn} label="Warn" />
+                    <AlertBadge count={notifications.unknown} dotColor={theme.label} label="No data" />
                     <AlertBadge count={notifications.critical} dotColor={theme.crit} label="Crit" />
                 </div>
                 <VDivider />
                 <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginRight: '14px' }}>
                     <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: theme.ok, animation: 'live-fade 3s ease-in-out infinite', flexShrink: 0 }} />
-                    <span style={{ fontFamily: theme.font, fontSize: '10px', fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: theme.ok }}>Live</span>
+                    <span style={{ fontFamily: theme.font, fontSize: '10px', fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: theme.ok }}>Snapshot</span>
                 </div>
                 <VDivider />
                 <span style={{ fontFamily: theme.font, fontSize: '18px', fontWeight: 700, letterSpacing: '0.06em', color: theme.text, fontVariantNumeric: 'tabular-nums' }}>

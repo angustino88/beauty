@@ -1,12 +1,13 @@
-import { Html, useGLTF } from '@react-three/drei';
-import { memo, useEffect, useMemo, useRef } from 'react';
-import rackModelUrl from '../../../../assets/rack.glb?url';
+import { Html } from '@react-three/drei';
+import { memo, useEffect, useRef } from 'react';
+import { StationModel } from './StationModel';
+import { STATUS_COLORS, TYPE_COLORS } from '../../utils/stationVisual';
 import type { RackBoxProps } from '../../types';
 import { useDragRack } from '../../hooks/useDragRack';
 import { RackStatus } from '../hud/RackStatus';
 import { RackDragHint } from '../hud/RackDragHint';
 
-const RACK_MODEL_SCALE = 0.0014;
+
 
 const deleteBtnStyle: React.CSSProperties = {
     width: 36, height: 36, borderRadius: '50%',
@@ -19,7 +20,7 @@ const deleteBtnStyle: React.CSSProperties = {
 function RackBoxComponent({
     rack, slots, isEditMode, isDeleteMode,
     onMove, onDelete, onDragStateChange, onNearestSlotChange,
-    pinned, onTogglePin,
+    pinned, onTogglePin, selected, onSelect, showLabels, colorMode,
 }: RackBoxProps) {
     // Holds the locally-moved position until server confirms — prevents sync reset
     const confirmedPositionRef = useRef<[number, number, number] | null>(null);
@@ -51,21 +52,25 @@ function RackBoxComponent({
         if (lerpTarget.current !== null) return;
         const pos = confirmedPositionRef.current ?? rack.position ?? [0, 0, 0];
         outerGroupRef.current?.position.set(...pos);
-    }, [rack.position, rack.id]);
+    }, [rack.position, rack.id, isDraggingRef, lerpTarget, outerGroupRef]);
 
-    const { scene } = useGLTF(rackModelUrl);
-    const model = useMemo(() => scene.clone(), [scene]);
+    const color = colorMode === 'type' ? TYPE_COLORS[rack.modelKind] : STATUS_COLORS[rack.status];
 
     return (
-        <group ref={outerGroupRef} position={rack.position ?? [0, 0, 0]}>
+        <group ref={outerGroupRef} position={rack.position ?? [0, 0, 0]}
+            onClick={event => { if (!isEditMode && event.delta < 5) { event.stopPropagation(); onSelect(rack.id); } }}>
+            <mesh position={[0, -1.385, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+                <planeGeometry args={[2.05, 1.85]} />
+                <meshBasicMaterial color={selected ? '#38bdf8' : color} transparent opacity={selected ? 0.4 : 0.1} depthWrite={false} />
+            </mesh>
             {isEditMode && !isDeleteMode && (
-                <mesh position={[0, 1.2, 0]} onPointerDown={handlePointerDown}>
-                    <boxGeometry args={[1.5, 2.5, 1]} />
+                <mesh position={[0, -1.4 + rack.dimensions[1] / 2, 0]} onPointerDown={handlePointerDown}>
+                    <boxGeometry args={[1.95, rack.dimensions[1] + 0.15, 1.95]} />
                     <meshBasicMaterial transparent opacity={0} />
                 </mesh>
             )}
 
-            <primitive object={model} castShadow receiveShadow scale={RACK_MODEL_SCALE} />
+            <StationModel rack={rack} color={color} />
 
             {isEditMode && !isDragging && !isDeleteMode && (
                 <RackDragHint name={rack.name} />
@@ -79,12 +84,12 @@ function RackBoxComponent({
                 </Html>
             )}
 
-            {!isEditMode && (
-                <Html position={[1.2, 1.5, 0]} style={{ pointerEvents: 'none' }} distanceFactor={0.01}>
+            {!isEditMode && (showLabels || selected || pinned) && (
+                <Html position={[0, rack.dimensions[1] - 1.1, 0]} center style={{ pointerEvents: 'none' }} zIndexRange={[10, 0]}>
                     <RackStatus
                         name={rack.name} temperature={rack.temperature}
                         humidity={rack.humidity} powerUsage={rack.powerUsage}
-                        status={rack.status} pinned={pinned}
+                        status={rack.status} pinned={pinned || selected}
                         onTogglePin={() => onTogglePin(rack.id)}
                     />
                 </Html>

@@ -1,5 +1,6 @@
 import type { IRack } from '@/features/spaces/station/types';
-import { getRackStatus, type RackStatus } from '../config/rackThresholds';
+import { getRackStatus, type RackStatus } from '../config/rackThresholds.ts';
+import { stationVisual } from './stationVisual.ts';
 import type { RackData, NotificationCounts } from '../types';
 
 export function toRoomSlug(name: string): string {
@@ -7,9 +8,10 @@ export function toRoomSlug(name: string): string {
 }
 
 export function metricStatus(
-    value: number,
+    value: number | null,
     thresholds: { warning: number; critical: number },
 ): RackStatus {
+    if (value == null) return 'unknown';
     if (value > thresholds.critical) return 'critical';
     if (value > thresholds.warning) return 'warning';
     return 'ok';
@@ -20,10 +22,13 @@ export function toRackData(
     position: [number, number, number] | null,
     slotCode: string | null,
 ): RackData {
-    const temperature = rack.temperature ?? 0;
-    const humidity = rack.humidity ?? 0;
-    const powerUsage = rack.power_usage ?? 0;
+    const temperature = rack.temperature ?? null;
+    const humidity = rack.humidity ?? null;
+    const powerUsage = rack.power_usage ?? null;
     return {
+        ...stationVisual(rack),
+        benchCount: rack.active_bench_count ?? rack.bench_count ?? null,
+        benchCapacity: rack.bench_capacity ?? null,
         id: rack.id,
         name: rack.name,
         temperature,
@@ -38,7 +43,7 @@ export function toRackData(
 }
 
 export function deriveNotifications(racks: RackData[]): NotificationCounts {
-    const counts: NotificationCounts = { ok: 0, warning: 0, critical: 0 };
+    const counts: NotificationCounts = { ok: 0, warning: 0, critical: 0, unknown: 0 };
     racks.forEach(r => { counts[r.status]++; });
     return counts;
 }

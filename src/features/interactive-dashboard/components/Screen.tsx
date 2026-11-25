@@ -1,5 +1,19 @@
 import { Canvas } from "@react-three/fiber";
-import { OrbitControls } from "@react-three/drei";
+import { CameraRig } from "./scene/CameraRig";
+import {
+  Box,
+  Scan,
+  RotateCcw,
+  PanelRightOpen,
+  Eye,
+  Layers,
+} from "lucide-react";
+import {
+  STATUS_COLORS,
+  TYPE_COLORS,
+  TYPE_LABELS,
+} from "../utils/stationVisual";
+import "../dcim.css";
 import { Suspense, useCallback, useState } from "react";
 import * as THREE from "three";
 import { useNavigate } from "react-router-dom";
@@ -13,12 +27,12 @@ import { TopBar } from "./topbar/TopBar";
 import { Sidebar } from "./sidebar/Sidebar";
 import { theme } from "../theme";
 import { ensureAnimations } from "../animations";
-import { usePermission } from '@/features/auth/hooks/useCan';
+import { usePermission } from "@/features/auth/hooks/useCan";
 
 export function Screen() {
   ensureAnimations();
   const navigate = useNavigate();
-  const canEditLayout = usePermission('lab_operations.manage');
+  const canEditLayout = usePermission("lab_operations.manage");
   const {
     racks,
     loading,
@@ -52,6 +66,24 @@ export function Screen() {
 
   const visibleRacks = racks.filter((r) => !pendingDeleteIds.includes(r.id));
 
+  const [selection, setSelection] = useState<{
+    roomId: number | undefined;
+    stationId: number;
+  } | null>(null);
+  const selectedId =
+    selection?.roomId === currentRoom?.id
+      ? (selection?.stationId ?? null)
+      : null;
+  const selectStation = (stationId: number) => {
+    setSelection({ roomId: currentRoom?.id, stationId });
+    setSidebarOpen(true);
+  };
+  const [preset, setPreset] = useState<"isometric" | "top" | "front">(
+    "isometric",
+  );
+  const [cameraReset, setCameraReset] = useState(0);
+  const [showLabels, setShowLabels] = useState(true);
+  const [colorMode, setColorMode] = useState<"status" | "type">("status");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [draggingRackId, setDraggingRackId] = useState<number | null>(null);
   const [nearestSlotCode, setNearestSlotCode] = useState<string | null>(null);
@@ -77,7 +109,8 @@ export function Screen() {
         cols <= 0
       ) {
         notify.warning("Room grid dimensions required", {
-          description: "Configure room rows and columns before editing the 3D layout.",
+          description:
+            "Configure room rows and columns before editing the 3D layout.",
         });
         return;
       }
@@ -113,6 +146,7 @@ export function Screen() {
 
   return (
     <div
+      className="dcim-dashboard"
       style={{
         width: "100vw",
         height: "100vh",
@@ -173,51 +207,172 @@ export function Screen() {
           </div>
         )}
 
-        <Canvas
-          orthographic
-          camera={{ near: -1000, far: 1000, zoom: 100, position: [0, 5, 10] }}
-          shadows={{ type: THREE.PCFShadowMap }}
-          dpr={[1, 2]}
-          style={{ flex: 1, height: "100%" }}
-        >
-          <ambientLight intensity={0.5} />
-          <directionalLight position={[5, 10, 5]} castShadow />
-          <RoomFloor
-            rows={currentRoom?.rows ?? null}
-            cols={currentRoom?.cols ?? null}
-          />
-          <SlotGridOverlay
-            slots={slotAnchors}
-            isEditMode={isEditMode}
-            isDragging={draggingRackId !== null}
-            nearestSlotCode={nearestSlotCode}
-            draggingRackId={draggingRackId}
-            racks={visibleRacks}
-            rows={currentRoom?.rows ?? null}
-            cols={currentRoom?.cols ?? null}
-          />
-          <Suspense fallback={null}>
-            {visibleRacks.map((rack) => (
-              <RackBox
-                key={`${rack.id}-${resetKey}-${isEditMode ? "edit" : "view"}`}
-                rack={rack}
-                slots={slotAnchors}
-                isEditMode={isEditMode}
-                isDeleteMode={isDeleteMode}
-                onMove={handleMove}
-                onDelete={handleDelete}
-                onDragStateChange={(id, dragging) => {
-                  setDraggingRackId(dragging ? id : null);
-                  if (!dragging) setNearestSlotCode(null);
-                }}
-                onNearestSlotChange={setNearestSlotCode}
-                pinned={pinnedIds.includes(rack.id)}
-                onTogglePin={togglePin}
-              />
-            ))}
-          </Suspense>
-          <OrbitControls makeDefault enabled={draggingRackId === null} />
-        </Canvas>
+        <div className="dcim-map">
+          <div className="dcim-map-header">
+            <div>
+              <span className="dcim-eyebrow">
+                INFRASTRUCTURE / SPATIAL VIEW
+              </span>
+              <h1>Room overview</h1>
+              <p>
+                {visibleRacks.length} placed stations ·{" "}
+                {Math.max(0, slotAnchors.length - visibleRacks.length)} empty
+                slots
+              </p>
+            </div>
+            <span className="dcim-schematic">Schematic view</span>
+          </div>
+          <div
+            className="dcim-map-toolbar"
+            role="toolbar"
+            aria-label="Map controls"
+          >
+            <div>
+              {(["isometric", "top", "front"] as const).map((view) => (
+                <button
+                  key={view}
+                  onClick={() => setPreset(view)}
+                  aria-pressed={preset === view}
+                >
+                  {view === "isometric" ? (
+                    <Box size={14} />
+                  ) : (
+                    <Scan size={14} />
+                  )}
+                  {view === "isometric"
+                    ? "3D view"
+                    : view === "top"
+                      ? "Top view"
+                      : "Front view"}
+                </button>
+              ))}
+            </div>
+            <div>
+              <button
+                onClick={() => setCameraReset((key) => key + 1)}
+                title="Fit room"
+              >
+                <RotateCcw size={14} />
+                Fit
+              </button>
+              <button
+                onClick={() => setShowLabels((value) => !value)}
+                aria-pressed={showLabels}
+              >
+                <Eye size={14} />
+                Labels
+              </button>
+              <button
+                onClick={() =>
+                  setColorMode((mode) =>
+                    mode === "status" ? "type" : "status",
+                  )
+                }
+              >
+                <Layers size={14} />
+                Color: {colorMode}
+              </button>
+            </div>
+          </div>
+          <Canvas
+            orthographic
+            camera={{ near: 0.1, far: 2000, zoom: 30, position: [20, 20, 20] }}
+            shadows={{ type: THREE.PCFShadowMap }}
+            dpr={[1, 2]}
+            style={{ flex: 1, height: "100%" }}
+          >
+            <color attach="background" args={["#0b1523"]} />
+            <ambientLight intensity={0.9} />
+            <hemisphereLight args={["#d9efff", "#253549", 1.2]} />
+            <directionalLight
+              position={[8, 15, 10]}
+              intensity={2.2}
+              castShadow
+              shadow-mapSize={[2048, 2048]}
+              shadow-camera-left={-30}
+              shadow-camera-right={30}
+              shadow-camera-top={30}
+              shadow-camera-bottom={-30}
+              shadow-bias={-0.0005}
+            />
+            <RoomFloor
+              rows={currentRoom?.rows ?? null}
+              cols={currentRoom?.cols ?? null}
+            />
+            <SlotGridOverlay
+              slots={slotAnchors}
+              isEditMode={isEditMode}
+              isDragging={draggingRackId !== null}
+              nearestSlotCode={nearestSlotCode}
+              draggingRackId={draggingRackId}
+              racks={visibleRacks}
+              rows={currentRoom?.rows ?? null}
+              cols={currentRoom?.cols ?? null}
+            />
+            <Suspense fallback={null}>
+              {visibleRacks.map((rack) => (
+                <RackBox
+                  key={`${rack.id}-${resetKey}-${isEditMode ? "edit" : "view"}`}
+                  rack={rack}
+                  selected={selectedId === rack.id}
+                  onSelect={selectStation}
+                  showLabels={showLabels}
+                  colorMode={colorMode}
+                  slots={slotAnchors}
+                  isEditMode={isEditMode}
+                  isDeleteMode={isDeleteMode}
+                  onMove={handleMove}
+                  onDelete={handleDelete}
+                  onDragStateChange={(id, dragging) => {
+                    setDraggingRackId(dragging ? id : null);
+                    if (!dragging) setNearestSlotCode(null);
+                  }}
+                  onNearestSlotChange={setNearestSlotCode}
+                  pinned={pinnedIds.includes(rack.id)}
+                  onTogglePin={togglePin}
+                />
+              ))}
+            </Suspense>
+            <CameraRig
+              rows={currentRoom?.rows}
+              cols={currentRoom?.cols}
+              preset={preset}
+              resetKey={`${currentRoom?.id}-${cameraReset}`}
+              enabled={draggingRackId === null}
+            />
+          </Canvas>
+          {!loading && visibleRacks.length === 0 && (
+            <div className="dcim-map-empty">
+              No stations placed
+              <span>
+                {unplacedCount
+                  ? "Use Edit layout to place stations in this room."
+                  : "Assign stations to this room to build its 3D layout."}
+              </span>
+            </div>
+          )}
+          <div className="dcim-map-footer">
+            <div className="dcim-legend">
+              {Object.entries(
+                colorMode === "status" ? STATUS_COLORS : TYPE_COLORS,
+              ).map(([key, color]) => (
+                <span key={key}>
+                  <i style={{ background: color }} />
+                  {colorMode === "type"
+                    ? TYPE_LABELS[key as keyof typeof TYPE_LABELS]
+                    : key === "unknown"
+                      ? "No / partial data"
+                      : key}
+                </span>
+              ))}
+            </div>
+            <span>
+              {isEditMode
+                ? "Drag to an available slot · Save to apply"
+                : "Drag to orbit · Scroll to zoom · Click to inspect"}
+            </span>
+          </div>
+        </div>
 
         {!sidebarOpen && (
           <button
@@ -242,13 +397,15 @@ export function Screen() {
               color: theme.text,
             }}
           >
-            ‹
+            <PanelRightOpen size={17} />
           </button>
         )}
 
         {sidebarOpen && (
           <Sidebar
             racks={visibleRacks}
+            selectedId={selectedId}
+            onSelect={selectStation}
             onClose={() => setSidebarOpen(false)}
             isEditMode={isEditMode}
             canEdit={canEditLayout}

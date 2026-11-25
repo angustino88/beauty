@@ -62,10 +62,10 @@ export interface IRoom extends LocationState {
   width?: number | null;
   floor?: string | null;
   size?: string | null;
-  temperature: number;
-  humidity: number;
+  temperature: number | null;
+  humidity: number | null;
   max_power: number;
-  power_usage: number;
+  power_usage: number | null;
   label: string;
   primary_owner: IPrimaryOwner | null;
   lifecycle_status: Choice<LifecycleStatus>;
@@ -143,6 +143,7 @@ export interface IRoomDashboardSlot {
 }
 
 export interface IRoomDashboardLayout {
+  contents?: Record<number, import('./stationContents').StationPosition[]>;
   room: {
     id: number;
     sku: string | null;
