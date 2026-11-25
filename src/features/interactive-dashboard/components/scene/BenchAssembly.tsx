@@ -1,3 +1,5 @@
+import { useVisualModel } from "../../models/useVisualModel";
+import { ImportedModel } from "../../models/ImportedModel";
 import type { StationPosition } from "@/features/spaces/room/stationContents";
 import { Part } from "./Part";
 
@@ -15,7 +17,7 @@ const families = [
   ["computer", /laptop|computer|workstation|monitor/],
 ] as const;
 
-function Instrument({
+function SchematicInstrument({
   device,
   selected,
 }: {
@@ -103,6 +105,32 @@ function Instrument({
   );
 }
 
+function Instrument({
+  device,
+  selected,
+}: {
+  device: Device;
+  selected: boolean;
+}) {
+  const specific = useVisualModel("equipment", device.id);
+  const category = useVisualModel("equipment_category", device.category?.id);
+  const productModel = useVisualModel(
+    "equipment_model",
+    device.product_model?.id,
+  );
+  const model = specific ?? productModel ?? category;
+  const fallback = <SchematicInstrument device={device} selected={selected} />;
+  return model ? (
+    <ImportedModel
+      model={model}
+      dimensions={[0.94, 0.65, 0.66]}
+      fallback={fallback}
+    />
+  ) : (
+    fallback
+  );
+}
+
 export function BenchAssembly({
   bench,
   width,
@@ -116,6 +144,9 @@ export function BenchAssembly({
   onInspect?: (id: number) => void;
   selected?: number;
 }) {
+  const specific = useVisualModel("bench", bench.id);
+  const shared = useVisualModel("bench", "*");
+  const model = specific ?? shared;
   const devices = [...bench.equipment].sort(
     (a, b) =>
       (a.bench_assignment?.position ?? Infinity) -
@@ -126,12 +157,9 @@ export function BenchAssembly({
     Math.max(1, Math.ceil(Math.sqrt((devices.length * width) / depth))),
   );
   const rows = Math.max(1, Math.ceil(devices.length / cols));
-  const cellW = (width * 0.9) / cols,
-    cellD = (depth * 0.82) / rows;
-  const scale = Math.min(cellW, cellD / 0.82);
   const unit = Math.min(width, depth);
-  return (
-    <group name={bench.name}>
+  const surface = (
+    <>
       <Part
         size={[width, unit * 0.06, depth]}
         position={[0, unit * 0.03, 0]}
@@ -142,30 +170,65 @@ export function BenchAssembly({
         position={[0, unit * 0.095, -depth * 0.47]}
         color={metal}
       />
-      {devices.map((device, i) => (
-        <group
-          key={device.id}
-          name={device.name}
-          position={[
-            ((i % cols) + 0.5 - cols / 2) * cellW,
-            unit * 0.06,
-            (Math.floor(i / cols) + 0.5 - rows / 2) * cellD,
-          ]}
-          scale={scale}
-          onClick={
-            onInspect
-              ? (e) => {
-                  if (e.delta < 5) {
-                    e.stopPropagation();
-                    onInspect(device.id);
+    </>
+  );
+  const content = (
+    surfaceHeight: number,
+    footprint: [number, number] = [width, depth],
+  ) => {
+    const fittedW = (footprint[0] * 0.9) / cols,
+      fittedD = (footprint[1] * 0.82) / rows;
+    const fittedScale = Math.min(fittedW, fittedD / 0.82, 0.6);
+    return (
+      <>
+        {devices.map((device, i) => (
+          <group
+            key={device.id}
+            name={device.name}
+            position={[
+              ((i % cols) + 0.5 - cols / 2) * fittedW,
+              surfaceHeight,
+              (Math.floor(i / cols) + 0.5 - rows / 2) * fittedD,
+            ]}
+            scale={fittedScale}
+            onClick={
+              onInspect
+                ? (e) => {
+                    if (e.delta < 5) {
+                      e.stopPropagation();
+                      onInspect(device.id);
+                    }
                   }
-                }
-              : undefined
+                : undefined
+            }
+          >
+            <Instrument device={device} selected={selected === device.id} />
+          </group>
+        ))}
+      </>
+    );
+  };
+  if (model)
+    return (
+      <group name={bench.name}>
+        <ImportedModel
+          model={model}
+          dimensions={[width, Math.min(width, depth) * 0.8, depth]}
+          fallback={
+            <>
+              {surface}
+              {content(unit * 0.06)}
+            </>
           }
         >
-          <Instrument device={device} selected={selected === device.id} />
-        </group>
-      ))}
+          {(height, footprint) => content(height, footprint)}
+        </ImportedModel>
+      </group>
+    );
+  return (
+    <group name={bench.name}>
+      {surface}
+      {content(unit * 0.06)}
     </group>
   );
 }

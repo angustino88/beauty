@@ -27,6 +27,7 @@ export function toRackData(
     const powerUsage = rack.power_usage ?? null;
     return {
         ...stationVisual(rack),
+        stationTypeId: rack.type?.id ?? null,
         benchCount: rack.active_bench_count ?? rack.bench_count ?? null,
         benchCapacity: rack.bench_capacity ?? null,
         id: rack.id,

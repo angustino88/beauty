@@ -1,9 +1,11 @@
+import { useVisualModel } from "../../models/useVisualModel";
+import { ImportedModel } from "../../models/ImportedModel";
 import type { RackData } from "../../types";
 
 import { Part } from "./Part";
 import { BenchAssembly } from "./BenchAssembly";
 /** Procedural silhouettes; decorative rack panels do not represent installed equipment. */
-export function StationModel({
+function SchematicStationModel({
   rack,
   color,
 }: {
@@ -12,9 +14,7 @@ export function StationModel({
 }) {
   const [w, h, d] = rack.dimensions;
   const kind = rack.modelKind;
-  const slots = rack.slots ?? [];
-  const columns = Math.max(1, Math.ceil(Math.sqrt((slots.length * w) / d)));
-  const rows = Math.max(1, Math.ceil(slots.length / columns));
+
   return (
     <group position={[0, -1.4, 0]} rotation={[0, rack.rotation, 0]}>
       <Part
@@ -24,40 +24,9 @@ export function StationModel({
       />
       {kind === "table" || kind === "shelf" ? (
         <>
-          {kind === "table" &&
-            slots.map((slot, index) => {
-              const width = w / columns,
-                depth = d / rows;
-              const benchWidth =
-                (width * 0.94) / Math.max(1, slot.benches.length);
-              return (
-                <group
-                  key={slot.id}
-                  position={[
-                    ((index % columns) + 0.5) * width - w / 2,
-                    h + 0.04,
-                    (Math.floor(index / columns) + 0.5) * depth - d / 2,
-                  ]}
-                >
-                  {slot.benches.map((bench, i) => (
-                    <group
-                      key={bench.id}
-                      position={[
-                        (i + 0.5 - slot.benches.length / 2) * benchWidth,
-                        0,
-                        0,
-                      ]}
-                    >
-                      <BenchAssembly
-                        bench={bench}
-                        width={benchWidth * 0.96}
-                        depth={depth * 0.9}
-                      />
-                    </group>
-                  ))}
-                </group>
-              );
-            })}
+          {kind === "table" && (
+            <StationContents rack={rack} surfaceHeight={h + 0.04} />
+          )}
           {[-1, 1].flatMap((x) =>
             [-1, 1].map((z) => (
               <Part
@@ -131,6 +100,91 @@ export function StationModel({
           />
         </>
       )}
+    </group>
+  );
+}
+
+function StationContents({
+  rack,
+  surfaceHeight,
+  footprint,
+}: {
+  rack: RackData;
+  surfaceHeight: number;
+  footprint?: [number, number];
+}) {
+  const [w, d] = footprint ?? [rack.dimensions[0], rack.dimensions[2]];
+  const slots = rack.slots ?? [];
+  const columns = Math.max(1, Math.ceil(Math.sqrt((slots.length * w) / d)));
+  const rows = Math.max(1, Math.ceil(slots.length / columns));
+  return (
+    <>
+      {" "}
+      {slots.map((slot, index) => {
+        const width = w / columns,
+          depth = d / rows;
+        const benchWidth = (width * 0.94) / Math.max(1, slot.benches.length);
+        return (
+          <group
+            key={slot.id}
+            position={[
+              ((index % columns) + 0.5) * width - w / 2,
+              surfaceHeight,
+              (Math.floor(index / columns) + 0.5) * depth - d / 2,
+            ]}
+          >
+            {slot.benches.map((bench, i) => (
+              <group
+                key={bench.id}
+                position={[
+                  (i + 0.5 - slot.benches.length / 2) * benchWidth,
+                  0,
+                  0,
+                ]}
+              >
+                <BenchAssembly
+                  bench={bench}
+                  width={benchWidth * 0.96}
+                  depth={depth * 0.9}
+                />
+              </group>
+            ))}
+          </group>
+        );
+      })}
+    </>
+  );
+}
+
+export function StationModel({
+  rack,
+  color,
+}: {
+  rack: RackData;
+  color: string;
+}) {
+  const model = useVisualModel("station_type", rack.stationTypeId);
+  const fallback = <SchematicStationModel rack={rack} color={color} />;
+  if (!model) return fallback;
+  return (
+    <group position={[0, -1.4, 0]} rotation={[0, rack.rotation, 0]}>
+      <ImportedModel
+        model={model}
+        dimensions={rack.dimensions}
+        fallback={
+          <group position={[0, 1.4, 0]} rotation={[0, -rack.rotation, 0]}>
+            {fallback}
+          </group>
+        }
+      >
+        {(height, footprint) => (
+          <StationContents
+            rack={rack}
+            surfaceHeight={height + 0.01}
+            footprint={footprint}
+          />
+        )}
+      </ImportedModel>
     </group>
   );
 }

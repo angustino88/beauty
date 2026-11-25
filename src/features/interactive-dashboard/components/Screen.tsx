@@ -1,3 +1,5 @@
+import { ModelLibraryProvider } from "../models/ModelLibraryProvider";
+import { ModelLibraryDialog } from "../models/ModelLibraryDialog";
 import { Canvas } from "@react-three/fiber";
 import { CameraRig } from "./scene/CameraRig";
 import {
@@ -30,6 +32,15 @@ import { ensureAnimations } from "../animations";
 import { usePermission } from "@/features/auth/hooks/useCan";
 
 export function Screen() {
+  return (
+    <ModelLibraryProvider>
+      <DashboardScreen />
+    </ModelLibraryProvider>
+  );
+}
+
+function DashboardScreen() {
+  const [libraryOpen, setLibraryOpen] = useState(false);
   ensureAnimations();
   const navigate = useNavigate();
   const canEditLayout = usePermission("lab_operations.manage");
@@ -207,6 +218,12 @@ export function Screen() {
           </div>
         )}
 
+        {libraryOpen && (
+          <ModelLibraryDialog
+            racks={visibleRacks}
+            onClose={() => setLibraryOpen(false)}
+          />
+        )}
         <div className="dcim-map">
           <div className="dcim-map-header">
             <div>
@@ -272,6 +289,9 @@ export function Screen() {
                 <Layers size={14} />
                 Color: {colorMode}
               </button>
+              {canEditLayout && (
+                <button onClick={() => setLibraryOpen(true)}>3D models</button>
+              )}
             </div>
           </div>
           <Canvas

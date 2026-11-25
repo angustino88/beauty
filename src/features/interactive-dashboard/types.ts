@@ -12,6 +12,7 @@ export interface RackData {
   slotCode: string | null;
   manufacturer: string | null;
   model: string | null;
+  stationTypeId?: number | null;
   stationType: string | null;
   slots?: import('../spaces/room/stationContents').StationPosition[];
   modelKind: 'rack' | 'table' | 'cabinet' | 'shelf' | 'generic';

@@ -1,3 +1,4 @@
+import { useVisualModel } from "../../models/useVisualModel";
 import { useEffect, useRef, useState } from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
@@ -13,6 +14,8 @@ export function BenchInspector({
   location: string;
   onClose: () => void;
 }) {
+  const custom = useVisualModel("bench", bench.id);
+  const shared = useVisualModel("bench", "*");
   const ref = useRef<HTMLDialogElement>(null);
   const [id, setId] = useState<number>();
   const device = bench.equipment.find((item) => item.id === id);
@@ -49,16 +52,18 @@ export function BenchInspector({
             selected={id}
             onInspect={setId}
           />
-          {[-1.38, 1.38].flatMap((x) =>
-            [-0.74, 0.74].map((z) => (
-              <Part
-                key={x + "," + z}
-                position={[x, -0.48, z]}
-                size={[0.09, 0.96, 0.09]}
-                color="#708596"
-              />
-            )),
-          )}
+          {!custom &&
+            !shared &&
+            [-1.38, 1.38].flatMap((x) =>
+              [-0.74, 0.74].map((z) => (
+                <Part
+                  key={x + "," + z}
+                  position={[x, -0.48, z]}
+                  size={[0.09, 0.96, 0.09]}
+                  color="#708596"
+                />
+              )),
+            )}
           <OrbitControls
             makeDefault
             minDistance={0.6}

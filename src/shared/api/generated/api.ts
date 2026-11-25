@@ -11343,6 +11343,7 @@ export type MappingEquipment = {
   sku: string;
   name: string;
   category: MappingEquipmentCategory | null;
+  product_model?: MappingEquipmentCategory | null;
   bench_id: number | null;
   bench_assignment: MappingEquipmentAssignment | null;
 };
