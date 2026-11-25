@@ -6,7 +6,7 @@
  * - `direct` (default): one backend at `VITE_API_URL`. Single-department deployment, no Router.
  * - `router`: several department backends behind the LabMango Router at `VITE_ROUTER_URL`. After Microsoft
  *   sign-in the frontend asks the Router which backend owns the user
- *   (`POST {VITE_ROUTER_URL}/routing/auth/backend-info/by-id-token/`) and then talks to that backend through
+ *   (`POST {VITE_ROUTER_URL}/routing/resolve/user`) and then talks to that backend through
  *   the Router's prefix: `{VITE_ROUTER_URL}/t/<prefix_key>/api/...`. The choice is remembered in
  *   localStorage so a reload (or a new tab) reaches the same backend, and it is cleared on sign-out.
  *
@@ -176,7 +176,7 @@ export async function resolveBackendForIdToken(
   }
   let response: Response;
   try {
-    response = await fetchImpl(joinUrl(routerUrl, '/routing/auth/backend-info/by-id-token/'), {
+    response = await fetchImpl(joinUrl(routerUrl, '/routing/resolve/user'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify({ id_token: idToken }),

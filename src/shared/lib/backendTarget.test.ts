@@ -87,7 +87,7 @@ test('router lookup posts the ID token and maps errors', async () => {
     fetchImpl: fakeFetch(200, { mappings: [{ backend_name: 'Lab A', prefix: '/t/abc' }] }, seen),
   });
   assert.deepEqual(ok, { backendName: 'Lab A', prefix: '/t/abc' });
-  assert.equal(seen.url, 'https://router/routing/auth/backend-info/by-id-token/');
+  assert.equal(seen.url, 'https://router/routing/resolve/user');
   assert.equal(seen.init?.method, 'POST');
   assert.equal(seen.init?.body, JSON.stringify({ id_token: 'tok' }));
 
