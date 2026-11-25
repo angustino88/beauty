@@ -95,6 +95,9 @@ test('production enrolls at the configured Nginx/Router URL, never a build-time 
   assert.equal(agentServerUrl({ isDev: false, apiUrl: 'http://10.0.0.5:8000' }), undefined);
   assert.equal(agentServerUrl({ isDev: true, apiUrl: 'http://127.0.0.1:8000' }), 'http://127.0.0.1:8000');
   assert.equal(agentServerUrl({ isDev: false, override: 'https://agents.company.com' }), 'https://agents.company.com');
+  assert.equal(agentServerUrl({ isDev: false, routedUrl: 'https://router/t/abc' }), 'https://router/t/abc');
+  assert.equal(agentServerUrl({ isDev: true, apiUrl: 'http://127.0.0.1:8000', routedUrl: 'http://localhost:8080/t/abc' }), 'http://localhost:8080/t/abc');
+  assert.equal(agentServerUrl({ isDev: false, override: 'https://agents.company.com', routedUrl: 'https://router/t/abc' }), 'https://agents.company.com');
   const [, configure] = setupScript({ ...ctx, serverUrl: undefined, os: 'windows', arch: 'x64', downloadUrl: 'https://dl' });
   assert.ok(sectionCommands(configure).includes('--url <server-url>'));
 });

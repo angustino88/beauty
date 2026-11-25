@@ -1,9 +1,10 @@
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 import { useDispatch } from "react-redux";
 import { useAppSelector } from "@/app/store";
 import { attemptRefreshAccessToken } from "@/shared/lib/api";
 import { useAuthedWebSocket } from "@/shared/ws/useAuthedWebSocket";
 import { notificationActions } from "../notificationSlice";
+import { getWsBaseUrl } from "@/shared/lib/backendTarget";
 
 type NotificationWsMessage = {
   type?: string;
@@ -18,15 +19,11 @@ type NotificationWsMessage = {
 export function useNotificationsWebSocket(): void {
   const dispatch = useDispatch();
   const accessToken = useAppSelector((state) => state.auth.accessToken);
-  const wsBase = useMemo(
-    () => (import.meta.env.VITE_API_URL as string).replace(/^http/, "ws"),
-    [],
-  );
 
   const urlFactory = useCallback(
     (token: string) =>
-      `${wsBase}/ws/notifications/?token=${encodeURIComponent(token)}`,
-    [wsBase],
+      `${getWsBaseUrl()}/ws/notifications/?token=${encodeURIComponent(token)}`,
+    [],
   );
 
   const handleMessage = useCallback(

@@ -52,6 +52,23 @@ application server). The agent setup dialog puts it in the enroll command; witho
 
 For exact values per environment, use secure internal channels and contact the team lead.
 
+### Direct backend or Router (`VITE_API_MODE`)
+
+The frontend works with one backend directly or with several department backends behind the
+[LabMango Router](https://github.com/angustino88/router). Copy `.env.example` for the full list.
+
+| `VITE_API_MODE` | Use when | Requests go to |
+|---|---|---|
+| `direct` (default) | one backend | `VITE_API_URL/api/...` |
+| `router` | several department backends | `VITE_ROUTER_URL/t/<prefix_key>/api/...` |
+
+In router mode the sign-in flow is: Microsoft sign-in (MSAL) → `POST VITE_ROUTER_URL/routing/auth/backend-info/by-id-token/`
+with the ID token → the Router answers the user's backend prefix → `aad-login`, the API, WebSockets and token
+refresh use that prefix. The chosen backend is kept in localStorage (`labmango.routedBackend`) until sign-out.
+Router-side requirements: its `AAD_AUDIENCE` equals `VITE_CLIENT_ID`, and its `CORS_ALLOWED_ORIGINS` contains
+the frontend origin. All backend URLs are built by `src/shared/lib/backendTarget.ts`; do not read
+`VITE_API_URL` anywhere else.
+
 ## Available Scripts
 
 - `npm run dev` — start local development server

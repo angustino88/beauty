@@ -121,11 +121,19 @@ export interface ScriptSection {
 /**
  * The `--url` of the enroll command: in production the public Nginx or Router address lab computers
  * reach (`VITE_AGENT_URL`), never the application server; in development the backend directly
- * (`VITE_API_URL`). `undefined` when production has none configured: the dialog then shows a
- * placeholder and a warning.
+ * (`VITE_API_URL`). In router mode (`VITE_API_MODE=router`) the backend's prefix on the Router
+ * (`routedUrl`, e.g. `https://router/t/<prefix_key>`) is used when no override is set: agents reach their
+ * backend through the Router's nginx. `undefined` when production has none configured: the dialog then
+ * shows a placeholder and a warning.
  */
-export function agentServerUrl(options: { override?: string; isDev: boolean; apiUrl?: string }): string | undefined {
+export function agentServerUrl(options: {
+  override?: string;
+  isDev: boolean;
+  apiUrl?: string;
+  routedUrl?: string;
+}): string | undefined {
   if (options.override) return options.override;
+  if (options.routedUrl) return options.routedUrl;
   if (options.isDev && options.apiUrl) return options.apiUrl;
   return undefined;
 }

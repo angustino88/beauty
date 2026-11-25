@@ -8,6 +8,7 @@ import { clearCsrfToken } from '@/shared/lib/csrf';
 import { meActions } from '../meSlice';
 import { useLogoutMutation } from '../api';
 import { notificationActions } from '@/features/notifications/notificationSlice';
+import { clearSelectedBackend } from '@/shared/lib/backendTarget';
 
 export interface LogoutResult {
   /** Full logout: API blacklist → MSAL clear → Redux clear */
@@ -25,6 +26,8 @@ export function useLogout(): LogoutResult {
     resetAutoLoginState();
     resetBootstrapAuthState();
     clearCsrfToken();
+    // Router mode: the next sign-in asks the Router again (the user may belong to another backend by then).
+    clearSelectedBackend();
     dispatch(authActions.logout());
     dispatch(meActions.clearMe());
     dispatch(notificationActions.clearNotifications());

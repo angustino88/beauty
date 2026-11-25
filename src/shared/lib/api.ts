@@ -8,6 +8,7 @@ import {
 import { refreshOnce } from './refreshMutex';
 import { getCsrfToken } from './csrf';
 import { getRefreshCsrfToken } from './refreshCsrf';
+import { getApiBaseUrl, joinUrl } from './backendTarget';
 
 // Minimal state shape needed for auth header injection.
 // Avoids circular dep with store.ts (which imports this file).
@@ -19,8 +20,8 @@ type ApiAuthState = {
   };
 };
 
-const rawBaseQuery = fetchBaseQuery({
-  baseUrl: import.meta.env.VITE_API_URL as string,
+const createRawBaseQuery = (baseUrl: string) => fetchBaseQuery({
+  baseUrl,
   credentials: 'include', // sends HttpOnly REFRESH_TOKEN_COOKIE_NAME automatically
   timeout: 30000, // 30 seconds timeout to prevent hanging requests
   prepareHeaders: (headers, { getState }) => {
@@ -31,6 +32,16 @@ const rawBaseQuery = fetchBaseQuery({
     return headers;
   },
 });
+
+// The base URL is read per request: in router mode it is only known after sign-in (see backendTarget.ts).
+let rawBaseQueryCache: { baseUrl: string; query: ReturnType<typeof fetchBaseQuery> } | null = null;
+const rawBaseQuery: ReturnType<typeof fetchBaseQuery> = (args, api, extraOptions) => {
+  const baseUrl = getApiBaseUrl();
+  if (!rawBaseQueryCache || rawBaseQueryCache.baseUrl !== baseUrl) {
+    rawBaseQueryCache = { baseUrl, query: createRawBaseQuery(baseUrl) };
+  }
+  return rawBaseQueryCache.query(args, api, extraOptions);
+};
 
 type RefreshResponsePayload = {
   access?: string;
@@ -58,7 +69,7 @@ export async function attemptRefreshAccessToken(
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       headers['X-CSRFToken'] = await getRefreshCsrfToken();
 
-      const response = await fetch(`${import.meta.env.VITE_API_URL as string}/api/refresh-token`, {
+      const response = await fetch(joinUrl(getApiBaseUrl(), '/api/refresh-token'), {
         method: 'POST',
         credentials: 'include',
         headers,
