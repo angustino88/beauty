@@ -159,7 +159,7 @@ export const baseApi = createApi({
     // Dashboard
     'LabDevice', 'DashboardStats',
     // Booking
-    'Booking', 'LabProject',
+    'Booking', 'LabProject', 'SlotWatch',
     // Downtime & Resource Status
     'Downtime',
     // Monitoring
