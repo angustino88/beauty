@@ -11,18 +11,18 @@ export function singleFilterId(values: readonly unknown[] | null | undefined): n
 }
 
 export const BENCH_DETAILS = [
-  { name: 'documentation_url', label: 'Documentation URL', type: 'text', maxLength: 500 },
-  { name: 'criticality', label: 'Criticality', type: 'text', maxLength: 32 },
   { name: 'requested_power_w', label: 'Requested power (W)', type: 'number' },
   { name: 'requested_load_kg', label: 'Requested load (kg)', type: 'number' },
   { name: 'requested_cooling_w', label: 'Requested cooling (W)', type: 'number' },
   { name: 'commissioning_date', label: 'Commissioning date', type: 'date' },
+  { name: 'documentation_url', label: 'Documentation URL', type: 'text', maxLength: 500 },
+  { name: 'criticality', label: 'Criticality', type: 'text', maxLength: 32 },
   { name: 'required_utilities', label: 'Required utilities', type: 'json-object' },
   { name: 'description', label: 'Description', type: 'textarea', section: 'Notes' },
 ] satisfies DetailField<BenchCreate>[];
 
 export const ROOM_DETAILS = [
-  { name: 'usable_height_m', span: 8, label: 'Usable height (m)', section: 'Layout', type: 'number', decimal: true },
+  { name: 'usable_height_m', label: 'Usable height (m)', section: 'Layout', type: 'number', decimal: true },
   { name: 'cooling_capacity_w', label: 'Cooling capacity (W)', type: 'number' },
   { name: 'network_port_capacity', label: 'Network ports', type: 'number' },
   { name: 'max_occupancy', label: 'Maximum occupancy', type: 'number' },

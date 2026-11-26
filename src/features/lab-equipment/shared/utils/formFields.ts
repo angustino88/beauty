@@ -33,12 +33,11 @@ export function buildEquipmentFormFields({
     { name: 'product_model_id', label: 'Product Model', type: 'select', dependsOn: ['type_id', 'manufacturer_id'], options: modelFormOptions },
     { name: 'serial_number', label: 'Serial Number', type: 'text', placeholder: 'Manufacturer serial number' },
     { name: 'log_label', label: 'LOG Label', type: 'text', placeholder: 'Legacy asset or log label' },
-    { name: 'department_id', span: 8, label: 'Department', type: 'select', options: departmentOptions?.map((d) => ({ label: d.name, value: d.id })) ?? [], onSearch: onDepartmentSearch },
-    { name: 'group_id', span: 8, label: 'Group', type: 'select', dependsOn: ['department_id'], options: groupOptions?.map((group) => ({ label: group.name, value: group.id })) ?? [], onSearch: onGroupSearch },
-    { name: 'owner_id', span: 8, label: 'Owner', type: 'select', placeholder: 'Search by name or username', options: refData?.owners?.map(toUserOption) ?? [] },
-    { name: 'power_draw_w', span: 8, label: 'Power Draw (W)', type: 'number' },
-    { name: 'weight_kg', span: 8, label: 'Weight (kg)', type: 'number' },
-    { name: 'firmware_version', span: 8, label: 'Firmware Version', type: 'text', maxLength: 255 },
+    { name: 'department_id', label: 'Department', type: 'select', options: departmentOptions?.map((d) => ({ label: d.name, value: d.id })) ?? [], onSearch: onDepartmentSearch },
+    { name: 'group_id', label: 'Group', type: 'select', dependsOn: ['department_id'], options: groupOptions?.map((group) => ({ label: group.name, value: group.id })) ?? [], onSearch: onGroupSearch },
+    { name: 'owner_id', label: 'Owner', type: 'select', placeholder: 'Search by name or username', options: refData?.owners?.map(toUserOption) ?? [] },
+    { name: 'power_draw_w', label: 'Power Draw (W)', type: 'number' },
+    { name: 'weight_kg', label: 'Weight (kg)', type: 'number' },
     { name: 'warranty_end_date', label: 'Warranty Until', type: 'date', placeholder: 'Select warranty expiration date' },
     { name: 'replacement_date', label: 'Replacement Date', type: 'date', placeholder: 'Select replacement date' },
     { name: 'image', label: 'Image', type: 'image' },
@@ -59,6 +58,8 @@ export function buildEquipmentFormFields({
       ],
     });
   }
+  const extraHalfFields: FieldConfig[] = [];
+  const extraFullFields: FieldConfig[] = [];
   for (const extra of config.extraFields ?? []) {
     if (formMode === 'edit' && extra.createOnly) continue;
     const refOptions = extra.referenceKey && extra.referenceKey !== 'departments' && extra.referenceKey !== 'storage_rooms'
@@ -69,9 +70,18 @@ export function buildEquipmentFormFields({
           value: option.id,
         }))
       : undefined;
-    fields.push({ name: extra.name, label: extra.label, type: extra.type, placeholder: extra.placeholder,
-      options: extra.options ?? mappedOptions, disabledInEdit: extra.createOnly });
+    const field: FieldConfig = {
+      name: extra.name, label: extra.label, type: extra.type, placeholder: extra.placeholder,
+      options: extra.options ?? mappedOptions, disabledInEdit: extra.createOnly,
+    };
+    if (extra.type === 'textarea' || extra.type === 'multi-select') {
+      extraFullFields.push(field);
+    } else {
+      extraHalfFields.push(field);
+    }
   }
+  fields.push(...extraHalfFields);
+  fields.push({ name: 'firmware_version', label: 'Firmware Version', type: 'text', maxLength: 255 });
 
   if (monitored && formMode === 'edit') {
     fields.push({
@@ -79,6 +89,7 @@ export function buildEquipmentFormFields({
       options: refData?.technical_users?.map(({ id, username }) => ({ value: id, label: username })),
     });
   }
+  fields.push(...extraFullFields);
   fields.push({ name: 'details', label: 'Details', type: 'textarea' });
   const sectionByField: Record<string, string> = {
     sku: 'Identification', name: 'Identification', serial_number: 'Identification', log_label: 'Identification',
