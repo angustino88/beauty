@@ -392,3 +392,52 @@ a.titleText:hover {
 .countdown[data-soon='true'] {
   color: var(--lm-warning-fg);
 }
+
+/* Up next bar: one calm line; colour only for "free now" and "starts soon" */
+.strip[data-tone='free'] {
+  border-color: var(--lm-success-border);
+}
+
+.strip[data-tone='soon'] {
+  border-color: var(--lm-warning-border);
+}
+
+.stripIcon[data-tone='free'] {
+  color: var(--lm-success-fg);
+  background: var(--lm-success-bg);
+}
+
+.stripIcon[data-tone='soon'] {
+  color: var(--lm-warning-fg);
+  background: var(--lm-warning-bg);
+}
+
+.stripText {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 10px;
+  min-width: 0;
+}
+
+.stripDetail {
+  color: var(--lm-text-secondary);
+  font-size: 13px;
+}
+
+.stripDivider {
+  width: 1px;
+  height: 20px;
+  background: var(--lm-border);
+}
+
+.stripLink {
+  color: var(--lm-text-secondary);
+}
+
+@media (max-width: 600px) {
+  .stripDivider,
+  .stripPlus {
+    display: none;
+  }
+}
