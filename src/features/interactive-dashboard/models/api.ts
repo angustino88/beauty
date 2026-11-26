@@ -154,6 +154,20 @@ const visualApi = baseApi
         }),
         transformResponse: (response: { data: VisualModelSelection }) =>
           response.data,
+        async onQueryStarted({ segment, id }, { dispatch, queryFulfilled }) {
+          try {
+            const { data } = await queryFulfilled;
+            dispatch(
+              visualApi.util.updateQueryData(
+                "visualModelSelection",
+                { segment, id },
+                () => data,
+              ),
+            );
+          } catch {
+            // Caller handles mutation rejection via unwrap().
+          }
+        },
         // Catalog defaults change what items inherit, so every selection and room layout is refreshed.
         invalidatesTags: ["VisualModelSelection", "VisualModelAsset", "Room"],
       }),

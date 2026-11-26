@@ -174,10 +174,10 @@ html[data-theme='dark'] {
   --lm-primary-border: #3d3370;
   --lm-on-primary: #ffffff;
 
-  --lm-success-fg: #5cbf88;
+  --lm-success-fg: #76dba1;
   --lm-success-solid: #2f9e63;
-  --lm-success-bg: #14271d;
-  --lm-success-border: #22432f;
+  --lm-success-bg: #142b1f;
+  --lm-success-border: #2f6346;
 
   --lm-info-fg: #a5cfff;
   --lm-info-solid: #4a84de;
