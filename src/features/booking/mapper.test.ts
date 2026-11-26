@@ -114,10 +114,12 @@ test('buildBookingListQuery correctly applies starts_at_after and starts_at_befo
     starts_at_before: '2026-11-09',
   });
 
-  assert.match(qs, /view_side=booking_calendar/);
-  assert.match(qs, /bench_id=5/);
-  assert.match(qs, /starts_at_after=2026-11-02/);
-  assert.match(qs, /starts_at_before=2026-11-09/);
+  const params = new URLSearchParams(qs);
+  assert.equal(params.get('view_side'), 'booking_calendar');
+  assert.equal(params.get('bench_id'), '5');
+  // Date-only bounds are sent as the absolute instant of local midnight (see toBookingInstant).
+  assert.equal(params.get('starts_at_after'), new Date('2026-11-02T00:00:00').toISOString());
+  assert.equal(params.get('starts_at_before'), new Date('2026-11-09T00:00:00').toISOString());
 });
 
 test('mapProjectOptions extracts and sorts project options from CatalogOptionList', () => {
