@@ -64,6 +64,10 @@ function RackBoxComponent({
     }, [rack.position, rack.id, isDraggingRef, lerpTarget, outerGroupRef]);
 
     const color = colorMode === 'type' ? TYPE_COLORS[rack.modelKind] : STATUS_COLORS[rack.status];
+    // Footprint follows the station's (rotated) size: true scale on a measured plan.
+    const [footW, , footD] = rack.dimensions;
+    const footprint: [number, number] = [Math.max(footW + 0.3, 1.2), Math.max(footD + 0.3, 0.9)];
+    const ringRadius = Math.hypot(footprint[0], footprint[1]) / 2 + 0.08;
 
     return (
         <group ref={outerGroupRef} position={rack.position ?? [0, 0, 0]}
@@ -71,23 +75,25 @@ function RackBoxComponent({
             onPointerOver={event => { event.stopPropagation(); setHovered(true); }}
             onPointerOut={() => setHovered(false)}>
             {/* Footprint: status colour, brighter on hover, a glowing outline when selected. */}
-            <mesh position={[0, -1.385, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-                <planeGeometry args={[2.05, 1.85]} />
+            <mesh position={[0, -1.385, 0]} rotation={[-Math.PI / 2, 0, rack.rotation]}>
+                <planeGeometry args={footprint} />
                 <meshBasicMaterial color={selected ? '#38bdf8' : color} transparent
                     opacity={dimmed ? 0.04 : selected ? 0.32 : hovered ? 0.26 : 0.12} depthWrite={false} />
             </mesh>
             {(selected || hovered) && (
                 <mesh position={[0, -1.38, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-                    <ringGeometry args={[1.18, 1.26, 48]} />
+                    <ringGeometry args={[ringRadius, ringRadius + 0.08, 64]} />
                     <meshBasicMaterial color={selected ? '#7dd3fc' : '#cbd5e1'} toneMapped={false}
                         transparent opacity={selected ? 1 : 0.6} depthWrite={false} />
                 </mesh>
             )}
             <StationBeacon status={rack.status} height={rack.dimensions[1] - 1.4} />
-            {overlayLevel != null && <MetricColumn level={overlayLevel} offset={[1.05, 0.75]} />}
+            {overlayLevel != null && (
+                <MetricColumn level={overlayLevel} offset={[footprint[0] / 2 + 0.15, footprint[1] / 2 - 0.1]} />
+            )}
             {isEditMode && !isDeleteMode && (
                 <mesh position={[0, -1.4 + rack.dimensions[1] / 2, 0]} onPointerDown={handlePointerDown}>
-                    <boxGeometry args={[1.95, rack.dimensions[1] + 0.15, 1.95]} />
+                    <boxGeometry args={[Math.max(footprint[0], 1.95), rack.dimensions[1] + 0.15, Math.max(footprint[1], 1.95)]} />
                     <meshBasicMaterial transparent opacity={0} />
                 </mesh>
             )}

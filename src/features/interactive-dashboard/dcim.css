@@ -779,3 +779,111 @@
 .dcim-station-list > * {
   flex-shrink: 0;
 }
+.dcim-live {
+  margin: -6px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  color: var(--panel-muted);
+}
+.dcim-live i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #475569;
+}
+.dcim-live i.is-live {
+  background: #34d399;
+  box-shadow: 0 0 0 3px #34d39933;
+  animation: dcim-live-pulse 2s ease-in-out infinite;
+}
+@keyframes dcim-live-pulse {
+  50% { box-shadow: 0 0 0 6px #34d39911; }
+}
+.dcim-capacity .dcim-section-title {
+  margin: 0 0 2px;
+}
+.dcim-capacity-row {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.dcim-capacity-row > span:first-child {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--panel-muted);
+}
+.dcim-capacity-row b {
+  color: var(--panel-text);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.dcim-capacity-row em {
+  font-style: normal;
+  margin-left: 6px;
+  color: var(--panel-muted);
+}
+.dcim-capacity-row .dcim-meter i {
+  background: linear-gradient(90deg, #38bdf8, #818cf8);
+}
+.dcim-capacity-row.is-warning .dcim-meter i { background: #fbbf24; }
+.dcim-capacity-row.is-critical .dcim-meter i { background: #fb7185; }
+.dcim-rack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.dcim-rack .dcim-section-title span {
+  float: right;
+  letter-spacing: 0;
+  text-transform: none;
+  font-weight: 500;
+}
+.dcim-rack-faces {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.dcim-rack-face small {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 10px;
+  color: var(--panel-muted);
+  text-align: center;
+}
+.dcim-rack-grid {
+  display: grid;
+  grid-template-columns: 22px 1fr;
+  height: 300px;
+  padding: 6px 6px 6px 0;
+  border-radius: 8px;
+  border: 1px solid var(--panel-border);
+  background: repeating-linear-gradient(180deg, #0c1727 0 6px, #0f1c2e 6px 7px);
+}
+.dcim-rack-u {
+  grid-column: 1;
+  font-size: 8px;
+  line-height: 1;
+  color: #5f7894;
+  text-align: right;
+  padding-right: 4px;
+  align-self: center;
+}
+.dcim-rack-item {
+  grid-column: 2;
+  margin: 0.5px 0;
+  display: flex;
+  align-items: center;
+  padding: 0 6px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 9px;
+  color: #dbe8f6;
+  border-radius: 3px;
+  border-left: 3px solid;
+  background: #1d3049;
+  min-height: 0;
+}

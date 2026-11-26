@@ -1,7 +1,6 @@
 import { useEffect, useMemo } from "react";
 import { CanvasTexture } from "three";
-import type { RackData } from "../../types";
-import { computeFloorDimensions } from "../../utils/slotGrid";
+import type { FloorSpec, RackData } from "../../types";
 import { heatColor, normalise, overlayDomain, overlayValue, type Overlay } from "../../utils/overlays";
 
 const FLOOR_Y = -1.395;
@@ -15,15 +14,13 @@ const RESOLUTION = 256;
 export function HeatmapLayer({
   racks,
   overlay,
-  rows,
-  cols,
+  floor,
 }: {
   racks: RackData[];
   overlay: Overlay;
-  rows?: number | null;
-  cols?: number | null;
+  floor: FloorSpec;
 }) {
-  const { floorWidth, floorDepth } = computeFloorDimensions(rows, cols);
+  const { floorWidth, floorDepth } = floor;
   const points = useMemo(
     () =>
       racks.flatMap((rack) => {

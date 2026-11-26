@@ -12,3 +12,10 @@ The model files and demonstration inventory used for capture are temporary fixtu
 [Temperature heatmap](dcim-heatmap.png), [station detail with camera focus](dcim-station-detail.png) and
 [enhanced rendering](dcim-enhanced-rendering.png) show the data overlays and the redesigned inventory panel.
 Their temperature, humidity and power values are synthetic: the stations API does not report telemetry yet.
+
+## Floor plan, capacity and live telemetry
+
+- `dcim-floor-plan.png`: measured floor plan (9 × 12 m) with zones, metre ruler and live room conditions in the top bar.
+- `dcim-capacity.png`: Capacity overlay (highest of power, weight, rack units and bench positions per station).
+- `dcim-station-capacity.png`: station panel with live readings, capacity meters and bench widths in 3D.
+- `dcim-top-view.png`: top view of the floor plan.

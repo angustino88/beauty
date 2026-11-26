@@ -22,6 +22,13 @@ export interface RackData {
   rotation: number;
   benchCount: number | null;
   benchCapacity: number | null;
+  /** Rated capacity and installed load (power, weight, rack units). */
+  capacity?: import('../spaces/room/types').IDashboardStationCapacity;
+  /** Rack-mounted equipment, bottom unit first. */
+  rackItems?: import('../spaces/room/types').IDashboardRackItem[];
+  /** When the newest live reading was taken, and how many channels report. */
+  conditionsAt?: string | null;
+  sensorCount?: number;
 }
 
 export interface SlotAnchor {
@@ -31,6 +38,23 @@ export interface SlotAnchor {
   slotCode: string;
   position: [number, number, number];
   occupiedRackId: number | null;
+  /** Footprint on the floor in scene units (metres on a measured plan). */
+  size: [number, number];
+  /** Rotation about the vertical axis, radians. */
+  rotation: number;
+  /** station, storage, aisle, safety, utility or reserved. */
+  slotType: string;
+  /** usable, blocked or retired. */
+  status: string;
+}
+
+/** Floor size, and whether positions are measured (metres) or laid out on the row/column grid. */
+export interface FloorSpec {
+  measured: boolean;
+  floorWidth: number;
+  floorDepth: number;
+  rows: number;
+  cols: number;
 }
 
 /** Rack status counts used by TopBar alert badges. */
