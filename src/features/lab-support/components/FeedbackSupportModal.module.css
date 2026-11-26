@@ -1,0 +1,426 @@
+/* ==========================================================================
+   Support & Feedback Modal + Post-Resolution CSAT Card
+   Uses LabMango semantic tokens (--lm-*) for seamless light & dark themes.
+   ========================================================================== */
+
+.modalHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding-right: 24px;
+}
+
+.modalTitle {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: var(--lm-text);
+  line-height: 1.3;
+}
+
+.modalSubtitle {
+  margin: 0;
+  font-size: 13px;
+  color: var(--lm-text-secondary);
+  line-height: 1.45;
+}
+
+.formBody {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-top: 6px;
+}
+
+.sectionBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.sectionLabelRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.sectionLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--lm-text);
+  line-height: 1.4;
+}
+
+.templateBtn {
+  border: none;
+  background: transparent;
+  color: var(--lm-primary);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 2px 6px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 140ms ease, color 140ms ease;
+}
+
+.templateBtn:hover {
+  background: color-mix(in srgb, var(--lm-primary) 10%, transparent);
+}
+
+.templateBtn:focus-visible {
+  outline: 2px solid var(--lm-focus);
+  outline-offset: 1px;
+}
+
+/* --- Segmented Icon Pill Group (inspired by Support & Contact reference) --- */
+.typePillGroup {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px;
+  padding: 4px;
+  border-radius: 10px;
+  background: var(--lm-surface-muted);
+  border: 1px solid var(--lm-border);
+}
+
+.typePill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 6px 10px;
+  border-radius: 7px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--lm-text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 150ms ease, border-color 150ms ease, color 150ms ease, box-shadow 150ms ease;
+}
+
+.typePill:hover {
+  color: var(--lm-text);
+  background: color-mix(in srgb, var(--lm-surface) 75%, transparent);
+}
+
+.typePill:focus-visible {
+  outline: 2px solid var(--lm-focus);
+  outline-offset: 1px;
+}
+
+.typePillActive {
+  color: var(--lm-primary);
+  font-weight: 600;
+  background: color-mix(in srgb, var(--lm-primary) 11%, var(--lm-surface));
+  border-color: color-mix(in srgb, var(--lm-primary) 52%, var(--lm-border));
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--lm-primary) 14%, transparent);
+}
+
+.typePillActive:hover {
+  color: var(--lm-primary);
+  background: color-mix(in srgb, var(--lm-primary) 14%, var(--lm-surface));
+}
+
+.typeHint {
+  font-size: 12px;
+  color: var(--lm-text-tertiary);
+  line-height: 1.4;
+}
+
+.privacyHint {
+  font-size: 12px;
+  color: var(--lm-text-tertiary);
+  line-height: 1.4;
+}
+
+/* --- Attachments (0/5) Tile Grid --- */
+.attachmentsDropzone {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 2px 0;
+  border-radius: 10px;
+  transition: background 150ms ease, outline-color 150ms ease;
+}
+
+.attachmentsDropzoneActive {
+  background: color-mix(in srgb, var(--lm-primary) 8%, transparent);
+  outline: 1.5px dashed var(--lm-primary);
+  outline-offset: 4px;
+}
+
+.uploadTile {
+  width: 92px;
+  height: 92px;
+  border-radius: 10px;
+  border: 1.5px dashed var(--lm-border);
+  background: var(--lm-surface-muted);
+  color: var(--lm-text-secondary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  cursor: pointer;
+  transition: border-color 150ms ease, color 150ms ease, background 150ms ease;
+}
+
+.uploadTile:hover:not(:disabled) {
+  border-color: var(--lm-primary);
+  color: var(--lm-primary);
+  background: color-mix(in srgb, var(--lm-primary) 6%, var(--lm-surface-muted));
+}
+
+.uploadTile:focus-visible {
+  outline: 2px solid var(--lm-focus);
+  outline-offset: 2px;
+}
+
+.uploadTile:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.uploadTileLabel {
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.attachmentTile {
+  position: relative;
+  width: 92px;
+  height: 92px;
+  border-radius: 10px;
+  border: 1px solid var(--lm-border);
+  background: var(--lm-surface-muted);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  gap: 4px;
+}
+
+.attachmentThumb {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.attachmentFileIcon {
+  color: var(--lm-text-secondary);
+}
+
+.attachmentFileName {
+  font-size: 11px;
+  color: var(--lm-text);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.attachmentFileSize {
+  font-size: 10px;
+  color: var(--lm-text-tertiary);
+}
+
+.removeAttachmentBtn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  border: 1px solid var(--lm-border);
+  background: color-mix(in srgb, var(--lm-surface) 92%, transparent);
+  color: var(--lm-text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  transition: background 140ms ease, color 140ms ease, border-color 140ms ease;
+}
+
+.removeAttachmentBtn:hover {
+  background: var(--lm-danger-solid);
+  border-color: var(--lm-danger-solid);
+  color: #ffffff;
+}
+
+/* --- Context & Optional Details --- */
+.contextStrip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--lm-surface-muted);
+  border: 1px solid var(--lm-border-subtle);
+}
+
+.contextMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.contextHeading {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--lm-text);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.contextSummary {
+  font-size: 11.5px;
+  color: var(--lm-text-tertiary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.moreToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  background: transparent;
+  color: var(--lm-text-secondary);
+  font-size: 12.5px;
+  font-weight: 500;
+  padding: 2px 0;
+  cursor: pointer;
+  align-self: flex-start;
+}
+
+.moreToggle:hover {
+  color: var(--lm-text);
+}
+
+.moreGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--lm-surface-muted);
+  border: 1px solid var(--lm-border-subtle);
+}
+
+.modalFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 4px;
+}
+
+.modalFooterLink {
+  font-size: 12.5px;
+  color: var(--lm-text-secondary);
+  text-decoration: none;
+}
+
+.modalFooterLink:hover {
+  color: var(--lm-primary);
+  text-decoration: underline;
+}
+
+.modalFooterActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* --- Post-Resolution CSAT Card (Ticket Detail) --- */
+.csatCard {
+  border-radius: 10px;
+  border: 1px solid var(--lm-border);
+  background: var(--lm-surface);
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.csatHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.csatTitleGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.csatTitle {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--lm-text);
+}
+
+.csatSubtitle {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--lm-text-secondary);
+}
+
+.csatRatingRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.csatScoreLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--lm-primary);
+}
+
+.csatSummaryComment {
+  margin: 0;
+  font-size: 13px;
+  color: var(--lm-text-secondary);
+  padding: 8px 10px;
+  border-radius: 7px;
+  background: var(--lm-surface-muted);
+  border: 1px solid var(--lm-border-subtle);
+  white-space: pre-wrap;
+}
+
+.csatActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+@media (max-width: 560px) {
+  .typePillGroup {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .moreGrid {
+    grid-template-columns: 1fr;
+  }
+}

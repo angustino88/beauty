@@ -45,6 +45,9 @@ export interface TicketSlaMeta {
 export const TICKET_TYPE_OPTIONS = [
   { value: 'incident', label: 'Incident', description: 'Something is broken or not working as expected' },
   { value: 'service_request', label: 'Service request', description: 'Access, equipment setup, or routine assistance' },
+  { value: 'bug', label: 'Bug', description: 'Software issue or unexpected behavior in Lab Mango' },
+  { value: 'feature_request', label: 'Feature request', description: 'New capability or workflow enhancement' },
+  { value: 'feedback', label: 'Feedback', description: 'Usability, design, or general platform feedback' },
   { value: 'problem', label: 'Problem', description: 'Recurring or root-cause investigation' },
   { value: 'change', label: 'Change', description: 'Planned modification or upgrade' },
   { value: 'question', label: 'Question', description: 'General inquiry or technical guidance' },
@@ -76,14 +79,20 @@ const INCIDENT_OUTCOMES: ResolutionCodeEnum[] = ['fixed', 'workaround', 'cannot_
 const REQUEST_OUTCOMES: ResolutionCodeEnum[] = ['fulfilled', 'partially_fulfilled', 'guidance_provided', 'declined', 'duplicate', 'withdrawn'];
 const OUTCOMES_BY_TYPE: Record<string, ResolutionCodeEnum[]> = {
   incident: INCIDENT_OUTCOMES,
+  bug: INCIDENT_OUTCOMES,
   problem: INCIDENT_OUTCOMES,
   service_request: REQUEST_OUTCOMES,
+  feature_request: ['change_implemented', 'fulfilled', 'partially_fulfilled', 'declined', 'duplicate', 'withdrawn'],
+  feedback: ['change_implemented', 'guidance_provided', 'fulfilled', 'declined', 'duplicate', 'withdrawn'],
   question: ['guidance_provided', 'fulfilled', 'declined', 'duplicate', 'withdrawn'],
   change: ['change_implemented', 'partially_fulfilled', 'declined', 'duplicate', 'withdrawn'],
 };
 
 const DESCRIPTION_BY_TYPE: Record<string, string> = {
   incident: 'What went wrong? Include the affected equipment or location, the impact, and what you already tried.',
+  bug: 'What happened? Include steps to reproduce, expected behavior, and the screen you were using.',
+  feature_request: 'What problem does this solve? Describe the proposed feature or workflow improvement.',
+  feedback: 'Share what is working well, what felt unclear, or how we can improve Lab Mango.',
   problem: 'Describe the recurring issue, when it occurs, and any related tickets or findings.',
   service_request: 'What do you need? Include the resource, who needs it, and any timing or access requirements.',
   question: 'What would you like to know? Include any relevant equipment, location, or context.',
@@ -265,8 +274,14 @@ export function getTicketTypeMeta(ticketType: unknown): TicketTypeMeta {
   switch (key) {
     case 'incident':
       return { key: 'incident', label: rawLabel || 'Incident', shortLabel: 'Incident', tone: 'danger' };
+    case 'bug':
+      return { key: 'bug', label: rawLabel || 'Bug', shortLabel: 'Bug', tone: 'danger' };
     case 'service_request':
       return { key: 'service_request', label: rawLabel || 'Service Request', shortLabel: 'Request', tone: 'info' };
+    case 'feature_request':
+      return { key: 'feature_request', label: rawLabel || 'Feature Request', shortLabel: 'Feature', tone: 'info' };
+    case 'feedback':
+      return { key: 'feedback', label: rawLabel || 'Feedback', shortLabel: 'Feedback', tone: 'reserved' };
     case 'problem':
       return { key: 'problem', label: rawLabel || 'Problem', shortLabel: 'Problem', tone: 'warning' };
     case 'change':
@@ -288,6 +303,9 @@ export function getTicketSlaMeta(sla: unknown, statusMeta?: TicketStatusMeta): T
     return { state: 'none', label: 'No SLA', tone: 'neutral' };
   }
   const rec = sla as Record<string, unknown>;
+  if (rec.state === 'none') {
+    return { state: 'none', label: 'No SLA', tone: 'neutral' };
+  }
   const responseBreached = Boolean(rec.response_breached || rec.response_breached_at);
   const resolutionBreached = Boolean(rec.resolution_breached || rec.resolution_breached_at);
   const isPaused = Boolean(rec.is_paused || rec.paused || rec.sla_paused_at);
@@ -399,6 +417,17 @@ export function formatTicketActivityLines(
     if (typeof payload.description === 'string' && payload.description) {
       lines.push(payload.description);
     }
+  }
+
+  if (typeof payload.score === 'number' && Number.isFinite(payload.score)) {
+    lines.push(`Satisfaction rating: ${payload.score} / 5`);
+    if (typeof payload.comment === 'string' && payload.comment.trim()) {
+      lines.push(`Comment: ${payload.comment.trim()}`);
+    }
+  }
+
+  if (typeof payload.page_path === 'string' && payload.page_path.trim()) {
+    lines.push(`Submitted from: ${payload.page_path.trim()}`);
   }
 
   if (typeof payload.from_status === 'string' && typeof payload.to_status === 'string') {

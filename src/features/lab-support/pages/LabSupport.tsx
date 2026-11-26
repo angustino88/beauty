@@ -8,7 +8,9 @@ import {
   ClockCircleOutlined,
   ExportOutlined,
   InboxOutlined,
+  MessageOutlined,
   PlusOutlined,
+  StarOutlined,
   TeamOutlined,
   UndoOutlined,
   UserSwitchOutlined,
@@ -28,8 +30,10 @@ import {
   useGetSupportTicketsQuery,
 } from '../api';
 import { CreateSupportTicketModal } from '../components/CreateSupportTicketModal';
+import FeedbackSupportModal from '../components/FeedbackSupportModal';
 import { buildSupportTicketColumns } from '../components/LabSupport.columns';
 import styles from '../components/SupportTickets.module.css';
+import { TICKET_TYPE_OPTIONS } from '../ticketPresentation';
 import type { SupportTicket, SupportTicketQueryParams } from '../types';
 import { exportLabSupportExcel } from '../utils/export';
 
@@ -42,6 +46,8 @@ const lifecycleOptions = [
   { label: 'Waiting', value: 'waiting' },
   { label: 'Resolved & Closed', value: 'done' },
 ];
+
+const validTicketTypes = new Set<string>(TICKET_TYPE_OPTIONS.map((option) => option.value));
 
 function positiveInteger(value: string | null) {
   const parsed = Number(value);
@@ -59,12 +65,15 @@ export default function SupportTickets() {
   const { search: queueSearch } = useLocation();
   const [exportLoading, setExportLoading] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
   const page = positiveInteger(params.get('page')) ?? 1;
   const size = Number(params.get('page_size'));
   const pageSize = [5, 10, 25, 50].includes(size) ? size : 10;
   const searchInput = params.get('q') ?? '';
   const state = params.get('state');
   const systemStateFilter = state && ['open', 'active', 'waiting', 'done'].includes(state) ? state : undefined;
+  const rawType = params.get('type');
+  const ticketTypeFilter = rawType && validTicketTypes.has(rawType) ? rawType : undefined;
   const priorityIdFilter = positiveInteger(params.get('priority'));
   const categoryIdFilter = positiveInteger(params.get('category'));
   const owner = params.get('owner');
@@ -94,6 +103,7 @@ export default function SupportTickets() {
       page_size: pageSize,
       search: searchInput || undefined,
       system_state: systemStateFilter,
+      ticket_type: ticketTypeFilter,
       priority_id: priorityIdFilter,
       category_id: categoryIdFilter,
     };
@@ -110,6 +120,7 @@ export default function SupportTickets() {
     pageSize,
     searchInput,
     systemStateFilter,
+    ticketTypeFilter,
     priorityIdFilter,
     categoryIdFilter,
     ownershipScope,
@@ -126,13 +137,14 @@ export default function SupportTickets() {
   const hasActiveFilters = Boolean(
     searchInput ||
       systemStateFilter ||
+      ticketTypeFilter ||
       priorityIdFilter !== undefined ||
       categoryIdFilter !== undefined ||
       ownershipScope !== 'all',
   );
 
   const clearFilters = () => {
-    updateQueue({ q: undefined, state: undefined, priority: undefined, category: undefined, owner: undefined });
+    updateQueue({ q: undefined, state: undefined, type: undefined, priority: undefined, category: undefined, owner: undefined });
   };
 
   const handleRefresh = () => {
@@ -243,6 +255,23 @@ export default function SupportTickets() {
               <AlertOutlined />
             </span>
           </div>
+
+          {stats.csat_responses > 0 && (
+            <div className={styles.statCard}>
+              <div className={styles.statCopy}>
+                <span className={styles.statLabel}>Satisfaction (CSAT)</span>
+                <span className={styles.statValue}>
+                  {stats.csat_average !== null ? `${stats.csat_average.toFixed(1)} / 5` : '–'}
+                </span>
+                <span className={styles.statSubtext}>
+                  {stats.csat_responses} {stats.csat_responses === 1 ? 'rating' : 'ratings'} in {stats.window_days} days
+                </span>
+              </div>
+              <span className={`${styles.statIconBox} ${styles.toneSuccess}`} aria-hidden="true">
+                <StarOutlined />
+              </span>
+            </div>
+          )}
         </div>
       )}
 
@@ -301,6 +330,17 @@ export default function SupportTickets() {
                   { value: 'unassigned', label: 'Unassigned only' },
                 ]}
               />
+              <Select<string>
+                aria-label="Filter by type"
+                placeholder="All types"
+                allowClear
+                value={ticketTypeFilter}
+                onChange={(val) => {
+                  updateQueue({ type: val });
+                }}
+                style={{ width: 155 }}
+                options={TICKET_TYPE_OPTIONS.map((opt) => ({ value: opt.value, label: opt.label }))}
+              />
               <Select<number>
                 aria-label="Filter by priority"
                 placeholder="All priorities"
@@ -354,6 +394,14 @@ export default function SupportTickets() {
               onClick={() => void handleExport()}
             >
               Export
+            </TooltipButton>
+            <TooltipButton
+              responsive
+              tooltip="Share feedback, report a bug, or request a feature"
+              icon={<MessageOutlined />}
+              onClick={() => setIsFeedbackModalOpen(true)}
+            >
+              Feedback
             </TooltipButton>
             <TooltipButton
               tooltip="Open a support ticket"
@@ -412,6 +460,14 @@ export default function SupportTickets() {
           setIsCreateModalOpen(false);
           handleRefresh();
           navigate(`/support-tickets/${encodeURIComponent(key)}`, { state: { queueSearch } });
+        }}
+      />
+
+      <FeedbackSupportModal
+        open={isFeedbackModalOpen}
+        onClose={() => setIsFeedbackModalOpen(false)}
+        onCreated={() => {
+          handleRefresh();
         }}
       />
     </div>
