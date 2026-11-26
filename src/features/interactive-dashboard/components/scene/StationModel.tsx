@@ -232,14 +232,21 @@ export function StationModel({
         }
       >
         {(height, footprint) =>
-          // Like the schematic view, only work tables carry their benches on a surface.
-          rack.modelKind === "table" && (
+          // Like the schematic view, work tables carry their benches and racks show their mounted units.
+          rack.modelKind === "table" ? (
             <StationContents
               rack={rack}
               surfaceHeight={height + 0.01}
               footprint={footprint}
             />
-          )
+          ) : rack.modelKind === "rack" && rack.capacity?.rack_units ? (
+            <RackUnits
+              rack={rack}
+              width={footprint[0]}
+              height={height}
+              depth={footprint[1]}
+            />
+          ) : null
         }
       </ImportedModel>
     </group>

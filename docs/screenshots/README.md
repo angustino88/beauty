@@ -19,3 +19,4 @@ Their temperature, humidity and power values are synthetic: the stations API doe
 - `dcim-capacity.png`: Capacity overlay (highest of power, weight, rack units and bench positions per station).
 - `dcim-station-capacity.png`: station panel with live readings, capacity meters and bench widths in 3D.
 - `dcim-top-view.png`: top view of the floor plan.
+- `dcim-reference-models.png`: built-in reference models (rack with mounted units, lab workbenches) and the rack elevation panel.
