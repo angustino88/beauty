@@ -160,6 +160,8 @@ export const baseApi = createApi({
     'LabDevice', 'DashboardStats',
     // Booking
     'Booking', 'LabProject', 'SlotWatch',
+    // Header bell (notification inbox)
+    'Notification',
     // Downtime & Resource Status
     'Downtime',
     // Monitoring

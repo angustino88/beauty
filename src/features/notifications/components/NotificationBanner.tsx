@@ -3,10 +3,12 @@ import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { useAppSelector } from "@/app/store";
 import { SystemBanner, type NotificationVariant } from "@/shared/notifications";
+import { useMarkNotificationReadMutation } from "../inboxApi";
 import { notificationActions } from "../notificationSlice";
 
 const TYPE_MAP: Record<string, NotificationVariant> = {
   info: "info",
+  announcement: "info",
   success: "success",
   warning: "warning",
   error: "error",
@@ -22,6 +24,12 @@ const actionLabel = (path: string) => (path.startsWith("/booking-calendar") ? "B
 export function NotificationBanner() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [markRead] = useMarkNotificationReadMutation();
+  // Lab announcements only; everything else lives in the header bell.
+  const dismiss = (id: number) => {
+    dispatch(notificationActions.removeNotification(id));
+    void markRead(id);
+  };
   const items = useAppSelector((state) => state.notifications.items);
   if (items.length === 0) return null;
 
@@ -45,9 +53,7 @@ export function NotificationBanner() {
           title={item.message}
           description={item.details || undefined}
           dismissible
-          onDismiss={() =>
-            dispatch(notificationActions.removeNotification(item.id))
-          }
+          onDismiss={() => dismiss(item.id)}
           action={
             isInAppPath(item.action_path) || (items.length > 1 && index === 0) ? (
               <Space size={4}>
@@ -56,7 +62,7 @@ export function NotificationBanner() {
                     size="small"
                     type="primary"
                     onClick={() => {
-                      dispatch(notificationActions.removeNotification(item.id));
+                      dismiss(item.id);
                       navigate(item.action_path as string);
                     }}
                   >
@@ -67,7 +73,10 @@ export function NotificationBanner() {
                   <Button
                     size="small"
                     type="text"
-                    onClick={() => dispatch(notificationActions.clearNotifications())}
+                    onClick={() => {
+                      items.forEach((entry) => void markRead(entry.id));
+                      dispatch(notificationActions.clearNotifications());
+                    }}
                   >
                     Dismiss all ({items.length})
                   </Button>
