@@ -13,6 +13,7 @@ import { formatBenchLabel } from '../../utils/benchChoiceOption';
 import { useAuthState } from '@/features/auth/hooks/useAuthState';
 import { usePermission } from '@/features/auth/hooks/useCan';
 import { BenchBookingEdit } from '../BenchBookingEdit';
+import { NotifyWhenFreeButton } from '../../slot-alerts/NotifyWhenFreeButton';
 import type { BenchBookingItem } from '../../types';
 
 interface EventDetailModalProps {
@@ -122,6 +123,18 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
               <Typography.Text style={{ color: 'var(--lm-text-secondary)', fontSize: '12px' }}>
                 <UserOutlined /> {booking.creator?.display_name || booking.creator?.username}
               </Typography.Text>
+              {!isMine &&
+                booking.bench?.id != null &&
+                ['reserved', 'in_progress'].includes(booking.status || '') &&
+                dayjs(booking.ends_at).isAfter(dayjs()) && (
+                  <NotifyWhenFreeButton
+                    size="small"
+                    type="primary"
+                    benchId={booking.bench.id}
+                    startsAt={booking.starts_at}
+                    endsAt={booking.ends_at}
+                  />
+                )}
             </Space>
           </>
         ) : (

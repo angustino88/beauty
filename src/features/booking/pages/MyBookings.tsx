@@ -6,7 +6,7 @@ import { FullTextSearch } from "@/components/inputs/FullTextSearch";
 import { TooltipButton } from "@/components/layout/TooltipButton";
 import tableStyles from "@/components/tables/AppTable.module.css";
 import { BenchBookingCreate } from "../components/BenchBookingCreate";
-import { SlotWatchDrawer } from "../components/SlotWatchDrawer";
+import { SlotAlertsDrawer } from "../slot-alerts";
 import {
   MyBookingTable,
   type MyBookingTableHandle,
@@ -86,7 +86,7 @@ export const MyBookings = () => {
 
         <MyBookingTable ref={tableRef} search={debouncedSearch} />
 
-        <SlotWatchDrawer open={isAlertsOpen} onClose={() => setIsAlertsOpen(false)} />
+        <SlotAlertsDrawer open={isAlertsOpen} onClose={() => setIsAlertsOpen(false)} />
 
         {isModalOpen && (
           <BenchBookingCreate

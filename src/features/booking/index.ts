@@ -9,5 +9,4 @@ export { BookingForm } from './components/BookingForm';
 export { MyBookingTable } from './components/MyBookingTable';
 export { default as BookingCalendar } from './pages/BookingCalendar';
 export { default as MyBookings } from './pages/MyBookings';
-export { SlotWatchDrawer } from './components/SlotWatchDrawer';
-export { SlotWatchModal } from './components/SlotWatchModal';
+export * from './slot-alerts';

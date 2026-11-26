@@ -3,6 +3,7 @@ import { InlineAlert } from "@/shared/notifications";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { DashboardSummary } from "../components/DashboardSummary";
 import { BenchTable } from "../components/BenchTable";
+import { SlotAlertsCard } from "@/features/booking/slot-alerts";
 import { BenchDetailModal } from "../components/modals/BenchDetailModal";
 import NotFound from "@/pages/errors/NotFound";
 import ServerError from "@/pages/errors/ServerError";
@@ -129,6 +130,8 @@ export default function Dashboard() {
         activeSummary={state.summaryStatus}
         onSummaryClick={state.handleSummaryClick}
       />
+
+      <SlotAlertsCard />
 
       <BenchTable
         data={tableData}

@@ -12,7 +12,7 @@ import { confirmAction, notify } from '@/shared/notifications';
 import type { IBenchBookingFormValues } from '../types';
 import type { BenchBookingCreateRequest } from '../mapper';
 import { BookingForm } from './BookingForm';
-import { SlotWatchModal, type SlotWatchModalProps } from './SlotWatchModal';
+import { useSlotAlert } from '../slot-alerts/useSlotAlert';
 import { useCreateBenchBookingMutation, useGetBookingBenchChoicesQuery } from '../api';
 import styles from './BookingModal.module.css';
 
@@ -35,7 +35,7 @@ export const BenchBookingCreate: React.FC<CustomModalProps> = ({
   const [formInstance] = Form.useForm<IBenchBookingFormValues>();
   const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(false);
-  const [watchPrefill, setWatchPrefill] = useState<SlotWatchModalProps['initial'] | null>(null);
+  const { createAlert } = useSlotAlert();
 
   // Same query (and cache entry) as the form's bench select.
   const { data: benchChoices } = useGetBookingBenchChoicesQuery({ includeId: null, hasComputing: true });
@@ -106,11 +106,15 @@ export const BenchBookingCreate: React.FC<CustomModalProps> = ({
           if ((error as { status?: number })?.status === 409 && values.bench_id) {
             // The bench is taken for that time: offer an alert for when it frees up.
             confirmAction({
-              title: 'That time is already booked',
-              description: `${description} Do you want to be notified if this slot frees up?`,
-              confirmText: 'Notify me',
-              cancelText: 'No thanks',
-              onConfirm: () => setWatchPrefill({ benchId: values.bench_id ?? undefined, startsAt, endsAt }),
+              title: 'This time is already booked',
+              description: `${description} Want us to notify you if it frees up? You'll get an alert in Lab Mango, by email and in Teams.`,
+              confirmText: 'Notify me when free',
+              cancelText: 'Not now',
+              onConfirm: async () => {
+                if (values.bench_id && (await createAlert({ benchId: values.bench_id, startsAt, endsAt }))) {
+                  closeModal?.(values.bench_id);
+                }
+              },
             });
           } else {
             notify.error('Unable to create booking', { description });
@@ -169,11 +173,6 @@ export const BenchBookingCreate: React.FC<CustomModalProps> = ({
       style={{ top: 24 }}
     >
       <BookingForm form={formInstance} formProps={{ onFinish: handleOnFinish }} />
-      <SlotWatchModal
-        open={watchPrefill !== null}
-        initial={watchPrefill ?? undefined}
-        onClose={() => setWatchPrefill(null)}
-      />
     </Modal>
   );
 };
