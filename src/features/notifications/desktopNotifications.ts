@@ -32,15 +32,18 @@ export const desktopNotificationsActive = () => desktopPermission() === 'granted
 
 /** Show one OS notification; clicking it focuses Lab Mango and runs `onOpen`. Same id never shows twice. */
 export function showDesktopNotification(
-  item: { id: number; title: string; body: string },
+  item: { id: number; title: string; body: string; actionLabel?: string; urgent?: boolean },
   onOpen: () => void,
 ): void {
   if (!desktopNotificationsActive() || !document.hidden) return;
+  // Say what a click does; keep time-sensitive alerts on screen until the user acts.
+  const body = item.actionLabel ? `${item.body}\nClick to ${item.actionLabel.toLowerCase()}.` : item.body;
   try {
     const notification = new Notification(item.title, {
-      body: item.body,
+      body,
       tag: `labmango-${item.id}`,
       icon: '/favicon.ico',
+      requireInteraction: !!item.urgent,
     });
     notification.onclick = () => {
       window.focus();

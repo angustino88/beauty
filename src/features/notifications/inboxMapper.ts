@@ -43,8 +43,17 @@ export function mapInboxItem(raw: Raw): InboxItem {
   };
 }
 
+const ACTION_LABELS: [prefix: string, label: string][] = [
+  ['/booking-calendar', 'Book now'],
+  ['/my-bookings', 'View booking'],
+  ['/support-tickets', 'View ticket'],
+  ['/lab-equipment/license', 'View licenses'],
+  ['/lab-monitoring', 'Open monitoring'],
+];
+
 /** Label for the primary action, by where it leads. */
-export const actionLabel = (path: string): string => (path.startsWith('/booking-calendar') ? 'Book now' : 'Open');
+export const actionLabel = (path: string): string =>
+  ACTION_LABELS.find(([prefix]) => path.startsWith(prefix))?.[1] ?? 'Open';
 
 /** "Just now", "5 min ago", "3 h ago", "Yesterday", "Nov 24". */
 export function formatRelative(value: string, now: Date = new Date()): string {

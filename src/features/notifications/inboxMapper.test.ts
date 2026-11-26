@@ -23,6 +23,10 @@ test('isInAppPath and actionLabel', () => {
   assert.equal(isInAppPath('javascript:alert(1)'), false);
   assert.equal(actionLabel('/booking-calendar?x=1'), 'Book now');
   assert.equal(actionLabel('/dashboard'), 'Open');
+  assert.equal(actionLabel('/my-bookings'), 'View booking');
+  assert.equal(actionLabel('/support-tickets/SUP-9'), 'View ticket');
+  assert.equal(actionLabel('/lab-equipment/license'), 'View licenses');
+  assert.equal(actionLabel('/lab-monitoring'), 'Open monitoring');
 });
 
 test('formatRelative uses short human labels', () => {

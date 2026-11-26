@@ -100,7 +100,17 @@ export function useNotificationsWebSocket(): void {
           action: item.actionPath ? { label: actionLabel(item.actionPath), onClick: open } : undefined,
         },
       );
-      showDesktopNotification({ id: item.id, title: item.title, body: item.details }, open);
+      showDesktopNotification(
+        {
+          id: item.id,
+          title: item.title,
+          body: item.details,
+          actionLabel: item.actionPath ? actionLabel(item.actionPath) : undefined,
+          // Booking starts and free slots are time-sensitive: they stay until clicked or closed.
+          urgent: !!item.actionPath && /^\/(booking-calendar|my-bookings)/.test(item.actionPath),
+        },
+        open,
+      );
     },
     [dispatch, navigate, refreshInbox],
   );
