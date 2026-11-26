@@ -38,6 +38,7 @@ export function useVisualModelField(segment: ModelSegment, id: number | null) {
       name: "visual_model_id",
       label: "3D model",
       type: "select",
+      span: 24,
       section: "Layout",
       loading: assets.isFetching || selection.isFetching,
       options: (assets.data ?? []).map((asset) => ({

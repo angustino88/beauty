@@ -5,9 +5,10 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 import React, { useEffect, useRef, useState } from 'react';
 import {
-    Form, Input, InputNumber, Select, Collapse,
-    DatePicker, Upload, Row, Col, Spin,
+    Form, Input, InputNumber, Select,
+    DatePicker, Upload, Spin,
 } from 'antd';
+import { ChevronRight } from 'lucide-react';
 import { confirmAction, getApiErrorDetails, getApiErrorMessage, notify } from '@/shared/notifications';
 import { InboxOutlined } from '@ant-design/icons';
 import { FormDialog } from '@/components/ui/form-dialog';
@@ -17,6 +18,11 @@ import { filterResourceOption } from '@/components/inputs/ResourceOption';
 import { isEquipmentErrorNotified } from '../../utils/equipmentNotifications';
 import { parseFormApiError } from '../../utils/formApiError';
 import { buildEditFormValues, computeAsyncInitialPatch, isRecord } from '../../utils/formInitialSync';
+import {
+    formatAdditionalSummary,
+    partitionFormSections,
+    resolveFieldWidth,
+} from '../../utils/formLayout';
 import { buildRequiredFieldRules } from '../../utils/formValidation';
 import { RESOURCE_IMAGE_ACCEPT, validateResourceImage } from '@/shared/lib/api/resourceImage';
 import styles from './EquipmentFormModal.module.css';
@@ -91,11 +97,6 @@ export interface EquipmentFormModalProps {
     professionalForm?: boolean;
 }
 
-const SECTION_ORDER = [
-    'Identification', 'Classification', 'Ownership', 'Location', 'Layout',
-    'Specifications', 'License terms', 'Lifecycle', 'Notes',
-];
-
 /** Resource options carry a one-line `selectedLabel` for the closed select (their list label has two lines). */
 const resourceSelectProps = (options?: SelectFieldOption[]) =>
     options?.some((option) => 'selectedLabel' in option && option.selectedLabel)
@@ -116,107 +117,167 @@ function FormFields({ fields, form, mode, professionalForm }: FormFieldsProps) {
 
         switch (field.type) {
             case 'text':
-                return <Input placeholder={field.placeholder ?? `Enter ${field.label}`} disabled={disabled} maxLength={field.maxLength} />;
+                return (
+                    <Input
+                        placeholder={field.placeholder ?? `Enter ${field.label}`}
+                        disabled={disabled}
+                        maxLength={field.maxLength}
+                    />
+                );
             case 'number':
-                return <InputNumber style={{ width: '100%' }} placeholder={field.placeholder} disabled={disabled} />;
+                return (
+                    <InputNumber
+                        style={{ width: '100%' }}
+                        placeholder={field.placeholder ?? (field.disabled ? 'Auto-calculated' : 'Enter value')}
+                        disabled={disabled}
+                    />
+                );
             case 'select':
-                return <Select showSearch allowClear placeholder={field.placeholder ?? `Select ${field.label}`}
-                    disabled={disabled} onSearch={field.onSearch}
-                    filterOption={field.onSearch ? false : filterResourceOption}
-                    loading={field.loading}
-                    notFoundContent={field.loading ? <Spin size="small" /> : field.searchHint}
-                    options={field.options} {...resourceSelectProps(field.options)}
-                    {...(field.creatable ? { mode: 'tags', tokenSeparators: [','] } : {})}
-                />;
+                return (
+                    <Select
+                        style={{ width: '100%' }}
+                        showSearch
+                        allowClear
+                        placeholder={field.placeholder ?? `Select ${field.label}`}
+                        disabled={disabled}
+                        onSearch={field.onSearch}
+                        filterOption={field.onSearch ? false : filterResourceOption}
+                        loading={field.loading}
+                        notFoundContent={field.loading ? <Spin size="small" /> : field.searchHint}
+                        options={field.options}
+                        {...resourceSelectProps(field.options)}
+                        {...(field.creatable ? { mode: 'tags', tokenSeparators: [','] } : {})}
+                    />
+                );
             case 'multi-select':
-                return <Select mode="multiple" showSearch allowClear placeholder={field.placeholder ?? `Select ${field.label}`}
-                    disabled={disabled} options={field.options} onSearch={field.onSearch}
-                    onOpenChange={field.onOpenChange} onPopupScroll={field.onPopupScroll} loading={field.loading}
-                    notFoundContent={field.loading ? <Spin size="small" /> : field.searchHint}
-                    popupRender={field.popupHint ? (menu) => (
-                        <>
-                            {menu}
-                            <div className={styles.popupHint}>{field.popupHint}</div>
-                        </>
-                    ) : undefined}
-                    {...resourceSelectProps(field.options)}
-                    // With a search callback the options come from the server, so do not filter them again here.
-                    filterOption={field.onSearch ? false : filterResourceOption}
-                />;
+                return (
+                    <Select
+                        style={{ width: '100%' }}
+                        mode="multiple"
+                        showSearch
+                        allowClear
+                        placeholder={field.placeholder ?? `Select ${field.label}`}
+                        disabled={disabled}
+                        options={field.options}
+                        onSearch={field.onSearch}
+                        onOpenChange={field.onOpenChange}
+                        onPopupScroll={field.onPopupScroll}
+                        loading={field.loading}
+                        notFoundContent={field.loading ? <Spin size="small" /> : field.searchHint}
+                        popupRender={field.popupHint ? (menu) => (
+                            <>
+                                {menu}
+                                <div className={styles.popupHint}>{field.popupHint}</div>
+                            </>
+                        ) : undefined}
+                        {...resourceSelectProps(field.options)}
+                        // With a search callback the options come from the server, so do not filter them again here.
+                        filterOption={field.onSearch ? false : filterResourceOption}
+                    />
+                );
             case 'date':
-                return <DatePicker style={{ width: '100%' }} disabled={disabled} />;
+                return <DatePicker style={{ width: '100%' }} placeholder={field.placeholder} disabled={disabled} />;
             case 'datetime':
-                return <DatePicker showTime style={{ width: '100%' }} disabled={disabled} />;
+                return <DatePicker showTime style={{ width: '100%' }} placeholder={field.placeholder} disabled={disabled} />;
             case 'quarter':
-                return <DatePicker picker="quarter" style={{ width: '100%' }} disabled={disabled} />;
+                return <DatePicker picker="quarter" style={{ width: '100%' }} placeholder={field.placeholder} disabled={disabled} />;
             case 'json':
             case 'json-object':
+                return (
+                    <Input.TextArea
+                        className={styles.jsonField}
+                        autoSize={{ minRows: professionalForm ? 2 : 4, maxRows: 6 }}
+                        placeholder={field.placeholder ?? (field.type === 'json-object' ? '{"key": "value"}' : 'Enter valid JSON')}
+                        disabled={disabled}
+                    />
+                );
             case 'textarea':
-                return <Input.TextArea autoSize={{ minRows: professionalForm ? 2 : 4, maxRows: 6 }}
-                    placeholder={field.placeholder ?? `Enter ${field.label}`} disabled={disabled} />;
+                return (
+                    <Input.TextArea
+                        autoSize={{ minRows: professionalForm ? 2 : 4, maxRows: 6 }}
+                        placeholder={field.placeholder ?? `Enter ${field.label}`}
+                        disabled={disabled}
+                    />
+                );
             default:
                 return <Input />;
         }
     };
 
     return (
-        <Row gutter={[12, 8]}>
-            {fields.map((field) => (
-                <Col key={field.name} xs={24} sm={field.span ?? (['textarea', 'json', 'json-object'].includes(field.type) ? 24 : 12)}>
-                    {field.optionsFn ? (
-                        <Form.Item noStyle shouldUpdate={(prev, next) =>
-                            field.dependsOn?.some((parent) => prev[parent] !== next[parent]) ?? true
-                        }>
-                            {() => {
-                                const values = form.getFieldsValue(true) as Record<string, unknown>;
-                                const options = field.optionsFn!(values);
-                                const disabled = Boolean(field.disabled) || (Boolean(field.disabledInEdit) && mode === 'edit')
-                                    || options.length === 0 || Boolean(field.dependsOn?.some((parent) => values[parent] == null));
-                                return (
-                                    <Form.Item name={field.name} label={field.label} required={field.required} extra={field.help}
-                                        rules={field.required ? [{ required: true, message: `Please select ${field.label}` }] : []}>
-                                        <Select showSearch allowClear
-                                            placeholder={options.length ? `Select ${field.label}` : (field.placeholder ?? 'Select a parent field first')}
-                                            disabled={disabled} options={options} {...resourceSelectProps(options)}
-                                            filterOption={filterResourceOption}
-                                        />
-                                    </Form.Item>
-                                );
-                            }}
-                        </Form.Item>
-                    ) : (
-                        <Form.Item name={field.name} label={field.label} required={field.required} extra={field.help}
-                            rules={[
-                                ...buildRequiredFieldRules(field),
-                                ...(field.type === 'json-object' || field.type === 'json' ? [{
-                                    validator: async (_: unknown, value?: string) => {
-                                        if (!value?.trim()) return;
-                                        let parsed: unknown;
-                                        try {
-                                            parsed = JSON.parse(value);
-                                        } catch {
-                                            throw new Error('Enter valid JSON.');
-                                        }
-                                        if (field.type === 'json-object' && !isRecord(parsed)) throw new Error('Enter a JSON object using curly braces.');
-                                    },
-                                }] : []),
-                                ...(field.maxLength ? [{ max: field.maxLength, message: `${field.label} must be at most ${field.maxLength} characters` }] : []),
-                            ]}>
-                            {renderField(field)}
-                        </Form.Item>
-                    )}
-                </Col>
-            ))}
-        </Row>
+        <div className={styles.fieldGrid}>
+            {fields.map((field) => {
+                const isFull = resolveFieldWidth(field) === 'full';
+                const itemClassName = isFull ? `${styles.fieldItem} ${styles.fieldItemFull}` : styles.fieldItem;
+                return (
+                    <div key={field.name} className={itemClassName}>
+                        {field.optionsFn ? (
+                            <Form.Item noStyle shouldUpdate={(prev, next) =>
+                                field.dependsOn?.some((parent) => prev[parent] !== next[parent]) ?? true
+                            }>
+                                {() => {
+                                    const values = form.getFieldsValue(true) as Record<string, unknown>;
+                                    const options = field.optionsFn!(values);
+                                    const disabled = Boolean(field.disabled) || (Boolean(field.disabledInEdit) && mode === 'edit')
+                                        || options.length === 0 || Boolean(field.dependsOn?.some((parent) => values[parent] == null));
+                                    return (
+                                        <Form.Item name={field.name} label={field.label} required={field.required} extra={field.help}
+                                            rules={field.required ? [{ required: true, message: `Please select ${field.label}` }] : []}>
+                                            <Select
+                                                style={{ width: '100%' }}
+                                                showSearch
+                                                allowClear
+                                                placeholder={options.length ? `Select ${field.label}` : (field.placeholder ?? 'Select a parent field first')}
+                                                disabled={disabled}
+                                                options={options}
+                                                {...resourceSelectProps(options)}
+                                                filterOption={filterResourceOption}
+                                            />
+                                        </Form.Item>
+                                    );
+                                }}
+                            </Form.Item>
+                        ) : (
+                            <Form.Item name={field.name} label={field.label} required={field.required} extra={field.help}
+                                rules={[
+                                    ...buildRequiredFieldRules(field),
+                                    ...(field.type === 'json-object' || field.type === 'json' ? [{
+                                        validator: async (_: unknown, value?: string) => {
+                                            if (!value?.trim()) return;
+                                            let parsed: unknown;
+                                            try {
+                                                parsed = JSON.parse(value);
+                                            } catch {
+                                                throw new Error('Enter valid JSON.');
+                                            }
+                                            if (field.type === 'json-object' && !isRecord(parsed)) throw new Error('Enter a JSON object using curly braces.');
+                                        },
+                                    }] : []),
+                                    ...(field.maxLength ? [{ max: field.maxLength, message: `${field.label} must be at most ${field.maxLength} characters` }] : []),
+                                ]}>
+                                {renderField(field)}
+                            </Form.Item>
+                        )}
+                    </div>
+                );
+            })}
+        </div>
     );
 }
 
 function FormSection({ section, fields, form, mode, professionalForm }: FormFieldsProps & { section: string }) {
     return (
         <section className={styles.section}>
-            <h3>{section}</h3>
-            <FormFields fields={fields.filter((field) => (field.section ?? 'Identification') === section)}
-                form={form} mode={mode} professionalForm={professionalForm} />
+            <div className={styles.sectionHeader}>
+                <h3 className={styles.sectionTitle}>{section}</h3>
+                <span className={styles.sectionRule} aria-hidden="true" />
+            </div>
+            <FormFields
+                fields={fields.filter((field) => (field.section ?? 'Identification') === section)}
+                form={form}
+                mode={mode}
+                professionalForm={professionalForm}
+            />
         </section>
     );
 }
@@ -449,18 +510,21 @@ export default function EquipmentFormModal({
     const regularFields = fields.filter((f) => f.type !== 'image');
     const essentialFields = regularFields.filter((field) => field.required || field.essential);
     const detailFields = regularFields.filter((field) => !field.required && !field.essential);
-    const hasImage      = fields.some((f) => f.type === 'image');
-    const sections = [...new Set(regularFields.map((field) => field.section ?? 'Identification'))];
-    const orderedSections = [
-        ...SECTION_ORDER.filter((section) => sections.includes(section)),
-        ...sections.filter((section) => !SECTION_ORDER.includes(section)),
-    ];
-    const essentialSections = new Set(essentialFields.map((field) => field.section ?? 'Identification'));
-    const primarySections = orderedSections.filter((section) => essentialSections.has(section));
-    const additionalSections = orderedSections.filter((section) => !essentialSections.has(section));
+    const hasImage = fields.some((f) => f.type === 'image');
+    const {
+        primarySections,
+        additionalSections,
+        additionalFieldCount,
+    } = partitionFormSections(fields);
+    const hasAdditionalDetails = professionalForm
+        ? additionalSections.length > 0
+        : detailFields.length > 0;
+    const additionalSummary = professionalForm
+        ? formatAdditionalSummary(additionalSections, additionalFieldCount)
+        : formatAdditionalSummary([], detailFields.length);
+
     return (
         <FormDialog
-            className={professionalForm ? styles.modal : undefined}
             title={title}
             description={mode === 'create' ? 'Add a new resource. Required fields are marked with an asterisk.' : 'Update resource information. Changes are saved only when you confirm.'}
             open={open}
@@ -487,12 +551,8 @@ export default function EquipmentFormModal({
                 form={form}
                 initialValues={mode === 'create' ? initialValues : undefined}
                 layout="vertical"
-                className={professionalForm ? styles.form : undefined}
+                className={styles.form}
                 onValuesChange={handleFormValuesChange}
-                style={{
-                    maxHeight: '70vh', overflowY: 'auto',
-                    scrollbarWidth: 'thin', overflowX: 'hidden', padding: '0 10px',
-                }}
             >
                 {professionalForm ? primarySections.map((section) => (
                     <FormSection key={section} section={section} fields={regularFields}
@@ -501,42 +561,52 @@ export default function EquipmentFormModal({
                     <FormFields fields={essentialFields} form={form} mode={mode} professionalForm={professionalForm} />
                 )}
 
-                {(professionalForm ? additionalSections.length > 0 : detailFields.length > 0) && (
-                    <Collapse
-                        className="equipment-form-details"
-                        activeKey={detailsOpen ? ['details'] : []}
-                        onChange={(keys) => setDetailsOpen(keys.includes('details'))}
-                    >
-                        <Collapse.Panel key="details" header="Additional details" forceRender>
+                {hasAdditionalDetails && (
+                    <div className={styles.detailsBlock}>
+                        <button
+                            type="button"
+                            className={styles.detailsToggle}
+                            aria-expanded={detailsOpen}
+                            onClick={() => setDetailsOpen((current) => !current)}
+                        >
+                            <span className={styles.detailsToggleLeft}>
+                                <ChevronRight
+                                    className={detailsOpen ? `${styles.detailsChevron} ${styles.detailsChevronOpen}` : styles.detailsChevron}
+                                    aria-hidden="true"
+                                />
+                                <span className={styles.detailsTitle}>Additional details</span>
+                            </span>
+                            <span className={styles.detailsMeta}>{additionalSummary}</span>
+                        </button>
+                        <div className={styles.detailsBody} hidden={!detailsOpen}>
                             {professionalForm ? additionalSections.map((section) => (
                                 <FormSection key={section} section={section} fields={regularFields}
                                     form={form} mode={mode} professionalForm={professionalForm} />
                             )) : <FormFields fields={detailFields} form={form} mode={mode} professionalForm={professionalForm} />}
-                        </Collapse.Panel>
-                    </Collapse>
+                        </div>
+                    </div>
                 )}
 
                 {hasImage && (
-                    <Row>
-                        <Col span={24}>
-                            <Form.Item label="Image (optional)">
-                                <Upload.Dragger
-                                    beforeUpload={(file) => handleImageChange(file as RcFile)}
-                                    multiple={false} maxCount={1}
-                                    fileList={imagePreview
-                                        ? [{ uid: '-1', name: 'image', status: 'done' as const, url: imagePreview }]
-                                        : undefined
-                                    }
-                                    onRemove={() => { setImageFile(null); setImagePreview(null); setImageRemoved(hadImageRef.current); }}
-                                    accept={RESOURCE_IMAGE_ACCEPT}
-                                >
-                                    <p className="ant-upload-drag-icon"><InboxOutlined /></p>
-                                    <p className="ant-upload-text">Choose or drop an image</p>
-                                    <p className="ant-upload-hint">JPG, PNG, GIF or WEBP · Up to 5 MB</p>
-                                </Upload.Dragger>
-                            </Form.Item>
-                        </Col>
-                    </Row>
+                    <div className={styles.imageBlock}>
+                        <Form.Item label="Image (optional)">
+                            <Upload.Dragger
+                                beforeUpload={(file) => handleImageChange(file as RcFile)}
+                                multiple={false}
+                                maxCount={1}
+                                fileList={imagePreview
+                                    ? [{ uid: '-1', name: 'image', status: 'done' as const, url: imagePreview }]
+                                    : undefined
+                                }
+                                onRemove={() => { setImageFile(null); setImagePreview(null); setImageRemoved(hadImageRef.current); }}
+                                accept={RESOURCE_IMAGE_ACCEPT}
+                            >
+                                <p className="ant-upload-drag-icon"><InboxOutlined /></p>
+                                <p className="ant-upload-text">Choose or drop an image</p>
+                                <p className="ant-upload-hint">JPG, PNG, GIF or WEBP · Up to 5 MB</p>
+                            </Upload.Dragger>
+                        </Form.Item>
+                    </div>
                 )}
             </Form>
         </FormDialog>

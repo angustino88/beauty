@@ -150,8 +150,8 @@ export const EQUIPMENT_CATEGORIES: Record<EquipmentCategoryKey, EquipmentCategor
     description: 'Workbenches, ESD chairs, mobile carts, and storage cabinets',
     icon: React.createElement(SkinOutlined),
     extraFields: [
-      { name: 'dimensions', label: 'Dimensions (JSON)', type: 'textarea', placeholder: '{"length_mm": 1200, "width_mm": 600, "height_mm": 750}' },
       { name: 'material_id', label: 'Material', type: 'select', referenceKey: 'materials' },
+      { name: 'dimensions', label: 'Dimensions (JSON)', type: 'textarea', placeholder: '{"length_mm": 1200, "width_mm": 600, "height_mm": 750}' },
     ],
     extraColumns: [
       { title: 'Dimensions', dataIndex: 'dimensions', width: 160 },
@@ -185,8 +185,8 @@ export const EQUIPMENT_CATEGORIES: Record<EquipmentCategoryKey, EquipmentCategor
     description: 'Fixtures, torque testers, automated test rigs, and chassis mounts',
     icon: React.createElement(SettingOutlined),
     extraFields: [
-      { name: 'dimensions', label: 'Dimensions (JSON)', type: 'textarea', placeholder: '{"length_mm": 100, "width_mm": 50, "height_mm": 25}' },
       { name: 'material_id', label: 'Material', type: 'select', referenceKey: 'materials' },
+      { name: 'dimensions', label: 'Dimensions (JSON)', type: 'textarea', placeholder: '{"length_mm": 100, "width_mm": 50, "height_mm": 25}' },
     ],
     extraColumns: [
       { title: 'Dimensions', dataIndex: 'dimensions', width: 160, render: (value) => typeof value === 'object' && value !== null ? Object.values(value as Record<string, unknown>).join(' × ') : String(value ?? '—') },
