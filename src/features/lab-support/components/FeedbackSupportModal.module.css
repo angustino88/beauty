@@ -1,231 +1,360 @@
 /* ==========================================================================
-   Support & Feedback Modal + Post-Resolution CSAT Card
-   Uses LabMango semantic tokens (--lm-*) for seamless light & dark themes.
+   Support & Feedback — Compact Command-Style Composer & CSAT Card
+   Original LabMango UI using semantic tokens (--lm-*) for light/dark themes.
    ========================================================================== */
 
+/* --- Header --- */
 .modalHeader {
   display: flex;
+  align-items: center;
+  gap: 11px;
+  padding-right: 28px;
+}
+
+.headerBadge {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 34px;
+  border: 1px solid var(--type-border, var(--lm-border));
+  background: var(--type-bg, var(--lm-surface-muted));
+  color: var(--type-fg, var(--lm-primary));
+  transition: background 160ms ease, color 160ms ease, border-color 160ms ease;
+}
+
+.headerCopy {
+  display: flex;
   flex-direction: column;
-  gap: 3px;
-  padding-right: 24px;
+  gap: 1px;
+  min-width: 0;
+}
+
+.modalTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .modalTitle {
   margin: 0;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
   letter-spacing: -0.015em;
   color: var(--lm-text);
   line-height: 1.3;
 }
 
+.routePill {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--lm-text-tertiary);
+  background: var(--lm-surface-muted);
+  border: 1px solid var(--lm-border-subtle);
+  padding: 1px 7px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
 .modalSubtitle {
   margin: 0;
-  font-size: 13px;
+  font-size: 12.5px;
   color: var(--lm-text-secondary);
-  line-height: 1.45;
+  line-height: 1.35;
 }
 
+/* --- Semantic Type Accents --- */
+.accentDanger {
+  --type-fg: var(--lm-danger-fg);
+  --type-solid: var(--lm-danger-solid);
+  --type-bg: var(--lm-danger-bg);
+  --type-border: var(--lm-danger-border);
+}
+
+.accentInfo {
+  --type-fg: var(--lm-info-fg);
+  --type-solid: var(--lm-info-solid);
+  --type-bg: var(--lm-info-bg);
+  --type-border: var(--lm-info-border);
+}
+
+.accentPrimary {
+  --type-fg: var(--lm-primary);
+  --type-solid: var(--lm-primary);
+  --type-bg: color-mix(in srgb, var(--lm-primary) 11%, var(--lm-surface));
+  --type-border: color-mix(in srgb, var(--lm-primary) 42%, var(--lm-border));
+}
+
+.accentSuccess {
+  --type-fg: var(--lm-success-fg);
+  --type-solid: var(--lm-success-solid);
+  --type-bg: var(--lm-success-bg);
+  --type-border: var(--lm-success-border);
+}
+
+/* --- Body Container --- */
 .formBody {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding-top: 6px;
+  gap: 12px;
+  padding-top: 4px;
 }
 
-.sectionBlock {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-}
-
-.sectionLabelRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+/* --- 4-Up Compact Semantic Type Cards --- */
+.typeCardGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
 }
 
-.sectionLabel {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--lm-text);
-  line-height: 1.4;
-}
-
-.templateBtn {
-  border: none;
-  background: transparent;
-  color: var(--lm-primary);
-  font-size: 12px;
-  font-weight: 500;
-  padding: 2px 6px;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background 140ms ease, color 140ms ease;
-}
-
-.templateBtn:hover {
-  background: color-mix(in srgb, var(--lm-primary) 10%, transparent);
-}
-
-.templateBtn:focus-visible {
-  outline: 2px solid var(--lm-focus);
-  outline-offset: 1px;
-}
-
-/* --- Segmented Icon Pill Group (inspired by Support & Contact reference) --- */
-.typePillGroup {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 4px;
-  padding: 4px;
-  border-radius: 10px;
-  background: var(--lm-surface-muted);
-  border: 1px solid var(--lm-border);
-}
-
-.typePill {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  min-height: 36px;
-  padding: 6px 10px;
-  border-radius: 7px;
-  border: 1px solid transparent;
-  background: transparent;
-  color: var(--lm-text-secondary);
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 150ms ease, border-color 150ms ease, color 150ms ease, box-shadow 150ms ease;
-}
-
-.typePill:hover {
-  color: var(--lm-text);
-  background: color-mix(in srgb, var(--lm-surface) 75%, transparent);
-}
-
-.typePill:focus-visible {
-  outline: 2px solid var(--lm-focus);
-  outline-offset: 1px;
-}
-
-.typePillActive {
-  color: var(--lm-primary);
-  font-weight: 600;
-  background: color-mix(in srgb, var(--lm-primary) 11%, var(--lm-surface));
-  border-color: color-mix(in srgb, var(--lm-primary) 52%, var(--lm-border));
-  box-shadow: 0 1px 2px color-mix(in srgb, var(--lm-primary) 14%, transparent);
-}
-
-.typePillActive:hover {
-  color: var(--lm-primary);
-  background: color-mix(in srgb, var(--lm-primary) 14%, var(--lm-surface));
-}
-
-.typeHint {
-  font-size: 12px;
-  color: var(--lm-text-tertiary);
-  line-height: 1.4;
-}
-
-.privacyHint {
-  font-size: 12px;
-  color: var(--lm-text-tertiary);
-  line-height: 1.4;
-}
-
-/* --- Attachments (0/5) Tile Grid --- */
-.attachmentsDropzone {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  padding: 2px 0;
-  border-radius: 10px;
-  transition: background 150ms ease, outline-color 150ms ease;
-}
-
-.attachmentsDropzoneActive {
-  background: color-mix(in srgb, var(--lm-primary) 8%, transparent);
-  outline: 1.5px dashed var(--lm-primary);
-  outline-offset: 4px;
-}
-
-.uploadTile {
-  width: 92px;
-  height: 92px;
-  border-radius: 10px;
-  border: 1.5px dashed var(--lm-border);
-  background: var(--lm-surface-muted);
-  color: var(--lm-text-secondary);
+.typeCard {
+  position: relative;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
+  align-items: flex-start;
+  gap: 3px;
+  padding: 9px 10px;
+  border-radius: 9px;
+  border: 1px solid var(--lm-border);
+  background: var(--lm-surface-muted);
+  color: var(--lm-text-secondary);
+  text-align: left;
   cursor: pointer;
-  transition: border-color 150ms ease, color 150ms ease, background 150ms ease;
+  transition: border-color 150ms ease, background 150ms ease, color 150ms ease, transform 120ms ease, box-shadow 150ms ease;
 }
 
-.uploadTile:hover:not(:disabled) {
-  border-color: var(--lm-primary);
-  color: var(--lm-primary);
-  background: color-mix(in srgb, var(--lm-primary) 6%, var(--lm-surface-muted));
+.typeCard:hover:not(:disabled) {
+  border-color: var(--type-border);
+  color: var(--lm-text);
+  background: var(--lm-surface);
 }
 
-.uploadTile:focus-visible {
+.typeCard:focus-visible {
   outline: 2px solid var(--lm-focus);
   outline-offset: 2px;
 }
 
-.uploadTile:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
+.typeCardActive {
+  border-color: var(--type-border);
+  background: var(--type-bg);
+  color: var(--type-fg);
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--type-solid) 14%, transparent);
 }
 
-.uploadTileLabel {
+.typeCardActive:hover:not(:disabled) {
+  background: var(--type-bg);
+  color: var(--type-fg);
+}
+
+.typeCardTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 6px;
+}
+
+.typeCardHeading {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.typeCardDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--type-solid);
+  flex: 0 0 6px;
+}
+
+.typeCardSub {
   font-size: 11px;
-  font-weight: 500;
+  color: var(--lm-text-tertiary);
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
-.attachmentTile {
+.typeCardActive .typeCardSub {
+  color: color-mix(in srgb, var(--type-fg) 82%, var(--lm-text-secondary));
+}
+
+/* --- Unified Command-Style Composer Surface --- */
+.composerShell {
   position: relative;
-  width: 92px;
-  height: 92px;
-  border-radius: 10px;
-  border: 1px solid var(--lm-border);
-  background: var(--lm-surface-muted);
-  overflow: hidden;
   display: flex;
   flex-direction: column;
+  border-radius: 10px;
+  border: 1px solid var(--lm-border);
+  background: var(--lm-surface);
+  overflow: hidden;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.composerShell:focus-within {
+  border-color: var(--lm-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--lm-primary) 13%, transparent);
+}
+
+.composerDragging {
+  border-color: var(--lm-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--lm-primary) 20%, transparent);
+}
+
+.composerTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px 4px;
+  border-bottom: 1px solid var(--lm-border-subtle);
+}
+
+.summaryInput {
+  flex: 1 1 auto;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  background: transparent !important;
+  padding: 4px 0 !important;
+  font-size: 14.5px !important;
+  font-weight: 600 !important;
+  color: var(--lm-text) !important;
+}
+
+.summaryInput:focus,
+.summaryInput:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.summaryInput::placeholder {
+  font-weight: 500;
+  color: var(--lm-text-tertiary);
+}
+
+.summaryCount {
+  font-size: 11px;
+  color: var(--lm-text-tertiary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.composerDetailsWrap {
+  position: relative;
+  padding: 6px 12px 4px;
+}
+
+.detailsInput {
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  background: transparent !important;
+  padding: 2px 0 !important;
+  font-size: 13.5px !important;
+  line-height: 1.55 !important;
+  color: var(--lm-text) !important;
+  resize: none !important;
+}
+
+.detailsInput:focus,
+.detailsInput:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.detailsInput::placeholder {
+  color: var(--lm-text-tertiary);
+}
+
+.promptChip {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid var(--lm-border-subtle);
+  background: var(--lm-surface-muted);
+  color: var(--lm-text-secondary);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: border-color 140ms ease, color 140ms ease, background 140ms ease;
+}
+
+.promptChip:hover:not(:disabled) {
+  border-color: var(--lm-primary);
+  color: var(--lm-primary);
+  background: color-mix(in srgb, var(--lm-primary) 8%, var(--lm-surface));
+}
+
+/* --- Compact Attachment Filmstrip (only shown when files attached) --- */
+.attachmentStrip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 6px 12px 8px;
+  border-top: 1px solid var(--lm-border-subtle);
+  background: color-mix(in srgb, var(--lm-surface-muted) 55%, var(--lm-surface));
+}
+
+.attachmentChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  max-width: 190px;
+  padding: 4px 6px 4px 4px;
+  border-radius: 7px;
+  border: 1px solid var(--lm-border);
+  background: var(--lm-surface);
+}
+
+.attachmentThumbMini {
+  width: 28px;
+  height: 28px;
+  border-radius: 5px;
+  object-fit: cover;
+  flex: 0 0 28px;
+  border: 1px solid var(--lm-border-subtle);
+}
+
+.attachmentIconBox {
+  width: 28px;
+  height: 28px;
+  border-radius: 5px;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 6px;
-  gap: 4px;
-}
-
-.attachmentThumb {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.attachmentFileIcon {
+  flex: 0 0 28px;
+  background: var(--lm-surface-muted);
   color: var(--lm-text-secondary);
 }
 
+.attachmentMeta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.2;
+}
+
 .attachmentFileName {
-  font-size: 11px;
+  font-size: 11.5px;
+  font-weight: 500;
   color: var(--lm-text);
-  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  text-align: center;
 }
 
 .attachmentFileSize {
@@ -234,116 +363,154 @@
 }
 
 .removeAttachmentBtn {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   border-radius: 999px;
-  border: 1px solid var(--lm-border);
-  background: color-mix(in srgb, var(--lm-surface) 92%, transparent);
-  color: var(--lm-text);
+  border: none;
+  background: transparent;
+  color: var(--lm-text-tertiary);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   padding: 0;
-  transition: background 140ms ease, color 140ms ease, border-color 140ms ease;
+  flex: 0 0 20px;
+  transition: background 140ms ease, color 140ms ease;
 }
 
 .removeAttachmentBtn:hover {
-  background: var(--lm-danger-solid);
-  border-color: var(--lm-danger-solid);
-  color: #ffffff;
+  background: var(--lm-danger-bg);
+  color: var(--lm-danger-fg);
 }
 
-/* --- Context & Optional Details --- */
-.contextStrip {
+/* --- Inline Composer Toolbar --- */
+.composerToolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 10px 12px;
-  border-radius: 8px;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 7px 10px;
+  border-top: 1px solid var(--lm-border-subtle);
   background: var(--lm-surface-muted);
-  border: 1px solid var(--lm-border-subtle);
 }
 
-.contextMeta {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.contextHeading {
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--lm-text);
+.toolbarGroup {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  flex-wrap: wrap;
 }
 
-.contextSummary {
-  font-size: 11.5px;
-  color: var(--lm-text-tertiary);
+.toolbarChipBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 8px;
+  border-radius: 6px;
+  border: 1px solid var(--lm-border);
+  background: var(--lm-surface);
+  color: var(--lm-text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 140ms ease, color 140ms ease, background 140ms ease;
+}
+
+.toolbarChipBtn:hover:not(:disabled) {
+  border-color: var(--lm-primary);
+  color: var(--lm-text);
+}
+
+.toolbarChipBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.toolbarChipActive {
+  border-color: color-mix(in srgb, var(--lm-primary) 45%, var(--lm-border));
+  background: color-mix(in srgb, var(--lm-primary) 10%, var(--lm-surface));
+  color: var(--lm-primary);
+}
+
+.toolbarSelect {
+  min-width: 112px;
+}
+
+.diagPath {
+  max-width: 120px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.moreToggle {
-  display: inline-flex;
+/* --- Drag Overlay --- */
+.dropOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  border: none;
-  background: transparent;
-  color: var(--lm-text-secondary);
-  font-size: 12.5px;
-  font-weight: 500;
-  padding: 2px 0;
-  cursor: pointer;
-  align-self: flex-start;
+  background: color-mix(in srgb, var(--lm-surface) 92%, var(--lm-primary));
+  border: 2px dashed var(--lm-primary);
+  border-radius: 10px;
+  color: var(--lm-primary);
+  font-size: 13px;
+  font-weight: 600;
+  pointer-events: none;
 }
 
-.moreToggle:hover {
-  color: var(--lm-text);
-}
-
-.moreGrid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  padding: 12px;
-  border-radius: 8px;
-  background: var(--lm-surface-muted);
-  border: 1px solid var(--lm-border-subtle);
-}
-
+/* --- Compact Footer --- */
 .modalFooter {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding-top: 4px;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding-top: 2px;
 }
 
-.modalFooterLink {
-  font-size: 12.5px;
+.footerMeta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  color: var(--lm-text-tertiary);
+}
+
+.kbdHint {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  border: 1px solid var(--lm-border);
+  background: var(--lm-surface-muted);
+  font-size: 10.5px;
+  font-family: inherit;
   color: var(--lm-text-secondary);
-  text-decoration: none;
-}
-
-.modalFooterLink:hover {
-  color: var(--lm-primary);
-  text-decoration: underline;
 }
 
 .modalFooterActions {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+}
+
+.modalFooterLink {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--lm-text-secondary);
+  text-decoration: none;
+  margin-right: 4px;
+}
+
+.modalFooterLink:hover {
+  color: var(--lm-primary);
 }
 
 /* --- Post-Resolution CSAT Card (Ticket Detail) --- */
@@ -417,11 +584,7 @@
 }
 
 @media (max-width: 560px) {
-  .typePillGroup {
+  .typeCardGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .moreGrid {
-    grid-template-columns: 1fr;
   }
 }

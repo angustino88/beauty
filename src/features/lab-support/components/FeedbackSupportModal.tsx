@@ -5,19 +5,21 @@ import {
   useState,
   type ClipboardEvent,
   type DragEvent,
+  type KeyboardEvent,
   type ReactNode,
 } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Button, Input, Modal, Select, Switch, Tooltip } from 'antd';
+import { Button, Input, Modal, Select, Tooltip } from 'antd';
 import {
   Bug,
-  ChevronDown,
-  ChevronUp,
   FileText,
   Layers,
   LifeBuoy,
   MessageSquare,
   Monitor,
+  Paperclip,
+  ShieldAlert,
+  Sparkles,
   Upload,
   X,
 } from 'lucide-react';
@@ -31,7 +33,6 @@ import {
 } from '../api';
 import {
   SUPPORT_ATTACHMENT_ACCEPT,
-  SUPPORT_ATTACHMENT_HINT,
   apiErrorMessage,
   formatFileSize,
 } from '../attachments';
@@ -62,16 +63,42 @@ interface AttachedItem {
   previewUrl: string | null;
 }
 
-function PillIcon({ pillKey }: { pillKey: FeedbackPillKey }): ReactNode {
+const TYPE_META: Record<
+  FeedbackPillKey,
+  { subtitle: string; accentClass: string; shortSubmit: string }
+> = {
+  support: {
+    subtitle: 'Lab & IT help',
+    accentClass: styles.accentSuccess,
+    shortSubmit: 'Send request',
+  },
+  bug: {
+    subtitle: 'Report a glitch',
+    accentClass: styles.accentDanger,
+    shortSubmit: 'Report bug',
+  },
+  feature: {
+    subtitle: 'Suggest an idea',
+    accentClass: styles.accentInfo,
+    shortSubmit: 'Submit idea',
+  },
+  feedback: {
+    subtitle: 'UX & thoughts',
+    accentClass: styles.accentPrimary,
+    shortSubmit: 'Send feedback',
+  },
+};
+
+function PillIcon({ pillKey, size = 15 }: { pillKey: FeedbackPillKey; size?: number }): ReactNode {
   switch (pillKey) {
     case 'support':
-      return <LifeBuoy size={15} aria-hidden="true" />;
+      return <LifeBuoy size={size} aria-hidden="true" />;
     case 'bug':
-      return <Bug size={15} aria-hidden="true" />;
+      return <Bug size={size} aria-hidden="true" />;
     case 'feature':
-      return <Layers size={15} aria-hidden="true" />;
+      return <Layers size={size} aria-hidden="true" />;
     case 'feedback':
-      return <MessageSquare size={15} aria-hidden="true" />;
+      return <MessageSquare size={size} aria-hidden="true" />;
   }
 }
 
@@ -86,12 +113,12 @@ export default function FeedbackSupportModal({
   const { isDark } = useTheme();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const idempotencyKeyRef = useRef<string>(createIdempotencyKey());
+  const dragDepthRef = useRef(0);
 
   const [selectedType, setSelectedType] = useState<FeedbackPillKey>(initialType);
   const [subject, setSubject] = useState('');
   const [details, setDetails] = useState('');
   const [includeContext, setIncludeContext] = useState(true);
-  const [showMoreOptions, setShowMoreOptions] = useState(false);
   const [categoryId, setCategoryId] = useState<number | null>(null);
   const [priorityId, setPriorityId] = useState<number | null>(null);
   const [attachments, setAttachments] = useState<AttachedItem[]>([]);
@@ -107,10 +134,11 @@ export default function FeedbackSupportModal({
   );
   const { data: prioritiesData, isFetching: prioritiesLoading } = useGetSupportPrioritiesQuery(
     {},
-    { skip: !open || !showMoreOptions },
+    { skip: !open },
   );
 
   const typeConfig = getFeedbackTypeConfig(selectedType);
+  const activeMeta = TYPE_META[selectedType];
   const pagePath = useMemo(() => normalizeFeedbackPagePath(location.pathname), [location.pathname]);
 
   const clientContext = useMemo(
@@ -131,7 +159,6 @@ export default function FeedbackSupportModal({
   );
 
   const effectiveCategoryId = categoryId ?? resolvedDefaultCategoryId;
-
   const attachmentsRef = useRef<AttachedItem[]>([]);
 
   useEffect(() => {
@@ -163,7 +190,8 @@ export default function FeedbackSupportModal({
     setCategoryId(null);
     setPriorityId(null);
     setIncludeContext(true);
-    setShowMoreOptions(false);
+    setIsDraggingFiles(false);
+    dragDepthRef.current = 0;
     setFormError(null);
     idempotencyKeyRef.current = createIdempotencyKey();
   };
@@ -215,7 +243,6 @@ export default function FeedbackSupportModal({
       if (item.kind === 'file') {
         const file = item.getAsFile();
         if (file) {
-          // Give unnamed clipboard screenshots a clean timestamped filename
           const namedFile =
             !file.name || file.name === 'image.png'
               ? new File([file], `screenshot-${Date.now()}-${i + 1}.png`, {
@@ -231,12 +258,24 @@ export default function FeedbackSupportModal({
     }
   };
 
+  const handleDragEnter = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    dragDepthRef.current += 1;
+    if (!submitting) setIsDraggingFiles(true);
+  };
+
+  const handleDragLeave = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    dragDepthRef.current = Math.max(0, dragDepthRef.current - 1);
+    if (dragDepthRef.current === 0) setIsDraggingFiles(false);
+  };
+
   const handleDrop = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
+    dragDepthRef.current = 0;
     setIsDraggingFiles(false);
     if (submitting) return;
-    const dropped = Array.from(event.dataTransfer.files ?? []);
-    addFiles(dropped);
+    addFiles(Array.from(event.dataTransfer.files ?? []));
   };
 
   const handleInsertTemplate = () => {
@@ -247,6 +286,15 @@ export default function FeedbackSupportModal({
     setDetails((prev) => `${prev.trimEnd()}\n\n${typeConfig.detailsTemplate}`);
   };
 
+  const canSubmit = Boolean(subject.trim() && details.trim()) && !submitting;
+
+  const handleComposerKeyDown = (event: KeyboardEvent<HTMLElement>) => {
+    if ((event.metaKey || event.ctrlKey) && event.key === 'Enter' && canSubmit) {
+      event.preventDefault();
+      void handleSubmit();
+    }
+  };
+
   const handleSubmit = async () => {
     const trimmedSubject = subject.trim();
     const trimmedDetails = details.trim();
@@ -255,7 +303,7 @@ export default function FeedbackSupportModal({
       return;
     }
     if (!trimmedDetails) {
-      setFormError('Please provide details before submitting.');
+      setFormError('Please add details before submitting.');
       return;
     }
 
@@ -296,7 +344,7 @@ export default function FeedbackSupportModal({
       } else {
         notify.success(`${typeConfig.label} submitted`, {
           code: ticketKey,
-          description: 'Tracked in Support Tickets so you can follow progress and replies.',
+          description: 'Tracked in Support Tickets so you can follow updates and replies.',
           action: {
             label: 'View ticket',
             onClick: () => navigate(`/support-tickets/${encodeURIComponent(ticket.key)}`),
@@ -316,15 +364,18 @@ export default function FeedbackSupportModal({
     }
   };
 
-  const contextPreview = useMemo(() => {
+  const diagnosticsTooltip = useMemo(() => {
     const parts: string[] = [];
-    if (pagePath) parts.push(pagePath);
+    if (pagePath) parts.push(`Page: ${pagePath}`);
     if (clientContext.browser) parts.push(clientContext.browser);
     if (clientContext.os) parts.push(clientContext.os);
     if (clientContext.viewport) parts.push(clientContext.viewport);
     if (clientContext.theme) parts.push(`${clientContext.theme} theme`);
-    return parts.join(' · ') || 'No diagnostics detected';
-  }, [pagePath, clientContext]);
+    const summary = parts.join(' · ') || 'No diagnostics detected';
+    return includeContext
+      ? `Attached automatically (${summary}). Click to exclude.`
+      : 'Diagnostics excluded. Click to include page and browser info.';
+  }, [includeContext, pagePath, clientContext]);
 
   const categoryOptions = (categoriesData?.data ?? []).map((cat) => ({
     value: cat.id,
@@ -342,23 +393,35 @@ export default function FeedbackSupportModal({
       open={open}
       onCancel={handleClose}
       footer={null}
-      width={620}
+      width={580}
+      centered
       destroyOnHidden
       closable={!submitting}
       keyboard={!submitting}
       mask={{ closable: !submitting }}
-      style={{ top: 32 }}
-      styles={{ body: { maxHeight: 'calc(100dvh - 120px)', overflowY: 'auto' } }}
       title={
-        <div className={styles.modalHeader}>
-          <h2 className={styles.modalTitle}>Support &amp; Feedback</h2>
-          <p className={styles.modalSubtitle}>
-            Get help or provide feedback about the platform
-          </p>
+        <div className={`${styles.modalHeader} ${activeMeta.accentClass}`}>
+          <span className={styles.headerBadge} aria-hidden="true">
+            <PillIcon pillKey={selectedType} size={17} />
+          </span>
+          <div className={styles.headerCopy}>
+            <div className={styles.modalTitleRow}>
+              <h2 className={styles.modalTitle}>Support &amp; Feedback</h2>
+              <span className={styles.routePill}>Tracked in Support Desk</span>
+            </div>
+            <p className={styles.modalSubtitle}>{typeConfig.description}</p>
+          </div>
         </div>
       }
     >
-      <div className={styles.formBody} onPaste={handlePaste}>
+      <div
+        className={styles.formBody}
+        onPaste={handlePaste}
+        onDragEnter={handleDragEnter}
+        onDragOver={(event) => event.preventDefault()}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
         {formError && (
           <InlineAlert
             variant="error"
@@ -367,132 +430,110 @@ export default function FeedbackSupportModal({
           />
         )}
 
-        {/* Type selector pills */}
-        <div className={styles.sectionBlock}>
-          <span id="feedback-type-label" className={styles.sectionLabel}>
-            Type
-          </span>
-          <div
-            className={styles.typePillGroup}
-            role="radiogroup"
-            aria-labelledby="feedback-type-label"
-          >
-            {FEEDBACK_TYPE_CONFIGS.map((cfg) => {
-              const isActive = cfg.key === selectedType;
-              return (
-                <button
-                  key={cfg.key}
-                  type="button"
-                  role="radio"
-                  aria-checked={isActive}
-                  disabled={submitting}
-                  className={`${styles.typePill} ${isActive ? styles.typePillActive : ''}`}
-                  onClick={() => setSelectedType(cfg.key)}
-                >
-                  <PillIcon pillKey={cfg.key} />
-                  <span>{cfg.label}</span>
-                </button>
-              );
-            })}
-          </div>
-          <span className={styles.typeHint}>{typeConfig.description}</span>
+        {/* 4-Up Compact Semantic Type Cards */}
+        <div
+          className={styles.typeCardGrid}
+          role="radiogroup"
+          aria-label="Submission type"
+        >
+          {FEEDBACK_TYPE_CONFIGS.map((cfg) => {
+            const isActive = cfg.key === selectedType;
+            const meta = TYPE_META[cfg.key];
+            return (
+              <button
+                key={cfg.key}
+                type="button"
+                role="radio"
+                aria-checked={isActive}
+                disabled={submitting}
+                className={`${styles.typeCard} ${meta.accentClass} ${isActive ? styles.typeCardActive : ''}`}
+                onClick={() => setSelectedType(cfg.key)}
+              >
+                <div className={styles.typeCardTop}>
+                  <span className={styles.typeCardHeading}>
+                    <PillIcon pillKey={cfg.key} size={14} />
+                    <span>{cfg.label}</span>
+                  </span>
+                  {isActive && <span className={styles.typeCardDot} aria-hidden="true" />}
+                </div>
+                <span className={styles.typeCardSub}>{meta.subtitle}</span>
+              </button>
+            );
+          })}
         </div>
 
-        {/* Summary */}
-        <div className={styles.sectionBlock}>
-          <label htmlFor="feedback-summary-input" className={styles.sectionLabel}>
-            Summary
-          </label>
-          <Input
-            id="feedback-summary-input"
-            value={subject}
-            onChange={(event) => setSubject(event.target.value)}
-            placeholder={typeConfig.subjectPlaceholder}
-            maxLength={200}
-            showCount
-            disabled={submitting}
-            autoFocus
-          />
-        </div>
-
-        {/* Details */}
-        <div className={styles.sectionBlock}>
-          <div className={styles.sectionLabelRow}>
-            <label htmlFor="feedback-details-input" className={styles.sectionLabel}>
-              Details
-            </label>
-            <button
-              type="button"
-              className={styles.templateBtn}
+        {/* Unified Command-Style Composer Card */}
+        <div className={`${styles.composerShell} ${isDraggingFiles ? styles.composerDragging : ''}`}>
+          <div className={styles.composerTitleRow}>
+            <Input
+              id="feedback-summary-input"
+              aria-label="Summary"
+              variant="borderless"
+              className={styles.summaryInput}
+              value={subject}
+              onChange={(event) => setSubject(event.target.value)}
+              onKeyDown={handleComposerKeyDown}
+              placeholder={typeConfig.subjectPlaceholder}
+              maxLength={200}
               disabled={submitting}
-              onClick={handleInsertTemplate}
-            >
-              Insert template
-            </button>
-          </div>
-          <Input.TextArea
-            id="feedback-details-input"
-            rows={5}
-            value={details}
-            onChange={(event) => setDetails(event.target.value)}
-            placeholder={typeConfig.detailsPlaceholder}
-            maxLength={10000}
-            disabled={submitting}
-          />
-          <span className={styles.privacyHint}>
-            Please don&apos;t include sensitive information (password, personal data, etc.)
-          </span>
-        </div>
-
-        {/* Attachments (0/5) */}
-        <div className={styles.sectionBlock}>
-          <div className={styles.sectionLabelRow}>
-            <span className={styles.sectionLabel}>
-              Attachments ({attachments.length}/{FEEDBACK_MAX_ATTACHMENTS})
-            </span>
-            <span className={styles.typeHint}>Drop files or paste screenshot (Ctrl+V)</span>
+              autoFocus
+            />
+            {subject.length > 0 && (
+              <span className={styles.summaryCount}>{subject.length}/200</span>
+            )}
           </div>
 
-          <input
-            ref={fileInputRef}
-            type="file"
-            multiple
-            accept={SUPPORT_ATTACHMENT_ACCEPT}
-            style={{ display: 'none' }}
-            onChange={(event) => {
-              const selected = Array.from(event.target.files ?? []);
-              addFiles(selected);
-              event.target.value = '';
-            }}
-          />
+          <div className={styles.composerDetailsWrap}>
+            <Input.TextArea
+              id="feedback-details-input"
+              aria-label="Details"
+              variant="borderless"
+              className={styles.detailsInput}
+              autoSize={{ minRows: 4, maxRows: 7 }}
+              value={details}
+              onChange={(event) => setDetails(event.target.value)}
+              onKeyDown={handleComposerKeyDown}
+              placeholder={typeConfig.detailsPlaceholder}
+              maxLength={10000}
+              disabled={submitting}
+            />
+            {!details.trim() && (
+              <Tooltip title="Insert structured writing prompt">
+                <button
+                  type="button"
+                  className={styles.promptChip}
+                  disabled={submitting}
+                  onClick={handleInsertTemplate}
+                >
+                  <Sparkles size={11} aria-hidden="true" />
+                  <span>Insert template</span>
+                </button>
+              </Tooltip>
+            )}
+          </div>
 
-          <div
-            className={`${styles.attachmentsDropzone} ${isDraggingFiles ? styles.attachmentsDropzoneActive : ''}`}
-            onDragOver={(event) => {
-              event.preventDefault();
-              setIsDraggingFiles(true);
-            }}
-            onDragLeave={() => setIsDraggingFiles(false)}
-            onDrop={handleDrop}
-          >
-            {attachments.map((item) => (
-              <div key={item.id} className={styles.attachmentTile} title={item.file.name}>
-                {item.previewUrl ? (
-                  <img
-                    src={item.previewUrl}
-                    alt={item.file.name}
-                    className={styles.attachmentThumb}
-                  />
-                ) : (
-                  <>
-                    <FileText size={20} className={styles.attachmentFileIcon} aria-hidden="true" />
+          {/* Compact Attachment Filmstrip (renders only when files are attached) */}
+          {attachments.length > 0 && (
+            <div className={styles.attachmentStrip} aria-label="Attached files">
+              {attachments.map((item) => (
+                <div key={item.id} className={styles.attachmentChip} title={item.file.name}>
+                  {item.previewUrl ? (
+                    <img
+                      src={item.previewUrl}
+                      alt={item.file.name}
+                      className={styles.attachmentThumbMini}
+                    />
+                  ) : (
+                    <span className={styles.attachmentIconBox} aria-hidden="true">
+                      <FileText size={14} />
+                    </span>
+                  )}
+                  <div className={styles.attachmentMeta}>
                     <span className={styles.attachmentFileName}>{item.file.name}</span>
                     <span className={styles.attachmentFileSize}>
                       {formatFileSize(item.file.size)}
                     </span>
-                  </>
-                )}
-                <Tooltip title={`Remove ${item.file.name}`}>
+                  </div>
                   <button
                     type="button"
                     className={styles.removeAttachmentBtn}
@@ -502,110 +543,119 @@ export default function FeedbackSupportModal({
                   >
                     <X size={12} />
                   </button>
-                </Tooltip>
-              </div>
-            ))}
+                </div>
+              ))}
+            </div>
+          )}
 
-            {attachments.length < FEEDBACK_MAX_ATTACHMENTS && (
-              <button
-                type="button"
-                className={styles.uploadTile}
-                disabled={submitting}
-                aria-label="Upload attachment"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <Upload size={18} aria-hidden="true" />
-                <span className={styles.uploadTileLabel}>Upload</span>
-              </button>
-            )}
-          </div>
-          <span className={styles.privacyHint}>{SUPPORT_ATTACHMENT_HINT}</span>
-        </div>
+          {/* Single-Row Inline Composer Toolbar */}
+          <div className={styles.composerToolbar}>
+            <div className={styles.toolbarGroup}>
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept={SUPPORT_ATTACHMENT_ACCEPT}
+                style={{ display: 'none' }}
+                onChange={(event) => {
+                  addFiles(Array.from(event.target.files ?? []));
+                  event.target.value = '';
+                }}
+              />
+              <Tooltip title="Attach files, drag & drop, or paste screenshot (Ctrl+V)">
+                <button
+                  type="button"
+                  className={`${styles.toolbarChipBtn} ${attachments.length > 0 ? styles.toolbarChipActive : ''}`}
+                  disabled={submitting || attachments.length >= FEEDBACK_MAX_ATTACHMENTS}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Paperclip size={13} aria-hidden="true" />
+                  <span>
+                    Attach {attachments.length > 0 ? `(${attachments.length}/${FEEDBACK_MAX_ATTACHMENTS})` : ''}
+                  </span>
+                </button>
+              </Tooltip>
 
-        {/* Transparent page & browser diagnostics */}
-        <div className={styles.contextStrip}>
-          <div className={styles.contextMeta}>
-            <span className={styles.contextHeading}>
-              <Monitor size={13} aria-hidden="true" />
-              <span>Include page &amp; browser diagnostics</span>
-            </span>
-            <span className={styles.contextSummary} title={contextPreview}>
-              {includeContext ? contextPreview : 'Diagnostics excluded from this submission'}
-            </span>
-          </div>
-          <Switch
-            size="small"
-            checked={includeContext}
-            onChange={setIncludeContext}
-            disabled={submitting}
-            aria-label="Include page and browser diagnostics"
-          />
-        </div>
-
-        {/* Optional routing overrides */}
-        <button
-          type="button"
-          className={styles.moreToggle}
-          onClick={() => setShowMoreOptions((prev) => !prev)}
-          aria-expanded={showMoreOptions}
-        >
-          {showMoreOptions ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-          <span>More options (category &amp; priority)</span>
-        </button>
-
-        {showMoreOptions && (
-          <div className={styles.moreGrid}>
-            <div className={styles.sectionBlock}>
-              <span className={styles.sectionLabel}>Category</span>
               <Select<number>
-                aria-label="Ticket category"
-                placeholder="Auto-selected"
-                allowClear
+                size="small"
+                aria-label="Category"
+                placeholder="Category"
+                className={styles.toolbarSelect}
+                popupMatchSelectWidth={false}
                 loading={categoriesLoading}
                 value={effectiveCategoryId}
                 onChange={(val) => setCategoryId(val ?? null)}
                 options={categoryOptions}
-                showSearch={{ optionFilterProp: 'label' }}
                 disabled={submitting}
               />
-            </div>
-            <div className={styles.sectionBlock}>
-              <span className={styles.sectionLabel}>Priority</span>
+
               <Select<number>
-                aria-label="Ticket priority"
-                placeholder="Default priority"
+                size="small"
+                aria-label="Priority"
+                placeholder="Priority: Auto"
                 allowClear
+                className={styles.toolbarSelect}
+                popupMatchSelectWidth={false}
                 loading={prioritiesLoading}
                 value={priorityId ?? undefined}
                 onChange={(val) => setPriorityId(val ?? null)}
                 options={priorityOptions}
-                showSearch={{ optionFilterProp: 'searchLabel' }}
                 disabled={submitting}
               />
             </div>
-          </div>
-        )}
 
-        {/* Footer */}
+            <Tooltip title={diagnosticsTooltip}>
+              <button
+                type="button"
+                aria-pressed={includeContext}
+                className={`${styles.toolbarChipBtn} ${includeContext ? styles.toolbarChipActive : ''}`}
+                disabled={submitting}
+                onClick={() => setIncludeContext((prev) => !prev)}
+              >
+                <Monitor size={13} aria-hidden="true" />
+                <span className={styles.diagPath}>
+                  {includeContext ? pagePath || 'Diagnostics' : 'No context'}
+                </span>
+              </button>
+            </Tooltip>
+          </div>
+
+          {isDraggingFiles && (
+            <div className={styles.dropOverlay}>
+              <Upload size={22} aria-hidden="true" />
+              <span>Drop up to {FEEDBACK_MAX_ATTACHMENTS} files to attach</span>
+            </div>
+          )}
+        </div>
+
+        {/* Compact Single-Row Footer */}
         <div className={styles.modalFooter}>
-          <Link
-            to="/support-tickets"
-            className={styles.modalFooterLink}
-            onClick={handleClose}
-          >
-            View my tickets &rarr;
-          </Link>
+          <span className={styles.footerMeta}>
+            <ShieldAlert size={13} aria-hidden="true" />
+            <span>No sensitive data</span>
+            <span>·</span>
+            <kbd className={styles.kbdHint}>Ctrl+Enter</kbd>
+          </span>
+
           <div className={styles.modalFooterActions}>
-            <Button onClick={handleClose} disabled={submitting}>
+            <Link
+              to="/support-tickets"
+              className={styles.modalFooterLink}
+              onClick={handleClose}
+            >
+              My tickets
+            </Link>
+            <Button size="middle" onClick={handleClose} disabled={submitting}>
               Cancel
             </Button>
             <Button
               type="primary"
+              size="middle"
               loading={submitting}
-              disabled={!subject.trim() || !details.trim()}
+              disabled={!canSubmit}
               onClick={() => void handleSubmit()}
             >
-              {typeConfig.submitLabel}
+              {activeMeta.shortSubmit}
             </Button>
           </div>
         </div>
