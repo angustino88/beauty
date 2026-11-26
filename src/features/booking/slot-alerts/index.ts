@@ -1,4 +1,4 @@
-export { NotifyWhenFreeButton } from './NotifyWhenFreeButton';
+export { FollowBookingButton } from './FollowBookingButton';
 export { SlotAlertModal } from './SlotAlertModal';
 export { SlotAlertRow } from './SlotAlertRow';
 export { SlotAlertsCard } from './SlotAlertsCard';

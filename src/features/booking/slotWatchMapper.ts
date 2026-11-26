@@ -1,5 +1,5 @@
 /** Pure slot-watch types and response mapping (no API client import, so it is unit-testable). */
-export type SlotWatchStatus = 'active' | 'cancelled' | 'expired';
+export type SlotWatchStatus = 'active' | 'cancelled' | 'expired' | 'fulfilled';
 
 export interface ISlotWatch {
   id: number;
@@ -7,6 +7,8 @@ export interface ISlotWatch {
   benchName: string;
   startsAt: string;
   endsAt: string;
+  /** Set when the alert follows one booking (one alert when it ends). */
+  followedBookingId: number | null;
   status: SlotWatchStatus;
   statusLabel: string;
   createdAt: string | null;
@@ -24,6 +26,7 @@ export type RawSlotWatch = {
   bench?: { id?: number; name?: string; uid?: string } | null;
   starts_at: string;
   ends_at: string;
+  followed_booking_id?: number | null;
   status?: ChoiceRef;
   created_at?: string | null;
 };
@@ -34,6 +37,7 @@ export const mapSlotWatch = (raw: RawSlotWatch): ISlotWatch => ({
   benchName: raw.bench?.name ?? 'Bench',
   startsAt: raw.starts_at,
   endsAt: raw.ends_at,
+  followedBookingId: raw.followed_booking_id ?? null,
   status: (raw.status?.value as SlotWatchStatus) ?? 'active',
   statusLabel: raw.status?.label ?? 'Active',
   createdAt: raw.created_at ?? null,
@@ -64,4 +68,11 @@ export function formatAlertWindow(startsAt: string, endsAt: string, now: Date = 
 /** "watching" while the range is open, "upcoming" before it starts. */
 export function alertPhase(startsAt: string, now: Date = new Date()): 'watching' | 'upcoming' {
   return new Date(startsAt).getTime() <= now.getTime() ? 'watching' : 'upcoming';
+}
+
+/** "14:00" today, "Tomorrow 09:30", or "Thu, Nov 27 09:30". */
+export function formatAlertTime(value: string, now: Date = new Date()): string {
+  const date = new Date(value);
+  const day = dayLabel(date, now);
+  return day === 'Today' ? clock(date) : `${day} ${clock(date)}`;
 }

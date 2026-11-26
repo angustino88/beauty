@@ -2,8 +2,8 @@ import dayjs, { type Dayjs } from 'dayjs';
 import { useCallback } from 'react';
 import { notify } from '@/shared/notifications';
 import { extractBookingErrorMessage } from '@/shared/utils/booking';
-import { formatAlertWindow } from '../slotWatchMapper';
-import { useCreateSlotWatchMutation, useGetSlotWatchesQuery } from '../slotWatchApi';
+import { formatAlertTime, formatAlertWindow } from '../slotWatchMapper';
+import { useCreateSlotWatchMutation, useFollowBookingMutation, useGetSlotWatchesQuery } from '../slotWatchApi';
 
 export type SlotAlertTarget = {
   benchId: number;
@@ -16,6 +16,7 @@ const toApi = (value: Dayjs | string) => dayjs(value).second(0).millisecond(0).f
 /** Create slot alerts with one call and a consistent confirmation; also tells whether one already exists. */
 export function useSlotAlert() {
   const [create, { isLoading }] = useCreateSlotWatchMutation();
+  const [follow] = useFollowBookingMutation();
   const { data: active } = useGetSlotWatchesQuery({ status: 'active' });
 
   const findExisting = useCallback(
@@ -58,5 +59,31 @@ export function useSlotAlert() {
     [create],
   );
 
-  return { createAlert, findExisting, isCreating: isLoading };
+  const findFollow = useCallback(
+    (bookingId: number) => active?.find((watch) => watch.followedBookingId === bookingId),
+    [active],
+  );
+
+  const followBooking = useCallback(
+    async (bookingId: number): Promise<boolean> => {
+      try {
+        const watch = await follow(bookingId).unwrap();
+        notify.success("You're following this booking", {
+          description: `We'll send you one alert as soon as ${watch.benchName} frees up — when the booking is about to end (now ${formatAlertTime(
+            watch.endsAt,
+          )}), finishes early, or is cancelled.`,
+          duration: 5000,
+        });
+        return true;
+      } catch (error) {
+        notify.error("Couldn't follow this booking", {
+          description: extractBookingErrorMessage(error, 'Please try again in a moment.'),
+        });
+        return false;
+      }
+    },
+    [follow],
+  );
+
+  return { createAlert, findExisting, followBooking, findFollow, isCreating: isLoading };
 }

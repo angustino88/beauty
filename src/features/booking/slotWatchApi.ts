@@ -27,6 +27,13 @@ export const slotWatchApi = baseApi.injectEndpoints({
       invalidatesTags: [{ type: 'SlotWatch', id: 'LIST' }],
     }),
 
+    // POST /api/labs/bench-bookings/{id}/actions/follow — one alert when that booking ends (idempotent)
+    followBooking: build.mutation<ISlotWatch, number>({
+      query: (bookingId) => ({ url: `/api/labs/bench-bookings/${bookingId}/actions/follow`, method: 'POST' }),
+      transformResponse: (res: unknown) => mapSlotWatch(unwrap(res)),
+      invalidatesTags: [{ type: 'SlotWatch', id: 'LIST' }],
+    }),
+
     // POST /api/labs/bench-slot-watches/{id}/actions/cancel — stop the alert (safe to repeat)
     cancelSlotWatch: build.mutation<ISlotWatch, number>({
       query: (id) => ({ url: `/api/labs/bench-slot-watches/${id}/actions/cancel`, method: 'POST' }),
@@ -40,4 +47,9 @@ export const slotWatchApi = baseApi.injectEndpoints({
   overrideExisting: false,
 });
 
-export const { useGetSlotWatchesQuery, useCreateSlotWatchMutation, useCancelSlotWatchMutation } = slotWatchApi;
+export const {
+  useGetSlotWatchesQuery,
+  useCreateSlotWatchMutation,
+  useFollowBookingMutation,
+  useCancelSlotWatchMutation,
+} = slotWatchApi;

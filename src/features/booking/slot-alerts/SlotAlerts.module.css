@@ -174,3 +174,14 @@
   margin-top: 2px;
   color: var(--lm-primary-fg);
 }
+
+.icon[data-phase='following'] {
+  color: var(--lm-warning-fg);
+  background: var(--lm-warning-bg);
+}
+
+.badge[data-phase='following'] {
+  color: var(--lm-warning-fg);
+  background: var(--lm-warning-bg);
+  border-color: var(--lm-warning-border);
+}

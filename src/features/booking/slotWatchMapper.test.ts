@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { alertPhase, formatAlertWindow, mapSlotWatch } from './slotWatchMapper.ts';
+import { alertPhase, formatAlertTime, formatAlertWindow, mapSlotWatch } from './slotWatchMapper.ts';
 
 test('mapSlotWatch flattens bench and status references', () => {
   const watch = mapSlotWatch({
@@ -13,6 +13,7 @@ test('mapSlotWatch flattens bench and status references', () => {
   });
   assert.equal(watch.benchId, 3);
   assert.equal(watch.benchName, 'Bench 03');
+  assert.equal(watch.followedBookingId, null);
   assert.equal(watch.status, 'active');
 });
 
@@ -39,4 +40,12 @@ test('alertPhase is watching once the range has started', () => {
   const now = new Date(2026, 10, 26, 12, 0);
   assert.equal(alertPhase(new Date(2026, 10, 26, 11, 0).toISOString(), now), 'watching');
   assert.equal(alertPhase(new Date(2026, 10, 26, 13, 0).toISOString(), now), 'upcoming');
+});
+
+test('mapSlotWatch keeps the followed booking and formatAlertTime drops "Today"', () => {
+  const watch = mapSlotWatch({ id: 4, starts_at: 'a', ends_at: 'b', followed_booking_id: 42 });
+  assert.equal(watch.followedBookingId, 42);
+  const now = new Date(2026, 10, 26, 9, 0);
+  assert.equal(formatAlertTime(new Date(2026, 10, 26, 14, 0).toISOString(), now), '14:00');
+  assert.equal(formatAlertTime(new Date(2026, 10, 27, 9, 30).toISOString(), now), 'Tomorrow 09:30');
 });

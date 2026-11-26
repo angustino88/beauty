@@ -3,7 +3,7 @@ import { memo } from 'react';
 import { Button, Modal } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
-import { NotifyWhenFreeButton } from '@/features/booking/slot-alerts/NotifyWhenFreeButton';
+import { FollowBookingButton } from '@/features/booking/slot-alerts/FollowBookingButton';
 import type { DashboardBenchDetail } from '../../types';
 import InfoModal from './InfoModal';
 import { useInfoModalStyles } from './InfoModal.styles';
@@ -46,13 +46,7 @@ export const BenchDetailModal = memo(function BenchDetailModal({
         </Button>,
         ...(benchDetail?.current_booking && dayjs(benchDetail.current_booking.ends_at).isAfter(dayjs())
           ? [
-              <NotifyWhenFreeButton
-                key="notify"
-                benchId={benchDetail.id}
-                startsAt={dayjs()}
-                // Watch until a couple of hours after the current booking so "ending soon" can fire.
-                endsAt={dayjs(benchDetail.current_booking.ends_at).add(2, 'hour')}
-              />,
+              <FollowBookingButton key="follow" bookingId={benchDetail.current_booking.id} />,
             ]
           : []),
         <Button
