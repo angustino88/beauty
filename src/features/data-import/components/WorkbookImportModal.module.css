@@ -1,0 +1,45 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  padding: 1px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--badge-border);
+  background: var(--badge-bg);
+  color: var(--badge-fg);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 18px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.success {
+  --badge-fg: var(--lm-success-fg);
+  --badge-bg: var(--lm-success-bg);
+  --badge-border: var(--lm-success-border);
+}
+
+.info {
+  --badge-fg: var(--lm-info-fg);
+  --badge-bg: var(--lm-info-bg);
+  --badge-border: var(--lm-info-border);
+}
+
+.warning {
+  --badge-fg: var(--lm-warning-fg);
+  --badge-bg: var(--lm-warning-bg);
+  --badge-border: var(--lm-warning-border);
+}
+
+.danger {
+  --badge-fg: var(--lm-danger-fg);
+  --badge-bg: var(--lm-danger-bg);
+  --badge-border: var(--lm-danger-border);
+}
+
+.zeroCount {
+  color: var(--lm-text-tertiary);
+  font-variant-numeric: tabular-nums;
+}

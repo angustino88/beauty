@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Button, Modal, Progress, Radio, Segmented, Space, Steps, Table, Tag, Typography, Upload } from 'antd';
+import { Button, Modal, Progress, Radio, Segmented, Space, Steps, Table, Typography, Upload } from 'antd';
 import type { TableColumnsType, UploadFile } from 'antd';
 import { CloudDownloadOutlined, DownloadOutlined, FileExcelOutlined, InboxOutlined } from '@ant-design/icons';
 import { InlineAlert, getApiErrorMessage, notify } from '@/shared/notifications';
@@ -12,6 +12,7 @@ import {
 } from '../api.ts';
 import { mapApplyErrorDetail, problemsToCsv, sortProblems } from '../mapper.ts';
 import type { ApiErrorDetail, ImportMode, ImportProblem, ImportProgress, ImportReport, ImportSheetOutcome } from '../types.ts';
+import styles from './WorkbookImportModal.module.css';
 
 const MAX_BYTES = 10 * 1024 * 1024;
 const PROGRESS_POLL_MS = 500;
@@ -55,7 +56,14 @@ function downloadCsv(problems: ImportProblem[]) {
   setTimeout(() => URL.revokeObjectURL(url), 100);
 }
 
-const count = (color: string) => (value: number) => (value ? <Tag color={color}>{value}</Tag> : 0);
+type BadgeTone = 'success' | 'info' | 'warning' | 'danger';
+
+const count = (tone: BadgeTone) => (value: number) =>
+  value ? (
+    <span className={`${styles.badge} ${styles[tone]}`}>{value.toLocaleString()}</span>
+  ) : (
+    <span className={styles.zeroCount}>0</span>
+  );
 
 function sheetColumns(mode: ImportMode): TableColumnsType<ImportSheetOutcome> {
   return [
@@ -63,10 +71,10 @@ function sheetColumns(mode: ImportMode): TableColumnsType<ImportSheetOutcome> {
     { title: 'Rows', dataIndex: 'rows', width: 80, align: 'right' },
     { title: 'New', dataIndex: 'created', width: 90, align: 'right', render: count('success') },
     ...(mode === 'upsert'
-      ? [{ title: 'Updated', dataIndex: 'updated', width: 100, align: 'right' as const, render: count('processing') }]
+      ? [{ title: 'Updated', dataIndex: 'updated', width: 100, align: 'right' as const, render: count('info') }]
       : []),
     { title: mode === 'upsert' ? 'Unchanged' : 'Already there', dataIndex: 'existing', width: 120, align: 'right' },
-    { title: 'Rows with errors', dataIndex: 'failed', width: 140, align: 'right', render: count('error') },
+    { title: 'Rows with errors', dataIndex: 'failed', width: 140, align: 'right', render: count('danger') },
   ];
 }
 
@@ -76,7 +84,11 @@ const problemColumns: TableColumnsType<ImportProblem> = [
     dataIndex: 'severity',
     width: 90,
     render: (value: ImportProblem['severity']) =>
-      value === 'error' ? <Tag color="error">Error</Tag> : <Tag color="warning">Warning</Tag>,
+      value === 'error' ? (
+        <span className={`${styles.badge} ${styles.danger}`}>Error</span>
+      ) : (
+        <span className={`${styles.badge} ${styles.warning}`}>Warning</span>
+      ),
   },
   { title: 'Sheet', dataIndex: 'sheet', width: 160 },
   { title: 'Row', dataIndex: 'row', width: 70, render: (value: number | null) => value ?? '—' },

@@ -16,6 +16,7 @@ import dayjs from 'dayjs';
 import { filterResourceOption } from '@/components/inputs/ResourceOption';
 import { isEquipmentErrorNotified } from '../../utils/equipmentNotifications';
 import { parseFormApiError } from '../../utils/formApiError';
+import { buildEditFormValues, computeAsyncInitialPatch, isRecord } from '../../utils/formInitialSync';
 import { buildRequiredFieldRules } from '../../utils/formValidation';
 import { RESOURCE_IMAGE_ACCEPT, validateResourceImage } from '@/shared/lib/api/resourceImage';
 import styles from './EquipmentFormModal.module.css';
@@ -94,27 +95,6 @@ const SECTION_ORDER = [
     'Identification', 'Classification', 'Ownership', 'Location', 'Layout',
     'Specifications', 'License terms', 'Lifecycle', 'Notes',
 ];
-
-type SelectLikeValue = string | number;
-type UnknownRecord   = Record<string, unknown>;
-
-const isRecord = (value: unknown): value is UnknownRecord =>
-    typeof value === 'object' && value !== null && !Array.isArray(value);
-
-const normalizeSelectLikeValue = (value: unknown): SelectLikeValue | undefined => {
-    if (typeof value === 'string' || typeof value === 'number') return value;
-    if (!isRecord(value)) return undefined;
-    const directCandidates = [value.id, value.value, value.pk];
-    for (const candidate of directCandidates) {
-        if (typeof candidate === 'string' || typeof candidate === 'number') return candidate;
-    }
-    for (const [key, candidate] of Object.entries(value)) {
-        if (key.endsWith('_id') && (typeof candidate === 'string' || typeof candidate === 'number')) {
-            return candidate;
-        }
-    }
-    return undefined;
-};
 
 /** Resource options carry a one-line `selectedLabel` for the closed select (their list label has two lines). */
 const resourceSelectProps = (options?: SelectFieldOption[]) =>
@@ -254,6 +234,8 @@ export default function EquipmentFormModal({
     const [imagePreview,  setImagePreview]  = useState<string | null>(null);
     const [imageRemoved,  setImageRemoved]  = useState(false);
     const dirty = useRef(false);
+    const touchedFields = useRef<Set<string>>(new Set());
+    const syncedRawInitials = useRef<Record<string, unknown>>({});
     const hadImageRef = useRef(false);
     const [submitting,    setSubmitting]    = useState(false);
     const [detailsOpen,   setDetailsOpen]   = useState(false);
@@ -272,46 +254,53 @@ export default function EquipmentFormModal({
     useEffect(() => {
         if (!open) {
             initialized.current = null;
+            touchedFields.current.clear();
+            syncedRawInitials.current = {};
             return;
         }
         const recordId = mode === 'edit' ? (initialValues as { id?: unknown } | undefined)?.id : undefined;
-        if (initialized.current?.mode === mode && initialized.current.recordId === recordId) return;
-        initialized.current = { mode, recordId };
-        if (open) {
-            form.resetFields();
-            dirty.current = false;
-            setImageFile(null);
-            setImageRemoved(false);
-            hadImageRef.current = mode === 'edit' && Boolean((initialValues as { image?: unknown } | undefined)?.image);
-            setDetailsOpen(mode === 'edit');
+        if (initialized.current?.mode === mode && initialized.current.recordId === recordId) {
             if (mode === 'edit' && initialValues) {
-                const record = initialValues as Record<string, unknown>;
-                const formValues: Record<string, unknown> = {};
-                for (const field of fieldsRef.current) {
-                    const raw = record[field.name];
-                    if (field.type === 'date' || field.type === 'datetime' || field.type === 'quarter') {
-                        formValues[field.name] = raw ? dayjs(raw as string) : null;
-                    } else if (field.type === 'json-object' || field.type === 'json') {
-                        formValues[field.name] = raw == null ? undefined : JSON.stringify(raw, null, 2);
-                    } else if (field.type === 'select') {
-                        formValues[field.name] = normalizeSelectLikeValue(raw) ?? undefined;
-                    } else if (field.type === 'multi-select' && Array.isArray(raw)) {
-                        formValues[field.name] = raw
-                            .map((item) => normalizeSelectLikeValue(item))
-                            .filter((item): item is SelectLikeValue => item !== undefined);
-                    } else {
-                        formValues[field.name] = raw ?? undefined;
+                const { patch, nextRaw } = computeAsyncInitialPatch({
+                    fields: fieldsRef.current,
+                    record: initialValues as Record<string, unknown>,
+                    previousRaw: syncedRawInitials.current,
+                    touchedFields: touchedFields.current,
+                });
+                syncedRawInitials.current = nextRaw;
+                if (Object.keys(patch).length > 0) {
+                    form.setFieldsValue(patch);
+                    const hasDependentChild = fieldsRef.current.some((field) =>
+                        field.dependsOn?.some((parent) => parent in patch),
+                    );
+                    if (hasDependentChild) {
+                        valuesChangeRef.current?.(form.getFieldsValue(true) as Record<string, unknown>);
                     }
                 }
-                form.setFieldsValue(formValues);
-                valuesChangeRef.current?.(formValues);
-                setImagePreview((record.image as string) || null);
-            } else {
-                setImagePreview(null);
-                valuesChangeRef.current?.({ ...initialValues });
             }
+            return;
         }
-    }, [open, mode, initialValues, form, professionalForm]);
+        initialized.current = { mode, recordId };
+        touchedFields.current.clear();
+        syncedRawInitials.current = {};
+        form.resetFields();
+        dirty.current = false;
+        setImageFile(null);
+        setImageRemoved(false);
+        hadImageRef.current = mode === 'edit' && Boolean((initialValues as { image?: unknown } | undefined)?.image);
+        setDetailsOpen(mode === 'edit');
+        if (mode === 'edit' && initialValues) {
+            const record = initialValues as Record<string, unknown>;
+            const { formValues, rawSnapshot } = buildEditFormValues(fieldsRef.current, record);
+            syncedRawInitials.current = rawSnapshot;
+            form.setFieldsValue(formValues);
+            valuesChangeRef.current?.(formValues);
+            setImagePreview((record.image as string) || null);
+        } else {
+            setImagePreview(null);
+            valuesChangeRef.current?.({ ...initialValues });
+        }
+    }, [open, mode, initialValues, fields, form, professionalForm]);
 
     const handleOk = async () => {
         let submittedValues: Record<string, unknown> | undefined;
@@ -417,7 +406,10 @@ export default function EquipmentFormModal({
                 expanded = true;
             }
         }
-        if (changed.has('room')) form.setFieldValue('slot_code', undefined);
+        if (changed.has('room')) {
+            changed.add('slot_code');
+            form.setFieldValue('slot_code', undefined);
+        }
 
         // Auto-calculate setup_capacity from rows × cols (Room)
         if (changed.has('rows') || changed.has('cols')) {
@@ -425,11 +417,15 @@ export default function EquipmentFormModal({
             const hasCols = fields.some((field) => field.name === 'cols');
             const hasCapacity = fields.some((field) => field.name === 'setup_capacity');
             if (hasRows && hasCols && hasCapacity) {
+                changed.add('setup_capacity');
                 const rows = Number(allValues.rows);
                 const cols = Number(allValues.cols);
                 form.setFieldValue('setup_capacity', Number.isFinite(rows) && Number.isFinite(cols) && rows > 0 && cols > 0
                     ? rows * cols : undefined);
             }
+        }
+        for (const key of changed) {
+            touchedFields.current.add(key);
         }
         if (shouldNotifyParent) {
             onValuesChange?.(form.getFieldsValue(true) as Record<string, unknown>);
