@@ -1,10 +1,12 @@
-import { BellOutlined, CheckCircleOutlined, CloseOutlined, EyeOutlined, HourglassOutlined } from '@ant-design/icons';
+import { BellOutlined, CheckCircleOutlined, CloseOutlined, EyeOutlined, HourglassOutlined, TeamOutlined } from '@ant-design/icons';
 import { Button, Popconfirm, Tooltip } from 'antd';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { notify } from '@/shared/notifications';
 import { extractBookingErrorMessage } from '@/shared/utils/booking';
 import { alertPhase, formatAlertTime, formatAlertWindow, type ISlotWatch } from '../slotWatchMapper';
 import { useCancelSlotWatchMutation } from '../slotWatchApi';
+import { SlotTimeline } from './SlotTimeline';
 import styles from './SlotAlerts.module.css';
 
 type Phase = 'following' | 'watching' | 'upcoming' | 'notified';
@@ -33,6 +35,50 @@ function describe(watch: ISlotWatch, phase: Phase): string {
   if (phase === 'notified') return `Alert sent ${watch.updatedAt ? formatAlertTime(watch.updatedAt) : ''}`.trim();
   if (phase === 'following') return `Booking ends ${formatAlertTime(watch.endsAt)} · one alert`;
   return formatAlertWindow(watch.startsAt, watch.endsAt);
+}
+
+/** Timeline, next free time (with Book when free now) and how many others are watching. */
+function AvailabilityDetails({ watch }: { watch: ISlotWatch }) {
+  const availability = watch.availability!;
+  // Read once per render of the row; the list refetches on focus, so it stays current.
+  const [now] = useState(() => Date.now());
+  const freeNow =
+    availability.nextFreeStartsAt !== null && new Date(availability.nextFreeStartsAt).getTime() <= now + 60_000;
+  const bookLink =
+    availability.nextFreeStartsAt && availability.nextFreeEndsAt && watch.benchId
+      ? `/booking-calendar?${new URLSearchParams({
+          action: 'create',
+          bench_ids: String(watch.benchId),
+          starts_at: availability.nextFreeStartsAt,
+          ends_at: availability.nextFreeEndsAt,
+        }).toString()}`
+      : null;
+  return (
+    <div className={styles.availability}>
+      <SlotTimeline availability={availability} />
+      <div className={styles.availabilityLine}>
+        <span className={styles.nextFree} data-free-now={freeNow}>
+          {availability.nextFreeStartsAt && availability.nextFreeEndsAt
+            ? freeNow
+              ? `Free now until ${formatAlertTime(availability.nextFreeEndsAt)}`
+              : `Next free ${formatAlertTime(availability.nextFreeStartsAt)} – ${formatAlertTime(availability.nextFreeEndsAt)}`
+            : 'Fully booked for this time'}
+        </span>
+        {availability.watcherCount > 0 && (
+          <Tooltip title="Other people with an alert for this bench and time. The first to book gets it.">
+            <span className={styles.demand}>
+              <TeamOutlined aria-hidden /> {availability.watcherCount} other{availability.watcherCount === 1 ? '' : 's'} watching
+            </span>
+          </Tooltip>
+        )}
+        {freeNow && bookLink && (
+          <Link to={bookLink} className={styles.bookNow}>
+            Book now
+          </Link>
+        )}
+      </div>
+    </div>
+  );
 }
 
 type Props = { watch: ISlotWatch; onDismiss?: (id: number) => void };
@@ -66,6 +112,7 @@ export function SlotAlertRow({ watch, onDismiss }: Props) {
           </span>
         </div>
         <div className={styles.meta}>{describe(watch, phase)}</div>
+        {watch.availability && <AvailabilityDetails watch={watch} />}
       </div>
       {phase === 'notified' ? (
         <div className={styles.rowActions}>
