@@ -20,7 +20,7 @@ test('coordinator navigation retains all destinations and promotes frequent page
   const sections = getNavigationSections(everything);
   assert.equal(sections.length, 11);
   const paths = sections.flatMap(({ pages }) => pages.map(({ path }) => path));
-  assert.equal(paths.length, 30);
+  assert.equal(paths.length, 31);
   assert.equal(new Set(paths).size, paths.length);
   assert.deepEqual(sections.slice(0, 5).map(({ pages }) => pages[0].path), [
     '/dashboard', '/dashboard/3d', '/leaderboard', '/booking-calendar', '/my-bookings',

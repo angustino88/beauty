@@ -46,3 +46,10 @@ test('station mapper maps lifecycle_status, access_policy, condition, availabili
   assert.equal(result.slots?.[1].service_status, 'out_of_service');
   assert.equal(result.slots?.[1].occupied, true);
 });
+
+test('station list preserves pagination totals for room inventory loading', async () => {
+  const { mapStationListApiResponse } = await import('./mapper.ts');
+  const result = mapStationListApiResponse({ data: [{ id: 1 }], meta: { pagination: { count: 150 } } });
+  assert.equal(result.total_count, 150);
+  assert.equal(result.data.length, 1);
+});

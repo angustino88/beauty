@@ -56,6 +56,8 @@ export function mapStationApiItem(raw: unknown): IStation {
     uid: asNullableString(st.uid) ?? undefined,
     sku: asString(st.sku),
     name: asString(st.name || st.station_name),
+    type: isRecord(st.type) ? { id: asNumber(st.type.id), name: asString(st.type.name) } : null,
+    orientation_degrees: asNumber(st.orientation_degrees),
     room: room
       ? {
           id: asNumber(room.id),
@@ -122,7 +124,8 @@ export function mapStationListApiResponse(response: unknown): IStationListRespon
 
   if (Array.isArray(data)) {
     return {
-      total_count: data.length,
+      total_count: isRecord(envelope.meta) && isRecord(envelope.meta.pagination)
+        ? asNumber(envelope.meta.pagination.count, data.length) : data.length,
       data: data.map(mapStationApiItem),
     };
   }

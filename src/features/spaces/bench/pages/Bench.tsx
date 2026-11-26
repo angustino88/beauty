@@ -1,3 +1,4 @@
+import { useVisualModelField } from "@/features/interactive-dashboard/models/useVisualModelField";
 import { useLabsBenchTypesOptionsRetrieveQuery, useLabsStationsOptionsRetrieveQuery, useLabsStationsSlotsRetrieveByStationIdQuery } from "@/shared/api/generated/api";
 import { WorkbookImportButton } from "@/features/data-import";
 import { useGetUsersQuery } from "@/features/lab-equipment/shared";
@@ -37,6 +38,7 @@ export default function BenchPage() {
 
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editingBench, setEditingBench] = useState<IBench | null>(null);
+  const visualModel = useVisualModelField("benches", editingBench?.id ?? null);
   const [deleteModal, setDeleteModal] = useState<{ item: IBench; mode: GuardedDeleteInitialMode } | null>(null);
   const [managingBench, setManagingBench] = useState<IBench | null>(null);
 
@@ -230,7 +232,7 @@ export default function BenchPage() {
         open={editingBench !== null}
         mode="edit"
         title="Edit Bench"
-        fields={formFields}
+        fields={visualModel.field ? [...formFields, visualModel.field] : formFields}
         onValuesChange={handleFormValues}
         initialValues={editingBench ? {
           ...editingBench,
@@ -239,6 +241,7 @@ export default function BenchPage() {
           type_id: editingBench.bench_type?.id,
           setup_location_id: editingBench.setup_location_id ?? editingBench.station?.id,
           station_slot_id: editingBench.station_slot_id,
+          visual_model_id: visualModel.value,
         } : undefined}
         onSubmit={async (values, imageFile) => {
           if (!editingBench) return;
@@ -259,6 +262,7 @@ export default function BenchPage() {
             payload.station_slot_id = nextSlot;
           }
           await form.updateInline(editingBench.id, payload);
+          await visualModel.save(editingBench.id, values.visual_model_id);
           if (imageFile) await form.updateImage(editingBench.id, imageFile);
           else if (imageFile === null) await form.removeImage(editingBench.id);
           setEditingBench(null);

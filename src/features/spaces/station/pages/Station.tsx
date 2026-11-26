@@ -1,3 +1,4 @@
+import { useVisualModelField } from "@/features/interactive-dashboard/models/useVisualModelField";
 import { useGetUsersQuery } from "@/features/lab-equipment/shared";
 import { WorkbookImportButton } from "@/features/data-import";
 import { toResourceOption } from "@/components/inputs/ResourceOption";
@@ -35,6 +36,7 @@ export default function StationPage() {
 
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editingStation, setEditingStation] = useState<IStation | null>(null);
+  const visualModel = useVisualModelField("stations", editingStation?.id ?? null);
   const [deleteModal, setDeleteModal] = useState<{ item: IStation; mode: GuardedDeleteInitialMode } | null>(null);
   const [historyId, setHistoryId] = useState<number | null>(null);
   const [historyPage, setHistoryPage] = useState(1);
@@ -224,13 +226,14 @@ export default function StationPage() {
         open={editingStation !== null}
         mode="edit"
         title="Edit Station"
-        fields={formFields}
+        fields={visualModel.field ? [...formFields, visualModel.field] : formFields}
         onValuesChange={handleFormValues}
         initialValues={editingStation ? {
           ...editingStation,
           ...ownershipFormValues(editingStation),
           type_id: editingStation.station_type?.id,
           room_id: editingStation.room?.id ?? editingStation.room_id,
+          visual_model_id: visualModel.value,
         } : undefined}
         onSubmit={async (values, imageFile) => {
           if (!editingStation) return;
@@ -253,6 +256,7 @@ export default function StationPage() {
           };
           await form.updateInline(editingStation.id, payload);
           await form.syncSlots(editingStation.id, values.bench_capacity);
+          await visualModel.save(editingStation.id, values.visual_model_id);
           if (imageFile) await form.updateImage(editingStation.id, imageFile);
           else if (imageFile === null) await form.removeImage(editingStation.id);
           setEditingStation(null);

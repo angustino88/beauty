@@ -61,6 +61,21 @@ export const stationApi = baseApi.injectEndpoints({
       query: (id) => ({ url: resourceImageUrl("stations", id), method: "DELETE" }),
       invalidatesTags: (_r, _e, id) => [...generateItemTag(TAG, id), ...invalidateList(TAG)],
     }),
+    // Load every page in the selected room so models never depend on a global first page.
+    getDashboardStations: build.query<IStationListResponse, number>({
+      async queryFn(roomId, _api, _extra, fetchWithBQ) {
+        const stations: IStation[] = [];
+        for (let page = 1; ; page++) {
+          const response = await fetchWithBQ({ url: ENDPOINTS.LIST, params: { room_id: roomId, page, page_size: 100, ordering: 'id' } });
+          if (response.error) return { error: response.error };
+          const batch = mapStationListApiResponse(response.data);
+          stations.push(...batch.data);
+          if (!batch.data.length || stations.length >= batch.total_count) break;
+        }
+        return { data: { data: stations, total_count: stations.length } };
+      },
+      providesTags: (result) => generateListTags(TAG, result),
+    }),
     getStations: build.query<IStationListResponse, IStationParams>({
       query: (params) => {
         const queryParams = new URLSearchParams();
@@ -256,6 +271,7 @@ export const stationApi = baseApi.injectEndpoints({
 
 export const {
   useGetStationsQuery,
+  useGetDashboardStationsQuery,
   useGetStationByIdQuery,
   useCreateStationMutation,
   useUpdateStationMutation,

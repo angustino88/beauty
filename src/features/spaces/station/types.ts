@@ -30,6 +30,8 @@ export interface IStation extends LocationState {
   uid?: string;
   sku: string;
   name: string;
+  type?: { id: number; name: string } | null;
+  orientation_degrees?: number;
   room?: IStationRoomRef | null;
   room_id?: number | null;
   slot_id?: number | null;

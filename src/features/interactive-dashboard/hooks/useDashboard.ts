@@ -8,7 +8,7 @@ import {
   useGetRoomsQuery,
 } from "@/features/spaces/room/api";
 import {
-  useGetStationsQuery,
+  useGetDashboardStationsQuery,
   usePlaceStationMutation,
 } from "@/features/spaces/station/api";
 import type { IStation } from "@/features/spaces/station/types";
@@ -18,11 +18,11 @@ import {
   toRackData,
   toRoomSlug,
 } from "../utils/rackMapper";
-import { nearestAvailableSlot, toSlotAnchors } from "../utils/slotGrid";
-import type { RackData, SlotAnchor } from "../types";
+import { floorSpec, nearestAvailableSlot, toSlotAnchors } from "../utils/slotGrid";
+import { withStationInfo } from "../utils/rackMapper";
+import type { FloorSpec, RackData, SlotAnchor } from "../types";
 
 const ROOM_QUERY = { page: 1, page_size: 100, ordering: "id" } as const;
-const RACK_QUERY = { page: 1, page_size: 100, ordering: "id" } as const;
 const PINNED_KEY = "rackPinnedIds";
 
 function loadPinned(): number[] {
@@ -82,12 +82,9 @@ export function useDashboard() {
   const { roomSlug } = useParams<{ roomSlug?: string }>();
   const { data: roomsData, isLoading: roomsLoading } =
     useGetRoomsQuery(ROOM_QUERY);
-  const { data: racksData, isLoading: racksLoading } =
-    useGetStationsQuery(RACK_QUERY);
   const [placeRack] = usePlaceStationMutation();
 
   const rooms = useMemo(() => roomsData?.data ?? [], [roomsData?.data]);
-  const allRacks = useMemo(() => racksData?.data ?? [], [racksData?.data]);
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [pinnedIds, setPinnedIds] = useState<number[]>(loadPinned);
@@ -113,26 +110,30 @@ export function useDashboard() {
   }, [currentIndex, navigate, roomSlug, rooms]);
 
   const currentRoom = rooms[currentIndex] ?? null;
+  const { currentData: racksData, isFetching: racksLoading } = useGetDashboardStationsQuery(currentRoom?.id ?? skipToken);
+  const allRacks = useMemo(() => racksData?.data ?? [], [racksData?.data]);
   const {
-    data: layoutData,
+    currentData: layoutData,
     isLoading: layoutLoading,
     refetch: refetchLayout,
   } = useGetRoomDashboardLayoutQuery(currentRoom?.id ?? skipToken);
 
-  const slotAnchors: SlotAnchor[] = useMemo(
+  const floor: FloorSpec = useMemo(
     () =>
-      toSlotAnchors(
+      floorSpec(
+        {
+          rows: layoutData?.room.rows ?? currentRoom?.rows,
+          cols: layoutData?.room.cols ?? currentRoom?.cols,
+          width_m: layoutData?.room.width_m,
+          length_m: layoutData?.room.length_m,
+        },
         layoutData?.slots ?? [],
-        layoutData?.room.rows ?? currentRoom?.rows,
-        layoutData?.room.cols ?? currentRoom?.cols,
       ),
-    [
-      layoutData?.room.cols,
-      layoutData?.room.rows,
-      layoutData?.slots,
-      currentRoom?.cols,
-      currentRoom?.rows,
-    ],
+    [layoutData?.room, layoutData?.slots, currentRoom?.cols, currentRoom?.rows],
+  );
+  const slotAnchors: SlotAnchor[] = useMemo(
+    () => toSlotAnchors(layoutData?.slots ?? [], floor),
+    [layoutData?.slots, floor],
   );
 
   useEffect(() => {
@@ -160,7 +161,17 @@ export function useDashboard() {
           currentRoom,
         );
       const anchor = slotByCode.get(slot.slot_code);
-      next.push(toRackData(detail, anchor?.position ?? null, slot.slot_code));
+      next.push(
+        withStationInfo(
+          {
+            ...toRackData(detail, anchor?.position ?? null, slot.slot_code, { trueScale: floor.measured }),
+            slots: layoutData.contents && (layoutData.contents[detail.id] ?? []),
+            visualModelId: layoutData.station_models?.[detail.id] ?? null,
+          },
+          layoutData.stations?.[detail.id],
+          floor.measured ? anchor?.rotation : undefined,
+        ),
+      );
     }
 
     for (const rack of layoutData.unplaced_racks) {
@@ -171,7 +182,7 @@ export function useDashboard() {
     }
 
     setRackState(next);
-  }, [allRacks, currentRoom, layoutData, slotAnchors]);
+  }, [allRacks, currentRoom, layoutData, slotAnchors, floor.measured]);
 
   const moveRack = useCallback(
     (id: number, position: [number, number, number]) => {
@@ -309,6 +320,8 @@ export function useDashboard() {
     goPrev,
     goNext,
     slotAnchors,
+    floor,
+    roomConditions: layoutData?.room.conditions ?? null,
     pinnedIds,
     togglePin,
   };
