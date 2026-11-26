@@ -12,6 +12,7 @@ export interface ISlotWatch {
   status: SlotWatchStatus;
   statusLabel: string;
   createdAt: string | null;
+  updatedAt: string | null;
 }
 
 export interface SlotWatchCreateRequest {
@@ -29,6 +30,7 @@ export type RawSlotWatch = {
   followed_booking_id?: number | null;
   status?: ChoiceRef;
   created_at?: string | null;
+  updated_at?: string | null;
 };
 
 export const mapSlotWatch = (raw: RawSlotWatch): ISlotWatch => ({
@@ -41,6 +43,7 @@ export const mapSlotWatch = (raw: RawSlotWatch): ISlotWatch => ({
   status: (raw.status?.value as SlotWatchStatus) ?? 'active',
   statusLabel: raw.status?.label ?? 'Active',
   createdAt: raw.created_at ?? null,
+  updatedAt: raw.updated_at ?? null,
 });
 
 const dayLabel = (value: Date, now: Date): string => {

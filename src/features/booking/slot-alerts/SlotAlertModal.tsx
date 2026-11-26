@@ -3,7 +3,6 @@ import { DatePicker, Form, Modal, Select } from 'antd';
 import dayjs, { type Dayjs } from 'dayjs';
 import { useEffect, useMemo, useState } from 'react';
 import { filterResourceOption } from '@/components/inputs/ResourceOption';
-import { DATETIMEFORMAT } from '@/shared/utils/booking';
 import { useGetBookingBenchChoicesQuery } from '../api';
 import { formatAlertWindow } from '../slotWatchMapper';
 import { toBenchChoiceOption } from '../utils/benchChoiceOption';
@@ -64,7 +63,7 @@ export function SlotAlertModal({ open, onClose, initial }: SlotAlertModalProps) 
       onCancel={onClose}
       onOk={() => form.submit()}
       confirmLoading={submitting}
-      okText="Create alert"
+      okText="Set alert"
       cancelText="Cancel"
       className={bookingStyles.bookingModal}
       destroyOnHidden
@@ -72,7 +71,7 @@ export function SlotAlertModal({ open, onClose, initial }: SlotAlertModalProps) 
       title={
         <div className={bookingStyles.modalTitle}>
           <BellOutlined />
-          <div>New slot alert</div>
+          <div>New alert</div>
         </div>
       }
     >
@@ -90,7 +89,7 @@ export function SlotAlertModal({ open, onClose, initial }: SlotAlertModalProps) 
         <Form.Item
           label="When do you need it?"
           name="range"
-          extra="Pick a preset or set your own start and end."
+          extra="Choose a preset or set your own start and end."
           rules={[
             { required: true, message: 'Choose when you need the bench' },
             {
@@ -106,7 +105,7 @@ export function SlotAlertModal({ open, onClose, initial }: SlotAlertModalProps) 
         >
           <DatePicker.RangePicker
             showTime={{ format: 'HH:mm', minuteStep: 15 }}
-            format={DATETIMEFORMAT}
+            format="MMM D, HH:mm"
             presets={presets()}
             style={{ width: '100%' }}
             disabledDate={(date) => date.isBefore(dayjs().startOf('day'))}
@@ -118,14 +117,13 @@ export function SlotAlertModal({ open, onClose, initial }: SlotAlertModalProps) 
         <div>
           {benchName && range?.[0] && range?.[1] ? (
             <>
-              We'll alert you when <strong>{benchName}</strong> has free time{' '}
-              <strong>{formatAlertWindow(range[0].toISOString(), range[1].toISOString())}</strong>
-              {' '}— when the current booking is about to end, or is cancelled or finished early.
+              You'll be notified when <strong>{benchName}</strong> becomes free during{' '}
+              <strong>{formatAlertWindow(range[0].toISOString(), range[1].toISOString())}</strong>.
             </>
           ) : (
-            <>We'll alert you when the booking in your way is about to end, or is cancelled or finished early.</>
+            <>You'll be notified when the bench becomes free during the time you choose.</>
           )}{' '}
-          Alerts arrive in Lab Mango, by email and in Teams. The slot isn't held, so book it as soon as you're notified.
+          Alerts arrive in Lab Mango, by email and in Teams, with a link to book. The slot isn't reserved for you.
         </div>
       </div>
     </Modal>

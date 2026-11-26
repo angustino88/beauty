@@ -6,6 +6,8 @@ export interface NotificationItem {
     message:       string;
     details?:      string;
     message_type?: string;
+    /** In-app path for the primary action (e.g. open a prefilled booking). */
+    action_path?:  string;
     created?:      string;
 }
 

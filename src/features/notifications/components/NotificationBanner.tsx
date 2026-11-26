@@ -1,5 +1,6 @@
-import { Button } from "antd";
+import { Button, Space } from "antd";
 import { useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import { useAppSelector } from "@/app/store";
 import { SystemBanner, type NotificationVariant } from "@/shared/notifications";
 import { notificationActions } from "../notificationSlice";
@@ -11,8 +12,16 @@ const TYPE_MAP: Record<string, NotificationVariant> = {
   error: "error",
 };
 
+/** Only follow links that stay inside the app. */
+const isInAppPath = (path?: string): path is string =>
+  !!path && path.startsWith("/") && !path.startsWith("//");
+
+/** Label for a notification's primary action, by where it leads. */
+const actionLabel = (path: string) => (path.startsWith("/booking-calendar") ? "Book now" : "Open");
+
 export function NotificationBanner() {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const items = useAppSelector((state) => state.notifications.items);
   if (items.length === 0) return null;
 
@@ -40,14 +49,30 @@ export function NotificationBanner() {
             dispatch(notificationActions.removeNotification(item.id))
           }
           action={
-            items.length > 1 && index === 0 ? (
-              <Button
-                size="small"
-                type="text"
-                onClick={() => dispatch(notificationActions.clearNotifications())}
-              >
-                Dismiss all ({items.length})
-              </Button>
+            isInAppPath(item.action_path) || (items.length > 1 && index === 0) ? (
+              <Space size={4}>
+                {isInAppPath(item.action_path) && (
+                  <Button
+                    size="small"
+                    type="primary"
+                    onClick={() => {
+                      dispatch(notificationActions.removeNotification(item.id));
+                      navigate(item.action_path as string);
+                    }}
+                  >
+                    {actionLabel(item.action_path)}
+                  </Button>
+                )}
+                {items.length > 1 && index === 0 && (
+                  <Button
+                    size="small"
+                    type="text"
+                    onClick={() => dispatch(notificationActions.clearNotifications())}
+                  >
+                    Dismiss all ({items.length})
+                  </Button>
+                )}
+              </Space>
             ) : undefined
           }
         />

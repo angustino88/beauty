@@ -41,16 +41,16 @@ export function useSlotAlert() {
           starts_at: toApi(start),
           ends_at: toApi(target.endsAt),
         }).unwrap();
-        notify.success('Slot alert is on', {
-          description: `We'll let you know as soon as ${watch.benchName} frees up (${formatAlertWindow(
+        notify.success(`Alert set for ${watch.benchName}`, {
+          description: `We'll notify you in Lab Mango, by email and in Teams as soon as it's free during ${formatAlertWindow(
             watch.startsAt,
             watch.endsAt,
-          )}).`,
+          )}.`,
           duration: 5000,
         });
         return true;
       } catch (error) {
-        notify.error("Couldn't set the slot alert", {
+        notify.error("Couldn't set the alert", {
           description: extractBookingErrorMessage(error, 'Please try again in a moment.'),
         });
         return false;
@@ -68,10 +68,10 @@ export function useSlotAlert() {
     async (bookingId: number): Promise<boolean> => {
       try {
         const watch = await follow(bookingId).unwrap();
-        notify.success("You're following this booking", {
-          description: `We'll send you one alert as soon as ${watch.benchName} frees up — when the booking is about to end (now ${formatAlertTime(
+        notify.success("You'll be notified when this booking ends", {
+          description: `${watch.benchName} is booked until ${formatAlertTime(
             watch.endsAt,
-          )}), finishes early, or is cancelled.`,
+          )}. We'll send one alert when it's about to end, finishes early, or is cancelled.`,
           duration: 5000,
         });
         return true;

@@ -8,10 +8,14 @@ const unwrap = (res: unknown): RawSlotWatch => (res as { data: RawSlotWatch }).d
 export const slotWatchApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
     // GET /api/labs/bench-slot-watches — the caller's own slot alerts
-    getSlotWatches: build.query<ISlotWatch[], { status?: SlotWatchStatus } | void>({
+    getSlotWatches: build.query<ISlotWatch[], { status?: SlotWatchStatus; updatedAfter?: string } | void>({
       query: (arg) => ({
         url: '/api/labs/bench-slot-watches',
-        params: { page_size: 100, ...(arg?.status ? { status: arg.status } : {}) },
+        params: {
+          page_size: 100,
+          ...(arg?.status ? { status: arg.status } : {}),
+          ...(arg?.updatedAfter ? { updated_after: arg.updatedAfter } : {}),
+        },
       }),
       transformResponse: (res: unknown) => ((res as { data?: RawSlotWatch[] }).data ?? []).map(mapSlotWatch),
       providesTags: (result) => [

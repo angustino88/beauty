@@ -7,12 +7,12 @@ export function SlotAlertsEmpty({ onCreate }: { onCreate: () => void }) {
     <div className={styles.empty}>
       <BellOutlined className={styles.emptyIcon} />
       <div>
-        <strong>No slot alerts yet.</strong>
+        <strong>No alerts</strong>
         <br />
-        Need a bench that's taken? We'll tell you the moment it frees up.
+        Need a bench that's booked? Set an alert and we'll notify you when it becomes free.
       </div>
       <Button type="primary" icon={<PlusOutlined />} onClick={onCreate}>
-        Create slot alert
+        New alert
       </Button>
     </div>
   );

@@ -12,7 +12,7 @@ export function FollowBookingButton({ bookingId, size, type = 'default', block }
 
   if (findFollow(bookingId)) {
     return (
-      <Tooltip title="You'll get one alert when this booking ends. Manage alerts from the Dashboard.">
+      <Tooltip title="You'll be notified when this booking ends. Manage alerts on the Dashboard.">
         <Button size={size} block={block} icon={<BellFilled />} disabled>
           Following
         </Button>
@@ -21,7 +21,7 @@ export function FollowBookingButton({ bookingId, size, type = 'default', block }
   }
 
   return (
-    <Tooltip title="One alert in Lab Mango, by email and in Teams when this booking is about to end, finishes early, or is cancelled">
+    <Tooltip title="Get one alert when this booking is about to end, finishes early, or is cancelled">
       <Button
         size={size}
         type={type}

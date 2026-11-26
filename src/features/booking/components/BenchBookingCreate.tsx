@@ -107,8 +107,8 @@ export const BenchBookingCreate: React.FC<CustomModalProps> = ({
             // The bench is taken for that time: offer an alert for when it frees up.
             confirmAction({
               title: 'This time is already booked',
-              description: `${description} Want us to notify you if it frees up? You'll get an alert in Lab Mango, by email and in Teams.`,
-              confirmText: 'Notify me when free',
+              description: `${description} We can notify you if this time becomes free.`,
+              confirmText: 'Notify me',
               cancelText: 'Not now',
               onConfirm: async () => {
                 if (values.bench_id && (await createAlert({ benchId: values.bench_id, startsAt, endsAt }))) {

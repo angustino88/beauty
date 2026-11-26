@@ -43,17 +43,17 @@
 
 .title {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  gap: 2px 8px;
   color: var(--lm-text);
   font-weight: 600;
   font-size: 14px;
 }
 
 .titleText {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .meta {
@@ -135,11 +135,6 @@
   background: var(--lm-neutral-bg);
 }
 
-.cardSubtitle {
-  margin: 2px 0 0;
-  color: var(--lm-text-secondary);
-  font-size: 13px;
-}
 
 .cardGrid {
   display: grid;
@@ -184,4 +179,89 @@
   color: var(--lm-warning-fg);
   background: var(--lm-warning-bg);
   border-color: var(--lm-warning-border);
+}
+
+.icon[data-phase='notified'] {
+  color: var(--lm-success-fg);
+  background: var(--lm-success-bg);
+}
+
+.badge[data-phase='notified'] {
+  color: var(--lm-success-fg);
+  background: var(--lm-success-bg);
+  border-color: var(--lm-success-border);
+}
+
+.row[data-phase='notified'] {
+  border-color: var(--lm-success-border);
+  background: var(--lm-success-bg);
+}
+
+a.titleText {
+  color: inherit;
+}
+
+a.titleText:hover {
+  color: var(--lm-primary-fg);
+  text-decoration: underline;
+}
+
+.rowActions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.cardActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Empty / loading state on the Dashboard: one quiet line instead of a card. */
+.strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px;
+  padding: 10px 16px;
+  background: var(--lm-surface);
+  border: 1px solid var(--lm-border);
+  border-radius: 12px;
+}
+
+.stripIcon {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  color: var(--lm-primary-fg);
+  background: var(--lm-primary-bg);
+}
+
+.stripText {
+  flex: 1 1 220px;
+  color: var(--lm-text-secondary);
+  font-size: 14px;
+}
+
+.stripText strong {
+  color: var(--lm-text);
+  font-weight: 600;
+}
+
+@media (max-width: 600px) {
+  .card {
+    padding: 14px;
+  }
+
+  .cardGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .row {
+    grid-template-columns: 32px minmax(0, 1fr) auto;
+    gap: 10px;
+  }
 }

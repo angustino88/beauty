@@ -5,6 +5,7 @@ import { useGetSlotWatchesQuery } from '../slotWatchApi';
 import { SlotAlertModal } from './SlotAlertModal';
 import { SlotAlertRow } from './SlotAlertRow';
 import { SlotAlertsEmpty } from './SlotAlertsEmpty';
+import { useRecentlyNotified } from './useRecentlyNotified';
 import styles from './SlotAlerts.module.css';
 
 export type SlotAlertsDrawerProps = { open: boolean; onClose: () => void };
@@ -12,7 +13,9 @@ export type SlotAlertsDrawerProps = { open: boolean; onClose: () => void };
 /** All of the user's active slot alerts. */
 export function SlotAlertsDrawer({ open, onClose }: SlotAlertsDrawerProps) {
   const [creating, setCreating] = useState(false);
-  const { data: watches, isLoading } = useGetSlotWatchesQuery({ status: 'active' }, { skip: !open });
+  const { data: active, isLoading } = useGetSlotWatchesQuery({ status: 'active' }, { skip: !open });
+  const { recent, dismiss } = useRecentlyNotified(open);
+  const watches = [...recent, ...(active ?? [])];
 
   return (
     <Drawer
@@ -33,10 +36,10 @@ export function SlotAlertsDrawer({ open, onClose }: SlotAlertsDrawerProps) {
     >
       {isLoading ? (
         <Skeleton active />
-      ) : watches?.length ? (
+      ) : watches.length ? (
         <div className={styles.list}>
           {watches.map((watch) => (
-            <SlotAlertRow key={watch.id} watch={watch} />
+            <SlotAlertRow key={watch.id} watch={watch} onDismiss={dismiss} />
           ))}
         </div>
       ) : (
