@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  ApiOutlined, AppstoreOutlined, BankOutlined, BarChartOutlined, BuildOutlined,
+  ApiOutlined, AppstoreOutlined, CodeSandboxOutlined, BankOutlined, BarChartOutlined, BuildOutlined,
   BugOutlined, CalendarOutlined, CustomerServiceOutlined, DatabaseOutlined,
   DesktopOutlined, ExperimentOutlined, FileProtectOutlined, HeatMapOutlined,
   HistoryOutlined, HomeOutlined, InboxOutlined, LaptopOutlined, LayoutOutlined,
@@ -20,7 +20,7 @@ export const pageIcons: Record<string, React.ReactNode> = {
   dashboard: <HomeOutlined />, '3d-dashboard': <HeatMapOutlined />, leaderboard: <TrophyOutlined />,
   'booking-calendar': <CalendarOutlined />, 'my-bookings': <HistoryOutlined />,
   mapping: <LayoutOutlined />, rooms: <BankOutlined />, stations: <DatabaseOutlined />,
-  benches: <ExperimentOutlined />, computing: <LaptopOutlined />, display: <DesktopOutlined />,
+  benches: <ExperimentOutlined />, '3d-models': <CodeSandboxOutlined />, computing: <LaptopOutlined />, display: <DesktopOutlined />,
   debugging: <BugOutlined />, networking: <ApiOutlined />, power: <ThunderboltOutlined />,
   accessories: <AppstoreOutlined />, samples: <ExperimentOutlined />, furniture: <SkinOutlined />,
   instruments: <ToolOutlined />, laboratory: <BuildOutlined />, mechanical: <SettingOutlined />,

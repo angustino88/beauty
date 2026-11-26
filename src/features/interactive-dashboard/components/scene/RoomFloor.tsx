@@ -1,10 +1,9 @@
 import * as THREE from 'three';
 import { useEffect, useMemo } from 'react';
-import { computeFloorDimensions } from '../../utils/slotGrid';
+import type { FloorSpec } from '../../types';
 
 interface RoomFloorProps {
-    rows?: number | null;
-    cols?: number | null;
+    floor: FloorSpec;
 }
 
 const FLOOR_Y        = -1.4;
@@ -12,8 +11,8 @@ const THICKNESS      = 0.3;
 const WALL_H         = 0.5;
 const FLOOR_Z_OFFSET = 0.5;
 
-export function RoomFloor({ rows, cols }: RoomFloorProps) {
-    const { floorWidth, floorDepth } = computeFloorDimensions(rows, cols);
+export function RoomFloor({ floor }: RoomFloorProps) {
+    const { floorWidth, floorDepth } = floor;
 
     const HALF_W       = floorWidth  / 2;
     const HALF_D       = floorDepth  / 2;
@@ -40,9 +39,10 @@ export function RoomFloor({ rows, cols }: RoomFloorProps) {
         const tex = new THREE.CanvasTexture(canvas);
         tex.wrapS = THREE.RepeatWrapping;
         tex.wrapT = THREE.RepeatWrapping;
-        tex.repeat.set(floorWidth, floorDepth); // 1 tile per 3D unit
+        // One tile per unit; on a measured plan that is a standard 600 mm raised-floor tile pattern per metre.
+        tex.repeat.set(floor.measured ? floorWidth / 0.6 : floorWidth, floor.measured ? floorDepth / 0.6 : floorDepth);
         return tex;
-    }, [floorWidth, floorDepth]);
+    }, [floorWidth, floorDepth, floor.measured]);
 
     useEffect(() => () => tileTexture.dispose(), [tileTexture]);
 

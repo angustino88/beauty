@@ -112,13 +112,8 @@ function Instrument({
   device: Device;
   selected: boolean;
 }) {
-  const specific = useVisualModel("equipment", device.id);
-  const category = useVisualModel("equipment_category", device.category?.id);
-  const productModel = useVisualModel(
-    "equipment_model",
-    device.product_model?.id,
-  );
-  const model = specific ?? productModel ?? category;
+  // The server resolves the device's own model, then its product model's, then its category's.
+  const model = useVisualModel(device.visual_model_id);
   const fallback = <SchematicInstrument device={device} selected={selected} />;
   return model ? (
     <ImportedModel
@@ -144,9 +139,7 @@ export function BenchAssembly({
   onInspect?: (id: number) => void;
   selected?: number;
 }) {
-  const specific = useVisualModel("bench", bench.id);
-  const shared = useVisualModel("bench", "*");
-  const model = specific ?? shared;
+  const model = useVisualModel(bench.visual_model_id);
   const devices = [...bench.equipment].sort(
     (a, b) =>
       (a.bench_assignment?.position ?? Infinity) -

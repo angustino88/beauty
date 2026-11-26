@@ -1,7 +1,9 @@
 import { Component, Suspense, useMemo, type ReactNode } from "react";
 import { useGLTF } from "@react-three/drei";
+import { useThree } from "@react-three/fiber";
 import { Box3, Vector3 } from "three";
 import type { VisualModel } from "./api";
+import { DRACO_DECODER_PATH, withKtx2 } from "./decoders";
 
 class ModelBoundary extends Component<
   { children: ReactNode; fallback: ReactNode; onError?: () => void },
@@ -28,7 +30,9 @@ function LoadedModel({
   dimensions: [number, number, number];
   children?: (surfaceHeight: number, footprint: [number, number]) => ReactNode;
 }) {
-  const { scene } = useGLTF(model.url, false, false);
+  const gl = useThree((state) => state.gl);
+  // Draco (local decoder), Meshopt (bundled with three) and KTX2 textures; nothing is fetched from a CDN.
+  const { scene } = useGLTF(model.url, DRACO_DECODER_PATH, true, withKtx2(gl));
   const [w, h, d] = dimensions;
   const { object, factor, center, bottom, height, footprint } = useMemo(() => {
     const object = scene.clone(true);
@@ -85,7 +89,11 @@ export function ImportedModel({
   children?: (surfaceHeight: number, footprint: [number, number]) => ReactNode;
 }) {
   return (
-    <ModelBoundary key={props.model.url} fallback={fallback} onError={onError}>
+    <ModelBoundary
+      key={props.model.cacheKey}
+      fallback={fallback}
+      onError={onError}
+    >
       <Suspense fallback={fallback}>
         <LoadedModel {...props} />
       </Suspense>

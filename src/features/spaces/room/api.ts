@@ -15,6 +15,8 @@ import type {
   IRoomDashboardLayout,
   IRoomDashboardRack,
   IRoomDashboardSlot,
+  IDashboardConditions,
+  IDashboardStationInfo,
   IRoomListResponse,
   IRoomParams,
   IRoomPayload,
@@ -96,6 +98,13 @@ function mapDashboardLayout(res: unknown): IRoomDashboardLayout {
         row_index: (s.row_index as number) ?? 0,
         col_index: (s.col_index as number) ?? 0,
         slot_code: (s.slot_code as string) ?? "",
+        x_mm: (s.x_mm as number | null | undefined) ?? null,
+        y_mm: (s.y_mm as number | null | undefined) ?? null,
+        width_mm: (s.width_mm as number | null | undefined) ?? null,
+        depth_mm: (s.depth_mm as number | null | undefined) ?? null,
+        orientation_degrees: (s.orientation_degrees as number | null | undefined) ?? null,
+        slot_type: (s.slot_type as string | undefined) ?? "station",
+        service_status: (s.status as string | undefined) ?? "usable",
         rack: station
           ? {
               id: station.id as number,
@@ -118,9 +127,27 @@ function mapDashboardLayout(res: unknown): IRoomDashboardLayout {
         rows: (room.layout_rows as number) ?? null,
         cols: (room.layout_columns as number) ?? null,
         setup_capacity: roomSlots.length,
+        // Decimals arrive as strings.
+        width_m: room.width_m == null ? null : Number(room.width_m),
+        length_m: room.length_m == null ? null : Number(room.length_m),
+        conditions: (room.conditions as IDashboardConditions | null | undefined) ?? null,
       },
       slots,
       contents: stationContents(data),
+      station_models: Object.fromEntries(
+        stations.map((st) => [st.id as number, (st.visual_model_id as number | null | undefined) ?? null]),
+      ),
+      stations: Object.fromEntries(
+        stations.map((st) => [
+          st.id as number,
+          {
+            capacity: st.capacity as IDashboardStationInfo["capacity"],
+            rack: (st.rack as IDashboardStationInfo["rack"]) ?? [],
+            conditions: (st.conditions as IDashboardConditions | null | undefined) ?? null,
+            layout: st.layout as IDashboardStationInfo["layout"],
+          },
+        ]),
+      ),
       unplaced_racks: unplacedStations,
     };
   }

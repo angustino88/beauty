@@ -27,6 +27,7 @@ export function stationVisual(
     IStation,
     "type" | "width_mm" | "height_mm" | "depth_mm" | "orientation_degrees"
   >,
+  { trueScale = false }: { trueScale?: boolean } = {},
 ) {
   const name = station.type?.name?.trim() || null;
   const tokens = (name ?? "").toLowerCase().split(/[^a-z0-9]+/);
@@ -55,12 +56,10 @@ export function stationVisual(
     dimension(station.height_mm, defaults[1]),
     dimension(station.depth_mm, defaults[2]),
   ];
-  // Schematic view: preserve proportions while fitting any orientation in a grid cell.
-  const scale = Math.min(
-    1,
-    1.85 / Math.hypot(dimensions[0], dimensions[2]),
-    2.8 / dimensions[1],
-  );
+  // Grid view: preserve proportions while fitting any orientation in a cell. A measured plan is true to scale.
+  const scale = trueScale
+    ? 1
+    : Math.min(1, 1.85 / Math.hypot(dimensions[0], dimensions[2]), 2.8 / dimensions[1]);
   return {
     stationType: name,
     modelKind,

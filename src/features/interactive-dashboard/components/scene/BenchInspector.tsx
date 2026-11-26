@@ -10,16 +10,16 @@ export function BenchInspector({
   bench,
   location,
   onClose,
-  stationTypeId,
+  stationModelId,
 }: {
   bench: Bench;
   location: string;
   onClose: () => void;
-  stationTypeId?: number | null;
+  /** The station's model, reused as the work surface when the bench has none of its own. */
+  stationModelId?: number | null;
 }) {
-  const custom = useVisualModel("bench", bench.id);
-  const shared = useVisualModel("bench", "*");
-  const stationModel = useVisualModel("station_type", stationTypeId);
+  const custom = useVisualModel(bench.visual_model_id);
+  const stationModel = useVisualModel(stationModelId);
   const ref = useRef<HTMLDialogElement>(null);
   const [id, setId] = useState<number>();
   const device = bench.equipment.find((item) => item.id === id);
@@ -38,7 +38,6 @@ export function BenchInspector({
         onInspect={setId}
       />
       {!custom &&
-        !shared &&
         [-1.38, 1.38].flatMap((x) =>
           [-0.74, 0.74].map((z) => (
             <Part
@@ -73,7 +72,7 @@ export function BenchInspector({
           <color attach="background" args={["#101d2c"]} />
           <ambientLight intensity={1.5} />
           <directionalLight position={[3, 6, 4]} intensity={2} />
-          {stationModel && !custom && !shared ? (
+          {stationModel && !custom ? (
             <ImportedModel
               model={stationModel}
               dimensions={[3, 1.5, 1.7]}
@@ -96,7 +95,7 @@ export function BenchInspector({
           )}
           <OrbitControls
             makeDefault
-            target={[0, stationModel || custom || shared ? 0.65 : 0, 0]}
+            target={[0, stationModel || custom ? 0.65 : 0, 0]}
             minDistance={0.6}
             maxDistance={9}
             maxPolarAngle={Math.PI * 0.5}

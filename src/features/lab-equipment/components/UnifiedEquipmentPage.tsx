@@ -66,6 +66,7 @@ import { userLabel } from '@/shared/utils/userRef';
 import { AgentHealthCell, ComputingAgentDialog, liveAgentsByEquipment, useGetComputingAgentsQuery, type AgentComputer } from '../agents';
 import MonitoredDevicesPopover from './MonitoredDevicesPopover';
 import { usePermission } from '@/features/auth/hooks/useCan';
+import { useVisualModelField } from '@/features/interactive-dashboard/models/useVisualModelField';
 
 export interface UnifiedEquipmentPageProps {
   config: EquipmentCategoryConfig;
@@ -91,6 +92,7 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
   const [formValues, setFormValues] = useState<Record<string, unknown>>({});
   const [formMode, setFormMode] = useState<'create' | 'edit'>('create');
   const [editingItem, setEditingItem] = useState<EquipmentItem | null>(null);
+  const visualModel = useVisualModelField('equipment', editingItem?.id ?? null);
 
   const [statusModalOpen, setStatusModalOpen] = useState(false);
   const [statusItem, setStatusItem] = useState<EquipmentItem | null>(null);
@@ -405,6 +407,8 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
   const handleFormSubmit = useCallback(
     async (values: Record<string, unknown>, imageFile?: File | null) => {
         const payload: Record<string, unknown> = { ...values };
+        // Stored through the 3D model endpoint, not the equipment update.
+        delete payload.visual_model_id;
         const calibration = values.is_calibration_required;
         payload.is_calibration_required = calibration == null ? undefined : calibration === 'yes';
         if (editingItem) {
@@ -473,6 +477,7 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
           }).unwrap();
           if (imageFile) await updateEquipmentImage({ id: editingItem.id, image: imageFile }).unwrap();
           else if (imageFile === null) await deleteEquipmentImage(editingItem.id).unwrap();
+          await visualModel.save(editingItem.id, values.visual_model_id);
           notifyEquipmentUpdated(config.singular, updated ?? {}, {
             ...editingItem,
             ...payload,
@@ -482,7 +487,7 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
         setFormOpen(false);
         setEditingItem(null);
     },
-    [createEquipment, updateEquipment, updateEquipmentImage, deleteEquipmentImage, config, formMode, editingItem, monitored],
+    [createEquipment, updateEquipment, updateEquipmentImage, deleteEquipmentImage, config, formMode, editingItem, monitored, visualModel],
   );
 
   // History modal title
@@ -502,6 +507,10 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
 
   // Initial values for editing
   const formInitialValues = useMemo(() => equipmentFormInitialValues(editingItem, config), [editingItem, config]);
+  const editInitialValues = useMemo(
+    () => (formInitialValues ? { ...formInitialValues, visual_model_id: visualModel.value } : formInitialValues),
+    [formInitialValues, visualModel.value],
+  );
 
   // Action button renderer matching the previous UI/UX design
   const actionsRenderer = useMemo(() => {
@@ -1010,8 +1019,8 @@ export const UnifiedEquipmentPage: React.FC<UnifiedEquipmentPageProps> = ({ conf
         open={formOpen}
         mode={formMode}
         title={formMode === 'create' ? `New ${config.singular}` : `Edit ${config.singular}`}
-        fields={formFields}
-        initialValues={formMode === 'create' ? { lifecycle_state: 'in_service' } : formInitialValues}
+        fields={formMode === 'edit' && visualModel.field ? [...formFields, visualModel.field] : formFields}
+        initialValues={formMode === 'create' ? { lifecycle_state: 'in_service' } : editInitialValues}
         onSubmit={handleFormSubmit}
         onValuesChange={setFormValues}
         onCancel={() => {

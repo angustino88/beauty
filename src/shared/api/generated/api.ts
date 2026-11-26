@@ -11290,6 +11290,17 @@ export type MappingRoom = {
   name: string;
   layout_rows: number | null;
   layout_columns: number | null;
+  length_m?: string | null;
+  width_m?: string | null;
+  /** Current conditions from fresh telemetry placed in the room; null when nothing reports. */
+  conditions?: MappingConditions | null;
+};
+export type MappingConditions = {
+  temperature_c: number | null;
+  humidity_percent: number | null;
+  power_w: number | null;
+  observed_at: string | null;
+  channel_count: number;
 };
 export type MappingRoomSlot = {
   id: number;
@@ -11302,6 +11313,10 @@ export type MappingRoomSlot = {
   width_mm: number | null;
   depth_mm: number | null;
   orientation_degrees: number;
+  /** station, storage, aisle, safety, utility or reserved. */
+  slot_type?: string;
+  /** usable, blocked or retired. */
+  status?: string;
 };
 export type MappingStation = {
   id: number;
@@ -11310,6 +11325,8 @@ export type MappingStation = {
   name: string;
   room_id: number | null;
   slot_id: number | null;
+  /** 3D library model shown for this resource, after catalog defaults. */
+  visual_model_id?: number | null;
 };
 export type MappingStationSlot = {
   id: number;
@@ -11317,6 +11334,7 @@ export type MappingStationSlot = {
   position_index: number;
   slot_code: string;
   label: string;
+  width_mm?: number | null;
 };
 export type MappingBench = {
   id: number;
@@ -11325,6 +11343,8 @@ export type MappingBench = {
   name: string;
   setup_location_id: number | null;
   station_slot_id: number | null;
+  /** 3D library model shown for this resource, after catalog defaults. */
+  visual_model_id?: number | null;
 };
 export type MappingEquipmentCategory = {
   id: number;
@@ -11346,6 +11366,8 @@ export type MappingEquipment = {
   product_model?: MappingEquipmentCategory | null;
   bench_id: number | null;
   bench_assignment: MappingEquipmentAssignment | null;
+  /** 3D library model shown for this resource, after catalog defaults. */
+  visual_model_id?: number | null;
 };
 export type MappingLicenseCategory = {
   id: number;

@@ -35,6 +35,7 @@ export const navigationSections: NavigationSection[] = [
     { path: '/spaces/room', label: 'Rooms', icon: 'rooms' },
     { path: '/spaces/station', label: 'Stations', icon: 'stations' },
     { path: '/spaces/bench', label: 'Benches', icon: 'benches' },
+    { path: '/spaces/3d-models', label: '3D models', icon: '3d-models' },
   ] },
   { key: 'equipment', label: 'Equipment', requires: 'lab_operations.manage', pages: [
     { path: '/lab-equipment/computing', label: 'Computing', icon: 'computing' },

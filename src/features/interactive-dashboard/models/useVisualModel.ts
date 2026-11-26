@@ -1,12 +1,12 @@
 import { createContext, useContext } from "react";
-import type { ModelScope, VisualModel } from "./api";
-export const LibraryContext = createContext<VisualModel[]>([]);
-export function useVisualModel(
-  scope: ModelScope,
-  key: string | number | null | undefined,
-) {
+import type { VisualModel } from "./api";
+
+/** Library models by asset id. The dashboard only displays: resources say which asset they show. */
+export const LibraryContext = createContext<ReadonlyMap<number, VisualModel>>(
+  new Map(),
+);
+
+export function useVisualModel(assetId: number | null | undefined) {
   const library = useContext(LibraryContext);
-  return library.find(
-    (model) => model.scope === scope && model.target_key === String(key),
-  );
+  return assetId == null ? undefined : library.get(assetId);
 }
