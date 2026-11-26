@@ -119,6 +119,16 @@ const injectedRtkApi = api.injectEndpoints({
         body: queryArg.agentSessionLogReport,
       }),
     }),
+    agentTelemetrySamplesBulkCreate: build.mutation<
+      AgentTelemetrySamplesBulkCreateApiResponse,
+      AgentTelemetrySamplesBulkCreateApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/agent/telemetry/samples/bulk`,
+        method: "POST",
+        body: queryArg.telemetryBulk,
+      }),
+    }),
     aadLoginCreate: build.mutation<
       AadLoginCreateApiResponse,
       AadLoginCreateApiArg
@@ -967,6 +977,24 @@ const injectedRtkApi = api.injectEndpoints({
         },
       }),
     }),
+    labsBenchesVisualModelRetrieveById: build.query<
+      LabsBenchesVisualModelRetrieveByIdApiResponse,
+      LabsBenchesVisualModelRetrieveByIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/benches/${queryArg.id}/visual-model`,
+      }),
+    }),
+    labsBenchesVisualModelUpdateById: build.mutation<
+      LabsBenchesVisualModelUpdateByIdApiResponse,
+      LabsBenchesVisualModelUpdateByIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/benches/${queryArg.id}/visual-model`,
+        method: "PUT",
+        body: queryArg.selectionWrite,
+      }),
+    }),
     labsBenchesWeeklyUsageRetrieveById: build.query<
       LabsBenchesWeeklyUsageRetrieveByIdApiResponse,
       LabsBenchesWeeklyUsageRetrieveByIdApiArg
@@ -1463,6 +1491,24 @@ const injectedRtkApi = api.injectEndpoints({
         url: `/api/labs/equipment-categories/${queryArg.categoryId}`,
       }),
     }),
+    labsEquipmentCategoriesVisualModelRetrieveById: build.query<
+      LabsEquipmentCategoriesVisualModelRetrieveByIdApiResponse,
+      LabsEquipmentCategoriesVisualModelRetrieveByIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/equipment-categories/${queryArg.id}/visual-model`,
+      }),
+    }),
+    labsEquipmentCategoriesVisualModelUpdateById: build.mutation<
+      LabsEquipmentCategoriesVisualModelUpdateByIdApiResponse,
+      LabsEquipmentCategoriesVisualModelUpdateByIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/equipment-categories/${queryArg.id}/visual-model`,
+        method: "PUT",
+        body: queryArg.selectionWrite,
+      }),
+    }),
     labsEquipmentCategoriesOptionsRetrieve: build.query<
       LabsEquipmentCategoriesOptionsRetrieveApiResponse,
       LabsEquipmentCategoriesOptionsRetrieveApiArg
@@ -1625,6 +1671,24 @@ const injectedRtkApi = api.injectEndpoints({
     >({
       query: (queryArg) => ({
         url: `/api/labs/equipment-product-models/${queryArg.modelId}`,
+      }),
+    }),
+    labsEquipmentProductModelsVisualModelRetrieveById: build.query<
+      LabsEquipmentProductModelsVisualModelRetrieveByIdApiResponse,
+      LabsEquipmentProductModelsVisualModelRetrieveByIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/equipment-product-models/${queryArg.id}/visual-model`,
+      }),
+    }),
+    labsEquipmentProductModelsVisualModelUpdateById: build.mutation<
+      LabsEquipmentProductModelsVisualModelUpdateByIdApiResponse,
+      LabsEquipmentProductModelsVisualModelUpdateByIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/equipment-product-models/${queryArg.id}/visual-model`,
+        method: "PUT",
+        body: queryArg.selectionWrite,
       }),
     }),
     labsEquipmentProductModelsOptionsRetrieve: build.query<
@@ -1947,6 +2011,24 @@ const injectedRtkApi = api.injectEndpoints({
       query: (queryArg) => ({
         url: `/api/labs/equipment/${queryArg.id}`,
         method: "DELETE",
+      }),
+    }),
+    labsEquipmentVisualModelRetrieveById: build.query<
+      LabsEquipmentVisualModelRetrieveByIdApiResponse,
+      LabsEquipmentVisualModelRetrieveByIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/equipment/${queryArg.id}/visual-model`,
+      }),
+    }),
+    labsEquipmentVisualModelUpdateById: build.mutation<
+      LabsEquipmentVisualModelUpdateByIdApiResponse,
+      LabsEquipmentVisualModelUpdateByIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/equipment/${queryArg.id}/visual-model`,
+        method: "PUT",
+        body: queryArg.selectionWrite,
       }),
     }),
     labsEquipmentMappingRetrieveByResourceId: build.query<
@@ -4284,6 +4366,24 @@ const injectedRtkApi = api.injectEndpoints({
         body: queryArg.stationTypeWrite,
       }),
     }),
+    labsStationTypesVisualModelRetrieveById: build.query<
+      LabsStationTypesVisualModelRetrieveByIdApiResponse,
+      LabsStationTypesVisualModelRetrieveByIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/station-types/${queryArg.id}/visual-model`,
+      }),
+    }),
+    labsStationTypesVisualModelUpdateById: build.mutation<
+      LabsStationTypesVisualModelUpdateByIdApiResponse,
+      LabsStationTypesVisualModelUpdateByIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/station-types/${queryArg.id}/visual-model`,
+        method: "PUT",
+        body: queryArg.selectionWrite,
+      }),
+    }),
     labsStationTypesRetrieveByTypeId: build.query<
       LabsStationTypesRetrieveByTypeIdApiResponse,
       LabsStationTypesRetrieveByTypeIdApiArg
@@ -4356,6 +4456,24 @@ const injectedRtkApi = api.injectEndpoints({
         url: `/api/labs/stations`,
         method: "POST",
         body: queryArg.stationCreate,
+      }),
+    }),
+    labsStationsVisualModelRetrieveById: build.query<
+      LabsStationsVisualModelRetrieveByIdApiResponse,
+      LabsStationsVisualModelRetrieveByIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/stations/${queryArg.id}/visual-model`,
+      }),
+    }),
+    labsStationsVisualModelUpdateById: build.mutation<
+      LabsStationsVisualModelUpdateByIdApiResponse,
+      LabsStationsVisualModelUpdateByIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/stations/${queryArg.id}/visual-model`,
+        method: "PUT",
+        body: queryArg.selectionWrite,
       }),
     }),
     labsStationsMappingRetrieveByResourceId: build.query<
@@ -4804,6 +4922,119 @@ const injectedRtkApi = api.injectEndpoints({
     >({
       query: (queryArg) => ({
         url: `/api/labs/telemetry/targets/${queryArg.targetType}/${queryArg.resourceId}`,
+      }),
+    }),
+    labsVisualModelAssetsRetrieve: build.query<
+      LabsVisualModelAssetsRetrieveApiResponse,
+      LabsVisualModelAssetsRetrieveApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/visual-model-assets`,
+        params: {
+          page: queryArg.page,
+          page_size: queryArg.pageSize,
+        },
+      }),
+    }),
+    labsVisualModelAssetsCreate: build.mutation<
+      LabsVisualModelAssetsCreateApiResponse,
+      LabsVisualModelAssetsCreateApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/visual-model-assets`,
+        method: "POST",
+        body: queryArg.assetUpload,
+      }),
+    }),
+    labsVisualModelAssetsUpdateByAssetId: build.mutation<
+      LabsVisualModelAssetsUpdateByAssetIdApiResponse,
+      LabsVisualModelAssetsUpdateByAssetIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/visual-model-assets/${queryArg.assetId}`,
+        method: "PUT",
+        body: queryArg.assetDetails,
+      }),
+    }),
+    labsVisualModelAssetsDestroyByAssetId: build.mutation<
+      LabsVisualModelAssetsDestroyByAssetIdApiResponse,
+      LabsVisualModelAssetsDestroyByAssetIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/visual-model-assets/${queryArg.assetId}`,
+        method: "DELETE",
+      }),
+    }),
+    labsVisualModelSelectionsBenchesRetrieve: build.query<
+      LabsVisualModelSelectionsBenchesRetrieveApiResponse,
+      LabsVisualModelSelectionsBenchesRetrieveApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/visual-model-selections/benches`,
+        params: {
+          page: queryArg.page,
+          page_size: queryArg.pageSize,
+        },
+      }),
+    }),
+    labsVisualModelSelectionsEquipmentRetrieve: build.query<
+      LabsVisualModelSelectionsEquipmentRetrieveApiResponse,
+      LabsVisualModelSelectionsEquipmentRetrieveApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/visual-model-selections/equipment`,
+        params: {
+          page: queryArg.page,
+          page_size: queryArg.pageSize,
+        },
+      }),
+    }),
+    labsVisualModelSelectionsEquipmentCategoriesRetrieve: build.query<
+      LabsVisualModelSelectionsEquipmentCategoriesRetrieveApiResponse,
+      LabsVisualModelSelectionsEquipmentCategoriesRetrieveApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/visual-model-selections/equipment-categories`,
+        params: {
+          page: queryArg.page,
+          page_size: queryArg.pageSize,
+        },
+      }),
+    }),
+    labsVisualModelSelectionsEquipmentProductModelsRetrieve: build.query<
+      LabsVisualModelSelectionsEquipmentProductModelsRetrieveApiResponse,
+      LabsVisualModelSelectionsEquipmentProductModelsRetrieveApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/visual-model-selections/equipment-product-models`,
+        params: {
+          page: queryArg.page,
+          page_size: queryArg.pageSize,
+        },
+      }),
+    }),
+    labsVisualModelSelectionsStationTypesRetrieve: build.query<
+      LabsVisualModelSelectionsStationTypesRetrieveApiResponse,
+      LabsVisualModelSelectionsStationTypesRetrieveApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/visual-model-selections/station-types`,
+        params: {
+          page: queryArg.page,
+          page_size: queryArg.pageSize,
+        },
+      }),
+    }),
+    labsVisualModelSelectionsStationsRetrieve: build.query<
+      LabsVisualModelSelectionsStationsRetrieveApiResponse,
+      LabsVisualModelSelectionsStationsRetrieveApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/labs/visual-model-selections/stations`,
+        params: {
+          page: queryArg.page,
+          page_size: queryArg.pageSize,
+        },
       }),
     }),
     labsWorkbookImportsActionsApplyCreate: build.mutation<
@@ -5274,6 +5505,7 @@ const injectedRtkApi = api.injectEndpoints({
           no_team: queryArg.noTeam,
           ordering: queryArg.ordering,
           page: queryArg.page,
+          page_path: queryArg.pagePath,
           page_size: queryArg.pageSize,
           parent_key: queryArg.parentKey,
           priority_id: queryArg.priorityId,
@@ -5788,6 +6020,11 @@ export type AgentRecordSessionLogApiResponse =
   | /** status 201 Session stored */ AgentSessionLogResponseRead;
 export type AgentRecordSessionLogApiArg = {
   agentSessionLogReport: AgentSessionLogReport;
+};
+export type AgentTelemetrySamplesBulkCreateApiResponse =
+  /** status 200  */ AgentTelemetryIngestTelemetryTelemetryIngestResultDetailResponse;
+export type AgentTelemetrySamplesBulkCreateApiArg = {
+  telemetryBulk: TelemetryBulk;
 };
 export type AadLoginCreateApiResponse =
   /** status 200  */ AadLoginSerializerAadLoginResponseDetailResponse;
@@ -6353,6 +6590,17 @@ export type LabsBenchesProfileRetrieveByIdApiArg = {
   id: number;
   startDate?: string;
 };
+export type LabsBenchesVisualModelRetrieveByIdApiResponse =
+  /** status 200  */ VisualModelSelectionSerializersSelectionDetailResponse;
+export type LabsBenchesVisualModelRetrieveByIdApiArg = {
+  id: number;
+};
+export type LabsBenchesVisualModelUpdateByIdApiResponse =
+  /** status 200  */ VisualModelSelectionSerializersSelectionDetailResponse;
+export type LabsBenchesVisualModelUpdateByIdApiArg = {
+  id: number;
+  selectionWrite: SelectionWrite;
+};
 export type LabsBenchesWeeklyUsageRetrieveByIdApiResponse =
   /** status 200  */ LabWeeklyUsageSerializersWeeklyUsageSlotListResponse;
 export type LabsBenchesWeeklyUsageRetrieveByIdApiArg = {
@@ -6720,6 +6968,17 @@ export type LabsEquipmentCategoriesRetrieveByCategoryIdApiResponse =
 export type LabsEquipmentCategoriesRetrieveByCategoryIdApiArg = {
   categoryId: number;
 };
+export type LabsEquipmentCategoriesVisualModelRetrieveByIdApiResponse =
+  /** status 200  */ VisualModelSelectionSerializersSelectionDetailResponse;
+export type LabsEquipmentCategoriesVisualModelRetrieveByIdApiArg = {
+  id: number;
+};
+export type LabsEquipmentCategoriesVisualModelUpdateByIdApiResponse =
+  /** status 200  */ VisualModelSelectionSerializersSelectionDetailResponse;
+export type LabsEquipmentCategoriesVisualModelUpdateByIdApiArg = {
+  id: number;
+  selectionWrite: SelectionWrite;
+};
 export type LabsEquipmentCategoriesOptionsRetrieveApiResponse =
   /** status 200 Standard selector options list */ CatalogOptionListRead;
 export type LabsEquipmentCategoriesOptionsRetrieveApiArg = {
@@ -6826,6 +7085,17 @@ export type LabsEquipmentProductModelsRetrieveByModelIdApiResponse =
   /** status 200  */ EquipmentProductModelCatalogDetailSerializersEquipmentProductModelDetailResponseRead;
 export type LabsEquipmentProductModelsRetrieveByModelIdApiArg = {
   modelId: number;
+};
+export type LabsEquipmentProductModelsVisualModelRetrieveByIdApiResponse =
+  /** status 200  */ VisualModelSelectionSerializersSelectionDetailResponse;
+export type LabsEquipmentProductModelsVisualModelRetrieveByIdApiArg = {
+  id: number;
+};
+export type LabsEquipmentProductModelsVisualModelUpdateByIdApiResponse =
+  /** status 200  */ VisualModelSelectionSerializersSelectionDetailResponse;
+export type LabsEquipmentProductModelsVisualModelUpdateByIdApiArg = {
+  id: number;
+  selectionWrite: SelectionWrite;
 };
 export type LabsEquipmentProductModelsOptionsRetrieveApiResponse =
   /** status 200 Standard selector options list */ CatalogOptionListRead;
@@ -7031,6 +7301,17 @@ export type LabsEquipmentPartialUpdateByIdApiArg = {
 export type LabsEquipmentDestroyByIdApiResponse = unknown;
 export type LabsEquipmentDestroyByIdApiArg = {
   id: number;
+};
+export type LabsEquipmentVisualModelRetrieveByIdApiResponse =
+  /** status 200  */ VisualModelSelectionSerializersSelectionDetailResponse;
+export type LabsEquipmentVisualModelRetrieveByIdApiArg = {
+  id: number;
+};
+export type LabsEquipmentVisualModelUpdateByIdApiResponse =
+  /** status 200  */ VisualModelSelectionSerializersSelectionDetailResponse;
+export type LabsEquipmentVisualModelUpdateByIdApiArg = {
+  id: number;
+  selectionWrite: SelectionWrite;
 };
 export type LabsEquipmentMappingRetrieveByResourceIdApiResponse =
   /** status 200  */ ResourceMappingResponse;
@@ -8645,6 +8926,17 @@ export type LabsStationTypesCreateApiResponse =
 export type LabsStationTypesCreateApiArg = {
   stationTypeWrite: StationTypeWrite;
 };
+export type LabsStationTypesVisualModelRetrieveByIdApiResponse =
+  /** status 200  */ VisualModelSelectionSerializersSelectionDetailResponse;
+export type LabsStationTypesVisualModelRetrieveByIdApiArg = {
+  id: number;
+};
+export type LabsStationTypesVisualModelUpdateByIdApiResponse =
+  /** status 200  */ VisualModelSelectionSerializersSelectionDetailResponse;
+export type LabsStationTypesVisualModelUpdateByIdApiArg = {
+  id: number;
+  selectionWrite: SelectionWrite;
+};
 export type LabsStationTypesRetrieveByTypeIdApiResponse =
   /** status 200  */ StationTypeDetailSerializersStationTypeDetailResponseRead;
 export type LabsStationTypesRetrieveByTypeIdApiArg = {
@@ -8700,6 +8992,17 @@ export type LabsStationsCreateApiResponse =
   /** status 201  */ StationCreateSerializersStationDetailResponseRead;
 export type LabsStationsCreateApiArg = {
   stationCreate: StationCreate;
+};
+export type LabsStationsVisualModelRetrieveByIdApiResponse =
+  /** status 200  */ VisualModelSelectionSerializersSelectionDetailResponse;
+export type LabsStationsVisualModelRetrieveByIdApiArg = {
+  id: number;
+};
+export type LabsStationsVisualModelUpdateByIdApiResponse =
+  /** status 200  */ VisualModelSelectionSerializersSelectionDetailResponse;
+export type LabsStationsVisualModelUpdateByIdApiArg = {
+  id: number;
+  selectionWrite: SelectionWrite;
 };
 export type LabsStationsMappingRetrieveByResourceIdApiResponse =
   /** status 200  */ ResourceMappingResponse;
@@ -8983,6 +9286,64 @@ export type LabsTelemetryTargetsRetrieveByTargetTypeResourceIdApiResponse =
 export type LabsTelemetryTargetsRetrieveByTargetTypeResourceIdApiArg = {
   resourceId: number;
   targetType: string;
+};
+export type LabsVisualModelAssetsRetrieveApiResponse =
+  /** status 200  */ VisualModelAssetListSerializersAssetPaginatedResponseRead;
+export type LabsVisualModelAssetsRetrieveApiArg = {
+  page?: number;
+  pageSize?: number;
+};
+export type LabsVisualModelAssetsCreateApiResponse =
+  | /** status 200  */ VisualModelAssetExistingSerializersAssetDetailResponseRead
+  | /** status 201  */ VisualModelAssetSerializersAssetDetailResponseRead;
+export type LabsVisualModelAssetsCreateApiArg = {
+  assetUpload: AssetUpload;
+};
+export type LabsVisualModelAssetsUpdateByAssetIdApiResponse =
+  /** status 200  */ VisualModelAssetSerializersAssetDetailResponseRead;
+export type LabsVisualModelAssetsUpdateByAssetIdApiArg = {
+  assetId: number;
+  assetDetails: AssetDetails;
+};
+export type LabsVisualModelAssetsDestroyByAssetIdApiResponse = unknown;
+export type LabsVisualModelAssetsDestroyByAssetIdApiArg = {
+  assetId: number;
+};
+export type LabsVisualModelSelectionsBenchesRetrieveApiResponse =
+  /** status 200  */ VisualModelSelectionListSerializersSelectionPaginatedResponse;
+export type LabsVisualModelSelectionsBenchesRetrieveApiArg = {
+  page?: number;
+  pageSize?: number;
+};
+export type LabsVisualModelSelectionsEquipmentRetrieveApiResponse =
+  /** status 200  */ VisualModelSelectionListSerializersSelectionPaginatedResponse;
+export type LabsVisualModelSelectionsEquipmentRetrieveApiArg = {
+  page?: number;
+  pageSize?: number;
+};
+export type LabsVisualModelSelectionsEquipmentCategoriesRetrieveApiResponse =
+  /** status 200  */ VisualModelSelectionListSerializersSelectionPaginatedResponse;
+export type LabsVisualModelSelectionsEquipmentCategoriesRetrieveApiArg = {
+  page?: number;
+  pageSize?: number;
+};
+export type LabsVisualModelSelectionsEquipmentProductModelsRetrieveApiResponse =
+  /** status 200  */ VisualModelSelectionListSerializersSelectionPaginatedResponse;
+export type LabsVisualModelSelectionsEquipmentProductModelsRetrieveApiArg = {
+  page?: number;
+  pageSize?: number;
+};
+export type LabsVisualModelSelectionsStationTypesRetrieveApiResponse =
+  /** status 200  */ VisualModelSelectionListSerializersSelectionPaginatedResponse;
+export type LabsVisualModelSelectionsStationTypesRetrieveApiArg = {
+  page?: number;
+  pageSize?: number;
+};
+export type LabsVisualModelSelectionsStationsRetrieveApiResponse =
+  /** status 200  */ VisualModelSelectionListSerializersSelectionPaginatedResponse;
+export type LabsVisualModelSelectionsStationsRetrieveApiArg = {
+  page?: number;
+  pageSize?: number;
 };
 export type LabsWorkbookImportsActionsApplyCreateApiResponse =
   /** status 200  */ WorkbookImportApplySerializersImportReportDetailResponseRead;
@@ -9355,6 +9716,7 @@ export type SupportTicketsRetrieveApiArg = {
   noTeam?: boolean;
   ordering?: string;
   page?: number;
+  pagePath?: string;
   pageSize?: number;
   parentKey?: string;
   priorityId?: number;
@@ -10047,6 +10409,47 @@ export type AgentSessionLogReport = {
   /** Empty for a temp login (no booking). */
   booking_code?: string | null;
   agent_version?: string;
+};
+export type TelemetryOperationError = {
+  code: string;
+  /** Index of the rejected reading in the operation. */
+  reading?: number;
+};
+export type TelemetryOperationResult = {
+  /** accepted, duplicate, partially_accepted or rejected. */
+  status: string;
+  errors: TelemetryOperationError[];
+};
+export type TelemetryIngestResult = {
+  results: TelemetryOperationResult[];
+  /** Re-pull the configuration when this is newer. */
+  config_version: number;
+};
+export type AgentTelemetryIngestTelemetryTelemetryIngestResultDetailResponse = {
+  data: TelemetryIngestResult;
+};
+export type TelemetryBulkModeEnum = "partial";
+export type TelemetryReadingStatusEnum = "ok" | "no_response" | "error";
+export type TelemetryReading = {
+  channel_id: number;
+  value?: string | null;
+  status?: TelemetryReadingStatusEnum;
+  profile_version?: string;
+};
+export type TelemetrySample = {
+  device_uid: string;
+  /** One per source poll cycle; persisted before the first send. */
+  sample_id: string;
+  observed_at: string;
+  config_version?: number;
+  readings: TelemetryReading[];
+};
+export type TelemetryOperation = {
+  data: TelemetrySample;
+};
+export type TelemetryBulk = {
+  mode: TelemetryBulkModeEnum;
+  operations: TelemetryOperation[];
 };
 export type AadLoginResponse = {
   username: string;
@@ -11275,6 +11678,23 @@ export type LabProfile = {
 export type LabProfileSerializersLabProfileDetailResponse = {
   data: LabProfile;
 };
+export type Selection = {
+  id: number;
+  name: string;
+  /** Model stored on this resource. */
+  visual_model_id: number | null;
+  /** Model shown on the 3D dashboard after inheriting catalog defaults. */
+  effective_visual_model_id: number | null;
+  /** 'own', or the catalog the shown model is inherited from (station_type, product_model, equipment_category); null when no model applies. */
+  origin: string | null;
+};
+export type VisualModelSelectionSerializersSelectionDetailResponse = {
+  data: Selection;
+};
+export type SelectionWrite = {
+  /** Library model to show, or null to inherit or show none. */
+  visual_model_id: number | null;
+};
 export type WeeklyUsageSlot = {
   day: number;
   hour: number;
@@ -11282,6 +11702,17 @@ export type WeeklyUsageSlot = {
 };
 export type LabWeeklyUsageSerializersWeeklyUsageSlotListResponse = {
   data: WeeklyUsageSlot[];
+};
+export type MappingConditions = {
+  /** Mean of current temperature channels. */
+  temperature_c: number | null;
+  /** Mean of current humidity channels. */
+  humidity_percent: number | null;
+  /** Sum of current power channels. */
+  power_w: number | null;
+  /** Newest reading included. */
+  observed_at: string | null;
+  channel_count: number;
 };
 export type MappingRoom = {
   id: number;
@@ -11292,15 +11723,7 @@ export type MappingRoom = {
   layout_columns: number | null;
   length_m?: string | null;
   width_m?: string | null;
-  /** Current conditions from fresh telemetry placed in the room; null when nothing reports. */
   conditions?: MappingConditions | null;
-};
-export type MappingConditions = {
-  temperature_c: number | null;
-  humidity_percent: number | null;
-  power_w: number | null;
-  observed_at: string | null;
-  channel_count: number;
 };
 export type MappingRoomSlot = {
   id: number;
@@ -11318,6 +11741,35 @@ export type MappingRoomSlot = {
   /** usable, blocked or retired. */
   status?: string;
 };
+export type MappingStationLayout = {
+  width_mm: number | null;
+  depth_mm: number | null;
+  height_mm: number | null;
+  orientation_degrees: number | null;
+};
+export type MappingStationCapacity = {
+  bench_capacity: number | null;
+  rack_units: number | null;
+  rack_units_used?: number;
+  power_capacity_w: number | null;
+  power_reserved_w: number | null;
+  /** Rated draw of equipment installed here. */
+  power_installed_w?: number;
+  max_load_kg: number | null;
+  load_installed_kg?: number;
+  network_port_capacity: number | null;
+  installed_units?: number;
+};
+export type MappingRackItem = {
+  equipment_id: number;
+  sku: string;
+  name: string;
+  category: string | null;
+  power_draw_w: number | null;
+  rack_unit: number;
+  rack_unit_height: number;
+  rack_face: string;
+};
 export type MappingStation = {
   id: number;
   uid: string;
@@ -11327,6 +11779,11 @@ export type MappingStation = {
   slot_id: number | null;
   /** 3D library model shown for this resource, after catalog defaults. */
   visual_model_id?: number | null;
+  layout?: MappingStationLayout;
+  capacity?: MappingStationCapacity;
+  conditions?: MappingConditions | null;
+  /** Rack-mounted equipment, bottom unit first. */
+  rack?: MappingRackItem[];
 };
 export type MappingStationSlot = {
   id: number;
@@ -12253,6 +12710,10 @@ export type EquipmentPlacementRead = {
   location_note: string;
   role: string;
   position: number;
+  /** Lowest rack unit (1 = bottom). */
+  rack_unit: number | null;
+  rack_unit_height: number | null;
+  rack_face: string;
   placed_at: string;
 };
 export type EquipmentLoan = {};
@@ -13081,6 +13542,8 @@ export type EquipmentPlacementUpdatedSerializersEquipmentPlacementDetailResponse
   {
     data: EquipmentPlacementRead;
   };
+export type RackFaceEnum = "front" | "rear";
+export type BlankEnum = "";
 export type EquipmentPlacementWrite = {
   bench_id?: number | null;
   station_id?: number | null;
@@ -13089,6 +13552,10 @@ export type EquipmentPlacementWrite = {
   location_note?: string;
   role?: string;
   position?: number;
+  /** Station placements in a rack: lowest occupied unit (1 = bottom). */
+  rack_unit?: number | null;
+  rack_unit_height?: number | null;
+  rack_face?: RackFaceEnum | BlankEnum;
 };
 export type EquipmentStatusChangeListSerializersEquipmentStatusChangePagination =
   {
@@ -16666,7 +17133,9 @@ export type RoomSlotRead = {
   slot_type: ChoiceRead;
   service_status: LabsChoiceReferenceRead;
   is_occupied: boolean;
+  /** Slot centre from the room's back-left corner, across the room's width (mm). */
   x_mm: number | null;
+  /** Slot centre from the room's back-left corner, along the room's length (mm). */
   y_mm: number | null;
   width_mm: number | null;
   depth_mm: number | null;
@@ -16920,6 +17389,8 @@ export type StationRead = {
   orientation_degrees: number;
   max_load_kg: number | null;
   bench_capacity: number | null;
+  /** Usable rack height in units (U) for rack stations, e.g. 42. Empty for non-rack stations. */
+  rack_units: number | null;
   max_concurrent_users: number | null;
   usable_surface_mm2: number | null;
   power_capacity_w: number | null;
@@ -16977,6 +17448,8 @@ export type StationCreate = {
   orientation_degrees?: number;
   max_load_kg?: number | null;
   bench_capacity?: number | null;
+  /** Usable rack height in units (U) for rack stations, e.g. 42. Empty for non-rack stations. */
+  rack_units?: number | null;
   max_concurrent_users?: number | null;
   usable_surface_mm2?: number | null;
   power_capacity_w?: number | null;
@@ -17019,6 +17492,8 @@ export type StationUpdate = {
   orientation_degrees?: number;
   max_load_kg?: number | null;
   bench_capacity?: number | null;
+  /** Usable rack height in units (U) for rack stations, e.g. 42. Empty for non-rack stations. */
+  rack_units?: number | null;
   max_concurrent_users?: number | null;
   usable_surface_mm2?: number | null;
   power_capacity_w?: number | null;
@@ -17055,6 +17530,8 @@ export type PatchedStationUpdate = {
   orientation_degrees?: number;
   max_load_kg?: number | null;
   bench_capacity?: number | null;
+  /** Usable rack height in units (U) for rack stations, e.g. 42. Empty for non-rack stations. */
+  rack_units?: number | null;
   max_concurrent_users?: number | null;
   usable_surface_mm2?: number | null;
   power_capacity_w?: number | null;
@@ -17590,7 +18067,6 @@ export type TelemetryDeviceClaimSerializersDeviceDetailDetailResponseRead = {
 };
 export type FramingEnum = "mbap" | "rtu_over_tcp";
 export type SerialInterfaceEnum = "rs485" | "rs232";
-export type BlankEnum = "";
 export type ParityEnum = "N" | "E" | "O";
 export type TelemetryModbusSettingsInput = {
   /** IP address or host name. */
@@ -17824,6 +18300,89 @@ export type TelemetryTargetOverviewSerializersTargetOverviewDetailResponseRead =
   {
     data: TelemetryTargetOverviewRead;
   };
+export type VisualModelAssetListSerializersAssetPagination = {
+  count: number;
+  page: number;
+  page_size: number;
+  next: string | null;
+  previous: string | null;
+};
+export type VisualModelAssetListSerializersAssetPaginationMeta = {
+  pagination: VisualModelAssetListSerializersAssetPagination;
+};
+export type Asset = {
+  name: string;
+  sha256: string;
+  size: number;
+  license?: string;
+  rotation?: number;
+  surface?: number;
+  version?: number;
+};
+export type AssetRead = {
+  id: number;
+  name: string;
+  url: string;
+  sha256: string;
+  size: number;
+  source_url: string;
+  license?: string;
+  rotation?: number;
+  surface?: number;
+  /** Resources and catalog types using this model. */
+  usage_count: number;
+  version?: number;
+  updated_at: string;
+};
+export type VisualModelAssetListSerializersAssetPaginatedResponse = {
+  meta: VisualModelAssetListSerializersAssetPaginationMeta;
+  data: Asset[];
+};
+export type VisualModelAssetListSerializersAssetPaginatedResponseRead = {
+  meta: VisualModelAssetListSerializersAssetPaginationMeta;
+  data: AssetRead[];
+};
+export type VisualModelAssetExistingSerializersAssetDetailResponse = {
+  data: Asset;
+};
+export type VisualModelAssetExistingSerializersAssetDetailResponseRead = {
+  data: AssetRead;
+};
+export type VisualModelAssetSerializersAssetDetailResponse = {
+  data: Asset;
+};
+export type VisualModelAssetSerializersAssetDetailResponseRead = {
+  data: AssetRead;
+};
+export type AssetUpload = {
+  name: string;
+  source_url?: string;
+  license?: string;
+  rotation?: number;
+  surface?: number;
+  file: Blob;
+};
+export type AssetDetails = {
+  name: string;
+  source_url?: string;
+  license?: string;
+  rotation?: number;
+  surface?: number;
+};
+export type VisualModelSelectionListSerializersSelectionPagination = {
+  count: number;
+  page: number;
+  page_size: number;
+  next: string | null;
+  previous: string | null;
+};
+export type VisualModelSelectionListSerializersSelectionPaginationMeta = {
+  pagination: VisualModelSelectionListSerializersSelectionPagination;
+};
+export type VisualModelSelectionListSerializersSelectionPaginatedResponse = {
+  meta: VisualModelSelectionListSerializersSelectionPaginationMeta;
+  data: Selection[];
+};
 export type SheetOutcome = {
   key: string;
   name: string;
@@ -18147,7 +18706,14 @@ export type AdminSettingsUpdateSerializersSupportSettingsDetailResponseRead = {
   data: SupportSettingsRead;
 };
 export type TicketTypeEnum =
-  "incident" | "service_request" | "problem" | "change" | "question";
+  | "incident"
+  | "service_request"
+  | "problem"
+  | "change"
+  | "question"
+  | "bug"
+  | "feature_request"
+  | "feedback";
 export type PatchedAdminSettingsUpdate = {
   reopen_window_days?: number;
   auto_close_days?: number;
@@ -18633,6 +19199,8 @@ export type TicketDetail = {
   urgency?: UrgencyEnum | BlankEnum;
   /** Reference in an external system (vendor RMA / case number, legacy Jira key...). */
   external_reference?: string;
+  /** Optional web app route path where the ticket or feedback was submitted. */
+  page_path?: string;
   /** Requester/agent-set target date, independent of the SLA. */
   due_date?: string | null;
   last_activity_at?: string;
@@ -18706,6 +19274,11 @@ export type TicketDetailRead = {
   urgency?: UrgencyEnum | BlankEnum;
   /** Reference in an external system (vendor RMA / case number, legacy Jira key...). */
   external_reference?: string;
+  /** Optional web app route path where the ticket or feedback was submitted. */
+  page_path?: string;
+  client_context: {
+    [key: string]: string;
+  };
   /** Requester/agent-set target date, independent of the SLA. */
   due_date?: string | null;
   category: RelationRead | null;
@@ -18726,6 +19299,7 @@ export type TicketDetailRead = {
   is_status_final: boolean;
   available_transitions: AvailableTicketTransitionRead[];
   is_watching: boolean;
+  can_submit_csat: boolean;
   created_at: string;
   updated_at: string;
   last_activity_at?: string;
@@ -18769,7 +19343,8 @@ export type LinkedResourceItem = {
 export type TicketCreateRequest = {
   subject: string;
   description: string;
-  category_id: number;
+  /** Optional: resolves to a matching active category or General when omitted. */
+  category_id?: number | null;
   /** Optional: derived from impact/urgency, then the default priority, when omitted. */
   priority_id?: number | null;
   ticket_type?: TicketTypeEnum;
@@ -18777,6 +19352,12 @@ export type TicketCreateRequest = {
   urgency?: UrgencyEnum | BlankEnum;
   source?: SourceEnum;
   external_reference?: string;
+  /** Optional relative web app route (e.g. /booking-calendar) where the ticket was opened. */
+  page_path?: string;
+  /** Optional non-sensitive client diagnostics (browser, os, viewport, theme, app_version, language). */
+  client_context?: {
+    [key: string]: string;
+  };
   due_date?: string | null;
   team_id?: number | null;
   labels?: string[];
@@ -19486,6 +20067,7 @@ export const {
   useAgentLicenseChecksActionsReportCreateByCheckKeyMutation,
   useAgentMonitoringPolicyRetrieveQuery,
   useAgentRecordSessionLogMutation,
+  useAgentTelemetrySamplesBulkCreateMutation,
   useAadLoginCreateMutation,
   useListAgentsQuery,
   useCreateAgentGrantMutation,
@@ -19564,6 +20146,8 @@ export const {
   useLabsBenchesImageDestroyByBenchIdMutation,
   useLabsBenchesAssessmentRetrieveByIdQuery,
   useLabsBenchesProfileRetrieveByIdQuery,
+  useLabsBenchesVisualModelRetrieveByIdQuery,
+  useLabsBenchesVisualModelUpdateByIdMutation,
   useLabsBenchesWeeklyUsageRetrieveByIdQuery,
   useLabsBenchesMappingRetrieveByResourceIdQuery,
   useLabsBenchesBookingChoicesRetrieveQuery,
@@ -19606,6 +20190,8 @@ export const {
   useLabsEquipmentCreateMutation,
   useLabsEquipmentCategoriesRetrieveQuery,
   useLabsEquipmentCategoriesRetrieveByCategoryIdQuery,
+  useLabsEquipmentCategoriesVisualModelRetrieveByIdQuery,
+  useLabsEquipmentCategoriesVisualModelUpdateByIdMutation,
   useLabsEquipmentCategoriesOptionsRetrieveQuery,
   useLabsEquipmentKindsRetrieveQuery,
   useLabsEquipmentKindsRetrieveByKindIdQuery,
@@ -19620,6 +20206,8 @@ export const {
   useLabsEquipmentManufacturersOptionsRetrieveQuery,
   useLabsEquipmentProductModelsRetrieveQuery,
   useLabsEquipmentProductModelsRetrieveByModelIdQuery,
+  useLabsEquipmentProductModelsVisualModelRetrieveByIdQuery,
+  useLabsEquipmentProductModelsVisualModelUpdateByIdMutation,
   useLabsEquipmentProductModelsOptionsRetrieveQuery,
   useLabsEquipmentReservationsRetrieveQuery,
   useLabsEquipmentReservationsCreateMutation,
@@ -19652,6 +20240,8 @@ export const {
   useLabsEquipmentUpdateByIdMutation,
   useLabsEquipmentPartialUpdateByIdMutation,
   useLabsEquipmentDestroyByIdMutation,
+  useLabsEquipmentVisualModelRetrieveByIdQuery,
+  useLabsEquipmentVisualModelUpdateByIdMutation,
   useLabsEquipmentMappingRetrieveByResourceIdQuery,
   useLabsEquipmentComputingActivitySummaryRetrieveQuery,
   useLabsEquipmentFacetsRetrieveQuery,
@@ -19855,12 +20445,16 @@ export const {
   useLabsRoomsStatusSummaryRetrieveQuery,
   useLabsStationTypesRetrieveQuery,
   useLabsStationTypesCreateMutation,
+  useLabsStationTypesVisualModelRetrieveByIdQuery,
+  useLabsStationTypesVisualModelUpdateByIdMutation,
   useLabsStationTypesRetrieveByTypeIdQuery,
   useLabsStationTypesPartialUpdateByTypeIdMutation,
   useLabsStationTypesDestroyByTypeIdMutation,
   useLabsStationTypesOptionsRetrieveQuery,
   useLabsStationsRetrieveQuery,
   useLabsStationsCreateMutation,
+  useLabsStationsVisualModelRetrieveByIdQuery,
+  useLabsStationsVisualModelUpdateByIdMutation,
   useLabsStationsMappingRetrieveByResourceIdQuery,
   useLabsStationsRetrieveByStationIdQuery,
   useLabsStationsUpdateByStationIdMutation,
@@ -19905,6 +20499,16 @@ export const {
   useLabsTelemetrySourcesChannelsRetrieveByDeviceIdQuery,
   useLabsTelemetrySourcesChannelsCreateByDeviceIdMutation,
   useLabsTelemetryTargetsRetrieveByTargetTypeResourceIdQuery,
+  useLabsVisualModelAssetsRetrieveQuery,
+  useLabsVisualModelAssetsCreateMutation,
+  useLabsVisualModelAssetsUpdateByAssetIdMutation,
+  useLabsVisualModelAssetsDestroyByAssetIdMutation,
+  useLabsVisualModelSelectionsBenchesRetrieveQuery,
+  useLabsVisualModelSelectionsEquipmentRetrieveQuery,
+  useLabsVisualModelSelectionsEquipmentCategoriesRetrieveQuery,
+  useLabsVisualModelSelectionsEquipmentProductModelsRetrieveQuery,
+  useLabsVisualModelSelectionsStationTypesRetrieveQuery,
+  useLabsVisualModelSelectionsStationsRetrieveQuery,
   useLabsWorkbookImportsActionsApplyCreateMutation,
   useLabsWorkbookImportsActionsCheckCreateMutation,
   useLabsWorkbookImportsExportRetrieveQuery,

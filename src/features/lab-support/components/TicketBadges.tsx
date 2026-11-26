@@ -101,6 +101,27 @@ function TicketTypeIcon({ typeKey }: { typeKey: string }): ReactNode {
           <path d="M9 1.8 3.8 8.8h3.7L6.8 14.2l5.4-7.1H8.5L9 1.8Z" fill="currentColor" />
         </svg>
       );
+    case 'bug':
+      return (
+        <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <rect x="4.5" y="5" width="7" height="7.5" rx="3.2" stroke="currentColor" strokeWidth="1.5" />
+          <path d="M6.2 3.2 7.2 5M9.8 3.2 8.8 5M2.4 7.5h2.1M11.5 7.5h2.1M2.7 10.7l1.9-.7M13.3 10.7l-1.9-.7M8 5v7.5" stroke="currentColor" strokeWidth="1.35" strokeLinecap="round" />
+        </svg>
+      );
+    case 'feature_request':
+      return (
+        <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M8 2.2 13.5 5.3 8 8.4 2.5 5.3 8 2.2Z" stroke="currentColor" strokeWidth="1.45" strokeLinejoin="round" />
+          <path d="M2.5 8.5 8 11.6l5.5-3.1M2.5 11.3 8 14.2l5.5-2.9" stroke="currentColor" strokeWidth="1.45" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      );
+    case 'feedback':
+      return (
+        <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M3 3.5h10a1 1 0 0 1 1 1v6.2a1 1 0 0 1-1 1H6.6L3.4 14v-2.3H3a1 1 0 0 1-1-1V4.5a1 1 0 0 1 1-1Z" stroke="currentColor" strokeWidth="1.45" strokeLinejoin="round" />
+          <path d="M5.4 6.7h5.2M5.4 9.1h3.2" stroke="currentColor" strokeWidth="1.35" strokeLinecap="round" />
+        </svg>
+      );
     case 'service_request':
       return (
         <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
