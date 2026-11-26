@@ -11,6 +11,12 @@ const supportedExtensions = new Set([
   "KHR_materials_emissive_strength",
   "KHR_texture_transform",
   "KHR_lights_punctual",
+  // Compressed geometry and textures; their decoders ship with the app (public/decoders).
+  "KHR_draco_mesh_compression",
+  "EXT_meshopt_compression",
+  "KHR_mesh_quantization",
+  "KHR_texture_basisu",
+  "EXT_texture_webp",
 ]);
 export async function validateGlb(file: File) {
   if (file.size > 15 * 1024 * 1024 || file.size < 20)
@@ -41,7 +47,7 @@ export async function validateGlb(file: File) {
     )
   )
     throw new Error(
-      "Export uncompressed geometry with embedded PNG/JPEG textures.",
+      "Use only supported glTF extensions: standard materials, Draco or Meshopt geometry, and PNG, JPEG, WebP or KTX2 textures.",
     );
   for (const item of [
     ...(metadata.buffers ?? []),

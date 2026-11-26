@@ -3,6 +3,8 @@ import type { ResourceMappingData, MappingEquipment } from '@/shared/api/generat
 export interface StationPosition {
   id: number;
   label: string;
+  /** Width of the position along the station, when configured. */
+  width_mm: number | null;
   benches: { id: number; name: string; visual_model_id: number | null; equipment: MappingEquipment[] }[];
 }
 
@@ -11,7 +13,7 @@ export function stationContents(data: Partial<ResourceMappingData>) {
   const result: Record<number, StationPosition[]> = {};
   const slots = new Map<number, StationPosition>();
   for (const slot of [...data.station_slots].sort((a, b) => a.position_index - b.position_index)) {
-    const position: StationPosition = { id: slot.id, label: [slot.slot_code, slot.label].filter(Boolean).join(' · '), benches: [] };
+    const position: StationPosition = { id: slot.id, label: [slot.slot_code, slot.label].filter(Boolean).join(' · '), width_mm: slot.width_mm ?? null, benches: [] };
     slots.set(slot.id, position);
     (result[slot.station_id] ??= []).push(position);
   }
@@ -21,7 +23,7 @@ export function stationContents(data: Partial<ResourceMappingData>) {
     if (!slot && bench.setup_location_id != null) {
       const positions = result[bench.setup_location_id] ??= [];
       slot = positions.find(p => p.id === -1);
-      if (!slot) positions.push(slot = { id: -1, label: 'No assigned slot', benches: [] });
+      if (!slot) positions.push(slot = { id: -1, label: 'No assigned slot', width_mm: null, benches: [] });
     }
     if (!slot) continue;
     const equipment: MappingEquipment[] = [];

@@ -8,14 +8,34 @@ import {
   PanelRightOpen,
   Eye,
   Layers,
+  Thermometer,
+  Zap,
+  Gauge,
+  CircleOff,
+  Play,
+  Pause,
+  Sparkles,
 } from "lucide-react";
+import { PerformanceMonitor } from "@react-three/drei";
+import { SceneEffects, SceneLighting, type RenderQuality } from "./scene/SceneEffects";
+import { HeatmapLayer } from "./scene/HeatmapLayer";
+import {
+  HEAT_STOPS,
+  OVERLAY_LABELS,
+  formatMetric,
+  normalise,
+  overlayDomain,
+  overlayValue,
+  type Overlay,
+} from "../utils/overlays";
+import { FloorRuler, FloorZones } from "./scene/FloorZones";
 import {
   STATUS_COLORS,
   TYPE_COLORS,
   TYPE_LABELS,
 } from "../utils/stationVisual";
 import "../dcim.css";
-import { Suspense, useCallback, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import * as THREE from "three";
 import { useNavigate } from "react-router-dom";
 import { confirmAction, notify } from "@/shared/notifications";
@@ -55,6 +75,8 @@ function DashboardScreen() {
     goPrev,
     goNext,
     slotAnchors,
+    floor,
+    roomConditions,
     pinnedIds,
     togglePin,
   } = useDashboard();
@@ -85,6 +107,7 @@ function DashboardScreen() {
       : null;
   const selectStation = (stationId: number) => {
     setSelection({ roomId: currentRoom?.id, stationId });
+    setFocusSelected(true);
     setSidebarOpen(true);
   };
   const [preset, setPreset] = useState<"isometric" | "top" | "front">(
@@ -97,10 +120,56 @@ function DashboardScreen() {
   const [draggingRackId, setDraggingRackId] = useState<number | null>(null);
   const [nearestSlotCode, setNearestSlotCode] = useState<string | null>(null);
   const [isWarningOpen, setIsWarningOpen] = useState(false);
+  const [overlay, setOverlay] = useState<Overlay>("none");
+  // Camera follows the selected station until Fit or a view change shows the whole room again.
+  const [focusSelected, setFocusSelected] = useState(false);
+  const [touring, setTouring] = useState(false);
+  // An explicit Effects choice is kept; without one, effects start on and switch off if frames drop.
+  const [qualityChoice, setQualityChoice] = useState<RenderQuality | null>(() => {
+    try {
+      const stored = localStorage.getItem("dcim:quality");
+      return stored === "high" || stored === "standard" ? stored : null;
+    } catch {
+      return null;
+    }
+  });
+  const [slowDevice, setSlowDevice] = useState(false);
+  const quality: RenderQuality = qualityChoice ?? (slowDevice ? "standard" : "high");
+  const changeQuality = (next: RenderQuality) => {
+    setQualityChoice(next);
+    try {
+      localStorage.setItem("dcim:quality", next);
+    } catch {
+      // Preference only; ignore storage failures.
+    }
+  };
 
-  const roomTemp = currentRoom?.temperature ?? null;
-  const roomHumidity = currentRoom?.humidity ?? null;
-  const roomPower = currentRoom?.power_usage ?? null;
+  const selectedRack = visibleRacks.find((rack) => rack.id === selectedId) ?? null;
+  const focus = focusSelected && selectedRack?.position ? selectedRack.position : null;
+  const domain = overlayDomain(visibleRacks, overlay);
+  const overlayReadings = visibleRacks.filter((rack) => overlayValue(rack, overlay) != null).length;
+  const floorSize = Math.max(floor.floorWidth, floor.floorDepth) + 2;
+
+  // Guided tour: visit each placed station in turn until stopped.
+  useEffect(() => {
+    if (!touring || isEditMode || !visibleRacks.length) return;
+    let index = Math.max(0, visibleRacks.findIndex((rack) => rack.id === selectedId));
+    const visit = () => {
+      const rack = visibleRacks[index % visibleRacks.length];
+      setSelection({ roomId: currentRoom?.id, stationId: rack.id });
+      setFocusSelected(true);
+      index += 1;
+    };
+    visit();
+    const timer = window.setInterval(visit, 4500);
+    return () => window.clearInterval(timer);
+  }, [touring, isEditMode, visibleRacks.length, currentRoom?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Live room conditions from telemetry win over the room record's own values.
+  const roomTemp = roomConditions?.temperature_c ?? currentRoom?.temperature ?? null;
+  const roomHumidity = roomConditions?.humidity_percent ?? currentRoom?.humidity ?? null;
+  const roomPower =
+    roomConditions?.power_w != null ? roomConditions.power_w / 1000 : (currentRoom?.power_usage ?? null);
 
   const clearEditState = useCallback(() => {
     setNearestSlotCode(null);
@@ -229,7 +298,9 @@ function DashboardScreen() {
                 slots
               </p>
             </div>
-            <span className="dcim-schematic">Schematic view</span>
+            <span className="dcim-schematic">
+              {quality === "high" ? "Enhanced rendering" : "Standard rendering"}
+            </span>
           </div>
           <div
             className="dcim-map-toolbar"
@@ -240,7 +311,10 @@ function DashboardScreen() {
               {(["isometric", "top", "front"] as const).map((view) => (
                 <button
                   key={view}
-                  onClick={() => setPreset(view)}
+                  onClick={() => {
+                    setPreset(view);
+                    setFocusSelected(false);
+                  }}
                   aria-pressed={preset === view}
                 >
                   {view === "isometric" ? (
@@ -258,7 +332,11 @@ function DashboardScreen() {
             </div>
             <div>
               <button
-                onClick={() => setCameraReset((key) => key + 1)}
+                onClick={() => {
+                  setTouring(false);
+                  setFocusSelected(false);
+                  setCameraReset((key) => key + 1);
+                }}
                 title="Fit room"
               >
                 <RotateCcw size={14} />
@@ -282,20 +360,73 @@ function DashboardScreen() {
                 Color: {colorMode}
               </button>
             </div>
+            <div role="radiogroup" aria-label="Data overlay">
+              {(["none", "temperature", "power", "capacity"] as const).map((value) => (
+                <button
+                  key={value}
+                  role="radio"
+                  aria-checked={overlay === value}
+                  aria-pressed={overlay === value}
+                  onClick={() => setOverlay(value)}
+                  title={OVERLAY_LABELS[value]}
+                >
+                  {value === "none" ? (
+                    <CircleOff size={14} />
+                  ) : value === "temperature" ? (
+                    <Thermometer size={14} />
+                  ) : value === "power" ? (
+                    <Zap size={14} />
+                  ) : (
+                    <Gauge size={14} />
+                  )}
+                  {value === "none"
+                    ? "No overlay"
+                    : value === "temperature"
+                      ? "Heat"
+                      : value === "power"
+                        ? "Power"
+                        : "Capacity"}
+                </button>
+              ))}
+            </div>
+            <div>
+              <button
+                onClick={() => setTouring((value) => !value)}
+                aria-pressed={touring}
+                disabled={isEditMode || !visibleRacks.length}
+                title="Visit each station in turn"
+              >
+                {touring ? <Pause size={14} /> : <Play size={14} />}
+                {touring ? "Stop tour" : "Tour"}
+              </button>
+              <button
+                onClick={() => changeQuality(quality === "high" ? "standard" : "high")}
+                aria-pressed={quality === "high"}
+                title="Ambient occlusion, glow and anti-aliasing"
+              >
+                <Sparkles size={14} />
+                Effects
+              </button>
+            </div>
           </div>
           <Canvas
             orthographic
             camera={{ near: 0.1, far: 2000, zoom: 30, position: [20, 20, 20] }}
-            shadows={{ type: THREE.PCFShadowMap }}
+            shadows={{ type: THREE.PCFSoftShadowMap }}
             dpr={[1, 2]}
+            gl={{ toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.05 }}
             style={{ flex: 1, height: "100%" }}
+            onPointerMissed={() => setTouring(false)}
           >
             <color attach="background" args={["#0b1523"]} />
-            <ambientLight intensity={0.9} />
-            <hemisphereLight args={["#d9efff", "#253549", 1.2]} />
+            <fog attach="fog" args={["#0b1523", 60, 160]} />
+            {qualityChoice === null && <PerformanceMonitor onDecline={() => setSlowDevice(true)} />}
+            <SceneLighting floorSize={floorSize} />
+            <ambientLight intensity={0.35} />
+            <hemisphereLight args={["#d9efff", "#253549", 0.6]} />
             <directionalLight
               position={[8, 15, 10]}
-              intensity={2.2}
+              intensity={1.8}
               castShadow
               shadow-mapSize={[2048, 2048]}
               shadow-camera-left={-30}
@@ -303,11 +434,21 @@ function DashboardScreen() {
               shadow-camera-top={30}
               shadow-camera-bottom={-30}
               shadow-bias={-0.0005}
+              shadow-normalBias={0.02}
             />
-            <RoomFloor
-              rows={currentRoom?.rows ?? null}
-              cols={currentRoom?.cols ?? null}
-            />
+            {overlay !== "none" && !isEditMode && (
+              <HeatmapLayer
+                racks={visibleRacks}
+                overlay={overlay}
+                floor={floor}
+              />
+            )}
+            <RoomFloor floor={floor} />
+            {/* Own boundary: labels still loading their font never hold back the rest of the scene. */}
+            <Suspense fallback={null}>
+              {!isEditMode && <FloorZones slots={slotAnchors} />}
+              {showLabels && <FloorRuler floor={floor} slots={slotAnchors} />}
+            </Suspense>
             <SlotGridOverlay
               slots={slotAnchors}
               isEditMode={isEditMode}
@@ -315,8 +456,6 @@ function DashboardScreen() {
               nearestSlotCode={nearestSlotCode}
               draggingRackId={draggingRackId}
               racks={visibleRacks}
-              rows={currentRoom?.rows ?? null}
-              cols={currentRoom?.cols ?? null}
             />
             <Suspense fallback={null}>
               {visibleRacks.map((rack) => (
@@ -339,16 +478,22 @@ function DashboardScreen() {
                   onNearestSlotChange={setNearestSlotCode}
                   pinned={pinnedIds.includes(rack.id)}
                   onTogglePin={togglePin}
+                  overlayLevel={(() => {
+                    const value = overlayValue(rack, overlay);
+                    return value == null || isEditMode ? null : normalise(value, domain);
+                  })()}
+                  dimmed={focus !== null && selectedId !== rack.id}
                 />
               ))}
             </Suspense>
             <CameraRig
-              rows={currentRoom?.rows}
-              cols={currentRoom?.cols}
+              floor={floor}
               preset={preset}
               resetKey={`${currentRoom?.id}-${cameraReset}`}
               enabled={draggingRackId === null}
+              focus={isEditMode ? null : focus}
             />
+            <SceneEffects quality={quality} />
           </Canvas>
           {!loading && visibleRacks.length === 0 && (
             <div className="dcim-map-empty">
@@ -361,6 +506,28 @@ function DashboardScreen() {
             </div>
           )}
           <div className="dcim-map-footer">
+            {overlay !== "none" && (
+              <div className="dcim-heat-legend" aria-label={`${OVERLAY_LABELS[overlay]} scale`}>
+                <strong>{OVERLAY_LABELS[overlay]}</strong>
+                {overlayReadings ? (
+                  <>
+                    <span>{formatMetric(domain[0], overlay)}</span>
+                    <i style={{ background: `linear-gradient(90deg, ${HEAT_STOPS.join(", ")})` }} />
+                    <span>{formatMetric(domain[1], overlay)}</span>
+                    <small>
+                      {overlayReadings} of {visibleRacks.length} stations{" "}
+                      {overlay === "capacity" ? "with rated capacity" : "reporting"}
+                    </small>
+                  </>
+                ) : (
+                  <small>
+                    {overlay === "capacity"
+                      ? "No station in this room has a rated power, weight, rack or bench capacity yet."
+                      : `No ${overlay === "temperature" ? "temperature" : "power"} telemetry for this room yet.`}
+                  </small>
+                )}
+              </div>
+            )}
             <div className="dcim-legend">
               {Object.entries(
                 colorMode === "status" ? STATUS_COLORS : TYPE_COLORS,
@@ -416,6 +583,17 @@ function DashboardScreen() {
             selectedId={selectedId}
             onSelect={selectStation}
             onClose={() => setSidebarOpen(false)}
+            onClearSelection={() => {
+              setTouring(false);
+              setSelection(null);
+              setFocusSelected(false);
+            }}
+            onFocus={(id) => {
+              setSelection({ roomId: currentRoom?.id, stationId: id });
+              setFocusSelected(true);
+            }}
+            pinnedIds={pinnedIds}
+            onTogglePin={togglePin}
             isEditMode={isEditMode}
             canEdit={canEditLayout}
             isDeleteMode={isDeleteMode}

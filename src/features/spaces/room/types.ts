@@ -142,12 +142,63 @@ export interface IRoomDashboardSlot {
   service_status?: 'usable' | 'blocked' | 'retired' | string;
   occupied?: boolean;
   rack: IRoomDashboardRack | null;
+  /** Slot centre from the room's back-left corner (x across the width, y along the length), in mm. */
+  x_mm?: number | null;
+  y_mm?: number | null;
+  width_mm?: number | null;
+  depth_mm?: number | null;
+  orientation_degrees?: number | null;
+  /** station, storage, aisle, safety, utility or reserved. */
+  slot_type?: string;
+}
+
+/** Current conditions from fresh telemetry placed in a room or station. */
+export interface IDashboardConditions {
+  temperature_c: number | null;
+  humidity_percent: number | null;
+  power_w: number | null;
+  observed_at: string | null;
+  channel_count: number;
+}
+
+export interface IDashboardRackItem {
+  equipment_id: number;
+  sku: string;
+  name: string;
+  category: string | null;
+  power_draw_w: number | null;
+  rack_unit: number;
+  rack_unit_height: number;
+  rack_face: string;
+}
+
+export interface IDashboardStationCapacity {
+  bench_capacity: number | null;
+  rack_units: number | null;
+  rack_units_used?: number;
+  power_capacity_w: number | null;
+  power_reserved_w: number | null;
+  power_installed_w?: number;
+  max_load_kg: number | null;
+  load_installed_kg?: number;
+  network_port_capacity: number | null;
+  installed_units?: number;
+}
+
+/** What the room mapping adds per station for the DCIM view. */
+export interface IDashboardStationInfo {
+  capacity?: IDashboardStationCapacity;
+  rack?: IDashboardRackItem[];
+  conditions?: IDashboardConditions | null;
+  layout?: { width_mm: number | null; depth_mm: number | null; height_mm: number | null; orientation_degrees: number | null };
 }
 
 export interface IRoomDashboardLayout {
   contents?: Record<number, import('./stationContents').StationPosition[]>;
   /** 3D library model each station shows (own or its station type's), by station id. */
   station_models?: Record<number, number | null>;
+  /** Capacity, rack contents and live conditions by station id. */
+  stations?: Record<number, IDashboardStationInfo>;
   room: {
     id: number;
     sku: string | null;
@@ -155,6 +206,9 @@ export interface IRoomDashboardLayout {
     rows: number | null;
     cols: number | null;
     setup_capacity: number | null;
+    width_m?: number | null;
+    length_m?: number | null;
+    conditions?: IDashboardConditions | null;
   };
   slots: IRoomDashboardSlot[];
   unplaced_racks: IRoomDashboardRack[];
