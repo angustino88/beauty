@@ -10,6 +10,7 @@ import {
   Layers,
   Thermometer,
   Zap,
+  Gauge,
   CircleOff,
   Play,
   Pause,
@@ -27,7 +28,7 @@ import {
   overlayValue,
   type Overlay,
 } from "../utils/overlays";
-import { computeFloorDimensions } from "../utils/slotGrid";
+import { FloorRuler, FloorZones } from "./scene/FloorZones";
 import {
   STATUS_COLORS,
   TYPE_COLORS,
@@ -74,6 +75,8 @@ function DashboardScreen() {
     goPrev,
     goNext,
     slotAnchors,
+    floor,
+    roomConditions,
     pinnedIds,
     togglePin,
   } = useDashboard();
@@ -145,10 +148,7 @@ function DashboardScreen() {
   const focus = focusSelected && selectedRack?.position ? selectedRack.position : null;
   const domain = overlayDomain(visibleRacks, overlay);
   const overlayReadings = visibleRacks.filter((rack) => overlayValue(rack, overlay) != null).length;
-  const floorSize = (() => {
-    const { floorWidth, floorDepth } = computeFloorDimensions(currentRoom?.rows, currentRoom?.cols);
-    return Math.max(floorWidth, floorDepth) + 2;
-  })();
+  const floorSize = Math.max(floor.floorWidth, floor.floorDepth) + 2;
 
   // Guided tour: visit each placed station in turn until stopped.
   useEffect(() => {
@@ -165,9 +165,11 @@ function DashboardScreen() {
     return () => window.clearInterval(timer);
   }, [touring, isEditMode, visibleRacks.length, currentRoom?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const roomTemp = currentRoom?.temperature ?? null;
-  const roomHumidity = currentRoom?.humidity ?? null;
-  const roomPower = currentRoom?.power_usage ?? null;
+  // Live room conditions from telemetry win over the room record's own values.
+  const roomTemp = roomConditions?.temperature_c ?? currentRoom?.temperature ?? null;
+  const roomHumidity = roomConditions?.humidity_percent ?? currentRoom?.humidity ?? null;
+  const roomPower =
+    roomConditions?.power_w != null ? roomConditions.power_w / 1000 : (currentRoom?.power_usage ?? null);
 
   const clearEditState = useCallback(() => {
     setNearestSlotCode(null);
@@ -359,7 +361,7 @@ function DashboardScreen() {
               </button>
             </div>
             <div role="radiogroup" aria-label="Data overlay">
-              {(["none", "temperature", "power"] as const).map((value) => (
+              {(["none", "temperature", "power", "capacity"] as const).map((value) => (
                 <button
                   key={value}
                   role="radio"
@@ -372,10 +374,18 @@ function DashboardScreen() {
                     <CircleOff size={14} />
                   ) : value === "temperature" ? (
                     <Thermometer size={14} />
-                  ) : (
+                  ) : value === "power" ? (
                     <Zap size={14} />
+                  ) : (
+                    <Gauge size={14} />
                   )}
-                  {value === "none" ? "No overlay" : value === "temperature" ? "Heat" : "Power"}
+                  {value === "none"
+                    ? "No overlay"
+                    : value === "temperature"
+                      ? "Heat"
+                      : value === "power"
+                        ? "Power"
+                        : "Capacity"}
                 </button>
               ))}
             </div>
@@ -430,14 +440,15 @@ function DashboardScreen() {
               <HeatmapLayer
                 racks={visibleRacks}
                 overlay={overlay}
-                rows={currentRoom?.rows ?? null}
-                cols={currentRoom?.cols ?? null}
+                floor={floor}
               />
             )}
-            <RoomFloor
-              rows={currentRoom?.rows ?? null}
-              cols={currentRoom?.cols ?? null}
-            />
+            <RoomFloor floor={floor} />
+            {/* Own boundary: labels still loading their font never hold back the rest of the scene. */}
+            <Suspense fallback={null}>
+              {!isEditMode && <FloorZones slots={slotAnchors} />}
+              {showLabels && <FloorRuler floor={floor} slots={slotAnchors} />}
+            </Suspense>
             <SlotGridOverlay
               slots={slotAnchors}
               isEditMode={isEditMode}
@@ -445,8 +456,6 @@ function DashboardScreen() {
               nearestSlotCode={nearestSlotCode}
               draggingRackId={draggingRackId}
               racks={visibleRacks}
-              rows={currentRoom?.rows ?? null}
-              cols={currentRoom?.cols ?? null}
             />
             <Suspense fallback={null}>
               {visibleRacks.map((rack) => (
@@ -478,8 +487,7 @@ function DashboardScreen() {
               ))}
             </Suspense>
             <CameraRig
-              rows={currentRoom?.rows}
-              cols={currentRoom?.cols}
+              floor={floor}
               preset={preset}
               resetKey={`${currentRoom?.id}-${cameraReset}`}
               enabled={draggingRackId === null}
@@ -507,11 +515,16 @@ function DashboardScreen() {
                     <i style={{ background: `linear-gradient(90deg, ${HEAT_STOPS.join(", ")})` }} />
                     <span>{formatMetric(domain[1], overlay)}</span>
                     <small>
-                      {overlayReadings} of {visibleRacks.length} stations reporting
+                      {overlayReadings} of {visibleRacks.length} stations{" "}
+                      {overlay === "capacity" ? "with rated capacity" : "reporting"}
                     </small>
                   </>
                 ) : (
-                  <small>No {overlay === "temperature" ? "temperature" : "power"} telemetry for this room yet.</small>
+                  <small>
+                    {overlay === "capacity"
+                      ? "No station in this room has a rated power, weight, rack or bench capacity yet."
+                      : `No ${overlay === "temperature" ? "temperature" : "power"} telemetry for this room yet.`}
+                  </small>
                 )}
               </div>
             )}

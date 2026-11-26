@@ -1,13 +1,43 @@
 import type { RackData } from "../types.ts";
 import { RACK_THRESHOLDS } from "../config/rackThresholds.ts";
 
-export type Overlay = "none" | "temperature" | "power";
+export type Overlay = "none" | "temperature" | "power" | "capacity";
 
 export const OVERLAY_LABELS: Record<Overlay, string> = {
   none: "No overlay",
   temperature: "Temperature",
   power: "Power draw",
+  capacity: "Capacity used",
 };
+
+export interface CapacityUse {
+  power: number | null;
+  load: number | null;
+  rackUnits: number | null;
+  benches: number | null;
+}
+
+/** Share of each rated capacity in use (0–1, may exceed 1); null where the station has no rating. */
+export function capacityUse(rack: RackData): CapacityUse {
+  const capacity = rack.capacity;
+  const ratio = (used: number | null | undefined, rated: number | null | undefined) =>
+    used != null && rated ? used / rated : null;
+  return {
+    power: ratio(
+      (capacity?.power_installed_w ?? 0) + (capacity?.power_reserved_w ?? 0) || null,
+      capacity?.power_capacity_w,
+    ),
+    load: ratio(capacity?.load_installed_kg, capacity?.max_load_kg),
+    rackUnits: ratio(capacity?.rack_units_used, capacity?.rack_units),
+    benches: ratio(rack.benchCount, rack.benchCapacity),
+  };
+}
+
+/** The tightest constraint: the highest share in use across power, weight, rack units and benches. */
+export function capacityPeak(rack: RackData): number | null {
+  const values = Object.values(capacityUse(rack)).filter((value): value is number => value != null);
+  return values.length ? Math.max(...values) : null;
+}
 
 /** Colour ramp used by the heatmap, the metric bars and their legend (cool → hot). */
 export const HEAT_STOPS = ["#2563eb", "#06b6d4", "#22c55e", "#eab308", "#f97316", "#dc2626"];
@@ -15,6 +45,7 @@ export const HEAT_STOPS = ["#2563eb", "#06b6d4", "#22c55e", "#eab308", "#f97316"
 export function overlayValue(rack: RackData, overlay: Overlay): number | null {
   if (overlay === "temperature") return rack.temperature;
   if (overlay === "power") return rack.powerUsage;
+  if (overlay === "capacity") return capacityPeak(rack);
   return null;
 }
 
@@ -24,6 +55,7 @@ export function overlayValue(rack: RackData, overlay: Overlay): number | null {
  */
 export function overlayDomain(racks: RackData[], overlay: Overlay): [number, number] {
   if (overlay === "temperature") return [18, RACK_THRESHOLDS.temperature.critical];
+  if (overlay === "capacity") return [0, 1];
   const values = racks.map((rack) => overlayValue(rack, overlay)).filter((value): value is number => value != null);
   return [0, Math.max(1, ...values)];
 }
@@ -53,5 +85,6 @@ export function heatHex(t: number) {
 
 export function formatMetric(value: number | null, overlay: Overlay) {
   if (value == null) return "—";
+  if (overlay === "capacity") return `${Math.round(value * 100)} %`;
   return overlay === "temperature" ? `${value.toFixed(1)} °C` : `${value.toFixed(1)} kW`;
 }

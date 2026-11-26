@@ -3,7 +3,7 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useRef } from "react";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { OrthographicCamera, Vector3 } from "three";
-import { computeFloorDimensions } from "../../utils/slotGrid";
+import type { FloorSpec } from "../../types";
 
 type Preset = "isometric" | "top" | "front";
 
@@ -22,15 +22,13 @@ function presetDirection(preset: Preset, span: number) {
  * instead of jumping. Any user drag or zoom stops the current animation.
  */
 export function CameraRig({
-  rows,
-  cols,
+  floor,
   preset,
   resetKey,
   enabled,
   focus,
 }: {
-  rows?: number | null;
-  cols?: number | null;
+  floor: FloorSpec;
   preset: Preset;
   resetKey: string;
   enabled: boolean;
@@ -44,7 +42,7 @@ export function CameraRig({
 
   const focusKey = focus ? focus.join(",") : "room";
   useEffect(() => {
-    const { floorWidth: w, floorDepth: d } = computeFloorDimensions(rows, cols);
+    const { floorWidth: w, floorDepth: d } = floor;
     const span = Math.max(w, d);
     const direction = presetDirection(preset, span);
     let target = ROOM_TARGET.clone();
@@ -63,7 +61,7 @@ export function CameraRig({
       );
     }
     goal.current = { position: target.clone().add(direction), target, zoom: Math.min(zoom, 220) };
-  }, [rows, cols, preset, resetKey, focusKey, size.width, size.height]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [floor.floorWidth, floor.floorDepth, preset, resetKey, focusKey, size.width, size.height]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const orbit = controls.current;

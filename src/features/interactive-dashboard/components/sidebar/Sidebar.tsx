@@ -21,6 +21,7 @@ import type { RackStatus } from "../../config/rackThresholds";
 import { RACK_THRESHOLDS } from "../../config/rackThresholds";
 import { STATUS_COLORS, TYPE_COLORS, TYPE_LABELS } from "../../utils/stationVisual";
 import { RackCard } from "./RackCard";
+import { categoryColor } from "../../utils/categoryColor";
 
 const STATUS_LABELS: Record<RackStatus, string> = {
   ok: "Healthy",
@@ -28,14 +29,6 @@ const STATUS_LABELS: Record<RackStatus, string> = {
   critical: "Critical",
   unknown: "No data",
 };
-
-const CATEGORY_PALETTE = ["#38bdf8", "#a78bfa", "#34d399", "#fbbf24", "#f472b6", "#fb923c", "#2dd4bf"];
-function categoryColor(name: string | undefined) {
-  if (!name) return "#64748b";
-  let hash = 0;
-  for (const char of name) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
-  return CATEGORY_PALETTE[hash % CATEGORY_PALETTE.length];
-}
 
 function MetricTile({
   icon,
@@ -82,6 +75,99 @@ function MetricTile({
         <i style={{ width: `${value == null ? 0 : Math.min(100, (value / max) * 100)}%` }} />
         {thresholds && <b style={{ left: `${(thresholds.warning / max) * 100}%` }} />}
       </span>
+    </div>
+  );
+}
+
+function timeAgo(iso: string) {
+  const seconds = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 1000));
+  if (seconds < 60) return `${seconds}s ago`;
+  const minutes = Math.round(seconds / 60);
+  return minutes < 60 ? `${minutes} min ago` : `${Math.round(minutes / 60)} h ago`;
+}
+
+function CapacityRow({
+  label,
+  used,
+  rated,
+  format,
+  hint,
+}: {
+  label: string;
+  used: number;
+  rated: number | null | undefined;
+  format: (value: number) => string;
+  hint?: string;
+}) {
+  const share = rated ? used / rated : null;
+  const level = share == null ? "unknown" : share > 0.95 ? "critical" : share > 0.8 ? "warning" : "ok";
+  return (
+    <div className={`dcim-capacity-row is-${level}`} title={hint}>
+      <span>
+        {label}
+        <b>
+          {format(used)}
+          {rated ? ` / ${format(rated)}` : ""}
+          {share != null && <em>{Math.round(share * 100)}%</em>}
+        </b>
+      </span>
+      {rated ? (
+        <span className="dcim-meter" aria-hidden="true">
+          <i style={{ width: `${Math.min(100, (share ?? 0) * 100)}%` }} />
+        </span>
+      ) : (
+        <small className="dcim-muted">No rated capacity</small>
+      )}
+    </div>
+  );
+}
+
+/** Front/rear rack elevation: one row per unit, top unit first, mounted equipment spanning its units. */
+function RackElevation({ units, items }: { units: number; items: NonNullable<RackData["rackItems"]> }) {
+  const faces: { key: string; label: string }[] = [
+    { key: "front", label: "Front" },
+    { key: "rear", label: "Rear" },
+  ];
+  const free = units - items.reduce((total, item) => total + item.rack_unit_height, 0);
+  return (
+    <div className="dcim-rack">
+      <h4 className="dcim-section-title">
+        Rack elevation <span>{free} U free</span>
+      </h4>
+      <div className="dcim-rack-faces">
+        {faces.map((face) => (
+          <div key={face.key} className="dcim-rack-face" aria-label={`${face.label} of rack`}>
+            <small>{face.label}</small>
+            <div className="dcim-rack-grid" style={{ gridTemplateRows: `repeat(${units}, 1fr)` }}>
+              {Array.from({ length: units }, (_, index) => units - index).map((unit) => (
+                <span
+                  key={unit}
+                  className="dcim-rack-u"
+                  style={{ gridRow: units - unit + 1 }}
+                  aria-hidden="true"
+                >
+                  {unit % 5 === 0 || unit === 1 ? unit : ""}
+                </span>
+              ))}
+              {items
+                .filter((item) => (item.rack_face || "front") === face.key)
+                .map((item) => (
+                  <span
+                    key={item.equipment_id}
+                    className="dcim-rack-item"
+                    style={{
+                      gridRow: `${units - (item.rack_unit + item.rack_unit_height - 1) + 1} / span ${item.rack_unit_height}`,
+                      borderLeftColor: categoryColor(item.category),
+                    }}
+                    title={`U${item.rack_unit}${item.rack_unit_height > 1 ? `–${item.rack_unit + item.rack_unit_height - 1}` : ""} · ${item.name || item.sku}${item.category ? ` · ${item.category}` : ""}${item.power_draw_w ? ` · ${item.power_draw_w} W` : ""}`}
+                  >
+                    {item.name || item.sku}
+                  </span>
+                ))}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -157,24 +243,62 @@ function StationDetail({
         <MetricTile icon={<Zap size={13} />} label="Power" value={station.powerUsage} unit="kW" digits={1} max={Math.max(10, station.powerUsage ?? 0)} />
       </div>
 
+      <p className="dcim-live">
+        {station.conditionsAt ? (
+          <>
+            <i className="is-live" />
+            Live · updated {timeAgo(station.conditionsAt)} · {station.sensorCount}{" "}
+            {station.sensorCount === 1 ? "sensor" : "sensors"}
+          </>
+        ) : (
+          <>
+            <i />
+            No live telemetry for this station
+          </>
+        )}
+      </p>
+
       <div className="dcim-capacity">
-        <span>
-          Bench positions
-          <b>
-            {used ?? benches.length}
-            {capacity ? ` / ${capacity}` : ""}
-          </b>
-        </span>
-        {capacity ? (
-          <span className="dcim-meter is-capacity" aria-hidden="true">
-            <i style={{ width: `${Math.min(100, ((used ?? benches.length) / capacity) * 100)}%` }} />
-          </span>
+        <h4 className="dcim-section-title">Capacity</h4>
+        <CapacityRow
+          label="Power"
+          used={(station.capacity?.power_installed_w ?? 0) + (station.capacity?.power_reserved_w ?? 0)}
+          rated={station.capacity?.power_capacity_w}
+          format={(value) => `${(value / 1000).toFixed(1)} kW`}
+          hint="Installed equipment plus reserved power"
+        />
+        <CapacityRow
+          label="Weight"
+          used={station.capacity?.load_installed_kg ?? 0}
+          rated={station.capacity?.max_load_kg}
+          format={(value) => `${Math.round(value)} kg`}
+        />
+        {station.capacity?.rack_units ? (
+          <CapacityRow
+            label="Rack units"
+            used={station.capacity.rack_units_used ?? 0}
+            rated={station.capacity.rack_units}
+            format={(value) => `${value} U`}
+          />
+        ) : null}
+        {capacity || benches.length ? (
+          <CapacityRow
+            label="Bench positions"
+            used={used ?? benches.length}
+            rated={capacity}
+            format={(value) => String(value)}
+          />
         ) : null}
         <small>
           {benches.length} {benches.length === 1 ? "bench" : "benches"} · {deviceCount}{" "}
           {deviceCount === 1 ? "device" : "devices"}
+          {station.capacity?.installed_units ? ` · ${station.capacity.installed_units} units installed` : ""}
         </small>
       </div>
+
+      {station.capacity?.rack_units ? (
+        <RackElevation units={station.capacity.rack_units} items={station.rackItems ?? []} />
+      ) : null}
 
       <h4 className="dcim-section-title">Benches</h4>
       {!station.slots ? (
