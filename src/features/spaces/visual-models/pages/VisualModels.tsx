@@ -350,16 +350,50 @@ function AssetDetail({
   );
 }
 
+type ModelGroup = "all" | "embedded" | "furniture" | "it" | "custom";
+
+function classifyModelGroup(asset: VisualModelAsset): Exclude<ModelGroup, "all"> {
+  const name = asset.name.toLowerCase();
+  if (!name.startsWith("reference")) return "custom";
+  if (
+    /oscilloscope|power supply|jtag|debugger|logic|dev board|dut|hil|solder|rework|chamber|rf|spectrum|instrument|vector|vn1630|vn5620|vt system|lauterbach|trace32|powerdebug|segger|j-link|raspberry|stm32|nucleo|ecu|rigol|dp831|toellner|toe\s?89|itech|electronic load|waveform|keysight|fluke|multimeter|microscope|embedded test rack/.test(
+      name,
+    )
+  ) {
+    return "embedded";
+  }
+  if (
+    /workbench|workstation|cabinet|shelving|cart|fume|hood|stool|chair|drawer|gantry|cable/.test(
+      name,
+    )
+  ) {
+    return "furniture";
+  }
+  return "it";
+}
+
 function LibraryTab({ assets }: { assets: VisualModelAsset[] }) {
   const [selected, setSelected] = useState<number>();
   const [uploadOpen, setUploadOpen] = useState(false);
-  const asset = assets.find((item) => item.id === selected) ?? assets[0];
+  const [query, setQuery] = useState("");
+  const [group, setGroup] = useState<ModelGroup>("all");
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return assets.filter((item) => {
+      if (group !== "all" && classifyModelGroup(item) !== group) return false;
+      if (q && !item.name.toLowerCase().includes(q)) return false;
+      return true;
+    });
+  }, [assets, group, query]);
+
+  const asset = filtered.find((item) => item.id === selected) ?? filtered[0];
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "260px 1fr", gap: 16, alignItems: "start" }}>
+    <div style={{ display: "grid", gridTemplateColumns: "300px 1fr", gap: 16, alignItems: "start" }}>
       <Card
         size="small"
-        title="Library"
+        title={`Library (${filtered.length})`}
         extra={
           <Button
             type="primary"
@@ -371,10 +405,33 @@ function LibraryTab({ assets }: { assets: VisualModelAsset[] }) {
           </Button>
         }
       >
+        <Space direction="vertical" size="small" style={{ width: "100%", marginBottom: 10 }}>
+          <Input.Search
+            allowClear
+            size="small"
+            placeholder="Filter 3D models…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+          <Segmented
+            block
+            size="small"
+            value={group}
+            onChange={(val) => setGroup(val as ModelGroup)}
+            options={[
+              { label: "All", value: "all" },
+              { label: "Embedded", value: "embedded" },
+              { label: "Furniture", value: "furniture" },
+              { label: "IT", value: "it" },
+              { label: "Custom", value: "custom" },
+            ]}
+          />
+        </Space>
         <List
           aria-label="Library models"
-          dataSource={assets}
-          locale={{ emptyText: "No models yet" }}
+          style={{ maxHeight: 520, overflowY: "auto" }}
+          dataSource={filtered}
+          locale={{ emptyText: assets.length ? "No matching models" : "No models yet" }}
           renderItem={(item) => (
             <List.Item
               onClick={() => setSelected(item.id)}
@@ -397,10 +454,12 @@ function LibraryTab({ assets }: { assets: VisualModelAsset[] }) {
         <AssetDetail key={asset.id} asset={asset} onDeleted={() => setSelected(undefined)} />
       ) : (
         <Card>
-          <Empty description="Upload a GLB to start the library.">
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => setUploadOpen(true)}>
-              Upload a model
-            </Button>
+          <Empty description={assets.length ? "No models match this filter." : "Upload a GLB to start the library."}>
+            {!assets.length && (
+              <Button type="primary" icon={<PlusOutlined />} onClick={() => setUploadOpen(true)}>
+                Upload a model
+              </Button>
+            )}
           </Empty>
         </Card>
       )}

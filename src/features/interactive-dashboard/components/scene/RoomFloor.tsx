@@ -8,7 +8,7 @@ interface RoomFloorProps {
 
 const FLOOR_Y        = -1.4;
 const THICKNESS      = 0.3;
-const WALL_H         = 0.5;
+const WALL_H         = 0.62;
 const FLOOR_Z_OFFSET = 0.5;
 
 export function RoomFloor({ floor }: RoomFloorProps) {
@@ -26,15 +26,25 @@ export function RoomFloor({ floor }: RoomFloorProps) {
         canvas.height = size;
         const ctx = canvas.getContext('2d')!;
 
-        ctx.fillStyle = '#1c2c40';
+        ctx.fillStyle = '#182739';
         ctx.fillRect(0, 0, size, size);
 
-        ctx.strokeStyle = '#30445b';
+        // Subtle inner brushed tile bevel
+        ctx.fillStyle = 'rgba(255,255,255,0.018)';
+        ctx.fillRect(size * 0.05, size * 0.05, size * 0.90, size * 0.90);
+
+        // Raised-floor tile seam & corner fasteners
+        ctx.strokeStyle = '#2d435b';
         ctx.lineWidth = size * 0.018;
         ctx.strokeRect(size * 0.012, size * 0.012, size - size * 0.024, size - size * 0.024);
 
-        ctx.fillStyle = 'rgba(255,255,255,0.015)';
-        ctx.fillRect(size * 0.06, size * 0.06, size * 0.88, size * 0.88);
+        ctx.fillStyle = '#3b5573';
+        const dot = size * 0.055;
+        for (const [dx, dy] of [[dot, dot], [size - dot, dot], [dot, size - dot], [size - dot, size - dot]]) {
+            ctx.beginPath();
+            ctx.arc(dx, dy, size * 0.012, 0, Math.PI * 2);
+            ctx.fill();
+        }
 
         const tex = new THREE.CanvasTexture(canvas);
         tex.wrapS = THREE.RepeatWrapping;
@@ -48,22 +58,46 @@ export function RoomFloor({ floor }: RoomFloorProps) {
 
     return (
         <group position={[0, 0, FLOOR_Z_OFFSET]}>
-            {/* Floor slab */}
+            {/* Floor slab + lower structural plinth trim */}
             <mesh position={[0, SLAB_Y, 0]} receiveShadow>
                 <boxGeometry args={[floorWidth, THICKNESS, floorDepth]} />
-                <meshStandardMaterial map={tileTexture} roughness={0.85} metalness={0.05} />
+                <meshStandardMaterial map={tileTexture} roughness={0.78} metalness={0.12} />
+            </mesh>
+            <mesh position={[0, SLAB_Y - THICKNESS / 2 - 0.03, 0]}>
+                <boxGeometry args={[floorWidth + 0.16, 0.06, floorDepth + 0.16]} />
+                <meshStandardMaterial color="#0d1827" roughness={0.85} metalness={0.35} />
             </mesh>
 
             {/* Baseboards */}
-            <Baseboard position={[0,      FLOOR_Y, -HALF_D]} size={[floorWidth, 0.25, 0.08]} />
-            <Baseboard position={[0,      FLOOR_Y,  HALF_D]} size={[floorWidth, 0.25, 0.08]} />
-            <Baseboard position={[-HALF_W, FLOOR_Y, 0]}      size={[0.08, 0.25, floorDepth]} />
-            <Baseboard position={[ HALF_W, FLOOR_Y, 0]}      size={[0.08, 0.25, floorDepth]} />
+            <Baseboard position={[0,      FLOOR_Y + 0.06, -HALF_D]} size={[floorWidth, 0.18, 0.08]} />
+            <Baseboard position={[0,      FLOOR_Y + 0.04,  HALF_D]} size={[floorWidth, 0.12, 0.08]} />
+            <Baseboard position={[-HALF_W, FLOOR_Y + 0.06, 0]}      size={[0.08, 0.18, floorDepth]} />
+            <Baseboard position={[ HALF_W, FLOOR_Y + 0.06, 0]}      size={[0.08, 0.18, floorDepth]} />
 
-            {/* Glass walls — back, left, right (front open) */}
-            <GlassWall position={[0,      WALL_CENTER_Y, -HALF_D]} size={[floorWidth, WALL_H, 0.08]} />
-            <GlassWall position={[-HALF_W, WALL_CENTER_Y, 0]}      size={[0.08, WALL_H, floorDepth]} />
-            <GlassWall position={[ HALF_W, WALL_CENTER_Y, 0]}      size={[0.08, WALL_H, floorDepth]} />
+            {/* Front entrance threshold accent bar (+Z side) */}
+            <mesh position={[0, FLOOR_Y + 0.015, HALF_D + 0.045]}>
+                <boxGeometry args={[Math.min(2.6, floorWidth * 0.28), 0.03, 0.04]} />
+                <meshStandardMaterial color="#38bdf8" emissive="#38bdf8" emissiveIntensity={1.1} toneMapped={false} />
+            </mesh>
+
+            {/* Corner architectural columns */}
+            {([-HALF_W, HALF_W] as const).flatMap((x) =>
+                ([-HALF_D, HALF_D] as const).map((z) => (
+                    <mesh key={`col-${x}-${z}`} position={[x, FLOOR_Y + (z < 0 ? WALL_H / 2 + 0.04 : 0.12), z]} castShadow>
+                        <boxGeometry args={[0.14, z < 0 ? WALL_H + 0.08 : 0.24, 0.14]} />
+                        <meshStandardMaterial color="#334a63" metalness={0.65} roughness={0.35} />
+                    </mesh>
+                )),
+            )}
+
+            {/* Glass partition walls — back, left, right (front open) with brushed aluminum top rail */}
+            <GlassWall position={[0,      WALL_CENTER_Y, -HALF_D]} size={[floorWidth, WALL_H, 0.06]} />
+            <GlassWall position={[-HALF_W, WALL_CENTER_Y, 0]}      size={[0.06, WALL_H, floorDepth]} />
+            <GlassWall position={[ HALF_W, WALL_CENTER_Y, 0]}      size={[0.06, WALL_H, floorDepth]} />
+
+            <WallRail position={[0,       FLOOR_Y + WALL_H + 0.02, -HALF_D]} size={[floorWidth + 0.08, 0.04, 0.09]} />
+            <WallRail position={[-HALF_W, FLOOR_Y + WALL_H + 0.02, 0]}       size={[0.09, 0.04, floorDepth + 0.08]} />
+            <WallRail position={[ HALF_W, FLOOR_Y + WALL_H + 0.02, 0]}       size={[0.09, 0.04, floorDepth + 0.08]} />
         </group>
     );
 }
@@ -75,7 +109,19 @@ function Baseboard({ position, size }: {
     return (
         <mesh position={position} receiveShadow castShadow>
             <boxGeometry args={size} />
-            <meshStandardMaterial color="#48647b" roughness={0.9} />
+            <meshStandardMaterial color="#364e67" roughness={0.7} metalness={0.35} />
+        </mesh>
+    );
+}
+
+function WallRail({ position, size }: {
+    position: [number, number, number];
+    size:     [number, number, number];
+}) {
+    return (
+        <mesh position={position} castShadow>
+            <boxGeometry args={size} />
+            <meshStandardMaterial color="#4e6b88" roughness={0.35} metalness={0.75} />
         </mesh>
     );
 }
@@ -88,9 +134,9 @@ function GlassWall({ position, size }: {
         <mesh position={position} castShadow receiveShadow>
             <boxGeometry args={size} />
             <meshPhysicalMaterial
-                color="#c8e8f4"
-                transparent opacity={0.22} roughness={0.04} metalness={0.1}
-                transmission={0.75} thickness={0.3} ior={1.5} depthWrite={false}
+                color="#9cd8f0"
+                transparent opacity={0.18} roughness={0.06} metalness={0.1}
+                transmission={0.7} thickness={0.25} ior={1.5} depthWrite={false}
             />
         </mesh>
     );

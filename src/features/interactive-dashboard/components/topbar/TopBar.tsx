@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import logoUrl from '../../../../assets/logo.png';
 import { theme } from '../../theme';
 import { ensureAnimations } from '../../animations';
@@ -8,13 +8,13 @@ import { ArrowBtn } from './ArrowBtn';
 import type { TopBarProps } from '../../types';
 
 function VDivider() {
-    return <div style={{ width: '1px', height: '36px', background: theme.divider, margin: '0 8px', flexShrink: 0 }} />;
+    return <div style={{ width: '1px', height: '34px', background: theme.divider, margin: '0 6px', flexShrink: 0 }} />;
 }
 
 export function TopBar({
-    rackCount, temperature, humidity, powerUsage,
-    roomName = 'SERVER ROOM A', locationString,
-    notifications, onPrev, onNext, onBack,
+    rackCount, temperature, humidity, powerUsage, rackUtilization, isLive = false,
+    roomName = 'SERVER ROOM A', currentRoomId, rooms = [], onSelectRoom, locationString,
+    notifications, onFilterStatus, onPrev, onNext, onBack,
 }: TopBarProps) {
     const [time, setTime] = useState(() => formatTime(new Date()));
 
@@ -33,7 +33,7 @@ export function TopBar({
             userSelect: 'none',
         }}>
 
-            {/* LEFT: back · logo · stats */}
+            {/* LEFT: back · logo · KPI stats */}
             <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
                 {onBack && (
                     <button
@@ -44,25 +44,24 @@ export function TopBar({
                             borderRadius: '4px', color: theme.text, fontSize: '16px',
                             width: '32px', height: '32px', cursor: 'pointer',
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            padding: 0, fontFamily: theme.font, marginRight: '12px', flexShrink: 0,
+                            padding: 0, fontFamily: theme.font, marginRight: '10px', flexShrink: 0,
                         }}
                     >
                         ←
                     </button>
                 )}
 
-                {/* Logo + brand — click to go back */}
                 <div
                     onClick={onBack}
                     title="Back"
                     onMouseEnter={e => { if (onBack) (e.currentTarget as HTMLDivElement).style.opacity = '0.75'; }}
                     onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.opacity = '1'; }}
-                    style={{ display: 'flex', alignItems: 'center', gap: '8px', marginRight: '14px', cursor: onBack ? 'pointer' : 'default' }}
+                    style={{ display: 'flex', alignItems: 'center', gap: '8px', marginRight: '10px', cursor: onBack ? 'pointer' : 'default' }}
                 >
-                    <img src={logoUrl} alt="logo" style={{ height: '32px', width: 'auto', objectFit: 'contain' }} />
+                    <img src={logoUrl} alt="logo" style={{ height: '30px', width: 'auto', objectFit: 'contain' }} />
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
-                        <span style={{ fontFamily: theme.font, fontSize: '11px', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: theme.accent }}>
-                            Infrastructure
+                        <span style={{ fontFamily: theme.font, fontSize: '10px', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: theme.accent }}>
+                            DCIM Spatial
                         </span>
                         <span style={{ fontFamily: theme.font, fontSize: '8px', letterSpacing: '0.14em', color: theme.label }}>
                             LAB MANGO
@@ -71,22 +70,49 @@ export function TopBar({
                 </div>
 
                 <VDivider />
-                <StatBlock label="Temperature" value={temperature != null ? temperature.toFixed(1) : '—'} unit={temperature != null ? '°C' : undefined} valueColor={theme.accent} valueSize="20px" />
+                <StatBlock label="Temp" value={temperature != null ? temperature.toFixed(1) : '—'} unit={temperature != null ? '°C' : undefined} valueColor={theme.accent} valueSize="18px" />
                 <VDivider />
-                <StatBlock label="Humidity"    value={humidity    != null ? humidity.toFixed(0)    : '—'} unit={humidity    != null ? '%'  : undefined} valueColor={theme.humid}  valueSize="20px" />
+                <StatBlock label="Humidity" value={humidity != null ? humidity.toFixed(0) : '—'} unit={humidity != null ? '%' : undefined} valueColor={theme.humid} valueSize="18px" />
                 <VDivider />
-                <StatBlock label="Power Usage" value={powerUsage  != null ? powerUsage.toFixed(1)  : '—'} unit={powerUsage  != null ? 'KW' : undefined} valueColor={theme.power}  valueSize="20px" />
+                <StatBlock label="Power" value={powerUsage != null ? powerUsage.toFixed(1) : '—'} unit={powerUsage != null ? 'kW' : undefined} valueColor={theme.power} valueSize="18px" />
+                {rackUtilization != null && (
+                    <>
+                        <VDivider />
+                        <StatBlock
+                            label="Rack U"
+                            value={Math.round(rackUtilization * 100)}
+                            unit="%"
+                            valueColor={rackUtilization > 0.9 ? theme.crit : rackUtilization > 0.75 ? theme.warn : theme.ok}
+                            valueSize="18px"
+                        />
+                    </>
+                )}
                 <VDivider />
-                <StatBlock label="Total Stations" value={rackCount} valueSize="20px" />
+                <StatBlock label="Stations" value={rackCount} valueSize="18px" />
             </div>
 
-            {/* CENTER: room name + nav */}
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+            {/* CENTER: room switcher + nav */}
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', minWidth: 0 }}>
                 <ArrowBtn direction="left" onClick={onPrev} />
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
-                    <span style={{ fontFamily: theme.font, fontSize: '16px', fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: theme.text, minWidth: '140px', textAlign: 'center', lineHeight: 1.1 }}>
-                        {roomName}
-                    </span>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', minWidth: '150px' }}>
+                    {rooms.length > 1 && onSelectRoom ? (
+                        <select
+                            className="dcim-room-select"
+                            aria-label="Select room"
+                            value={currentRoomId ?? ''}
+                            onChange={(e) => onSelectRoom(Number(e.target.value))}
+                        >
+                            {rooms.map((room) => (
+                                <option key={room.id} value={room.id}>
+                                    {room.name}
+                                </option>
+                            ))}
+                        </select>
+                    ) : (
+                        <span style={{ fontFamily: theme.font, fontSize: '15px', fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: theme.text, textAlign: 'center', lineHeight: 1.1 }}>
+                            {roomName}
+                        </span>
+                    )}
                     {locationString && (
                         <span style={{ fontFamily: theme.font, fontSize: '10px', letterSpacing: '0.08em', color: theme.label, textAlign: 'center', lineHeight: 1.2 }}>
                             {locationString}
@@ -96,21 +122,40 @@ export function TopBar({
                 <ArrowBtn direction="right" onClick={onNext} />
             </div>
 
-            {/* RIGHT: alerts · live · clock */}
+            {/* RIGHT: clickable alert triage · live · clock */}
             <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginRight: '14px' }}>
-                    <AlertBadge count={notifications.ok}       dotColor={theme.ok}   label="OK"   />
-                    <AlertBadge count={notifications.warning}  dotColor={theme.warn} label="Warn" />
-                    <AlertBadge count={notifications.unknown} dotColor={theme.label} label="No data" />
-                    <AlertBadge count={notifications.critical} dotColor={theme.crit} label="Crit" />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginRight: '10px' }}>
+                    <button className="dcim-alert-trigger" onClick={() => onFilterStatus?.('ok')} title="Filter healthy stations">
+                        <AlertBadge count={notifications.ok} dotColor={theme.ok} label="OK" />
+                    </button>
+                    <button className="dcim-alert-trigger" onClick={() => onFilterStatus?.('warning')} title="Inspect warning stations">
+                        <AlertBadge count={notifications.warning} dotColor={theme.warn} label="Warn" />
+                    </button>
+                    <button className="dcim-alert-trigger" onClick={() => onFilterStatus?.('critical')} title="Inspect critical alerts">
+                        <AlertBadge count={notifications.critical} dotColor={theme.crit} label="Crit" />
+                    </button>
+                    <button className="dcim-alert-trigger" onClick={() => onFilterStatus?.('unknown')} title="Filter stations without telemetry">
+                        <AlertBadge count={notifications.unknown} dotColor={theme.label} label="No data" />
+                    </button>
                 </div>
                 <VDivider />
-                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginRight: '14px' }}>
-                    <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: theme.ok, animation: 'live-fade 3s ease-in-out infinite', flexShrink: 0 }} />
-                    <span style={{ fontFamily: theme.font, fontSize: '10px', fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: theme.ok }}>Snapshot</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginRight: '10px' }}>
+                    <span style={{
+                        width: '7px', height: '7px', borderRadius: '50%',
+                        background: isLive ? theme.ok : '#64748b',
+                        animation: isLive ? 'live-fade 2.4s ease-in-out infinite' : undefined,
+                        flexShrink: 0,
+                    }} />
+                    <span style={{
+                        fontFamily: theme.font, fontSize: '10px', fontWeight: 700,
+                        letterSpacing: '0.16em', textTransform: 'uppercase',
+                        color: isLive ? theme.ok : theme.label,
+                    }}>
+                        {isLive ? 'Live' : 'Snapshot'}
+                    </span>
                 </div>
                 <VDivider />
-                <span style={{ fontFamily: theme.font, fontSize: '18px', fontWeight: 700, letterSpacing: '0.06em', color: theme.text, fontVariantNumeric: 'tabular-nums' }}>
+                <span style={{ fontFamily: theme.font, fontSize: '16px', fontWeight: 700, letterSpacing: '0.06em', color: theme.text, fontVariantNumeric: 'tabular-nums' }}>
                     {time}
                 </span>
             </div>

@@ -1,11 +1,12 @@
 import type { RackData } from "../types.ts";
 import { RACK_THRESHOLDS } from "../config/rackThresholds.ts";
 
-export type Overlay = "none" | "temperature" | "power" | "capacity";
+export type Overlay = "none" | "temperature" | "humidity" | "power" | "capacity";
 
 export const OVERLAY_LABELS: Record<Overlay, string> = {
   none: "No overlay",
   temperature: "Temperature",
+  humidity: "Relative humidity",
   power: "Power draw",
   capacity: "Capacity used",
 };
@@ -44,17 +45,19 @@ export const HEAT_STOPS = ["#2563eb", "#06b6d4", "#22c55e", "#eab308", "#f97316"
 
 export function overlayValue(rack: RackData, overlay: Overlay): number | null {
   if (overlay === "temperature") return rack.temperature;
+  if (overlay === "humidity") return rack.humidity;
   if (overlay === "power") return rack.powerUsage;
   if (overlay === "capacity") return capacityPeak(rack);
   return null;
 }
 
 /**
- * Value range of the overlay. Temperature uses a fixed operating band up to the critical threshold so colours
- * mean the same in every room; power scales to the busiest station in the room.
+ * Value range of the overlay. Temperature and humidity use fixed operating bands up to their critical
+ * thresholds so colours mean the same in every room; power scales to the busiest station in the room.
  */
 export function overlayDomain(racks: RackData[], overlay: Overlay): [number, number] {
   if (overlay === "temperature") return [18, RACK_THRESHOLDS.temperature.critical];
+  if (overlay === "humidity") return [20, RACK_THRESHOLDS.humidity.critical];
   if (overlay === "capacity") return [0, 1];
   const values = racks.map((rack) => overlayValue(rack, overlay)).filter((value): value is number => value != null);
   return [0, Math.max(1, ...values)];
@@ -86,5 +89,6 @@ export function heatHex(t: number) {
 export function formatMetric(value: number | null, overlay: Overlay) {
   if (value == null) return "—";
   if (overlay === "capacity") return `${Math.round(value * 100)} %`;
+  if (overlay === "humidity") return `${Math.round(value)} %`;
   return overlay === "temperature" ? `${value.toFixed(1)} °C` : `${value.toFixed(1)} kW`;
 }
