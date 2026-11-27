@@ -1,6 +1,6 @@
 import { PlusOutlined } from '@ant-design/icons';
 import { Button, Card, Form, Spin } from 'antd';
-import type { Dayjs } from 'dayjs';
+import dayjs, { type Dayjs } from 'dayjs';
 import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { BookingFilter } from '../components/BookingFilter';
@@ -21,6 +21,18 @@ const parseBenchIds = (searchParams: URLSearchParams): number[] => {
     .filter((num) => !Number.isNaN(num));
 };
 
+/** `?action=create&starts_at=&ends_at=` → the time to prefill, when valid. */
+const parseCreateInterval = (searchParams: URLSearchParams): { starts_at: Dayjs; ends_at: Dayjs } | undefined => {
+  const start = searchParams.get('starts_at');
+  const end = searchParams.get('ends_at');
+  if (searchParams.get('action') !== 'create' || !start || !end) return undefined;
+  const startsAt = dayjs(start);
+  const endsAt = dayjs(end);
+  return startsAt.isValid() && endsAt.isValid() && endsAt.isAfter(startsAt)
+    ? { starts_at: startsAt, ends_at: endsAt }
+    : undefined;
+};
+
 const BookingCalendar = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [formInstance] = Form.useForm();
@@ -29,7 +41,27 @@ const BookingCalendar = () => {
   );
   const [createTimeInterval, setCreateTimeInterval] = useState<
     { starts_at?: Dayjs; ends_at?: Dayjs } | undefined
-  >(undefined);
+  >(() => parseCreateInterval(searchParams));
+
+  // Alert links ("Book now") open the form with bench and free time prefilled, also when the
+  // calendar is already open. The one-shot parameters are then removed so a reload does not reopen it.
+  const createLinkKey = searchParams.get('action') === 'create' ? searchParams.toString() : null;
+  const [handledCreateLink, setHandledCreateLink] = useState(createLinkKey);
+  if (createLinkKey && createLinkKey !== handledCreateLink) {
+    setHandledCreateLink(createLinkKey);
+    setCreateTimeInterval(parseCreateInterval(searchParams));
+    setIsModalVisible(true);
+  }
+
+  const clearCreateParams = () =>
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        ['action', 'starts_at', 'ends_at'].forEach((key) => next.delete(key));
+        return next;
+      },
+      { replace: true },
+    );
   const visibleDateRangeRef = useRef<{ start: string; end: string } | null>(null);
 
   const { bookingEvents, isFetching, fetchEvents } = useBookingCalendarEvents();
@@ -93,6 +125,7 @@ const BookingCalendar = () => {
   const handleCreateModalClose = (selectedBench: number) => {
     setIsModalVisible(false);
     setCreateTimeInterval(undefined);
+    clearCreateParams();
 
     const currentBenches: number[] = formInstance.getFieldValue('bench_ids') || [];
     if (!currentBenches.includes(selectedBench) && selectedBench !== 0) {
@@ -109,6 +142,7 @@ const BookingCalendar = () => {
   const handleCreateModalCancel = () => {
     setIsModalVisible(false);
     setCreateTimeInterval(undefined);
+    clearCreateParams();
   };
 
   const refetchData = () => {

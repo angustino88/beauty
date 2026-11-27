@@ -1,18 +1,35 @@
-import { Button } from "antd";
+import { Button, Space } from "antd";
 import { useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import { useAppSelector } from "@/app/store";
 import { SystemBanner, type NotificationVariant } from "@/shared/notifications";
+import { useMarkNotificationReadMutation } from "../inboxApi";
 import { notificationActions } from "../notificationSlice";
 
 const TYPE_MAP: Record<string, NotificationVariant> = {
   info: "info",
+  announcement: "info",
   success: "success",
   warning: "warning",
   error: "error",
 };
 
+/** Only follow links that stay inside the app. */
+const isInAppPath = (path?: string): path is string =>
+  !!path && path.startsWith("/") && !path.startsWith("//");
+
+/** Label for a notification's primary action, by where it leads. */
+const actionLabel = (path: string) => (path.startsWith("/booking-calendar") ? "Book now" : "Open");
+
 export function NotificationBanner() {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const [markRead] = useMarkNotificationReadMutation();
+  // Lab announcements only; everything else lives in the header bell.
+  const dismiss = (id: number) => {
+    dispatch(notificationActions.removeNotification(id));
+    void markRead(id);
+  };
   const items = useAppSelector((state) => state.notifications.items);
   if (items.length === 0) return null;
 
@@ -36,18 +53,35 @@ export function NotificationBanner() {
           title={item.message}
           description={item.details || undefined}
           dismissible
-          onDismiss={() =>
-            dispatch(notificationActions.removeNotification(item.id))
-          }
+          onDismiss={() => dismiss(item.id)}
           action={
-            items.length > 1 && index === 0 ? (
-              <Button
-                size="small"
-                type="text"
-                onClick={() => dispatch(notificationActions.clearNotifications())}
-              >
-                Dismiss all ({items.length})
-              </Button>
+            isInAppPath(item.action_path) || (items.length > 1 && index === 0) ? (
+              <Space size={4}>
+                {isInAppPath(item.action_path) && (
+                  <Button
+                    size="small"
+                    type="primary"
+                    onClick={() => {
+                      dismiss(item.id);
+                      navigate(item.action_path as string);
+                    }}
+                  >
+                    {actionLabel(item.action_path)}
+                  </Button>
+                )}
+                {items.length > 1 && index === 0 && (
+                  <Button
+                    size="small"
+                    type="text"
+                    onClick={() => {
+                      items.forEach((entry) => void markRead(entry.id));
+                      dispatch(notificationActions.clearNotifications());
+                    }}
+                  >
+                    Dismiss all ({items.length})
+                  </Button>
+                )}
+              </Space>
             ) : undefined
           }
         />

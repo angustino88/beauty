@@ -6,6 +6,7 @@ import { NavLink } from 'react-router-dom';
 import { LogoBosch, LogoLabMango } from '@/components/svg';
 import { useSeason } from '@/shared/season/useSeason';
 import { useTheme } from '@/shared/theme/ThemeContext';
+import { NotificationBell } from '@/features/notifications/components/NotificationBell';
 import { SeasonDecor } from './SeasonDecor';
 import styleCss from './layout.module.css';
 
@@ -43,6 +44,7 @@ const AppHeader = () => {
       {season ? <SeasonDecor season={season.id} /> : <div className={styleCss.headerSpacer} />}
 
       <div className={styleCss.headerActions}>
+        <NotificationBell className={styleCss.headerIconButton} />
         <Tooltip title="Support & Feedback">
           <button
             type="button"

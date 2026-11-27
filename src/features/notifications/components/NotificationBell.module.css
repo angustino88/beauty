@@ -1,0 +1,243 @@
+.bell {
+  position: relative;
+}
+
+.badge {
+  position: absolute;
+  top: -6px;
+  right: -7px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  border: 2px solid var(--lm-surface);
+  background: var(--lm-danger-solid);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 14px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  width: min(400px, calc(100vw - 24px));
+  max-height: min(560px, calc(100vh - 96px));
+}
+
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px 8px;
+}
+
+.panelTitle {
+  margin: 0;
+  color: var(--lm-text);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.tabs {
+  padding: 0 16px 10px;
+  border-bottom: 1px solid var(--lm-border-subtle);
+}
+
+.list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.items {
+  margin: 0;
+  padding: 4px 0;
+  list-style: none;
+}
+
+.item {
+  position: relative;
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) 10px;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 16px;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  transition: background-color 120ms ease;
+}
+
+.item:hover {
+  background: var(--lm-surface-muted);
+}
+
+.item:focus-visible {
+  outline: 2px solid var(--lm-focus);
+  outline-offset: -2px;
+}
+
+.item[data-unread='true'] {
+  background: var(--lm-primary-bg);
+}
+
+.item[data-unread='true']:hover {
+  background: var(--lm-surface-muted);
+}
+
+.itemIcon {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  font-size: 15px;
+  color: var(--lm-info-fg);
+  background: var(--lm-info-bg);
+}
+
+.itemIcon[data-kind='success'] {
+  color: var(--lm-success-fg);
+  background: var(--lm-success-bg);
+}
+
+.itemIcon[data-kind='warning'] {
+  color: var(--lm-warning-fg);
+  background: var(--lm-warning-bg);
+}
+
+.itemIcon[data-kind='error'] {
+  color: var(--lm-danger-fg);
+  background: var(--lm-danger-bg);
+}
+
+.itemIcon[data-kind='announcement'] {
+  color: var(--lm-primary-fg);
+  background: var(--lm-surface-muted);
+}
+
+.itemBody {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.itemTitle {
+  color: var(--lm-text);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.item[data-unread='true'] .itemTitle {
+  font-weight: 650;
+}
+
+.itemDetails {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--lm-text-secondary);
+  font-size: 13px;
+  line-height: 1.4;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.itemMeta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 2px;
+  color: var(--lm-text-tertiary);
+  font-size: 12px;
+}
+
+.itemAction {
+  color: var(--lm-primary-fg);
+  font-weight: 600;
+}
+
+.unreadDot {
+  width: 8px;
+  height: 8px;
+  margin-top: 6px;
+  border-radius: 50%;
+  background: var(--lm-primary);
+}
+
+.loading {
+  padding: 12px 16px;
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 36px 24px;
+  color: var(--lm-text-secondary);
+  font-size: 13px;
+  text-align: center;
+}
+
+.empty strong {
+  color: var(--lm-text);
+  font-size: 14px;
+}
+
+.emptyIcon {
+  margin-bottom: 6px;
+  color: var(--lm-text-tertiary);
+  font-size: 26px;
+}
+
+.footer {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--lm-border-subtle);
+  background: var(--lm-surface-subtle);
+  border-radius: 0 0 8px 8px;
+}
+
+.footerIcon {
+  color: var(--lm-text-secondary);
+}
+
+.footerText {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.footerTitle {
+  color: var(--lm-text);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.footerHint {
+  color: var(--lm-text-tertiary);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+/* Phone: the panel fills a bottom sheet. */
+.sheet .panel {
+  width: 100%;
+  max-height: none;
+  height: 100%;
+}
+
+.sheet :global(.ant-drawer-content) {
+  border-radius: 16px 16px 0 0;
+}

@@ -2,6 +2,9 @@
 import { memo } from 'react';
 import { Button, Modal } from 'antd';
 import { useNavigate } from 'react-router-dom';
+import dayjs from 'dayjs';
+import { FollowBookingButton } from '@/features/booking/slot-alerts/FollowBookingButton';
+import { useIsOwnBooking } from '@/features/booking/slot-alerts/useIsOwnBooking';
 import type { DashboardBenchDetail } from '../../types';
 import InfoModal from './InfoModal';
 import { useInfoModalStyles } from './InfoModal.styles';
@@ -21,6 +24,13 @@ export const BenchDetailModal = memo(function BenchDetailModal({
 }: BenchDetailModalProps) {
   const navigate = useNavigate();
   const { styles } = useInfoModalStyles();
+  const current = benchDetail?.current_booking;
+  const isCurrentRunning = !!current && dayjs(current.ends_at).isAfter(dayjs());
+  const { isOwn, isChecking } = useIsOwnBooking(
+    benchDetail && current && isCurrentRunning
+      ? { id: current.id, benchId: benchDetail.id, startsAt: current.starts_at }
+      : null,
+  );
 
   return (
     <Modal
@@ -42,6 +52,10 @@ export const BenchDetailModal = memo(function BenchDetailModal({
         <Button key="close" onClick={closeModal}>
           Close
         </Button>,
+        // Someone else is using the bench: offer one alert when their booking ends.
+        ...(current && isCurrentRunning && !isOwn && !isChecking
+          ? [<FollowBookingButton key="follow" bookingId={current.id} />]
+          : []),
         <Button
           key="book"
           type="primary"

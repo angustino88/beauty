@@ -12,6 +12,7 @@ import { confirmAction, notify } from '@/shared/notifications';
 import type { IBenchBookingFormValues } from '../types';
 import type { BenchBookingCreateRequest } from '../mapper';
 import { BookingForm } from './BookingForm';
+import { useSlotAlert } from '../slot-alerts/useSlotAlert';
 import { useCreateBenchBookingMutation, useGetBookingBenchChoicesQuery } from '../api';
 import styles from './BookingModal.module.css';
 
@@ -34,6 +35,7 @@ export const BenchBookingCreate: React.FC<CustomModalProps> = ({
   const [formInstance] = Form.useForm<IBenchBookingFormValues>();
   const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(false);
+  const { createAlert } = useSlotAlert();
 
   // Same query (and cache entry) as the form's bench select.
   const { data: benchChoices } = useGetBookingBenchChoicesQuery({ includeId: null, hasComputing: true });
@@ -100,9 +102,23 @@ export const BenchBookingCreate: React.FC<CustomModalProps> = ({
           closeModal?.(response.bench?.id ?? 0);
           refetchBooking?.();
         } catch (error: unknown) {
-          notify.error('Unable to create booking', {
-            description: extractBookingErrorMessage(error, 'Please review your booking details and try again.'),
-          });
+          const description = extractBookingErrorMessage(error, 'Please review your booking details and try again.');
+          if ((error as { status?: number })?.status === 409 && values.bench_id) {
+            // The bench is taken for that time: offer an alert for when it frees up.
+            confirmAction({
+              title: 'This time is already booked',
+              description: `${description} We can notify you if this time becomes free.`,
+              confirmText: 'Notify me',
+              cancelText: 'Not now',
+              onConfirm: async () => {
+                if (values.bench_id && (await createAlert({ benchId: values.bench_id, startsAt, endsAt }))) {
+                  closeModal?.(values.bench_id);
+                }
+              },
+            });
+          } else {
+            notify.error('Unable to create booking', { description });
+          }
         }
       };
 

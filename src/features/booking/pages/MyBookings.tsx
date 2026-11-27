@@ -1,4 +1,4 @@
-import { ClearOutlined, PlusOutlined, UndoOutlined } from "@ant-design/icons";
+import { BellOutlined, ClearOutlined, PlusOutlined, UndoOutlined } from "@ant-design/icons";
 import { Card, Col, Row } from "antd";
 import { useRef, useState } from "react";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -6,6 +6,7 @@ import { FullTextSearch } from "@/components/inputs/FullTextSearch";
 import { TooltipButton } from "@/components/layout/TooltipButton";
 import tableStyles from "@/components/tables/AppTable.module.css";
 import { BenchBookingCreate } from "../components/BenchBookingCreate";
+import { UpNextDrawer } from "../slot-alerts";
 import {
   MyBookingTable,
   type MyBookingTableHandle,
@@ -17,6 +18,7 @@ export const MyBookings = () => {
   const debouncedSearch = useDebouncedValue(searchInput, 500);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isAlertsOpen, setIsAlertsOpen] = useState(false);
   const tableRef = useRef<MyBookingTableHandle>(null);
 
   const handleModalClose = () => {
@@ -64,6 +66,14 @@ export const MyBookings = () => {
             </TooltipButton>
             <TooltipButton
               responsive
+              tooltip="Get notified when a busy bench frees up"
+              icon={<BellOutlined />}
+              onClick={() => setIsAlertsOpen(true)}
+            >
+              Slot alerts
+            </TooltipButton>
+            <TooltipButton
+              responsive
               tooltip="Book a bench"
               type="primary"
               icon={<PlusOutlined />}
@@ -75,6 +85,8 @@ export const MyBookings = () => {
         </Row>
 
         <MyBookingTable ref={tableRef} search={debouncedSearch} />
+
+        <UpNextDrawer open={isAlertsOpen} initialTab="alerts" onClose={() => setIsAlertsOpen(false)} />
 
         {isModalOpen && (
           <BenchBookingCreate
