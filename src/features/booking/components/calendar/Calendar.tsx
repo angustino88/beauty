@@ -18,6 +18,10 @@ type CalendarProps = {
   }) => void;
   refetchBooking: () => void;
   onDatesSet?: (range: { start: string; end: string }) => void;
+  /** Day to open on (default today). */
+  initialDate?: Date;
+  /** Booking whose details open when the calendar shows it. */
+  focusEventId?: string;
   [key: string]: unknown;
 };
 
@@ -30,7 +34,16 @@ const VIEW_DEFS = [
 ] as const;
 type ViewKey = typeof VIEW_DEFS[number]['key'] | 'list';
 
-export function Calendar({ events, onClickEvent, onDateClick, onSelect, refetchBooking, onDatesSet }: CalendarProps) {
+export function Calendar({
+  events,
+  onClickEvent,
+  onDateClick,
+  onSelect,
+  refetchBooking,
+  onDatesSet,
+  initialDate,
+  focusEventId,
+}: CalendarProps) {
   const [selectedKey, setSelectedKey] = useState<ViewKey>('week');
   const calendarRef = useRef<FullCalendar | null>(null);
   const [title, setTitle] = useState<string | undefined>(undefined);
@@ -97,6 +110,8 @@ export function Calendar({ events, onClickEvent, onDateClick, onSelect, refetchB
             onSelect={onSelect}
             refetchBooking={refetchBooking}
             onDatesSet={onDatesSet}
+            initialDate={initialDate}
+            focusEventId={focusEventId}
           />
         </Suspense>
       </div>

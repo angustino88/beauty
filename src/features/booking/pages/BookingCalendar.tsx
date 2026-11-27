@@ -33,6 +33,13 @@ const parseCreateInterval = (searchParams: URLSearchParams): { starts_at: Dayjs;
     : undefined;
 };
 
+/** `?booking_id=&date=` (Dashboard "Up next") → the booking to open and the day it is on. */
+const parseFocus = (searchParams: URLSearchParams): { bookingId: string; date: Date } | undefined => {
+  const bookingId = searchParams.get('booking_id');
+  const date = dayjs(searchParams.get('date'));
+  return bookingId && date.isValid() ? { bookingId, date: date.toDate() } : undefined;
+};
+
 const BookingCalendar = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [formInstance] = Form.useForm();
@@ -63,6 +70,8 @@ const BookingCalendar = () => {
       { replace: true },
     );
   const visibleDateRangeRef = useRef<{ start: string; end: string } | null>(null);
+  // Read once: the calendar opens on this booking's day with its details showing.
+  const [focus] = useState(() => parseFocus(searchParams));
 
   const { bookingEvents, isFetching, fetchEvents } = useBookingCalendarEvents();
   const { id: myUserId, username } = useAuthState();
@@ -181,6 +190,8 @@ const BookingCalendar = () => {
         onSelect={handleSelectTimeInterval}
         refetchBooking={refetchData}
         onDatesSet={handleDatesSet}
+        initialDate={focus?.date}
+        focusEventId={focus?.bookingId}
       />
 
       {isModalVisible && (

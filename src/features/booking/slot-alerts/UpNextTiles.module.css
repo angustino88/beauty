@@ -73,6 +73,17 @@
   font-size: 14px;
 }
 
+/* Each kind keeps its own colour; urgent tones below override it. */
+.tileIcon[data-kind='booking'] {
+  color: var(--lm-primary-fg);
+  background: var(--lm-primary-bg);
+}
+
+.tileIcon[data-kind='alert'] {
+  color: var(--lm-info-fg);
+  background: var(--lm-info-bg);
+}
+
 .tileIcon[data-tone='free'] {
   color: var(--lm-success-fg);
   background: var(--lm-surface);

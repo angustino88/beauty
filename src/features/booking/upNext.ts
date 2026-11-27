@@ -6,6 +6,8 @@ import { formatAlertTime, formatBookingCountdown, type ISlotWatch } from './slot
 
 export interface UpNextBooking {
   id: number;
+  /** The booked bench, so the tile can open the calendar on it; null when the list did not include it. */
+  benchId: number | null;
   benchName: string;
   startsAt: string;
   endsAt: string;
@@ -26,6 +28,13 @@ const NEVER = Number.POSITIVE_INFINITY;
 const bookPath = (benchId: number, startsAt: string, endsAt: string) =>
   `/booking-calendar?${new URLSearchParams({ action: 'create', bench_ids: String(benchId), starts_at: startsAt, ends_at: endsAt })}`;
 
+/** The booking itself on the calendar: its bench, its day, and its details open. */
+export const bookingPath = (booking: Pick<UpNextBooking, 'id' | 'benchId' | 'startsAt'>) => {
+  const params = new URLSearchParams({ booking_id: String(booking.id), date: booking.startsAt });
+  if (booking.benchId) params.set('bench_ids', String(booking.benchId));
+  return `/booking-calendar?${params}`;
+};
+
 function bookingItem(booking: UpNextBooking, t: number, now: Date): UpNextItem {
   const start = new Date(booking.startsAt).getTime();
   const live = start <= t;
@@ -36,7 +45,7 @@ function bookingItem(booking: UpNextBooking, t: number, now: Date): UpNextItem {
     tone: !live && start - t <= HOUR ? 'soon' : 'neutral',
     title: booking.benchName,
     status: booking.awaitingApproval ? `${countdown} · awaiting approval` : countdown,
-    to: '/my-bookings',
+    to: bookingPath(booking),
     sortAt: live ? t : start,
     booking,
   };

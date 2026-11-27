@@ -26,6 +26,7 @@ const alert = (id: number, bench: string, freeFrom: string | null, freeUntil: st
 
 const booking = (id: number, startsAt: string, endsAt: string, pending = false): UpNextBooking => ({
   id,
+  benchId: id + 100,
   benchName: `Bench ${id}`,
   startsAt,
   endsAt,
@@ -53,7 +54,7 @@ test('mixes bookings and alerts, most urgent first', () => {
     ],
   );
   assert.match(items[0].to!, /^\/booking-calendar\?action=create&bench_ids=1/);
-  assert.equal(items[1].to, '/my-bookings');
+  assert.match(items[1].to!, /^\/booking-calendar\?booking_id=12&/);
 });
 
 test('a followed booking without a free gap says when it ends; ended bookings are dropped', () => {
@@ -72,4 +73,13 @@ test('visibleCount reserves the last slot for "+N"', () => {
   assert.equal(visibleCount(8, 5, false), 4);
   assert.equal(visibleCount(8, 5, true), 8);
   assert.equal(visibleCount(3, 2, false), 1);
+});
+
+test('a booking tile opens that booking on the calendar, not the bookings list', () => {
+  const [item] = buildUpNextItems([booking(12, at(14), at(16))], [], now);
+  const url = new URL(item.to!, 'http://x');
+  assert.equal(url.pathname, '/booking-calendar');
+  assert.equal(url.searchParams.get('booking_id'), '12');
+  assert.equal(url.searchParams.get('bench_ids'), '112');
+  assert.equal(url.searchParams.get('date'), at(14));
 });

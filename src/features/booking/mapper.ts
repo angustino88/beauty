@@ -148,6 +148,7 @@ export function mapBookingItem(raw: unknown): BenchBookingItem {
       : null,
     starts_at: startsAt,
     ends_at: endsAt,
+    completed_at: (item.completed_at as string | null | undefined) || null,
     status: statusStr,
     approval_status: approvalStr,
     creator: normalizedCreator,

@@ -34,6 +34,7 @@ export function useNextBookings() {
     () =>
       bookings.map((booking) => ({
         id: booking.id,
+        benchId: booking.bench?.id || null,
         benchName: benchLabel(booking),
         startsAt: booking.starts_at,
         endsAt: booking.ends_at,
