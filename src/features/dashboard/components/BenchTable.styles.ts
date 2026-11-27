@@ -85,14 +85,12 @@ export const useBenchTableStyles = createStyles(({ css }) => ({
       color: var(--lm-primary-fg);
       background: transparent;
       font: inherit;
-      font-weight: 600;
       text-align: start;
-      text-decoration: underline;
-      text-underline-offset: 3px;
+      text-decoration: none;
       overflow-wrap: anywhere;
       cursor: pointer;
     }
-    .benchName:hover { text-decoration-thickness: 2px; }
+    .benchName:hover { color: var(--lm-primary-hover); }
     .benchName:focus-visible {
       outline: 2px solid var(--lm-focus);
       outline-offset: 2px;

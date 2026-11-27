@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
-import { Button, DatePicker, Form, Input, InputNumber, Modal, Popconfirm, Space } from 'antd';
-import { PlusOutlined } from '@ant-design/icons';
+import { Button, DatePicker, Form, Input, Modal, Popconfirm, Space, Tooltip } from 'antd';
+import { InfoCircleOutlined, PlusOutlined } from '@ant-design/icons';
 import dayjs, { type Dayjs } from 'dayjs';
 import { Link } from 'react-router-dom';
 import {
@@ -13,11 +13,13 @@ import {
 } from '@/shared/api/generated/api';
 import { InlineAlert, notify } from '@/shared/notifications';
 import { apiErrorMessage } from '../attachments';
+import { formatWorkBreakdown, parseSmartDuration } from '../workDuration';
+import { SmartDurationInput } from './SmartDurationInput';
 import styles from './SupportTickets.module.css';
 import { WorkLogMetrics, WorkLogTable } from './WorkLogTable';
 
 interface EntryFormValues {
-  minutes: number;
+  duration: string;
   startedAt: Dayjs;
   description?: string;
 }
@@ -48,8 +50,9 @@ export function TicketWorkLogs({ ticketKey, onUpdated }: {
   const openEditor = (entry?: TicketWorkLogRead) => {
     replay.current = null;
     setError('');
+    form.resetFields();
     form.setFieldsValue({
-      minutes: entry?.time_spent_minutes,
+      duration: entry ? formatWorkBreakdown(entry.time_spent_minutes) : '',
       startedAt: entry ? dayjs(entry.started_at) : dayjs(),
       description: entry?.description ?? '',
     });
@@ -63,10 +66,15 @@ export function TicketWorkLogs({ ticketKey, onUpdated }: {
 
   const save = async (values: EntryFormValues) => {
     if (!editor || saving) return;
+    const parsed = parseSmartDuration(values.duration);
+    if (!parsed.ok) {
+      form.setFields([{ name: 'duration', errors: [parsed.message] }]);
+      return;
+    }
     setError('');
     const entry = editor.entry;
     const payload = {
-      time_spent_minutes: values.minutes,
+      time_spent_minutes: parsed.minutes,
       started_at: values.startedAt.toISOString(),
       description: values.description?.trim() ?? '',
     };
@@ -161,6 +169,7 @@ export function TicketWorkLogs({ ticketKey, onUpdated }: {
       <Modal
         title={editor?.entry ? 'Edit work entry' : 'Log work'}
         open={editor !== null}
+        width={540}
         okText={editor?.entry ? 'Save changes' : 'Log work'}
         confirmLoading={saving}
         closable={!saving}
@@ -172,22 +181,43 @@ export function TicketWorkLogs({ ticketKey, onUpdated }: {
         forceRender
       >
         {error && <InlineAlert variant="error" title="Could not save work entry" description={error} />}
-        <Form layout="vertical" form={form} onFinish={(values) => void save(values)} className={styles.transitionForm}>
-          <div className={styles.workLogFormFields}>
-            <Form.Item
-              name="minutes"
-              label="Time spent (minutes)"
-              rules={[
-                { required: true, message: 'Enter the time spent.' },
-                { type: 'integer', min: 1, max: 14400, message: 'Enter 1 to 14,400 whole minutes.' },
-              ]}
-            >
-              <InputNumber min={1} max={14400} style={{ width: '100%' }} placeholder="e.g. 45" />
-            </Form.Item>
-            <Form.Item name="startedAt" label="Started at" rules={[{ required: true, message: 'Select a date and time.' }]}>
-              <DatePicker showTime format="DD MMM YYYY, HH:mm" style={{ width: '100%' }} />
-            </Form.Item>
-          </div>
+        <Form
+          layout="vertical"
+          form={form}
+          onFinish={(values) => void save(values)}
+          onValuesChange={(changed: Partial<EntryFormValues>) => {
+            if (typeof changed.duration === 'string' && parseSmartDuration(changed.duration).ok) {
+              form.setFields([{ name: 'duration', errors: [] }]);
+            }
+          }}
+          className={styles.transitionForm}
+        >
+          <Form.Item
+            name="duration"
+            required
+            validateTrigger={['onBlur', 'onSubmit']}
+            label={
+              <span className={styles.fieldLabelGroup}>
+                <span>Time spent</span>
+                <Tooltip title="Supports m, h, d (8h), w (5d / 40h), mo (4w / 160h), H:MM, or plain minutes. Max 240h (14,400 min) per entry.">
+                  <InfoCircleOutlined className={styles.fieldInfoIcon} aria-label="Time spent format help" />
+                </Tooltip>
+              </span>
+            }
+            rules={[
+              {
+                validator: (_, rawValue: string | undefined) => {
+                  const parsed = parseSmartDuration(rawValue);
+                  return parsed.ok ? Promise.resolve() : Promise.reject(new Error(parsed.message));
+                },
+              },
+            ]}
+          >
+            <SmartDurationInput disabled={saving} onPressEnter={() => form.submit()} />
+          </Form.Item>
+          <Form.Item name="startedAt" label="Started at" rules={[{ required: true, message: 'Select a date and time.' }]}>
+            <DatePicker showTime format="DD MMM YYYY, HH:mm" style={{ width: '100%' }} />
+          </Form.Item>
           <Form.Item
             name="description"
             label="Work performed (optional)"
