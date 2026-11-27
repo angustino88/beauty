@@ -4,6 +4,5 @@ export * from "./logo";
 export * from "./imageIcon";
 export * from "./MonitoringIcon";
 export * from "./SysInfoIcon";
-export * from "./SantaReindeerIcon";
-export * from "./LionDanceIcon";
-export * from "./Year2026Icon";
+// Large seasonal mascots are exported only as lazy wrappers; never re-export the raw icons here.
+export * from "./seasonalIcons";

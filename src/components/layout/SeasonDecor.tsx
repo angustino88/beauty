@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { LionDanceIcon, SantaReindeerIcon } from '@/components/svg';
+import { LazyLionDanceIcon, LazySantaReindeerIcon } from '@/components/svg';
 import type { SeasonId } from '@/shared/season/seasons';
 import styleCss from './layout.module.css';
 
@@ -58,8 +58,8 @@ const MOTIFS: Record<SeasonId, readonly Motif[]> = {
 };
 
 const MASCOTS: Partial<Record<SeasonId, ReactNode>> = {
-  tet: <LionDanceIcon />,
-  christmas: <SantaReindeerIcon />,
+  tet: <LazyLionDanceIcon />,
+  christmas: <LazySantaReindeerIcon />,
 };
 
 /** Decorative strip inside the header: season motifs plus the season's mascot. */

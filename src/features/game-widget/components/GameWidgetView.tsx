@@ -1,4 +1,4 @@
-import { LionDanceIcon } from '@/components/svg';
+import { LazyLionDanceIcon } from '@/components/svg';
 import { COLLECT_SIZE, GAME_WIDTH, GROUND_Y, TIER_LABELS } from '../constants';
 import type { GameWidgetState } from '../types';
 import styleCss from './GameWidget.module.css';
@@ -114,7 +114,7 @@ export default function GameWidgetView({ onClose, state, jump, restart, toggleRu
             style={{ transform: `translate3d(0, ${y}px, 0)` }}
             title="Reindeer"
           >
-            <LionDanceIcon />
+            <LazyLionDanceIcon />
           </div>
 
           {obstacles.map((o) => (
