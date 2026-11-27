@@ -1,91 +1,131 @@
-import { Button, Space } from "antd";
-import { useDispatch } from "react-redux";
-import { useNavigate } from "react-router-dom";
-import { useAppSelector } from "@/app/store";
-import { SystemBanner, type NotificationVariant } from "@/shared/notifications";
-import { useMarkNotificationReadMutation } from "../inboxApi";
-import { notificationActions } from "../notificationSlice";
+import { useEffect, useState } from 'react';
+import { Button } from 'antd';
+import { useDispatch } from 'react-redux';
+import { useAppSelector } from '@/app/store';
+import { SystemBanner } from '@/shared/notifications';
+import { useGetActiveBannersQuery, useMarkNotificationReadMutation } from '../inboxApi';
+import { isBannerVisible, toBannerVariant } from '../inboxMapper';
+import { notificationActions } from '../notificationSlice';
+import styles from './NotificationBanner.module.css';
 
-const TYPE_MAP: Record<string, NotificationVariant> = {
-  info: "info",
-  announcement: "info",
-  success: "success",
-  warning: "warning",
-  error: "error",
-};
-
-/** Only follow links that stay inside the app. */
-const isInAppPath = (path?: string): path is string =>
-  !!path && path.startsWith("/") && !path.startsWith("//");
-
-/** Label for a notification's primary action, by where it leads. */
-const actionLabel = (path: string) => (path.startsWith("/booking-calendar") ? "Book now" : "Open");
+const MAX_COLLAPSED_BANNERS = 2;
 
 export function NotificationBanner() {
   const dispatch = useDispatch();
-  const navigate = useNavigate();
+  const accessToken = useAppSelector((state) => state.auth.accessToken);
+  const items = useAppSelector((state) => state.notifications.items);
+  const [expanded, setExpanded] = useState(false);
+
+  const { data: fetchedBanners } = useGetActiveBannersQuery(undefined, {
+    skip: !accessToken,
+  });
   const [markRead] = useMarkNotificationReadMutation();
-  // Lab announcements only; everything else lives in the header bell.
+
+  // Hydrate active banners from REST so banners appear immediately even before WS connects.
+  useEffect(() => {
+    if (!fetchedBanners) return;
+    const nowMs = Date.now();
+    dispatch(
+      notificationActions.hydrateBanners(
+        fetchedBanners
+          .filter((item) => isBannerVisible(item, nowMs))
+          .map((item) => ({
+            id: item.id,
+            type: 'notification',
+            message: item.title,
+            details: item.details,
+            message_type: item.kind,
+            is_dismissible: item.isDismissible,
+            expires_at: item.expiresAt,
+            created: item.createdAt,
+          })),
+      ),
+    );
+  }, [fetchedBanners, dispatch]);
+
+  // Auto-prune expired banners the moment their earliest expires_at passes.
+  useEffect(() => {
+    const nowMs = Date.now();
+    let earliestMs = Infinity;
+    for (const item of items) {
+      if (!item.expires_at) continue;
+      const ms = Date.parse(item.expires_at);
+      if (!Number.isNaN(ms) && ms < earliestMs) {
+        earliestMs = ms;
+      }
+    }
+    if (!Number.isFinite(earliestMs)) return;
+
+    const delayMs = Math.max(0, earliestMs - nowMs);
+    // Guard against 32-bit setTimeout overflow (~24.8 days).
+    const boundedDelay = Math.min(delayMs, 2_000_000_000);
+    const timer = setTimeout(() => {
+      dispatch(notificationActions.pruneExpiredBanners(Date.now()));
+    }, boundedDelay + 50);
+
+    return () => clearTimeout(timer);
+  }, [items, dispatch]);
+
+  if (items.length === 0) return null;
+
   const dismiss = (id: number) => {
     dispatch(notificationActions.removeNotification(id));
     void markRead(id);
   };
-  const items = useAppSelector((state) => state.notifications.items);
-  if (items.length === 0) return null;
+
+  const dismissibleItems = items.filter((entry) => entry.is_dismissible);
+  const dismissAll = () => {
+    dismissibleItems.forEach((entry) => void markRead(entry.id));
+    dispatch(notificationActions.clearDismissibleBanners());
+  };
+
+  const visibleItems = expanded ? items : items.slice(0, MAX_COLLAPSED_BANNERS);
+  const hiddenCount = items.length - visibleItems.length;
 
   return (
-    <div
-      style={{
-        position: "sticky",
-        top: 0,
-        zIndex: 999,
-        width: "100%",
-        display: "flex",
-        flexDirection: "column",
-        gap: 8,
-        marginBottom: 12,
-      }}
-    >
-      {items.map((item, index) => (
-        <SystemBanner
-          key={item.id}
-          variant={TYPE_MAP[item.message_type ?? "info"] ?? "info"}
-          title={item.message}
-          description={item.details || undefined}
-          dismissible
-          onDismiss={() => dismiss(item.id)}
-          action={
-            isInAppPath(item.action_path) || (items.length > 1 && index === 0) ? (
-              <Space size={4}>
-                {isInAppPath(item.action_path) && (
-                  <Button
-                    size="small"
-                    type="primary"
-                    onClick={() => {
-                      dismiss(item.id);
-                      navigate(item.action_path as string);
-                    }}
-                  >
-                    {actionLabel(item.action_path)}
-                  </Button>
-                )}
-                {items.length > 1 && index === 0 && (
-                  <Button
-                    size="small"
-                    type="text"
-                    onClick={() => {
-                      items.forEach((entry) => void markRead(entry.id));
-                      dispatch(notificationActions.clearNotifications());
-                    }}
-                  >
-                    Dismiss all ({items.length})
-                  </Button>
-                )}
-              </Space>
-            ) : undefined
-          }
-        />
-      ))}
+    <div className={styles.stack} role="region" aria-label="System announcements">
+      {visibleItems.map((item, index) => {
+        const showInlineDismissAll =
+          !hiddenCount && !expanded && dismissibleItems.length > 1 && index === 0;
+
+        return (
+          <SystemBanner
+            key={item.id}
+            variant={toBannerVariant(item.message_type)}
+            title={item.message}
+            description={item.details || undefined}
+            dismissible={item.is_dismissible}
+            onDismiss={item.is_dismissible ? () => dismiss(item.id) : undefined}
+            action={
+              showInlineDismissAll ? (
+                <Button size="small" type="text" onClick={dismissAll}>
+                  Dismiss all ({dismissibleItems.length})
+                </Button>
+              ) : undefined
+            }
+          />
+        );
+      })}
+
+      {(hiddenCount > 0 || (expanded && items.length > MAX_COLLAPSED_BANNERS)) && (
+        <div className={styles.overflowBar}>
+          <span>
+            {hiddenCount > 0
+              ? `${hiddenCount} more active ${hiddenCount === 1 ? 'banner' : 'banners'}`
+              : `Showing all ${items.length} active banners`}
+          </span>
+          <span className={styles.overflowActions}>
+            <Button size="small" type="link" onClick={() => setExpanded((prev) => !prev)}>
+              {expanded ? 'Show fewer' : `Show all (${items.length})`}
+            </Button>
+            {dismissibleItems.length > 1 && (
+              <Button size="small" type="text" onClick={dismissAll}>
+                Dismiss all ({dismissibleItems.length})
+              </Button>
+            )}
+          </span>
+        </div>
+      )}
     </div>
   );
 }

@@ -140,6 +140,25 @@
   font-weight: 650;
 }
 
+.itemTitleRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.bannerTag {
+  flex-shrink: 0;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--lm-text-secondary);
+  background: var(--lm-surface-subtle);
+  border: 1px solid var(--lm-border-subtle);
+}
+
 .itemDetails {
   display: -webkit-box;
   overflow: hidden;
