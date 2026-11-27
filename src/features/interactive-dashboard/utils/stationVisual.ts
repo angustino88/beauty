@@ -33,11 +33,28 @@ export function stationVisual(
   const tokens = (name ?? "").toLowerCase().split(/[^a-z0-9]+/);
   const has = (...words: string[]) =>
     words.some((word) => tokens.includes(word));
-  const modelKind: RackData["modelKind"] = has("rack", "racks")
+  const modelKind: RackData["modelKind"] = has(
+    "rack",
+    "racks",
+    "hil",
+    "simulator",
+    "testbench",
+  )
     ? "rack"
-    : has("table", "desk", "bench", "workbench", "workstation")
+    : has(
+          "table",
+          "desk",
+          "bench",
+          "workbench",
+          "workstation",
+          "fume",
+          "hood",
+          "cart",
+          "trolley",
+          "gantry",
+        )
       ? "table"
-      : has("cabinet", "enclosure")
+      : has("cabinet", "enclosure", "locker", "flammable", "safety", "drawer", "drawers")
         ? "cabinet"
         : has("shelf", "shelves", "shelving")
           ? "shelf"

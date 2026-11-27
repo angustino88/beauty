@@ -297,6 +297,16 @@ export function useDashboard() {
     navigate(`/dashboard/3d/${toRoomSlug(rooms[nextIndex].name)}`);
   }, [currentIndex, navigate, rooms]);
 
+  const selectRoom = useCallback(
+    (roomId: number) => {
+      const target = rooms.find((room) => room.id === roomId);
+      if (target) {
+        navigate(`/dashboard/3d/${toRoomSlug(target.name)}`);
+      }
+    },
+    [navigate, rooms],
+  );
+
   const togglePin = useCallback((id: number) => {
     setPinnedIds((prev) => {
       const next = prev.includes(id)
@@ -316,7 +326,9 @@ export function useDashboard() {
     cancelAdd,
     deleteRack,
     unplacedCount,
+    rooms,
     currentRoom,
+    selectRoom,
     goPrev,
     goNext,
     slotAnchors,

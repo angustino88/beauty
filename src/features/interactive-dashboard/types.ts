@@ -83,9 +83,15 @@ export interface RackBoxProps {
   onTogglePin: (id: number) => void;
   /** Metric shown as a column beside the station, as a 0–1 level; null hides it. */
   overlayLevel?: number | null;
+  /** Analytical X-Ray thermal/capacity shell overlay. */
+  xrayMode?: boolean;
+  /** What-If capacity planner highlight state. */
+  planMatch?: 'match' | 'excluded' | null;
   /** Another station is focused: fade this one back. */
   dimmed?: boolean;
 }
+
+export type SidebarTab = 'inventory' | 'planner' | 'alerts';
 
 /** Props for the Sidebar panel. */
 export interface SidebarProps {
@@ -99,6 +105,12 @@ export interface SidebarProps {
   onFocus?: (id: number) => void;
   pinnedIds?: number[];
   onTogglePin?: (id: number) => void;
+  activeTab?: SidebarTab;
+  onTabChange?: (tab: SidebarTab) => void;
+  statusFilter?: RackStatus | null;
+  onStatusFilterChange?: (status: RackStatus | null) => void;
+  capacityPlan?: import('./utils/dcimMetrics').CapacityRequirement;
+  onCapacityPlanChange?: (next: import('./utils/dcimMetrics').CapacityRequirement) => void;
   isEditMode: boolean;
   canEdit?: boolean;
   isDeleteMode: boolean;
@@ -115,9 +127,15 @@ export interface TopBarProps {
   temperature: number | null;
   humidity: number | null;
   powerUsage: number | null;
+  rackUtilization?: number | null;
+  isLive?: boolean;
   roomName?: string;
+  currentRoomId?: number;
+  rooms?: Array<{ id: number; name: string }>;
+  onSelectRoom?: (roomId: number) => void;
   locationString?: string;
   notifications: NotificationCounts;
+  onFilterStatus?: (status: RackStatus) => void;
   onPrev?: () => void;
   onNext?: () => void;
   onBack?: () => void;

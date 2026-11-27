@@ -1,33 +1,56 @@
 import { BenchInspector } from "../scene/BenchInspector";
+import { RackInspector } from "../scene/RackInspector";
 import { useMemo, useState } from "react";
 import {
+  AlertTriangle,
   ArrowLeft,
   Box,
   Check,
+  CheckCircle2,
+  Compass,
   Crosshair,
   Droplets,
+  Layers,
   LayoutGrid,
   Pencil,
   Pin,
   Plus,
+  RotateCcw,
   Search,
+  Server,
   Thermometer,
   Trash2,
   X,
   Zap,
 } from "lucide-react";
-import type { RackData, SidebarProps } from "../../types";
+import type { RackData, SidebarProps, SidebarTab } from "../../types";
 import type { RackStatus } from "../../config/rackThresholds";
 import { RACK_THRESHOLDS } from "../../config/rackThresholds";
 import { STATUS_COLORS, TYPE_COLORS, TYPE_LABELS } from "../../utils/stationVisual";
 import { RackCard } from "./RackCard";
 import { categoryColor } from "../../utils/categoryColor";
+import {
+  computeRoomRollup,
+  deriveStationAlerts,
+  findContiguousFreeU,
+  hasCapacityRequirement,
+  matchCapacityPlan,
+  type CapacityRequirement,
+} from "../../utils/dcimMetrics";
 
 const STATUS_LABELS: Record<RackStatus, string> = {
   ok: "Healthy",
   warning: "Warning",
   critical: "Critical",
   unknown: "No data",
+};
+
+const EMPTY_PLAN: CapacityRequirement = {
+  requiredU: 0,
+  requiredPowerW: 0,
+  requiredWeightKg: 0,
+  requiredBenches: 0,
+  face: "front",
 };
 
 function MetricTile({
@@ -122,18 +145,39 @@ function CapacityRow({
   );
 }
 
-/** Front/rear rack elevation: one row per unit, top unit first, mounted equipment spanning its units. */
-function RackElevation({ units, items }: { units: number; items: NonNullable<RackData["rackItems"]> }) {
+/** Front/rear rack elevation: interactive units + 3D Rack Inspector launch. */
+function RackElevation({
+  units,
+  items,
+  powerCapacityW,
+  onInspect3D,
+}: {
+  units: number;
+  items: NonNullable<RackData["rackItems"]>;
+  powerCapacityW?: number | null;
+  onInspect3D: (equipmentId?: number | null) => void;
+}) {
+  const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
   const faces: { key: string; label: string }[] = [
     { key: "front", label: "Front" },
     { key: "rear", label: "Rear" },
   ];
-  const free = units - items.reduce((total, item) => total + item.rack_unit_height, 0);
+  const free = Math.max(0, units - items.reduce((total, item) => total + item.rack_unit_height, 0));
+  const freeFront = useMemo(() => findContiguousFreeU(units, items, "front"), [units, items]);
+  const maxContiguous = freeFront.reduce((best, r) => Math.max(best, r.sizeU), 0);
+  const selectedItem = items.find((item) => item.equipment_id === selectedItemId) ?? null;
+
   return (
     <div className="dcim-rack">
-      <h4 className="dcim-section-title">
-        Rack elevation <span>{free} U free</span>
-      </h4>
+      <div className="dcim-rack-head">
+        <h4 className="dcim-section-title">
+          Rack elevation <span>{free}U free · max {maxContiguous}U contiguous</span>
+        </h4>
+        <button className="dcim-rack-3d-btn" onClick={() => onInspect3D(selectedItemId)}>
+          <Server size={13} />
+          3D Rack
+        </button>
+      </div>
       <div className="dcim-rack-faces">
         {faces.map((face) => (
           <div key={face.key} className="dcim-rack-face" aria-label={`${face.label} of rack`}>
@@ -151,23 +195,54 @@ function RackElevation({ units, items }: { units: number; items: NonNullable<Rac
               ))}
               {items
                 .filter((item) => (item.rack_face || "front") === face.key)
-                .map((item) => (
-                  <span
-                    key={item.equipment_id}
-                    className="dcim-rack-item"
-                    style={{
-                      gridRow: `${units - (item.rack_unit + item.rack_unit_height - 1) + 1} / span ${item.rack_unit_height}`,
-                      borderLeftColor: categoryColor(item.category),
-                    }}
-                    title={`U${item.rack_unit}${item.rack_unit_height > 1 ? `–${item.rack_unit + item.rack_unit_height - 1}` : ""} · ${item.name || item.sku}${item.category ? ` · ${item.category}` : ""}${item.power_draw_w ? ` · ${item.power_draw_w} W` : ""}`}
-                  >
-                    {item.name || item.sku}
-                  </span>
-                ))}
+                .map((item) => {
+                  const isActive = item.equipment_id === selectedItemId;
+                  return (
+                    <button
+                      type="button"
+                      key={item.equipment_id}
+                      className={`dcim-rack-item${isActive ? " is-active" : ""}`}
+                      style={{
+                        gridRow: `${units - (item.rack_unit + item.rack_unit_height - 1) + 1} / span ${item.rack_unit_height}`,
+                        borderLeftColor: categoryColor(item.category),
+                      }}
+                      onClick={() =>
+                        setSelectedItemId((cur) => (cur === item.equipment_id ? null : item.equipment_id))
+                      }
+                      onDoubleClick={() => onInspect3D(item.equipment_id)}
+                      title={`U${item.rack_unit}${item.rack_unit_height > 1 ? `–${item.rack_unit + item.rack_unit_height - 1}` : ""} · ${item.name || item.sku}${item.category ? ` · ${item.category}` : ""}${item.power_draw_w ? ` · ${item.power_draw_w} W` : ""}`}
+                    >
+                      {item.name || item.sku}
+                    </button>
+                  );
+                })}
             </div>
           </div>
         ))}
       </div>
+      {selectedItem && (
+        <div className="dcim-rack-selection">
+          <div>
+            <strong>{selectedItem.name || selectedItem.sku}</strong>
+            <small>
+              U{selectedItem.rack_unit}
+              {selectedItem.rack_unit_height > 1
+                ? `–${selectedItem.rack_unit + selectedItem.rack_unit_height - 1}`
+                : ""}{" "}
+              ({selectedItem.rack_unit_height}U · {selectedItem.rack_face || "front"}) ·{" "}
+              {selectedItem.category || "Uncategorized"} · {selectedItem.sku}
+              {selectedItem.power_draw_w != null && (
+                <>
+                  {" "}
+                  · {selectedItem.power_draw_w} W
+                  {powerCapacityW ? ` (${Math.round((selectedItem.power_draw_w / powerCapacityW) * 100)}%)` : ""}
+                </>
+              )}
+            </small>
+          </div>
+          <button onClick={() => onInspect3D(selectedItem.equipment_id)}>3D</button>
+        </div>
+      )}
     </div>
   );
 }
@@ -178,14 +253,16 @@ function StationDetail({
   onBack,
   onFocus,
   onTogglePin,
-  onInspect,
+  onInspectBench,
+  onInspectRack,
 }: {
   station: RackData;
   pinned: boolean;
   onBack: () => void;
   onFocus: () => void;
   onTogglePin: () => void;
-  onInspect: (benchId: number) => void;
+  onInspectBench: (benchId: number) => void;
+  onInspectRack: (equipmentId?: number | null) => void;
 }) {
   const used = station.benchCount;
   const capacity = station.benchCapacity;
@@ -218,6 +295,12 @@ function StationDetail({
             <Pin size={14} />
             {pinned ? "Pinned" : "Pin label"}
           </button>
+          {station.capacity?.rack_units ? (
+            <button onClick={() => onInspectRack(null)}>
+              <Server size={14} />
+              3D Rack
+            </button>
+          ) : null}
         </div>
       </div>
 
@@ -240,7 +323,14 @@ function StationDetail({
           thresholds={RACK_THRESHOLDS.humidity}
           max={100}
         />
-        <MetricTile icon={<Zap size={13} />} label="Power" value={station.powerUsage} unit="kW" digits={1} max={Math.max(10, station.powerUsage ?? 0)} />
+        <MetricTile
+          icon={<Zap size={13} />}
+          label="Power"
+          value={station.powerUsage}
+          unit="kW"
+          digits={1}
+          max={Math.max(10, station.powerUsage ?? 0)}
+        />
       </div>
 
       <p className="dcim-live">
@@ -297,7 +387,12 @@ function StationDetail({
       </div>
 
       {station.capacity?.rack_units ? (
-        <RackElevation units={station.capacity.rack_units} items={station.rackItems ?? []} />
+        <RackElevation
+          units={station.capacity.rack_units}
+          items={station.rackItems ?? []}
+          powerCapacityW={station.capacity.power_capacity_w}
+          onInspect3D={onInspectRack}
+        />
       ) : null}
 
       <h4 className="dcim-section-title">Benches</h4>
@@ -314,7 +409,7 @@ function StationDetail({
                   <strong>{bench.name}</strong>
                   <small>{slot.label}</small>
                 </div>
-                <button onClick={() => onInspect(bench.id)} title={`Inspect ${bench.name} in 3D`}>
+                <button onClick={() => onInspectBench(bench.id)} title={`Inspect ${bench.name} in 3D`}>
                   <Box size={14} />
                   Inspect
                 </button>
@@ -339,6 +434,251 @@ function StationDetail({
   );
 }
 
+function RoomRollupCard({ racks }: { racks: RackData[] }) {
+  const rollup = useMemo(() => computeRoomRollup(racks), [racks]);
+  if (!racks.length) return null;
+  return (
+    <div className="dcim-rollup-card">
+      <div className="dcim-rollup-grid">
+        <div>
+          <span>POWER BUDGET</span>
+          <strong>
+            {rollup.totalPowerCapacityW > 0
+              ? `${(rollup.totalPowerAllocatedW / 1000).toFixed(1)} / ${(rollup.totalPowerCapacityW / 1000).toFixed(1)} kW`
+              : rollup.livePowerKw != null
+                ? `${rollup.livePowerKw.toFixed(1)} kW live`
+                : "—"}
+          </strong>
+        </div>
+        <div>
+          <span>RACK SPACE</span>
+          <strong>
+            {rollup.totalRackUnits > 0
+              ? `${rollup.freeRackUnits}U free / ${rollup.totalRackUnits}U`
+              : `${rollup.totalBenches} benches`}
+          </strong>
+        </div>
+        <div>
+          <span>THERMAL RANGE</span>
+          <strong>
+            {rollup.tempMin != null && rollup.tempMax != null
+              ? `${rollup.tempMin.toFixed(0)}–${rollup.tempMax.toFixed(0)} °C`
+              : "No sensors"}
+          </strong>
+        </div>
+        <div>
+          <span>ASSETS</span>
+          <strong>
+            {rollup.totalDevices} devices
+          </strong>
+        </div>
+      </div>
+      {rollup.powerUtilization != null && (
+        <div className="dcim-rollup-bar">
+          <span>
+            Room power utilization <b>{Math.round(rollup.powerUtilization * 100)}%</b>
+          </span>
+          <span className="dcim-meter" aria-hidden="true">
+            <i
+              style={{
+                width: `${Math.min(100, rollup.powerUtilization * 100)}%`,
+                background:
+                  rollup.powerUtilization > 0.9
+                    ? "#fb7185"
+                    : rollup.powerUtilization > 0.75
+                      ? "#fbbf24"
+                      : "linear-gradient(90deg, #38bdf8, #34d399)",
+              }}
+            />
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CapacityPlannerPanel({
+  racks,
+  plan,
+  onChange,
+  onSelect,
+}: {
+  racks: RackData[];
+  plan: CapacityRequirement;
+  onChange: (next: CapacityRequirement) => void;
+  onSelect: (id: number) => void;
+}) {
+  const active = hasCapacityRequirement(plan);
+  const matches = useMemo(() => matchCapacityPlan(racks, plan), [racks, plan]);
+  const fitCount = matches.filter((m) => m.fits).length;
+
+  const setNum = (field: "requiredU" | "requiredPowerW" | "requiredWeightKg" | "requiredBenches", raw: string) => {
+    const val = Math.max(0, Number(raw) || 0);
+    onChange({ ...plan, [field]: val });
+  };
+
+  return (
+    <div className="dcim-planner">
+      <div className="dcim-planner-form">
+        <div className="dcim-planner-head">
+          <span>WHAT-IF DEPLOYMENT FINDER</span>
+          {active && (
+            <button onClick={() => onChange(EMPTY_PLAN)} title="Clear planner constraints">
+              <RotateCcw size={12} />
+              Reset
+            </button>
+          )}
+        </div>
+        <div className="dcim-planner-inputs">
+          <label>
+            Rack U (contiguous)
+            <input
+              type="number"
+              min={0}
+              max={48}
+              value={plan.requiredU || ""}
+              placeholder="e.g. 4"
+              onChange={(e) => setNum("requiredU", e.target.value)}
+            />
+          </label>
+          <label>
+            Power draw (W)
+            <input
+              type="number"
+              min={0}
+              step={100}
+              value={plan.requiredPowerW || ""}
+              placeholder="e.g. 1200"
+              onChange={(e) => setNum("requiredPowerW", e.target.value)}
+            />
+          </label>
+          <label>
+            Weight (kg)
+            <input
+              type="number"
+              min={0}
+              step={5}
+              value={plan.requiredWeightKg || ""}
+              placeholder="e.g. 35"
+              onChange={(e) => setNum("requiredWeightKg", e.target.value)}
+            />
+          </label>
+          <label>
+            Bench slots
+            <input
+              type="number"
+              min={0}
+              max={12}
+              value={plan.requiredBenches || ""}
+              placeholder="e.g. 1"
+              onChange={(e) => setNum("requiredBenches", e.target.value)}
+            />
+          </label>
+        </div>
+        <div className="dcim-planner-face">
+          <span>Rack face</span>
+          <div>
+            {(["front", "rear"] as const).map((face) => (
+              <button
+                key={face}
+                aria-pressed={plan.face === face}
+                onClick={() => onChange({ ...plan, face })}
+              >
+                {face}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="dcim-planner-summary">
+        {active ? (
+          <>
+            <strong>
+              {fitCount} of {racks.length} stations
+            </strong>{" "}
+            can host this deployment (highlighted in emerald on the 3D floorplan).
+          </>
+        ) : (
+          "Enter U space, power, weight or bench needs to highlight eligible stations in 3D."
+        )}
+      </div>
+
+      <div className="dcim-station-list">
+        {matches.map((item) => (
+          <button
+            key={item.rack.id}
+            className={`dcim-planner-card ${active ? (item.fits ? "is-fit" : "is-blocked") : ""}`}
+            onClick={() => onSelect(item.rack.id)}
+          >
+            <div className="dcim-planner-card-head">
+              <strong>{item.rack.name}</strong>
+              <span className={`dcim-fit-pill ${item.fits ? "is-fit" : "is-no"}`}>
+                {item.fits ? (
+                  <>
+                    <CheckCircle2 size={11} /> Fit
+                  </>
+                ) : (
+                  "No fit"
+                )}
+              </span>
+            </div>
+            <div className="dcim-planner-stats">
+              <span>{item.maxContiguousU}U max block</span>
+              <span>{item.freePowerW != null ? `${(item.freePowerW / 1000).toFixed(1)} kW free` : "No W rating"}</span>
+              <span>{item.freeWeightKg != null ? `${Math.round(item.freeWeightKg)} kg free` : "—"}</span>
+            </div>
+            {!item.fits && item.reasons.length > 0 && (
+              <small className="dcim-planner-reason">{item.reasons.join(" · ")}</small>
+            )}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function AlertsPanel({
+  racks,
+  onSelect,
+}: {
+  racks: RackData[];
+  onSelect: (id: number) => void;
+}) {
+  const alerts = useMemo(() => deriveStationAlerts(racks), [racks]);
+  if (!alerts.length) {
+    return (
+      <div className="dcim-alerts-empty">
+        <CheckCircle2 size={24} />
+        <strong>All systems nominal</strong>
+        <p>No thermal, humidity, power or capacity threshold alerts in this room.</p>
+      </div>
+    );
+  }
+  return (
+    <div className="dcim-station-list">
+      {alerts.map((alert) => (
+        <button
+          key={alert.id}
+          className={`dcim-alert-card is-${alert.severity}`}
+          onClick={() => onSelect(alert.stationId)}
+        >
+          <div className="dcim-alert-card-head">
+            <span className={`dcim-status-pill is-${alert.severity}`}>
+              <AlertTriangle size={11} />
+              {alert.severity}
+            </span>
+            <small>{alert.slotCode ?? "Unplaced"}</small>
+          </div>
+          <strong>{alert.stationName}</strong>
+          <p>{alert.title}</p>
+          <small>{alert.detail} · Click to locate in 3D</small>
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function Sidebar({
   racks,
   selectedId,
@@ -348,6 +688,12 @@ export function Sidebar({
   onFocus,
   pinnedIds = [],
   onTogglePin,
+  activeTab: controlledTab,
+  onTabChange,
+  statusFilter: controlledStatusFilter,
+  onStatusFilterChange,
+  capacityPlan,
+  onCapacityPlanChange,
   isEditMode,
   isDeleteMode,
   unplacedCount,
@@ -358,9 +704,26 @@ export function Sidebar({
   canEdit = false,
 }: SidebarProps) {
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<RackStatus | null>(null);
+  const [localTab, setLocalTab] = useState<SidebarTab>("inventory");
+  const [localStatusFilter, setLocalStatusFilter] = useState<RackStatus | null>(null);
   const [typeFilter, setTypeFilter] = useState<RackData["modelKind"] | null>(null);
   const [benchId, setBenchId] = useState<number | null>(null);
+  const [rackInspectItem, setRackInspectItem] = useState<{ open: boolean; itemId: number | null }>({
+    open: false,
+    itemId: null,
+  });
+
+  const activeTab = controlledTab ?? localTab;
+  const setTab = (tab: SidebarTab) => {
+    setLocalTab(tab);
+    onTabChange?.(tab);
+  };
+  const statusFilter = controlledStatusFilter !== undefined ? controlledStatusFilter : localStatusFilter;
+  const setStatusFilter = (next: RackStatus | null) => {
+    setLocalStatusFilter(next);
+    onStatusFilterChange?.(next);
+  };
+
   const selected = racks.find((rack) => rack.id === selectedId);
   const slot = selected?.slots?.find((item) => item.benches.some((bench) => bench.id === benchId));
   const activeBench = slot?.benches.find((bench) => bench.id === benchId);
@@ -370,6 +733,9 @@ export function Sidebar({
     for (const rack of racks) result[rack.status]++;
     return result;
   }, [racks]);
+
+  const alertCount = useMemo(() => deriveStationAlerts(racks).length, [racks]);
+
   const types = useMemo(
     () =>
       (Object.keys(TYPE_LABELS) as RackData["modelKind"][])
@@ -377,6 +743,7 @@ export function Sidebar({
         .filter(({ count }) => count > 0),
     [racks],
   );
+
   const filtered = racks.filter(
     (rack) =>
       (!statusFilter || rack.status === statusFilter) &&
@@ -385,10 +752,10 @@ export function Sidebar({
   );
 
   return (
-    <aside className="dcim-sidebar" aria-label="Station inventory">
+    <aside className="dcim-sidebar" aria-label="DCIM operations panel">
       <div className="dcim-sidebar-header">
         <div>
-          <span className="dcim-eyebrow">ROOM INVENTORY</span>
+          <span className="dcim-eyebrow">DCIM OPERATIONS</span>
           <h2>
             Stations <span>{racks.length}</span>
           </h2>
@@ -398,23 +765,35 @@ export function Sidebar({
         </button>
       </div>
 
-      <div className="dcim-status-grid" role="group" aria-label="Filter by status">
-        {(["ok", "warning", "critical", "unknown"] as const).map((status) => (
+      {!selected && (
+        <div className="dcim-tabs" role="tablist" aria-label="Operations views">
           <button
-            key={status}
-            className={`dcim-status-tile is-${status}`}
-            aria-pressed={statusFilter === status}
-            onClick={() => setStatusFilter((value) => (value === status ? null : status))}
-            title={`Show ${STATUS_LABELS[status].toLowerCase()} stations`}
+            role="tab"
+            aria-selected={activeTab === "inventory"}
+            onClick={() => setTab("inventory")}
           >
-            <b>{counts[status]}</b>
-            <span>
-              <i style={{ background: STATUS_COLORS[status] }} />
-              {STATUS_LABELS[status]}
-            </span>
+            <Layers size={13} />
+            Inventory
           </button>
-        ))}
-      </div>
+          <button
+            role="tab"
+            aria-selected={activeTab === "planner"}
+            onClick={() => setTab("planner")}
+          >
+            <Compass size={13} />
+            Planner
+          </button>
+          <button
+            role="tab"
+            aria-selected={activeTab === "alerts"}
+            onClick={() => setTab("alerts")}
+          >
+            <AlertTriangle size={13} />
+            Alerts
+            {alertCount > 0 && <b className="dcim-tab-badge">{alertCount}</b>}
+          </button>
+        </div>
+      )}
 
       {selected ? (
         <div className="dcim-sidebar-scroll">
@@ -425,11 +804,39 @@ export function Sidebar({
             onBack={() => onClearSelection?.()}
             onFocus={() => onFocus?.(selected.id)}
             onTogglePin={() => onTogglePin?.(selected.id)}
-            onInspect={setBenchId}
+            onInspectBench={setBenchId}
+            onInspectRack={(itemId) => setRackInspectItem({ open: true, itemId: itemId ?? null })}
           />
         </div>
+      ) : activeTab === "planner" ? (
+        <CapacityPlannerPanel
+          racks={racks}
+          plan={capacityPlan ?? EMPTY_PLAN}
+          onChange={(next) => onCapacityPlanChange?.(next)}
+          onSelect={onSelect}
+        />
+      ) : activeTab === "alerts" ? (
+        <AlertsPanel racks={racks} onSelect={onSelect} />
       ) : (
         <>
+          <RoomRollupCard racks={racks} />
+          <div className="dcim-status-grid" role="group" aria-label="Filter by status">
+            {(["ok", "warning", "critical", "unknown"] as const).map((status) => (
+              <button
+                key={status}
+                className={`dcim-status-tile is-${status}`}
+                aria-pressed={statusFilter === status}
+                onClick={() => setStatusFilter(statusFilter === status ? null : status)}
+                title={`Show ${STATUS_LABELS[status].toLowerCase()} stations`}
+              >
+                <b>{counts[status]}</b>
+                <span>
+                  <i style={{ background: STATUS_COLORS[status] }} />
+                  {STATUS_LABELS[status]}
+                </span>
+              </button>
+            ))}
+          </div>
           <div className="dcim-filters">
             <label className="dcim-search">
               <Search size={15} />
@@ -483,6 +890,15 @@ export function Sidebar({
           onClose={() => setBenchId(null)}
         />
       )}
+
+      {rackInspectItem.open && selected && selected.capacity?.rack_units ? (
+        <RackInspector
+          key={`rack-${selected.id}`}
+          station={selected}
+          initialEquipmentId={rackInspectItem.itemId}
+          onClose={() => setRackInspectItem({ open: false, itemId: null })}
+        />
+      ) : null}
 
       <footer className="dcim-sidebar-footer">
         <span>

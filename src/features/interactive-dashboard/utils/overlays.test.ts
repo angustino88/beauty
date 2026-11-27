@@ -13,10 +13,12 @@ test('heat ramp runs from blue to red and clamps', () => {
   assert.deepEqual(heatColor(2), heatColor(1));
 });
 
-test('power scales to the busiest station; temperature uses a fixed band', () => {
+test('power scales to the busiest station; temperature and humidity use fixed bands', () => {
   assert.deepEqual(overlayDomain([rack(2), rack(6), rack(null)], 'power'), [0, 6]);
   assert.deepEqual(overlayDomain([], 'power'), [0, 1]);
   assert.deepEqual(overlayDomain([rack(1, 40)], 'temperature'), [18, 50]);
+  assert.deepEqual(overlayDomain([], 'humidity'), [20, 75]);
+  assert.equal(formatMetric(48.4, 'humidity'), '48 %');
   assert.equal(normalise(34, [18, 50]), 0.5);
 });
 

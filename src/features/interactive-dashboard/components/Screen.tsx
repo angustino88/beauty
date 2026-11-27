@@ -1,24 +1,36 @@
 import { ModelLibraryProvider } from "../models/ModelLibraryProvider";
 import { Canvas } from "@react-three/fiber";
-import { CameraRig } from "./scene/CameraRig";
+import { OrthographicCamera, PerformanceMonitor, PerspectiveCamera } from "@react-three/drei";
+import {
+  CameraRig,
+  type CameraPreset,
+  type CameraProjection,
+} from "./scene/CameraRig";
 import {
   Box,
-  Scan,
-  RotateCcw,
-  PanelRightOpen,
-  Eye,
-  Layers,
-  Thermometer,
-  Zap,
-  Gauge,
+  Camera,
   CircleOff,
-  Play,
+  Compass,
+  Droplets,
+  Eye,
+  Gauge,
+  HelpCircle,
+  Layers,
+  Map as MapIcon,
+  PanelRightOpen,
   Pause,
+  Play,
+  RotateCcw,
+  Scan,
   Sparkles,
+  Thermometer,
+  Wind,
+  Zap,
 } from "lucide-react";
-import { PerformanceMonitor } from "@react-three/drei";
 import { SceneEffects, SceneLighting, type RenderQuality } from "./scene/SceneEffects";
 import { HeatmapLayer } from "./scene/HeatmapLayer";
+import { AirflowLayer } from "./scene/AirflowLayer";
+import { MiniMap } from "./hud/MiniMap";
 import {
   HEAT_STOPS,
   OVERLAY_LABELS,
@@ -28,6 +40,12 @@ import {
   overlayValue,
   type Overlay,
 } from "../utils/overlays";
+import {
+  computeRoomRollup,
+  hasCapacityRequirement,
+  matchCapacityPlan,
+  type CapacityRequirement,
+} from "../utils/dcimMetrics";
 import { FloorRuler, FloorZones } from "./scene/FloorZones";
 import {
   STATUS_COLORS,
@@ -35,7 +53,7 @@ import {
   TYPE_LABELS,
 } from "../utils/stationVisual";
 import "../dcim.css";
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { useNavigate } from "react-router-dom";
 import { confirmAction, notify } from "@/shared/notifications";
@@ -46,9 +64,19 @@ import { RackBox } from "./scene/RackBox";
 import { SlotGridOverlay } from "./scene/SlotGridOverlay";
 import { TopBar } from "./topbar/TopBar";
 import { Sidebar } from "./sidebar/Sidebar";
+import type { SidebarTab } from "../types";
+import type { RackStatus } from "../config/rackThresholds";
 import { theme } from "../theme";
 import { ensureAnimations } from "../animations";
 import { usePermission } from "@/features/auth/hooks/useCan";
+
+const INITIAL_PLAN: CapacityRequirement = {
+  requiredU: 0,
+  requiredPowerW: 0,
+  requiredWeightKg: 0,
+  requiredBenches: 0,
+  face: "front",
+};
 
 export function Screen() {
   return (
@@ -62,6 +90,7 @@ function DashboardScreen() {
   ensureAnimations();
   const navigate = useNavigate();
   const canEditLayout = usePermission("lab_operations.manage");
+  const canvasHostRef = useRef<HTMLDivElement>(null);
   const {
     racks,
     loading,
@@ -71,7 +100,9 @@ function DashboardScreen() {
     cancelAdd,
     deleteRack,
     unplacedCount,
+    rooms,
     currentRoom,
+    selectRoom,
     goPrev,
     goNext,
     slotAnchors,
@@ -95,7 +126,10 @@ function DashboardScreen() {
     hasPendingMoves,
   } = useEditMode({ addRack, cancelAdd, moveRack, deleteRack });
 
-  const visibleRacks = racks.filter((r) => !pendingDeleteIds.includes(r.id));
+  const visibleRacks = useMemo(
+    () => racks.filter((r) => !pendingDeleteIds.includes(r.id)),
+    [racks, pendingDeleteIds],
+  );
 
   const [selection, setSelection] = useState<{
     roomId: number | undefined;
@@ -105,25 +139,35 @@ function DashboardScreen() {
     selection?.roomId === currentRoom?.id
       ? (selection?.stationId ?? null)
       : null;
-  const selectStation = (stationId: number) => {
-    setSelection({ roomId: currentRoom?.id, stationId });
-    setFocusSelected(true);
-    setSidebarOpen(true);
-  };
-  const [preset, setPreset] = useState<"isometric" | "top" | "front">(
-    "isometric",
-  );
+
+  const [preset, setPreset] = useState<CameraPreset>("isometric");
+  const [projection, setProjection] = useState<CameraProjection>("ortho");
   const [cameraReset, setCameraReset] = useState(0);
   const [showLabels, setShowLabels] = useState(true);
   const [colorMode, setColorMode] = useState<"status" | "type">("status");
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarTab, setSidebarTab] = useState<SidebarTab>("inventory");
+  const [statusFilter, setStatusFilter] = useState<RackStatus | null>(null);
+  const [capacityPlan, setCapacityPlan] = useState<CapacityRequirement>(INITIAL_PLAN);
   const [draggingRackId, setDraggingRackId] = useState<number | null>(null);
   const [nearestSlotCode, setNearestSlotCode] = useState<string | null>(null);
   const [isWarningOpen, setIsWarningOpen] = useState(false);
   const [overlay, setOverlay] = useState<Overlay>("none");
+  const [xrayMode, setXrayMode] = useState(false);
+  const [showAirflow, setShowAirflow] = useState(false);
+  const [showMiniMap, setShowMiniMap] = useState(true);
+  const [showShortcuts, setShowShortcuts] = useState(false);
   // Camera follows the selected station until Fit or a view change shows the whole room again.
   const [focusSelected, setFocusSelected] = useState(false);
   const [touring, setTouring] = useState(false);
+  const selectStation = useCallback(
+    (stationId: number) => {
+      setSelection({ roomId: currentRoom?.id, stationId });
+      setFocusSelected(true);
+      setSidebarOpen(true);
+    },
+    [currentRoom?.id],
+  );
   // An explicit Effects choice is kept; without one, effects start on and switch off if frames drop.
   const [qualityChoice, setQualityChoice] = useState<RenderQuality | null>(() => {
     try {
@@ -150,6 +194,14 @@ function DashboardScreen() {
   const overlayReadings = visibleRacks.filter((rack) => overlayValue(rack, overlay) != null).length;
   const floorSize = Math.max(floor.floorWidth, floor.floorDepth) + 2;
 
+  const rollup = useMemo(() => computeRoomRollup(visibleRacks), [visibleRacks]);
+  const planActive = sidebarTab === "planner" && hasCapacityRequirement(capacityPlan) && !isEditMode;
+  const matchedIds = useMemo(() => {
+    if (!planActive) return null;
+    const matches = matchCapacityPlan(visibleRacks, capacityPlan);
+    return new Set(matches.filter((m) => m.fits).map((m) => m.rack.id));
+  }, [planActive, visibleRacks, capacityPlan]);
+
   // Guided tour: visit each placed station in turn until stopped.
   useEffect(() => {
     if (!touring || isEditMode || !visibleRacks.length) return;
@@ -165,16 +217,99 @@ function DashboardScreen() {
     return () => window.clearInterval(timer);
   }, [touring, isEditMode, visibleRacks.length, currentRoom?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Keyboard shortcuts for fast DCIM navigation (ignored while typing in form inputs).
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.tagName === "SELECT" ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      const key = event.key.toLowerCase();
+      if (key === "1") {
+        setPreset("isometric");
+        setFocusSelected(false);
+      } else if (key === "2") {
+        setPreset("top");
+        setFocusSelected(false);
+      } else if (key === "3") {
+        setPreset("front");
+        setFocusSelected(false);
+      } else if (key === "4") {
+        setPreset("rear");
+        setFocusSelected(false);
+      } else if (key === "p") {
+        setProjection((p) => (p === "ortho" ? "perspective" : "ortho"));
+      } else if (key === "f") {
+        setTouring(false);
+        setFocusSelected(false);
+        setCameraReset((k) => k + 1);
+      } else if (key === "l") {
+        setShowLabels((v) => !v);
+      } else if (key === "x") {
+        setXrayMode((v) => !v);
+      } else if (key === "a") {
+        setShowAirflow((v) => !v);
+      } else if (key === "m") {
+        setShowMiniMap((v) => !v);
+      } else if (key === "?") {
+        setShowShortcuts((v) => !v);
+      } else if (key === "escape") {
+        setShowShortcuts(false);
+        setTouring(false);
+        setFocusSelected(false);
+        setSelection(null);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
+
+  const handleSnapshot = () => {
+    const canvas = canvasHostRef.current?.querySelector("canvas");
+    if (!canvas) return;
+    try {
+      const url = canvas.toDataURL("image/png");
+      const link = document.createElement("a");
+      const slug = (currentRoom?.name ?? "dcim-room").toLowerCase().replace(/[^a-z0-9]+/g, "-");
+      link.download = `${slug}-3d-${new Date().toISOString().slice(0, 10)}.png`;
+      link.href = url;
+      link.click();
+      notify.success("Floorplan snapshot saved");
+    } catch {
+      notify.error("Unable to export 3D snapshot");
+    }
+  };
+
   // Live room conditions from telemetry win over the room record's own values.
   const roomTemp = roomConditions?.temperature_c ?? currentRoom?.temperature ?? null;
   const roomHumidity = roomConditions?.humidity_percent ?? currentRoom?.humidity ?? null;
   const roomPower =
     roomConditions?.power_w != null ? roomConditions.power_w / 1000 : (currentRoom?.power_usage ?? null);
+  const isLive = Boolean(roomConditions?.observed_at || rollup.liveStationCount > 0);
 
   const clearEditState = useCallback(() => {
     setNearestSlotCode(null);
     setDraggingRackId(null);
   }, []);
+
+  const handleFilterStatus = (status: RackStatus) => {
+    setSidebarOpen(true);
+    setSelection(null);
+    setFocusSelected(false);
+    if (status === "critical" || status === "warning") {
+      setSidebarTab("alerts");
+    } else {
+      setSidebarTab("inventory");
+      setStatusFilter((cur) => (cur === status ? null : status));
+    }
+  };
 
   const handleToggleEditGuard = () => {
     if (!isEditMode) {
@@ -196,7 +331,6 @@ function DashboardScreen() {
       return;
     }
 
-    // Warn if there are any unsaved moves (drop without saving)
     if (hasPendingMoves) {
       setIsWarningOpen(true);
       confirmAction({
@@ -237,11 +371,17 @@ function DashboardScreen() {
         temperature={roomTemp}
         humidity={roomHumidity}
         powerUsage={roomPower}
+        rackUtilization={rollup.rackUtilization}
+        isLive={isLive}
         roomName={currentRoom?.name}
+        currentRoomId={currentRoom?.id}
+        rooms={rooms.map((r) => ({ id: r.id, name: r.name }))}
+        onSelectRoom={selectRoom}
         locationString={
           currentRoom?.location_info?.location_string ?? undefined
         }
         notifications={notifications}
+        onFilterStatus={handleFilterStatus}
         onPrev={goPrev}
         onNext={goNext}
         onBack={() => navigate(-1)}
@@ -285,30 +425,45 @@ function DashboardScreen() {
           </div>
         )}
 
-        <div className="dcim-map">
+        <div className="dcim-map" ref={canvasHostRef}>
           <div className="dcim-map-header">
             <div>
               <span className="dcim-eyebrow">
-                INFRASTRUCTURE / SPATIAL VIEW
+                DCIM / 3D SPATIAL OPERATIONS
               </span>
-              <h1>Room overview</h1>
+              <h1>{currentRoom?.name ?? "Room overview"}</h1>
               <p>
                 {visibleRacks.length} placed stations ·{" "}
                 {Math.max(0, slotAnchors.length - visibleRacks.length)} empty
                 slots
+                {floor.measured
+                  ? ` · ${floor.floorWidth.toFixed(1)} × ${floor.floorDepth.toFixed(1)} m`
+                  : ""}
+                {rollup.totalRackUnits > 0
+                  ? ` · ${rollup.freeRackUnits}U free of ${rollup.totalRackUnits}U`
+                  : ""}
               </p>
             </div>
-            <span className="dcim-schematic">
-              {quality === "high" ? "Enhanced rendering" : "Standard rendering"}
-            </span>
+            <div className="dcim-header-badges">
+              {planActive && matchedIds && (
+                <span className="dcim-schematic is-planner">
+                  Planner: {matchedIds.size} fit
+                </span>
+              )}
+              <span className="dcim-schematic">
+                {projection === "perspective" ? "Perspective" : "Orthographic"} ·{" "}
+                {quality === "high" ? "Enhanced" : "Standard"}
+              </span>
+            </div>
           </div>
+
           <div
             className="dcim-map-toolbar"
             role="toolbar"
             aria-label="Map controls"
           >
             <div>
-              {(["isometric", "top", "front"] as const).map((view) => (
+              {(["isometric", "top", "front", "rear"] as const).map((view) => (
                 <button
                   key={view}
                   onClick={() => {
@@ -317,51 +472,41 @@ function DashboardScreen() {
                   }}
                   aria-pressed={preset === view}
                 >
-                  {view === "isometric" ? (
-                    <Box size={14} />
-                  ) : (
-                    <Scan size={14} />
-                  )}
+                  {view === "isometric" ? <Box size={14} /> : <Scan size={14} />}
                   {view === "isometric"
-                    ? "3D view"
+                    ? "3D"
                     : view === "top"
-                      ? "Top view"
-                      : "Front view"}
+                      ? "Top"
+                      : view === "front"
+                        ? "Front"
+                        : "Rear"}
                 </button>
               ))}
-            </div>
-            <div>
+              <button
+                onClick={() =>
+                  setProjection((p) => (p === "ortho" ? "perspective" : "ortho"))
+                }
+                aria-pressed={projection === "perspective"}
+                title="Switch Orthographic / Perspective camera (P)"
+              >
+                <Compass size={14} />
+                {projection === "perspective" ? "Persp" : "Ortho"}
+              </button>
               <button
                 onClick={() => {
                   setTouring(false);
                   setFocusSelected(false);
                   setCameraReset((key) => key + 1);
                 }}
-                title="Fit room"
+                title="Fit room (F)"
               >
                 <RotateCcw size={14} />
                 Fit
               </button>
-              <button
-                onClick={() => setShowLabels((value) => !value)}
-                aria-pressed={showLabels}
-              >
-                <Eye size={14} />
-                Labels
-              </button>
-              <button
-                onClick={() =>
-                  setColorMode((mode) =>
-                    mode === "status" ? "type" : "status",
-                  )
-                }
-              >
-                <Layers size={14} />
-                Color: {colorMode}
-              </button>
             </div>
+
             <div role="radiogroup" aria-label="Data overlay">
-              {(["none", "temperature", "power", "capacity"] as const).map((value) => (
+              {(["none", "temperature", "humidity", "power", "capacity"] as const).map((value) => (
                 <button
                   key={value}
                   role="radio"
@@ -374,30 +519,80 @@ function DashboardScreen() {
                     <CircleOff size={14} />
                   ) : value === "temperature" ? (
                     <Thermometer size={14} />
+                  ) : value === "humidity" ? (
+                    <Droplets size={14} />
                   ) : value === "power" ? (
                     <Zap size={14} />
                   ) : (
                     <Gauge size={14} />
                   )}
                   {value === "none"
-                    ? "No overlay"
+                    ? "None"
                     : value === "temperature"
                       ? "Heat"
-                      : value === "power"
-                        ? "Power"
-                        : "Capacity"}
+                      : value === "humidity"
+                        ? "RH%"
+                        : value === "power"
+                          ? "Power"
+                          : "Capacity"}
                 </button>
               ))}
             </div>
+
             <div>
+              <button
+                onClick={() => setXrayMode((v) => !v)}
+                aria-pressed={xrayMode}
+                title="Analytical thermal/capacity X-Ray shells (X)"
+              >
+                <Layers size={14} />
+                X-Ray
+              </button>
+              <button
+                onClick={() => setShowAirflow((v) => !v)}
+                aria-pressed={showAirflow}
+                title="3D cold intake / hot exhaust airflow (A)"
+              >
+                <Wind size={14} />
+                Airflow
+              </button>
+              <button
+                onClick={() => setShowLabels((value) => !value)}
+                aria-pressed={showLabels}
+                title="Toggle station HUD labels (L)"
+              >
+                <Eye size={14} />
+                Labels
+              </button>
+              <button
+                onClick={() =>
+                  setColorMode((mode) =>
+                    mode === "status" ? "type" : "status",
+                  )
+                }
+                title="Toggle color coding"
+              >
+                Color: {colorMode}
+              </button>
+            </div>
+
+            <div>
+              <button
+                onClick={() => setShowMiniMap((v) => !v)}
+                aria-pressed={showMiniMap}
+                title="Toggle 2D floorplan mini-map (M)"
+              >
+                <MapIcon size={14} />
+                Map
+              </button>
               <button
                 onClick={() => setTouring((value) => !value)}
                 aria-pressed={touring}
                 disabled={isEditMode || !visibleRacks.length}
-                title="Visit each station in turn"
+                title="Guided station tour"
               >
                 {touring ? <Pause size={14} /> : <Play size={14} />}
-                {touring ? "Stop tour" : "Tour"}
+                {touring ? "Stop" : "Tour"}
               </button>
               <button
                 onClick={() => changeQuality(quality === "high" ? "standard" : "high")}
@@ -405,19 +600,54 @@ function DashboardScreen() {
                 title="Ambient occlusion, glow and anti-aliasing"
               >
                 <Sparkles size={14} />
-                Effects
+                FX
+              </button>
+              <button
+                onClick={handleSnapshot}
+                title="Export 3D floorplan PNG snapshot"
+              >
+                <Camera size={14} />
+                PNG
+              </button>
+              <button
+                onClick={() => setShowShortcuts((v) => !v)}
+                aria-pressed={showShortcuts}
+                title="Keyboard shortcuts (?)"
+                aria-label="Keyboard shortcuts"
+              >
+                <HelpCircle size={14} />
               </button>
             </div>
           </div>
+
           <Canvas
-            orthographic
-            camera={{ near: 0.1, far: 2000, zoom: 30, position: [20, 20, 20] }}
             shadows={{ type: THREE.PCFSoftShadowMap }}
             dpr={[1, 2]}
-            gl={{ toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.05 }}
+            gl={{
+              preserveDrawingBuffer: true,
+              toneMapping: THREE.ACESFilmicToneMapping,
+              toneMappingExposure: 1.05,
+            }}
             style={{ flex: 1, height: "100%" }}
             onPointerMissed={() => setTouring(false)}
           >
+            {projection === "ortho" ? (
+              <OrthographicCamera
+                makeDefault
+                near={0.1}
+                far={2000}
+                zoom={30}
+                position={[20, 20, 20]}
+              />
+            ) : (
+              <PerspectiveCamera
+                makeDefault
+                fov={42}
+                near={0.1}
+                far={500}
+                position={[14, 12, 14]}
+              />
+            )}
             <color attach="background" args={["#0b1523"]} />
             <fog attach="fog" args={["#0b1523", 60, 160]} />
             {qualityChoice === null && <PerformanceMonitor onDecline={() => setSlowDevice(true)} />}
@@ -443,6 +673,7 @@ function DashboardScreen() {
                 floor={floor}
               />
             )}
+            {showAirflow && !isEditMode && <AirflowLayer racks={visibleRacks} />}
             <RoomFloor floor={floor} />
             {/* Own boundary: labels still loading their font never hold back the rest of the scene. */}
             <Suspense fallback={null}>
@@ -482,6 +713,14 @@ function DashboardScreen() {
                     const value = overlayValue(rack, overlay);
                     return value == null || isEditMode ? null : normalise(value, domain);
                   })()}
+                  xrayMode={xrayMode}
+                  planMatch={
+                    matchedIds
+                      ? matchedIds.has(rack.id)
+                        ? "match"
+                        : "excluded"
+                      : null
+                  }
                   dimmed={focus !== null && selectedId !== rack.id}
                 />
               ))}
@@ -489,12 +728,46 @@ function DashboardScreen() {
             <CameraRig
               floor={floor}
               preset={preset}
+              projection={projection}
               resetKey={`${currentRoom?.id}-${cameraReset}`}
               enabled={draggingRackId === null}
               focus={isEditMode ? null : focus}
             />
             <SceneEffects quality={quality} />
           </Canvas>
+
+          {showMiniMap && !isEditMode && visibleRacks.length > 0 && (
+            <MiniMap
+              floor={floor}
+              slots={slotAnchors}
+              racks={visibleRacks}
+              selectedId={selectedId}
+              colorMode={colorMode}
+              overlay={overlay}
+              matchedIds={matchedIds}
+              onSelect={selectStation}
+            />
+          )}
+
+          {showShortcuts && (
+            <div className="dcim-shortcuts-popover" role="dialog" aria-label="Keyboard shortcuts">
+              <div className="dcim-shortcuts-head">
+                <strong>DCIM Shortcuts</strong>
+                <button onClick={() => setShowShortcuts(false)}>✕</button>
+              </div>
+              <ul>
+                <li><kbd>1</kbd>–<kbd>4</kbd> <span>3D / Top / Front / Rear view</span></li>
+                <li><kbd>P</kbd> <span>Orthographic / Perspective</span></li>
+                <li><kbd>F</kbd> <span>Fit full room</span></li>
+                <li><kbd>X</kbd> <span>Toggle analytical X-Ray</span></li>
+                <li><kbd>A</kbd> <span>Toggle 3D thermal airflow</span></li>
+                <li><kbd>L</kbd> <span>Toggle station labels</span></li>
+                <li><kbd>M</kbd> <span>Toggle 2D mini-map</span></li>
+                <li><kbd>Esc</kbd> <span>Clear selection / exit focus</span></li>
+              </ul>
+            </div>
+          )}
+
           {!loading && visibleRacks.length === 0 && (
             <div className="dcim-map-empty">
               No stations placed
@@ -505,6 +778,7 @@ function DashboardScreen() {
               </span>
             </div>
           )}
+
           <div className="dcim-map-footer">
             {overlay !== "none" && (
               <div className="dcim-heat-legend" aria-label={`${OVERLAY_LABELS[overlay]} scale`}>
@@ -523,7 +797,7 @@ function DashboardScreen() {
                   <small>
                     {overlay === "capacity"
                       ? "No station in this room has a rated power, weight, rack or bench capacity yet."
-                      : `No ${overlay === "temperature" ? "temperature" : "power"} telemetry for this room yet.`}
+                      : `No ${OVERLAY_LABELS[overlay].toLowerCase()} telemetry for this room yet.`}
                   </small>
                 )}
               </div>
@@ -545,7 +819,7 @@ function DashboardScreen() {
             <span>
               {isEditMode
                 ? "Drag to an available slot · Save to apply"
-                : "Drag to orbit · Scroll to zoom · Click to inspect"}
+                : "Drag to orbit · Scroll to zoom · Click to inspect · Press ? for shortcuts"}
             </span>
           </div>
         </div>
@@ -594,6 +868,12 @@ function DashboardScreen() {
             }}
             pinnedIds={pinnedIds}
             onTogglePin={togglePin}
+            activeTab={sidebarTab}
+            onTabChange={setSidebarTab}
+            statusFilter={statusFilter}
+            onStatusFilterChange={setStatusFilter}
+            capacityPlan={capacityPlan}
+            onCapacityPlanChange={setCapacityPlan}
             isEditMode={isEditMode}
             canEdit={canEditLayout}
             isDeleteMode={isDeleteMode}
