@@ -99,7 +99,7 @@ function LicenseInventory() {
         searchHint: equipmentSearch.emptyText,
         help: 'Optional. A license can be assigned to as many equipment items as it has seats.',
       },
-      { name: 'primary_owner', span: 8, section: 'Ownership', essential: true, label: 'Owner', type: 'select', options: table.ownerOptions },
+      { name: 'primary_owner', section: 'Ownership', essential: true, label: 'Owner', type: 'select', options: table.ownerOptions },
       { name: 'remark', section: 'Notes', label: 'Remark', type: 'textarea' },
       { name: 'image', label: 'Image', type: 'image' },
     ],

@@ -1,31 +1,276 @@
-.modal :global(.ant-modal-container) { padding: 0; overflow: hidden; border: 1px solid var(--lm-border); border-radius: 8px; }
-.modal :global(.ant-modal-header) { margin: 0; padding: 16px 24px; border-bottom: 1px solid var(--lm-border); }
-.modal :global(.ant-modal-title) { font-size: 16px; color: var(--lm-text); }
-.modal :global(.ant-modal-body) { padding: 0; }
-.modal :global(.ant-modal-footer) { margin: 0; padding: 12px 24px; border-top: 1px solid var(--lm-border); background: var(--lm-surface-subtle); }
-.form { padding: 0 !important; max-height: none !important; }
-.section + .section { margin-top: 12px; }
-.section h3 { margin: 0 0 14px; padding-bottom: 8px; border-bottom: 1px solid var(--lm-border); font-size: 12px; font-weight: 700; color: var(--lm-text-secondary); }
-.form :global(.ant-form-item) { margin-bottom: 12px; }
-.form :global(.ant-form-item-label > label) { font-size: 12px; font-weight: 500; color: var(--lm-text-secondary); }
-.form :global(.ant-input), .form :global(.ant-input-number), .form :global(.ant-select), .form :global(.ant-picker) { font-size: 12px; }
-.form :global(input.ant-input),
+.form {
+  width: 100%;
+}
+
+/* ─── Sections ───────────────────────────────────────────────── */
+
+.section + .section {
+  margin-top: 22px;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.sectionTitle {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--lm-text-tertiary);
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.sectionRule {
+  flex: 1;
+  height: 1px;
+  background: var(--lm-border-subtle);
+}
+
+/* ─── Unified 2-Column Field Grid ────────────────────────────── */
+
+.fieldGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 16px;
+  row-gap: 14px;
+  align-items: start;
+}
+
+.fieldItem {
+  min-width: 0;
+}
+
+.fieldItemFull {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 640px) {
+  .fieldGrid {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 12px;
+  }
+}
+
+/* ─── Form Items & Unified Control Geometry ──────────────────── */
+
+.form :global(.ant-form-item) {
+  margin-bottom: 0;
+}
+
+.form :global(.ant-form-item-label) {
+  padding: 0 0 6px !important;
+  line-height: 1.3;
+}
+
+.form :global(.ant-form-item-label > label) {
+  height: auto;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--lm-text);
+  line-height: 1.35;
+}
+
+.form :global(.ant-form-item-label > label.ant-form-item-required:not(.ant-form-item-required-mark-optional)::before) {
+  color: var(--lm-danger-solid);
+  font-size: 12.5px;
+  margin-inline-end: 4px;
+}
+
+.form :global(.ant-form-item-control-input) {
+  min-height: 36px;
+}
+
+.form :global(.ant-form-item-control-input-content) {
+  width: 100%;
+  min-width: 0;
+}
+
+.form :global(.ant-input),
+.form :global(.ant-input-affix-wrapper),
 .form :global(.ant-input-number),
 .form :global(.ant-select),
-.form :global(.ant-picker) { min-height: 32px; }
-.form :global(.ant-form-item-extra) { font-size: 11px; color: var(--lm-text-tertiary); min-height: 0; margin-top: 4px; }
-.form :global(.equipment-form-details) { margin: 8px 0 20px; border: 1px solid var(--lm-border); background: var(--lm-surface-subtle); }
-.form :global(.ant-collapse-header) { font-size: 12px; font-weight: 600; color: var(--lm-text-secondary); }
-.form :global(.ant-upload-drag) { background: var(--lm-surface-subtle); }
-.form :global(.ant-upload-drag-icon) { margin-bottom: 4px !important; }
-.form :global(.ant-upload-drag-icon .anticon) { font-size: 24px !important; }
-.form :global(.ant-upload-text) { font-size: 12px !important; }
-.form :global(.ant-upload-hint) { font-size: 11px !important; }
-@media (max-width: 600px) { .form { padding: 16px !important; } }
+.form :global(.ant-picker) {
+  width: 100%;
+  font-size: 13px;
+  border-radius: 7px;
+}
+
+.form :global(input.ant-input),
+.form :global(.ant-input-affix-wrapper),
+.form :global(.ant-input-number),
+.form :global(.ant-select-single),
+.form :global(.ant-select-multiple),
+.form :global(.ant-picker) {
+  min-height: 36px;
+}
+
+.form :global(.ant-input-number) {
+  display: inline-flex;
+  align-items: center;
+}
+
+.form :global(.ant-input-number-input),
+.form :global(.ant-picker-input > input) {
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.form :global(.ant-select-selection-placeholder),
+.form :global(.ant-select-selection-item) {
+  font-size: 13px;
+}
+
+.form :global(textarea.ant-input) {
+  font-size: 13px;
+  line-height: 1.5;
+  padding: 8px 11px;
+}
+
+.jsonField {
+  font-family: var(--lm-font-mono);
+  font-size: 12px !important;
+  line-height: 1.55 !important;
+}
+
+.form :global(.ant-form-item-extra) {
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: var(--lm-text-tertiary);
+  min-height: 0;
+  margin-top: 4px;
+}
+
+.form :global(.ant-form-item-explain-error) {
+  font-size: 11.5px;
+  line-height: 1.4;
+  margin-top: 4px;
+}
+
+/* ─── Flush Additional Details Disclosure ────────────────────── */
+
+.detailsBlock {
+  margin-top: 22px;
+}
+
+.detailsToggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--lm-border);
+  border-radius: 8px;
+  background: var(--lm-surface-subtle);
+  color: var(--lm-text);
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 140ms ease, border-color 140ms ease;
+}
+
+.detailsToggle:hover {
+  background: var(--lm-surface-muted);
+  border-color: var(--lm-border-strong);
+}
+
+.detailsToggle:focus-visible {
+  outline: none;
+  box-shadow: var(--lm-focus-ring);
+}
+
+.detailsToggleLeft {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.detailsChevron {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  color: var(--lm-text-tertiary);
+  transition: transform 160ms ease;
+}
+
+.detailsChevronOpen {
+  transform: rotate(90deg);
+  color: var(--lm-primary-fg);
+}
+
+.detailsTitle {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--lm-text);
+}
+
+.detailsMeta {
+  font-size: 11.5px;
+  color: var(--lm-text-tertiary);
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.detailsBody {
+  padding-top: 18px;
+}
+
+.detailsBody[hidden] {
+  display: none;
+}
+
+/* ─── Image Upload ───────────────────────────────────────────── */
+
+.imageBlock {
+  margin-top: 20px;
+}
+
+.form :global(.ant-upload-drag) {
+  background: var(--lm-surface-subtle);
+}
+
+.form :global(.ant-upload-drag-icon) {
+  margin-bottom: 4px !important;
+}
+
+.form :global(.ant-upload-drag-icon .anticon) {
+  font-size: 24px !important;
+}
+
+.form :global(.ant-upload-text) {
+  font-size: 12px !important;
+}
+
+.form :global(.ant-upload-hint) {
+  font-size: 11px !important;
+}
+
 .popupHint {
-    padding: 6px 12px 4px;
-    margin-top: 4px;
-    border-top: 1px solid var(--lm-border-subtle);
-    color: var(--lm-text-tertiary);
-    font-size: 12px;
+  padding: 6px 12px 4px;
+  margin-top: 4px;
+  border-top: 1px solid var(--lm-border-subtle);
+  color: var(--lm-text-tertiary);
+  font-size: 12px;
+}
+
+@media (max-width: 640px) {
+  .detailsToggle {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .detailsMeta {
+    padding-left: 23px;
+    text-align: left;
+    white-space: normal;
+  }
 }

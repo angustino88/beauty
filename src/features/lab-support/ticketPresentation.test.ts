@@ -143,3 +143,23 @@ test('formatTicketActivityLines formats status transitions and field change diff
     'Team: None → Lab Operations',
   ]);
 });
+
+test('getTicketTypeMeta and getTicketSlaMeta handle bug, feature_request, feedback and state=none', () => {
+  assert.equal(getTicketTypeMeta('bug').tone, 'danger');
+  assert.equal(getTicketTypeMeta('feature_request').shortLabel, 'Feature');
+  assert.equal(getTicketTypeMeta('feedback').tone, 'reserved');
+  assert.equal(getTicketSlaMeta({ state: 'none', paused: false }).state, 'none');
+  assert.equal(getTicketSlaMeta({ state: 'none', paused: false }).label, 'No SLA');
+});
+
+test('formatTicketActivityLines formats CSAT ratings and submitted page_path', () => {
+  const csatLines = formatTicketActivityLines({
+    payload: { score: 5, comment: 'Quick turnaround!' },
+  });
+  assert.deepEqual(csatLines, ['Satisfaction rating: 5 / 5', 'Comment: Quick turnaround!']);
+
+  const createLines = formatTicketActivityLines({
+    payload: { page_path: '/booking-calendar' },
+  });
+  assert.deepEqual(createLines, ['Submitted from: /booking-calendar']);
+});

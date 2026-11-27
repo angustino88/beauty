@@ -72,25 +72,25 @@ export const ROOM_SPECS_FIELDS: RoomSpecField[] = [
  * the room and cannot change after creation.
  */
 export const buildRoomFormFields = (location: RoomLocationOptions): FieldConfig[] => [
-  { name: "sku", span: 7, label: "SKU", type: "text", required: true, maxLength: 255, disabledInEdit: true, section: "Identification" },
-  { name: "name", span: 10, label: "Name", type: "text", required: true, maxLength: 255, section: "Identification" },
-  { name: "label", span: 7, label: "Short label", type: "text", essential: true, placeholder: "e.g. A101", section: "Identification" },
-  { name: "rows", span: 8, apiField: "layout_rows", label: "Grid rows", type: "number", required: true, section: "Layout" },
-  { name: "cols", span: 8, apiField: "layout_columns", label: "Grid columns", type: "number", required: true, section: "Layout" },
-  {
-    name: "setup_capacity", span: 8, label: "Setup capacity", type: "number", disabled: true,
-    help: "Calculated from grid rows × columns.", section: "Layout",
-  },
-  { name: "length", span: 8, apiField: "length_m", label: "Length (m)", type: "number", section: "Layout" },
-  { name: "width", span: 8, apiField: "width_m", label: "Width (m)", type: "number", section: "Layout" },
+  { name: "sku", label: "SKU", type: "text", required: true, maxLength: 255, disabledInEdit: true, section: "Identification" },
+  { name: "name", label: "Name", type: "text", required: true, maxLength: 255, section: "Identification" },
+  { name: "label", label: "Short label", type: "text", essential: true, placeholder: "e.g. A101", section: "Identification" },
+  { name: "rows", apiField: "layout_rows", label: "Grid rows", type: "number", required: true, section: "Layout" },
+  { name: "cols", apiField: "layout_columns", label: "Grid columns", type: "number", required: true, section: "Layout" },
+  { name: "length", apiField: "length_m", label: "Length (m)", type: "number", section: "Layout" },
+  { name: "width", apiField: "width_m", label: "Width (m)", type: "number", section: "Layout" },
   { name: "max_power", apiField: "power_capacity_w", label: "Max power (W)", type: "number", section: "Specifications" },
   { name: "country", apiField: "country_id", label: "Country", type: "select", essential: true, ...location.country, section: "Location" },
   { name: "city", apiField: "city_id", label: "City", type: "select", dependsOn: ["country"], ...location.city, placeholder: location.city.disabled ? "Select a country first" : "Select City", section: "Location" },
   { name: "building", apiField: "building_id", label: "Building", type: "select", dependsOn: ["city"], ...location.building, placeholder: location.building.disabled ? "Select a city first" : "Select Building", section: "Location" },
   { name: "floor", label: "Floor", type: "text", placeholder: "e.g. 1 or B1", section: "Location" },
-  { name: "location", apiField: "map_url", label: "Map link", type: "text", placeholder: "https://…", section: "Location" },
+  { name: "location", span: 24, apiField: "map_url", label: "Map link", type: "text", placeholder: "https://…", section: "Location" },
   { name: "remark", label: "Remark", type: "textarea", section: "Notes" },
   ...editableDetails(ROOM_DETAILS),
+  {
+    name: "setup_capacity", label: "Setup capacity", type: "number", disabled: true,
+    help: "Calculated from grid rows × columns.", section: "Layout",
+  },
   { name: "image", label: "Image", type: "image" },
 ];
 

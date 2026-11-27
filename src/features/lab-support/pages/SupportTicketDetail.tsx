@@ -79,6 +79,7 @@ import { TicketAttachments } from '../components/TicketAttachments';
 import { SupportPeopleSelect } from '../components/SupportPeopleSelect';
 import { TicketWorkflow } from '../components/TicketWorkflow';
 import { TicketWorkLogs } from '../components/TicketWorkLogs';
+import { TicketCsatCard } from '../components/TicketCsatCard';
 import {
   TicketPriorityBadge,
   TicketSlaBadge,
@@ -707,6 +708,21 @@ function TicketDetail({ ticketKey: key }: { ticketKey: string }) {
                 </Typography.Text>
               )}
             </section>
+          )}
+
+          {/* Post-Resolution CSAT Satisfaction Rating */}
+          {(currentStatusMeta.isTerminal || ticket.csat_score !== null) && (
+            <TicketCsatCard
+              ticketKey={ticket.key}
+              canSubmit={Boolean(ticket.can_submit_csat)}
+              score={ticket.csat_score}
+              comment={ticket.csat_comment}
+              submittedAt={ticket.csat_submitted_at}
+              onSubmitted={() => {
+                void refetchDetail();
+                void refetchActivity();
+              }}
+            />
           )}
 
           {/* Description & Labels Card */}
@@ -1741,6 +1757,34 @@ function TicketDetail({ ticketKey: key }: { ticketKey: string }) {
                   </Typography.Text>
                 )}
               </div>
+
+              {/* Submission Context (Page Path & Client Diagnostics) */}
+              {(ticket.page_path || (ticket.client_context && Object.keys(ticket.client_context).length > 0)) && (
+                <div className={styles.fieldRow} style={{ marginTop: 4 }}>
+                  <span className={styles.fieldLabel}>Submission Context</span>
+                  <dl className={styles.metaList}>
+                    {ticket.page_path && (
+                      <div className={styles.metaRow}>
+                        <dt>Page</dt>
+                        <dd>
+                          <Link to={ticket.page_path} style={{ fontSize: 12.5 }}>
+                            {ticket.page_path}
+                          </Link>
+                        </dd>
+                      </div>
+                    )}
+                    {ticket.client_context &&
+                      Object.entries(ticket.client_context).map(([ctxKey, ctxValue]) => (
+                        <div key={ctxKey} className={styles.metaRow}>
+                          <dt style={{ textTransform: 'capitalize' }}>
+                            {ctxKey.replaceAll('_', ' ')}
+                          </dt>
+                          <dd>{ctxValue}</dd>
+                        </div>
+                      ))}
+                  </dl>
+                </div>
+              )}
 
               {/* Linked Lab Resources */}
               {(ticket.resource_links?.length ?? 0) > 0 && (
