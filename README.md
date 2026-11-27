@@ -75,8 +75,10 @@ nginx serves the build and proxies the API on the same origin; `docker-compose.d
 ## Available Scripts
 
 - `npm run dev` — start local development server
-- `npm run build` — regenerate the API client, then production build to `build/`
-- `npm run build:app` — production build to `build/` (used by Docker)
+- `npm run build` — production build to `build/` from the committed API client (works on a fresh clone)
+- `npm run build:app` — same as `npm run build` (used by Docker)
+- `npm run build:full` — regenerate the API client from `openapi/openapi-full.json`, then build; needs the
+  contract, which is not in the repository (`openapi/` is git-ignored), so get it from the backend team first
 - `npm run preview` — preview built assets
 - `npm run lint` — run ESLint
 - `npm test` — run Node.js TypeScript unit tests
