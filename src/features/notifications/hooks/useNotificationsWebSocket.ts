@@ -1,23 +1,29 @@
-import { useCallback, useEffect, useRef } from "react";
-import { useDispatch } from "react-redux";
-import { useNavigate } from "react-router-dom";
-import { useAppSelector } from "@/app/store";
-import { attemptRefreshAccessToken } from "@/shared/lib/api";
-import { notify } from "@/shared/notifications";
-import { useAuthedWebSocket } from "@/shared/ws/useAuthedWebSocket";
-import { getWsBaseUrl } from "@/shared/lib/backendTarget";
-import { showDesktopNotification } from "../desktopNotifications";
-import { inboxApi } from "../inboxApi";
-import { actionLabel, mapInboxItem } from "../inboxMapper";
-import { notificationActions } from "../notificationSlice";
+import { useCallback, useEffect, useRef } from 'react';
+import { useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+import { useAppSelector } from '@/app/store';
+import { attemptRefreshAccessToken } from '@/shared/lib/api';
+import { notify } from '@/shared/notifications';
+import { useAuthedWebSocket } from '@/shared/ws/useAuthedWebSocket';
+import { getWsBaseUrl } from '@/shared/lib/backendTarget';
+import { showDesktopNotification } from '../desktopNotifications';
+import { inboxApi } from '../inboxApi';
+import { actionLabel, isBannerVisible, mapInboxItem, toBannerVariant } from '../inboxMapper';
+import { notificationActions } from '../notificationSlice';
+import { hasShownAlert, markAlertShown } from '../shownAlerts';
 
 type NotificationWsMessage = {
   type?: string;
+  event?: 'created' | 'updated' | 'removed';
   id?: number;
   message?: string;
   details?: string;
   /** Choice on the wire (`{value, label}`); a bare string is accepted too. */
   message_type?: string | { value: string; label?: string };
+  display_mode?: string | { value: string; label?: string };
+  is_dismissible?: boolean;
+  expiry_date?: string | null;
+  expires_at?: string | null;
   action_path?: string;
   is_read?: boolean;
   /** Set on the batch the server replays when the socket connects: list it, don't pop it up again. */
@@ -26,11 +32,12 @@ type NotificationWsMessage = {
 };
 
 /**
- * Live notifications:
- * - every message refreshes the header bell (badge + panel);
- * - a new one shows a short toast with its action (e.g. Book now), and a desktop notification
- *   when the user opted in and Lab Mango is in the background;
- * - unread lab announcements stay pinned in the banner until dismissed (which marks them read).
+ * Live notifications over `/ws/user/` (delivers both broadcast and targeted user notifications):
+ * - Expiring banners (`display_mode === 'banner'` or legacy `announcement`): rendered strictly in
+ *   the sticky top NotificationBanner (created/updated in-place, removed on expiry/delete). Never
+ *   triggers a toast popup or desktop notification.
+ * - One-time alerts (`display_mode === 'alert'`): refreshes the header bell and shows a toast +
+ *   opt-in desktop notification at most once (never on connect replay, already-read, or repeat push).
  */
 export function useNotificationsWebSocket(): void {
   const dispatch = useDispatch();
@@ -38,13 +45,15 @@ export function useNotificationsWebSocket(): void {
   const accessToken = useAppSelector((state) => state.auth.accessToken);
   const refreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => () => {
-    if (refreshTimer.current) clearTimeout(refreshTimer.current);
-  }, []);
+  useEffect(
+    () => () => {
+      if (refreshTimer.current) clearTimeout(refreshTimer.current);
+    },
+    [],
+  );
 
   const urlFactory = useCallback(
-    (token: string) =>
-      `${getWsBaseUrl()}/ws/notifications/?token=${encodeURIComponent(token)}`,
+    (token: string) => `${getWsBaseUrl()}/ws/user/?token=${encodeURIComponent(token)}`,
     [],
   );
 
@@ -54,8 +63,8 @@ export function useNotificationsWebSocket(): void {
     refreshTimer.current = setTimeout(() => {
       dispatch(
         inboxApi.util.invalidateTags([
-          { type: "Notification", id: "LIST" },
-          { type: "Notification", id: "COUNT" },
+          { type: 'Notification', id: 'LIST' },
+          { type: 'Notification', id: 'COUNT' },
         ]),
       );
     }, 400);
@@ -63,43 +72,64 @@ export function useNotificationsWebSocket(): void {
 
   const handleMessage = useCallback(
     (message: NotificationWsMessage) => {
-      if (message.type !== "notification" || !message.id || !message.message) {
+      if (message.type !== 'notification' || !message.id) {
         return;
       }
+
+      if (message.event === 'removed') {
+        dispatch(notificationActions.removeNotification(message.id));
+        refreshInbox();
+        return;
+      }
+
+      if (!message.message) {
+        return;
+      }
+
       refreshInbox();
       const item = mapInboxItem({ ...message, id: message.id });
 
-      if (item.kind === "announcement") {
-        if (!item.isRead) {
+      // Expiring banners NEVER trigger toast alerts or desktop popups.
+      if (item.displayMode === 'banner') {
+        if (isBannerVisible(item)) {
           dispatch(
-            notificationActions.pushNotification({
+            notificationActions.upsertBanner({
               id: item.id,
-              type: "notification",
+              type: 'notification',
               message: item.title,
               details: item.details,
               message_type: item.kind,
+              is_dismissible: item.isDismissible,
+              expires_at: item.expiresAt,
               action_path: item.actionPath ?? undefined,
               created: item.createdAt,
             }),
           );
+        } else {
+          dispatch(notificationActions.removeNotification(item.id));
         }
         return;
       }
-      if (message.replay || item.isRead) return;
+
+      // One-time alerts: never pop up on connect replay, already-read items, or duplicate deliveries.
+      if (message.replay || item.isRead || hasShownAlert(item.id)) {
+        return;
+      }
+      markAlertShown(item.id);
 
       const open = () => {
         dispatch(inboxApi.endpoints.markNotificationRead.initiate(item.id) as never);
         if (item.actionPath) navigate(item.actionPath);
       };
-      notify[item.kind === "error" ? "error" : item.kind === "warning" ? "warning" : item.kind === "success" ? "success" : "info"](
-        item.title,
-        {
-          key: `notification-${item.id}`,
-          description: item.details || undefined,
-          duration: item.actionPath ? 10_000 : 6_000,
-          action: item.actionPath ? { label: actionLabel(item.actionPath), onClick: open } : undefined,
-        },
-      );
+
+      const variant = toBannerVariant(item.kind);
+      notify[variant](item.title, {
+        key: `notification-${item.id}`,
+        description: item.details || undefined,
+        duration: item.actionPath ? 10_000 : 6_000,
+        action: item.actionPath ? { label: actionLabel(item.actionPath), onClick: open } : undefined,
+      });
+
       showDesktopNotification(
         {
           id: item.id,

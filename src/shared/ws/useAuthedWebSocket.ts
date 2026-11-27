@@ -25,6 +25,25 @@ export function useAuthedWebSocket({
   const reconnectAttemptRef = useRef(0);
   const cancelledRef = useRef(false);
 
+  // Keep latest callbacks in refs so identity changes (e.g. React Router's useNavigate on
+  // route transitions) never tear down and reconnect an active WebSocket.
+  const callbacksRef = useRef({
+    onMessage,
+    onUnauthorized,
+    onOpen,
+    onClose,
+    onError,
+  });
+  useEffect(() => {
+    callbacksRef.current = {
+      onMessage,
+      onUnauthorized,
+      onOpen,
+      onClose,
+      onError,
+    };
+  }, [onMessage, onUnauthorized, onOpen, onClose, onError]);
+
   const clearReconnectTimer = useCallback(() => {
     if (reconnectTimerRef.current) {
       clearTimeout(reconnectTimerRef.current);
@@ -57,29 +76,30 @@ export function useAuthedWebSocket({
 
       ws.onopen = () => {
         reconnectAttemptRef.current = 0;
-        onOpen?.();
+        callbacksRef.current.onOpen?.();
       };
 
       ws.onmessage = (event) => {
         try {
           const parsed = JSON.parse(event.data) as WsMessage;
-          onMessage(parsed);
+          callbacksRef.current.onMessage(parsed);
         } catch {
           // Ignore malformed messages; keep socket alive.
         }
       };
 
       ws.onerror = (event) => {
-        onError?.(event);
+        callbacksRef.current.onError?.(event);
       };
 
       ws.onclose = (event) => {
-        onClose?.(event);
+        callbacksRef.current.onClose?.(event);
         if (cancelledRef.current) return;
 
         const handleReconnect = async () => {
-          if (isUnauthorizedClose(event) && onUnauthorized) {
-            const recovered = await onUnauthorized();
+          const handleUnauthorized = callbacksRef.current.onUnauthorized;
+          if (isUnauthorizedClose(event) && handleUnauthorized) {
+            const recovered = await handleUnauthorized();
             if (recovered) {
               reconnectAttemptRef.current = 0;
               return;
@@ -101,5 +121,5 @@ export function useAuthedWebSocket({
       wsRef.current?.close();
       wsRef.current = null;
     };
-  }, [accessToken, enabled, clearReconnectTimer, onClose, onError, onMessage, onOpen, onUnauthorized, urlFactory]);
+  }, [accessToken, enabled, clearReconnectTimer, urlFactory]);
 }

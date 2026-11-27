@@ -18,7 +18,13 @@ import {
   useMarkAllNotificationsReadMutation,
   useMarkNotificationReadMutation,
 } from '../inboxApi';
-import { actionLabel, badgeLabel, formatRelative, type InboxItem, type InboxKind } from '../inboxMapper';
+import {
+  actionLabel,
+  badgeLabel,
+  formatRelative,
+  type InboxItem,
+  type InboxKind,
+} from '../inboxMapper';
 import styles from './NotificationBell.module.css';
 
 const ICONS: Record<InboxKind, React.ReactNode> = {
@@ -30,27 +36,35 @@ const ICONS: Record<InboxKind, React.ReactNode> = {
 };
 
 function NotificationRow({ item, onOpen }: { item: InboxItem; onOpen: (item: InboxItem) => void }) {
+  const isBanner = item.displayMode === 'banner';
+  const showUnread = !isBanner && !item.isRead;
+
   return (
     <li>
       <button
         type="button"
         className={styles.item}
-        data-unread={!item.isRead}
+        data-unread={showUnread}
         onClick={() => onOpen(item)}
-        aria-label={`${item.isRead ? '' : 'Unread: '}${item.title}`}
+        aria-label={`${showUnread ? 'Unread: ' : ''}${isBanner ? 'Banner: ' : ''}${item.title}`}
       >
         <span className={styles.itemIcon} data-kind={item.kind} aria-hidden>
           {ICONS[item.kind]}
         </span>
         <span className={styles.itemBody}>
-          <span className={styles.itemTitle}>{item.title}</span>
+          <span className={styles.itemTitleRow}>
+            <span className={styles.itemTitle}>{item.title}</span>
+            {isBanner && <span className={styles.bannerTag}>Banner</span>}
+          </span>
           {item.details && <span className={styles.itemDetails}>{item.details}</span>}
           <span className={styles.itemMeta}>
             <time dateTime={item.createdAt}>{formatRelative(item.createdAt)}</time>
-            {item.actionPath && <span className={styles.itemAction}>{actionLabel(item.actionPath)} →</span>}
+            {!isBanner && item.actionPath && (
+              <span className={styles.itemAction}>{actionLabel(item.actionPath)} →</span>
+            )}
           </span>
         </span>
-        {!item.isRead && <span className={styles.unreadDot} aria-hidden />}
+        {showUnread && <span className={styles.unreadDot} aria-hidden />}
       </button>
     </li>
   );
@@ -95,7 +109,7 @@ function NotificationPanel({ onClose }: { onClose: () => void }) {
   const [markAllRead, { isLoading: markingAll }] = useMarkAllNotificationsReadMutation();
 
   const open = (item: InboxItem) => {
-    if (!item.isRead) void markRead(item.id);
+    if (item.displayMode === 'alert' && !item.isRead) void markRead(item.id);
     if (item.actionPath) {
       onClose();
       navigate(item.actionPath);
