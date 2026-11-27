@@ -6,6 +6,7 @@ import { useLazyGetDowntimesQuery } from '@/features/spaces/shared/downtimeApi';
 import { useLazyGetBenchByIdQuery } from '@/features/spaces/bench/api';
 import { useAuthState } from '@/features/auth/hooks/useAuthState';
 import { benchColor } from '../utils/benchColors';
+import { actualEnd, isOnSchedule } from '../utils/bookingTimes';
 
 const CALENDAR_DATETIME_FORMAT = 'YYYY-MM-DDTHH:mm:ss';
 
@@ -80,8 +81,11 @@ export function useBookingCalendarEvents() {
           const roomIds = new Set(benches.flatMap((b) => (b.room?.id != null ? [b.room.id] : [])));
 
           const mappedBookings: EventInput[] = bookings.flatMap((booking) => {
+            // A cancelled, expired or rejected booking freed its slot: it is not on the schedule.
+            if (!isOnSchedule(booking)) return [];
             const startStr = booking.starts_at;
-            const endStr = booking.ends_at;
+            // A booking completed early shows the time it really held the bench.
+            const endStr = booking.ends_at ? actualEnd(booking) : '';
             if (!startStr || !endStr) return [];
 
             // Colour only says whose booking it is; a coordinator's edit rights do not make others' bookings "mine".

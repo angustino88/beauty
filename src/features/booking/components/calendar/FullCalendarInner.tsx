@@ -4,7 +4,7 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import listPlugin from '@fullcalendar/list';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
-import { type CSSProperties, type Dispatch, type RefObject, type SetStateAction } from 'react';
+import { type CSSProperties, type Dispatch, type RefObject, type SetStateAction, useState } from 'react';
 import styles from './Calendar.module.css';
 import dayjs, { type Dayjs } from 'dayjs';
 import { Popover } from 'antd';
@@ -37,9 +37,11 @@ const CreatorInitial = ({ name, className }: { name: string; className: string }
 type CalendarEventContentProps = {
   arg: EventContentArg;
   refetchBooking: () => void;
+  focused?: boolean;
+  onFocusClosed?: () => void;
 };
 
-const CalendarEventContent = ({ arg, refetchBooking }: CalendarEventContentProps) => {
+const CalendarEventContent = ({ arg, refetchBooking, focused = false, onFocusClosed }: CalendarEventContentProps) => {
   const { timeText, event, view } = arg;
   const creator = event.extendedProps?.creator as string | undefined;
   const hoverTitle = event.title;
@@ -138,6 +140,11 @@ const CalendarEventContent = ({ arg, refetchBooking }: CalendarEventContentProps
 
   return (
     <Popover
+      // Opened from a link to this booking: show its details straight away.
+      defaultOpen={focused}
+      onOpenChange={(open) => {
+        if (!open && focused) onFocusClosed?.();
+      }}
       styles={{ container: { padding: 0 } }}
       content={(
         <EventDetailModal
@@ -165,6 +172,8 @@ type CustomizedFullCalendarProps = {
   }) => void;
   refetchBooking: () => void;
   onDatesSet?: (range: { start: string; end: string }) => void;
+  initialDate?: Date;
+  focusEventId?: string;
   [key: string]: unknown;
 };
 
@@ -177,8 +186,12 @@ const CustomizedFullCalendar = ({
   onSelect,
   refetchBooking,
   onDatesSet,
+  initialDate,
+  focusEventId,
   ...props
 }: CustomizedFullCalendarProps) => {
+  // The linked booking's details open once; after they close, refetches do not reopen them.
+  const [pendingFocusId, setPendingFocusId] = useState(focusEventId);
   return (
     <FullCalendar
       {...props}
@@ -187,6 +200,7 @@ const CustomizedFullCalendar = ({
       plugins={[interactionPlugin, timeGridPlugin, dayGridPlugin, listPlugin]}
       height={view.startsWith('list') ? 'auto' : '65vh'}
       initialView={view}
+      initialDate={initialDate}
       slotEventOverlap={false}
       eventMaxStack={3}
       headerToolbar={false}
@@ -203,10 +217,17 @@ const CustomizedFullCalendar = ({
       }}
       nowIndicator={true}
       firstDay={1}
-      scrollTime={dayjs().subtract(2, 'hour').format('HH') + ':00:00'}
+      scrollTime={dayjs(initialDate).subtract(initialDate ? 1 : 2, 'hour').format('HH') + ':00:00'}
       events={events}
       eventMinHeight={20}
-      eventContent={(arg) => <CalendarEventContent arg={arg} refetchBooking={refetchBooking} />}
+      eventContent={(arg) => (
+        <CalendarEventContent
+          arg={arg}
+          refetchBooking={refetchBooking}
+          focused={!!pendingFocusId && arg.event.id === pendingFocusId}
+          onFocusClosed={() => setPendingFocusId(undefined)}
+        />
+      )}
       selectable={true}
       select={(info) =>
         onSelect({

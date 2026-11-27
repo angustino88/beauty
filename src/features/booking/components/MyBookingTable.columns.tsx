@@ -12,6 +12,7 @@ import type { ColumnsType } from 'antd/es/table';
 import React from 'react';
 import { TooltipButton } from '@/components/layout/TooltipButton';
 import type { BenchBookingItem, IProjectOption } from '../types';
+import { actualEnd, endedEarly } from '../utils/bookingTimes';
 import styles from './MyBookingTable.module.css';
 import { StatusBadge } from '@/shared/components/StatusBadge';
 import type { StatusTone } from '@/shared/status/statusTone';
@@ -307,9 +308,18 @@ export function buildMyBookingColumns({
       showSorterTooltip: { target: 'sorter-icon' },
       width: 140,
       align: 'left',
-      render: (_: unknown, record: BenchBookingItem) => (
-        <DateRenderer value={record.ends_at} />
-      ),
+      // A booking completed early ends when it was completed; the booked end stays visible.
+      render: (_: unknown, record: BenchBookingItem) =>
+        endedEarly(record) ? (
+          <div>
+            <DateRenderer value={actualEnd(record)} />
+            <Typography.Text type="secondary" style={{ display: 'block', fontSize: 11 }}>
+              Booked until {dayjs(record.ends_at).format('h:mm A')}
+            </Typography.Text>
+          </div>
+        ) : (
+          <DateRenderer value={record.ends_at} />
+        ),
     },
     {
       title: 'Project',

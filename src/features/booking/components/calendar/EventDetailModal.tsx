@@ -15,6 +15,7 @@ import { usePermission } from '@/features/auth/hooks/useCan';
 import { BenchBookingEdit } from '../BenchBookingEdit';
 import { FollowBookingButton } from '../../slot-alerts/FollowBookingButton';
 import type { BenchBookingItem } from '../../types';
+import { actualEnd, endedEarly } from '../../utils/bookingTimes';
 
 interface EventDetailModalProps {
   eventId?: string | number;
@@ -53,10 +54,13 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
 
   const formatBookingDuration = () => {
     const from = dayjs(booking?.starts_at);
-    const to = dayjs(booking?.ends_at);
-    return from.isSame(to, 'day')
+    const to = dayjs(booking ? actualEnd(booking) : undefined);
+    const range = from.isSame(to, 'day')
       ? `${from.format('dddd, MMM D, YYYY h:mm A')} - ${to.format('h:mm A')}`
       : `${from.format('dddd, MMM D, YYYY h:mm A')} - ${to.format('dddd, MMM D, YYYY h:mm A')}`;
+    return booking && endedEarly(booking)
+      ? `${range} (completed early, booked until ${dayjs(booking.ends_at).format('h:mm A')})`
+      : range;
   };
 
   const projectName = booking?.project?.name || 'Unknown project';

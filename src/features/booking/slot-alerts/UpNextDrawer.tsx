@@ -6,6 +6,7 @@ import { Link } from 'react-router-dom';
 import { formatBookingCountdown } from '../slotWatchMapper';
 import { useGetSlotWatchesQuery } from '../slotWatchApi';
 import type { BenchBookingItem } from '../types';
+import { bookingPath } from '../upNext';
 import { SlotAlertModal } from './SlotAlertModal';
 import { SlotAlertRow } from './SlotAlertRow';
 import { SlotAlertsEmpty } from './SlotAlertsEmpty';
@@ -44,7 +45,7 @@ function BookingRow({ booking }: { booking: BenchBookingItem }) {
               : ` – ${dayjs(booking.ends_at).format('HH:mm')}`}
         </div>
       </div>
-      <Link to="/my-bookings">
+      <Link to={bookingPath({ id: booking.id, benchId: booking.bench?.id || null, startsAt: booking.starts_at })}>
         <Button size="small">View</Button>
       </Link>
     </div>

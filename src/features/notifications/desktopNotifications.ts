@@ -1,6 +1,7 @@
 /**
  * Browser (desktop) notifications: strictly opt-in, shown only while Lab Mango is in the background.
- * The browser permission prompt appears only when the user turns them on from the bell panel.
+ * The browser permission prompt appears only when the user turns them on from the bell panel, or
+ * sets a slot alert (a free bench is time-sensitive) without having decided yet.
  */
 import { useCallback, useState } from 'react';
 
@@ -29,6 +30,32 @@ const writePref = (on: boolean) => {
 };
 
 export const desktopNotificationsActive = () => desktopPermission() === 'granted' && readPref();
+
+const hasDecided = (): boolean => {
+  try {
+    return localStorage.getItem(PREF_KEY) !== null;
+  } catch {
+    return true;
+  }
+};
+
+/**
+ * Called when the user asks to be alerted about a bench: turn desktop notifications on unless they
+ * already chose (in the bell panel or the browser). Call it from the click, before any await, so the
+ * browser treats the permission prompt as user-initiated.
+ */
+export function offerDesktopNotifications(): void {
+  if (!supported() || hasDecided() || Notification.permission === 'denied') return;
+  if (Notification.permission === 'granted') {
+    writePref(true);
+    return;
+  }
+  void Notification.requestPermission()
+    .then((result) => {
+      if (result !== 'default') writePref(result === 'granted');
+    })
+    .catch(() => undefined);
+}
 
 /** Show one OS notification; clicking it focuses Lab Mango and runs `onOpen`. Same id never shows twice. */
 export function showDesktopNotification(

@@ -1,5 +1,6 @@
 import dayjs, { type Dayjs } from 'dayjs';
 import { useCallback } from 'react';
+import { offerDesktopNotifications } from '@/features/notifications/desktopNotifications';
 import { notify } from '@/shared/notifications';
 import { extractBookingErrorMessage } from '@/shared/utils/booking';
 import { formatAlertTime, formatAlertWindow } from '../slotWatchMapper';
@@ -32,6 +33,8 @@ export function useSlotAlert() {
 
   const createAlert = useCallback(
     async (target: SlotAlertTarget): Promise<boolean> => {
+      // A free bench is time-sensitive: offer desktop notifications while the user is acting on it.
+      offerDesktopNotifications();
       // Never watch the past: clip the start to now.
       const now = dayjs();
       const start = dayjs(target.startsAt).isBefore(now) ? now : dayjs(target.startsAt);
@@ -66,6 +69,7 @@ export function useSlotAlert() {
 
   const followBooking = useCallback(
     async (bookingId: number): Promise<boolean> => {
+      offerDesktopNotifications();
       try {
         const watch = await follow(bookingId).unwrap();
         notify.success("You'll be notified when this booking ends", {

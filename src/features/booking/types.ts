@@ -87,6 +87,8 @@ export interface BenchBookingItem {
   } | null;
   starts_at: string;
   ends_at: string;
+  /** When a completed booking released the bench (may be before ends_at); null otherwise. */
+  completed_at: string | null;
   status: string;
   approval_status: string;
   reason: string;
